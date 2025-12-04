@@ -10,15 +10,24 @@
 !.yarn/releases
 !.yarn/versions
 
+# workspace dependencies
+apps/*/node_modules
+packages/*/node_modules
+
 # testing
 /coverage
 
 # next.js
 /.next/
 /out/
+apps/*/.next/
+apps/*/out/
 
 # production
 /build
+apps/*/build
+apps/*/dist
+packages/*/dist
 
 # misc
 .DS_Store
@@ -39,3 +48,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# clerk configuration (can include secrets)
+/.clerk/
