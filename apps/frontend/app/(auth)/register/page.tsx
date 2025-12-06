@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [code, setCode] = useState('');
   const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const router = useRouter();
 
@@ -88,6 +89,7 @@ export default function RegisterPage() {
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoaded) return;
+    setIsVerifying(true);
 
     try {
       const completeSignUp = await signUp.attemptEmailAddressVerification({
@@ -105,6 +107,8 @@ export default function RegisterPage() {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
       setGlobalError(clerkError || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -178,10 +182,18 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 isDisabled={code.length !== 6}
-                className="w-full bg-primary font-semibold text-primary-foreground shadow-sm group hover:bg-primary/90"
+                className="w-full shadow-sm group"
               >
-                Verify Email
-                <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
+                {isVerifying ? (
+                  <>
+                  <Spinner color="current" size="sm" />
+                    Verifying...</>
+                ) : (
+                  <>
+                    Verify Email
+                    <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
+                  </>
+                )}
               </Button>
             </form>
           </Card.Content>
