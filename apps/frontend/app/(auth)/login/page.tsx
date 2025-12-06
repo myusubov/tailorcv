@@ -74,7 +74,7 @@ export default function LoginPage() {
         <div className="relative z-10">
           <NextLink href="/" className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner backdrop-blur-md ring-1 ring-white/20">
-              <Icon icon="lucide:file-text" className="h-6 w-6 text-white" />
+              <Icon icon="lucide:file-text" className="size-6 text-white" />
             </div>
             TailorCV
           </NextLink>
@@ -94,8 +94,8 @@ export default function LoginPage() {
 
         <div className="relative z-10 mt-12 space-y-6">
            <div className="flex items-center gap-4 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30 transition-colors group-hover:bg-indigo-500/30 group-hover:text-indigo-200">
-                <Icon icon="lucide:check" className="h-4 w-4" />
+            <div className="flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30 transition-colors group-hover:bg-indigo-500/30 group-hover:text-indigo-200">
+                <Icon icon="lucide:check" className="size-4" />
             </div>
             <span className="text-lg font-medium text-slate-200">Continue where you left off</span>
             </div>
@@ -109,8 +109,8 @@ export default function LoginPage() {
           {/* Mobile Logo - Centered */}
           <div className="flex justify-center lg:hidden mb-8">
             <NextLink href="/" className="flex items-center gap-2.5 text-2xl font-bold text-foreground transition-opacity hover:opacity-80">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Icon icon="lucide:file-text" className="h-5 w-5" />
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon icon="lucide:file-text" className="size-5" />
               </div>
               TailorCV
             </NextLink>
@@ -164,14 +164,14 @@ export default function LoginPage() {
 
             {globalError && (
               <div className="flex items-center gap-2 rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger">
-                <Icon icon="lucide:alert-circle" className="h-4 w-4 shrink-0" />
+                <Icon icon="lucide:alert-circle" className="size-4 shrink-0" />
                 {globalError}
               </div>
             )}
 
             <Button type="submit" isPending={isSubmitting} className="w-full bg-primary font-semibold text-primary-foreground shadow-sm group hover:bg-primary/90">
               Sign In
-              <Icon icon="lucide:arrow-right" className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-all" />
+              <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
             </Button>
 
             <div className="relative py-2">
@@ -189,7 +189,7 @@ export default function LoginPage() {
               className="w-full font-medium"
               onPress={handleGoogleSignIn}
             >
-              <Icon icon="logos:google-icon" className="mr-3 h-5 w-5" />
+              <Icon icon="logos:google-icon" className="mr-3 size-5" />
               Continue with Google
             </Button>
 

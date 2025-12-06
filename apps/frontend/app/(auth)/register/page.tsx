@@ -3,7 +3,8 @@
 import { useSignUp } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import NextLink from 'next/link';
-import { Form, TextField, Label, Input, Button, Checkbox, Link, Separator, FieldError } from '@heroui/react';
+import { Form, TextField, Label, Input, Button, Checkbox, Link, Separator, FieldError, Spinner, InputOTP, Card } from '@heroui/react';
+import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -11,6 +12,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/auth';
+import { getClerkErrorMessage } from '@/lib/utils';
 
 
 export default function RegisterPage() {
@@ -18,6 +20,8 @@ export default function RegisterPage() {
   const [verifying, setVerifying] = useState(false);
   const [code, setCode] = useState('');
   const [globalError, setGlobalError] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const router = useRouter();
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
@@ -38,12 +42,14 @@ export default function RegisterPage() {
     setGlobalError('');
 
     try {
-      await signUp.create({
-        emailAddress: data.email,
-        password: data.password,
-        firstName: data.firstName,
-        lastName: data.lastName,
-      });
+      if (!signUp.status || signUp.status === 'missing_requirements') {
+        await signUp.create({
+          emailAddress: data.email,
+          password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+        });
+      }
 
       // Send the user an email with the verification code
       await signUp.prepareEmailAddressVerification({
@@ -51,9 +57,30 @@ export default function RegisterPage() {
       });
 
       setVerifying(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
-      setGlobalError(err.errors?.[0]?.message || 'Something went wrong');
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Something went wrong');
+    }
+  };
+
+  // Handle re-sending the verification code
+  const handleResend = async () => {
+    if (!isLoaded) return;
+    setResending(true);
+    setGlobalError('');
+
+    try {
+      await signUp.prepareEmailAddressVerification({
+        strategy: 'email_code',
+      });
+      toast.success('Verification code resent');
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Failed to resend code');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -74,60 +101,104 @@ export default function RegisterPage() {
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
-      setGlobalError(err.errors?.[0]?.message || 'Verification failed');
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Verification failed');
     }
   };
 
   const handleGoogleSignUp = async () => {
+    const isGoogleButton = document.activeElement?.id === "google-signup-btn";
     if (!isLoaded) return;
     try {
+      setGoogleLoading(true);
       await signUp.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
         redirectUrlComplete: '/dashboard',
       });
-    } catch (err: any) {
-      console.error(err);
-      setGlobalError('Oauth failed')
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Oauth failed')
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
   if (verifying) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8 rounded-xl bg-content1 p-10 shadow-xl">
-          <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-foreground">Verify your email</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We sent a code to your email.
-            </p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-8">
+        <NextLink href="/" className="mb-8 flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-80">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon icon="lucide:file-text" className="size-5" />
           </div>
+          TailorCV
+        </NextLink>
 
-          <form className="mt-8 space-y-6" onSubmit={handleVerification}>
-            <input type="hidden" name="remember" value="true" />
-            <div className="-space-y-px rounded-md shadow-sm">
-              <TextField>
-                <Label>Verification Code</Label>
-                <Input
+        <Card className="w-full max-w-[400px]">
+          <Card.Header className="flex flex-col gap-1 text-center">
+            <Card.Title className="text-2xl">Check your email</Card.Title>
+            <Card.Description>
+              We've sent a 6-digit verification code to <span className="text-foreground font-medium">{control._formValues.email}</span>
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <form onSubmit={handleVerification} className="flex flex-col gap-6">
+              <div className="flex justify-center py-4">
+                <InputOTP
+                  maxLength={6}
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  className="bg-default-100 text-lg tracking-widest"
-                />
-              </TextField>
-            </div>
+                  onChange={setCode}
+                  pattern="^[0-9]*$"
+                  inputMode="numeric"
+                >
+                  <InputOTP.Group>
+                    <InputOTP.Slot index={0} />
+                    <InputOTP.Slot index={1} />
+                    <InputOTP.Slot index={2} />
+                  </InputOTP.Group>
+                  <InputOTP.Separator />
+                  <InputOTP.Group>
+                    <InputOTP.Slot index={3} />
+                    <InputOTP.Slot index={4} />
+                    <InputOTP.Slot index={5} />
+                  </InputOTP.Group>
+                </InputOTP>
+              </div>
 
-            {globalError && <p className="text-center text-sm text-danger">{globalError}</p>}
+              {globalError && (
+                <div className="flex items-center gap-2 rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger">
+                  <Icon icon="lucide:alert-circle" className="size-4 shrink-0" />
+                  {globalError}
+                </div>
+              )}
 
-            <div>
-              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                Verify & Create Account
+              <Button
+                type="submit"
+                isDisabled={code.length !== 6}
+                className="w-full bg-primary font-semibold text-primary-foreground shadow-sm group hover:bg-primary/90"
+              >
+                Verify Email
+                <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
               </Button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </Card.Content>
+          <Card.Footer className="flex-col gap-2 border-t border-divider pt-4">
+            <p className="text-center text-sm text-muted-foreground">
+              Didn't receive the code?{' '}
+              <button
+                type="button"
+                className="text-primary hover:underline font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleResend}
+                disabled={resending}
+              >
+                {resending ? 'Resending...' : 'Resend code'}
+              </button>
+            </p>
+          </Card.Footer>
+        </Card>
       </div>
     );
   }
@@ -145,7 +216,7 @@ export default function RegisterPage() {
         <div className="relative z-10">
           <NextLink href="/" className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner backdrop-blur-md ring-1 ring-white/20">
-              <Icon icon="lucide:file-text" className="h-6 w-6 text-white" />
+              <Icon icon="lucide:file-text" className="size-6 text-white" />
             </div>
             TailorCV
           </NextLink>
@@ -170,8 +241,8 @@ export default function RegisterPage() {
             "Instant PDF download"
           ].map((feature, i) => (
             <div key={i} className="flex items-center gap-4 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30 transition-colors group-hover:bg-indigo-500/30 group-hover:text-indigo-200">
-                <Icon icon="lucide:check" className="h-4 w-4" />
+              <div className="flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30 transition-colors group-hover:bg-indigo-500/30 group-hover:text-indigo-200">
+                <Icon icon="lucide:check" className="size-4" />
               </div>
               <span className="text-lg font-medium text-slate-200">{feature}</span>
             </div>
@@ -186,8 +257,8 @@ export default function RegisterPage() {
           {/* Mobile Logo - Centered */}
           <div className="flex justify-center lg:hidden mb-8">
             <NextLink href="/" className="flex items-center gap-2.5 text-2xl font-bold text-foreground transition-opacity hover:opacity-80">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Icon icon="lucide:file-text" className="h-5 w-5" />
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon icon="lucide:file-text" className="size-5" />
               </div>
               TailorCV
             </NextLink>
@@ -295,14 +366,29 @@ export default function RegisterPage() {
 
             {globalError && (
               <div className="flex items-center gap-2 rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger">
-                <Icon icon="lucide:alert-circle" className="h-4 w-4 shrink-0" />
+                <Icon icon="lucide:alert-circle" className="size-4 shrink-0" />
                 {globalError}
               </div>
             )}
 
-            <Button type="submit" isPending={isSubmitting} className="w-full bg-primary font-semibold text-primary-foreground shadow-sm group hover:bg-primary/90">
-              Create Account
-              <Icon icon="lucide:arrow-right" className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-all" />
+            <div id="clerk-captcha" />
+
+            <Button
+              type="submit"
+              isDisabled={isSubmitting || googleLoading}
+              className="w-full font-semibold shadow-sm group"
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner color="current" size="sm" />
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  Create Account
+                  <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
+                </>
+              )}
             </Button>
 
             <div className="relative py-2">
@@ -317,11 +403,21 @@ export default function RegisterPage() {
             <Button
               type="button"
               variant="secondary"
+              isDisabled={googleLoading || isSubmitting}
               className="w-full font-medium"
               onPress={handleGoogleSignUp}
             >
-              <Icon icon="logos:google-icon" className="mr-3 h-5 w-5" />
-              Continue with Google
+              {googleLoading ? (
+                <>
+                  <Spinner color="current" size="sm" />
+                  Signing up with Google...
+                </>
+              ) : (
+                <>
+                  <Icon icon="logos:google-icon" className="size-5" />
+                  Continue with Google
+                </>
+              )}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
