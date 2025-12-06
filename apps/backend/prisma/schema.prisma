@@ -2,22 +2,77 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "./generated/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
+// ============================================
+// USER MODEL
+// ============================================
 model User {
+  id             String   @id @default(uuid())
+  clerkUserId    String   @unique // Clerk auth ID
+  email          String   @unique
+  name           String
+  plan           Plan     @default(FREE)
+  creditsUsed    Int      @default(0)
+  creditsLimit   Int      @default(3) // 3 for FREE, -1 for unlimited
+  stripeCustomerId String? @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  baseResumes      BaseResume[]
+  customizedResumes CustomizedResume[]
+
+  @@map("users")
+}
+
+enum Plan {
+  FREE
+  PRO_MONTHLY
+  PRO_LIFETIME
+}
+
+// ============================================
+// BASE RESUME MODEL
+// ============================================
+model BaseResume {
   id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  bio       String?
-  avatar    String?
+  userId    String
+  name      String   @default("My Resume") // e.g., "Software Engineer Resume"
+  data      Json     // Entire resume structure as JSON
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  // Relations
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customizedResumes CustomizedResume[]
+
+  @@map("base_resumes")
+}
+
+// ============================================
+// CUSTOMIZED RESUME MODEL
+// ============================================
+model CustomizedResume {
+  id             String   @id @default(uuid())
+  userId         String
+  baseResumeId   String
+  jobTitle       String?  // e.g., "Senior Frontend Engineer"
+  companyName    String?  // e.g., "Google"
+  jobDescription String   @db.Text // Full job description
+  customizedData Json     // AI-customized resume data
+  matchScore     Int?     @default(0) // 0-100, future feature
+  createdAt      DateTime @default(now())
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseResume BaseResume @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
+
+  @@map("customized_resumes")
 }

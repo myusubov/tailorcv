@@ -14,6 +14,7 @@ const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.url(),
+  SHADOW_DATABASE_URL: z.url().optional(),
 
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1),

@@ -16,42 +16,40 @@ export function AnimatedError({
   icon = 'lucide:alert-circle',
 }: AnimatedErrorProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+
+  // Derive the actual height from the message state and measured height
+  const height = message ? measuredHeight : 0;
 
   const measureHeight = useCallback(() => {
     if (contentRef.current) {
-      // Use requestAnimationFrame to ensure measurement happens after paint
-      requestAnimationFrame(() => {
-        if (contentRef.current) {
-          const measuredHeight = contentRef.current.offsetHeight;
-          setHeight(measuredHeight);
-        }
-      });
+      const newHeight = contentRef.current.offsetHeight;
+      setMeasuredHeight(newHeight);
     }
   }, []);
 
+  // Only measure height when we have a message, don't set height directly
   useEffect(() => {
-    if (message) {
-      // Measure after a microtask to ensure content is rendered
-      queueMicrotask(() => {
-        measureHeight();
-      });
+    if (!message) return;
 
-      // Also set up ResizeObserver for dynamic content changes
-      const resizeObserver = new ResizeObserver(() => {
-        measureHeight();
-      });
+    // Measure height after content renders
+    const timeoutId = setTimeout(() => {
+      measureHeight();
+    }, 0);
 
-      if (contentRef.current) {
-        resizeObserver.observe(contentRef.current);
-      }
+    // Set up ResizeObserver for dynamic content changes
+    const resizeObserver = new ResizeObserver(() => {
+      measureHeight();
+    });
 
-      return () => {
-        resizeObserver.disconnect();
-      };
-    } else {
-      setHeight(0);
+    if (contentRef.current) {
+      resizeObserver.observe(contentRef.current);
     }
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
   }, [message, measureHeight]);
 
   return (

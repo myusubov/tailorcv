@@ -1,15 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
     "moduleResolution": "node",
-    "target": "ES2020",
-    "lib": ["ES2020"],
+    "target": "ES2023",
+    "lib": ["ES2023"],
     "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": false
+    "noEmit": false,
+    "esModuleInterop": true,
+    "strict": true
   },
-  "include": ["src/**/*", "types/**/*"],
+  "include": ["src/**/*", "types/**/*", "prisma/generated/**/*"],
   "exclude": ["node_modules", "dist"],
   "references": [{ "path": "../../packages/shared" }]
 }

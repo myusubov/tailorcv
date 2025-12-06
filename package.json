@@ -16,7 +16,18 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prisma:generate": "npm run prisma:generate -w backend",
+    "prisma:migrate": "npm run prisma:migrate -w backend",
+    "prisma:migrate:deploy": "npm run prisma:migrate:deploy -w backend",
+    "prisma:migrate:reset": "npm run prisma:migrate:reset -w backend",
+    "prisma:db:push": "npm run prisma:db:push -w backend",
+    "prisma:db:seed": "npm run prisma:db:seed -w backend",
+    "prisma:studio": "npm run prisma:studio -w backend",
+    "prisma:format": "npm run prisma:format -w backend",
+    "prisma:validate": "npm run prisma:validate -w backend",
+    "db:setup": "npm run db:setup -w backend",
+    "db:reset": "npm run db:reset -w backend"
   },
   "devDependencies": {
     "@types/node": "^20",
