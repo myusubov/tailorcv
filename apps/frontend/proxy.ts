@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 
 // Public routes that don't require authentication
 // Note: These routes are accessible without login
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isPublicRoute = createRouteMatcher([
   '/',
   '/login(.*)',

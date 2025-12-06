@@ -9,7 +9,7 @@ export class AppError extends Error {
     message: string,
     errorCode: ErrorCode = ErrorCode.INTERNAL_ERROR,
     statusCode: number = 500,
-    details?: any
+    details?: any,
   ) {
     super(message);
     this.statusCode = statusCode;

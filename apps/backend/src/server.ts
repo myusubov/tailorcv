@@ -2,19 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import { clerkMiddleware, requireAuth } from '@clerk/express'
+import { clerkMiddleware, requireAuth } from '@clerk/express';
 import { v1Router } from './routes';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error';
 import { AppError } from './utils/AppError';
 import { ErrorCode } from 'shared';
 
-
-
 dotenv.config();
 
 const app = express();
-const PORT = env.PORT
+const PORT = env.PORT;
 
 // Middleware
 app.use(cors());
@@ -38,7 +36,9 @@ app.get('/', (req, res) => {
 
 // 404 handler
 app.use((req, res, next) => {
-  next(new AppError(`Cannot ${req.method} ${req.path}`, ErrorCode.NOT_FOUND, 404));
+  next(
+    new AppError(`Cannot ${req.method} ${req.path}`, ErrorCode.NOT_FOUND, 404),
+  );
 });
 
 // Global Error Handler

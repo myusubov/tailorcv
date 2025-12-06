@@ -28,4 +28,3 @@ export interface ApiError {
   code: string;
   status: number;
 }
-

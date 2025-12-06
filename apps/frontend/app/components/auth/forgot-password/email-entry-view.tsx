@@ -13,7 +13,9 @@ import {
 import { Icon } from '@iconify/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+
+import { AnimatedError } from '@/app/components/ui';
 
 import {
   forgotPasswordSchema,
@@ -150,10 +152,7 @@ export function EmailEntryView({ onSubmit, globalError }: EmailEntryViewProps) {
             </p>
           </motion.div>
 
-          <Form
-            className="space-y-6"
-            onSubmit={handleSubmit(handleFormSubmit)}
-          >
+          <Form className="space-y-6" onSubmit={handleSubmit(handleFormSubmit)}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -178,23 +177,7 @@ export function EmailEntryView({ onSubmit, globalError }: EmailEntryViewProps) {
               />
             </motion.div>
 
-            <AnimatePresence mode="wait">
-              {globalError && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-danger-50 text-danger flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
-                >
-                  <Icon
-                    icon="lucide:alert-circle"
-                    className="size-4 shrink-0"
-                  />
-                  {globalError}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <AnimatedError message={globalError} />
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

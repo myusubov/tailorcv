@@ -51,6 +51,7 @@ The global middleware in `src/middleware/error.ts` automatically handles:
 ## 4. Helper Utilities
 
 Located in `src/utils/response.ts`:
+
 - `successResponse(res, data, statusCode)`
 - `errorResponse(res, message, statusCode, code, details)`
 - `paginatedResponse(res, data, page, limit, total)`

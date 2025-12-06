@@ -1,0 +1,11 @@
+export { Navigation } from './navigation';
+export { Hero } from './hero';
+export { ProblemSection } from './problem-section';
+export { SolutionSection } from './solution-section';
+export { GithubFeature } from './github-feature';
+export { FeaturesGrid } from './features-grid';
+export { Testimonials } from './testimonials';
+export { Pricing } from './pricing';
+export { FAQ } from './faq';
+export { FinalCTA } from './final-cta';
+export { Footer } from './footer';

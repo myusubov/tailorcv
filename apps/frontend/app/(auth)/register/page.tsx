@@ -22,7 +22,9 @@ import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+
+import { AnimatedError } from '@/app/components/ui';
 
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils';
@@ -119,7 +121,7 @@ export default function RegisterPage() {
 
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
-        router.push(config.auth.afterSignUpUrl as string);
+        router.push(config.auth.afterSignUpUrl);
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -215,23 +217,7 @@ export default function RegisterPage() {
                   </InputOTP>
                 </motion.div>
 
-                <AnimatePresence mode="wait">
-                  {globalError && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="bg-danger-50 text-danger flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
-                    >
-                      <Icon
-                        icon="lucide:alert-circle"
-                        className="size-4 shrink-0"
-                      />
-                      {globalError}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <AnimatedError message={globalError} />
 
                 <Button
                   type="submit"
@@ -284,8 +270,8 @@ export default function RegisterPage() {
         className="relative hidden w-full flex-col justify-between overflow-hidden bg-[#020617] p-12 text-white lg:flex lg:w-[45%] xl:p-16"
       >
         {/* Background Effects */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(79,70,229,0.15),_transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,_rgba(59,130,246,0.15),_transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(79,70,229,0.15),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.15),transparent)]" />
         <div className="absolute -top-20 -left-20 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[100px]" />
         <div className="absolute -right-20 -bottom-20 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
 
@@ -538,23 +524,7 @@ export default function RegisterPage() {
               />
             </motion.div>
 
-            <AnimatePresence mode="wait">
-              {globalError && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-danger-50 text-danger flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
-                >
-                  <Icon
-                    icon="lucide:alert-circle"
-                    className="size-4 shrink-0"
-                  />
-                  {globalError}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <AnimatedError message={globalError} />
 
             <div id="clerk-captcha" />
 

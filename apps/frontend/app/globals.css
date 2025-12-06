@@ -2,18 +2,245 @@
 @import '@heroui/styles';
 
 :root {
-  --background: #f1f5f9;
+  /* Base backgrounds */
+  --background: #f8fafc;
   --foreground: #0f172a;
+
+  /* Field/Input colors (HeroUI) */
+  --field-background: #ffffff;
+  --field-foreground: #0f172a;
+  --field-placeholder: #94a3b8;
+  --field-border: #e2e8f0;
+
+  /* Surface colors - for cards, sections */
+  --surface: #ffffff;
+  --surface-secondary: #f1f5f9;
+  --surface-elevated: #ffffff;
+
+  /* Muted colors */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  /* Border colors */
+  --border: #e2e8f0;
+  --border-muted: #f1f5f9;
+
+  /* Card */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  /* Primary brand colors */
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  /* Accent colors for gradients and highlights */
+  --accent: #818cf8;
+  --accent-foreground: #ffffff;
+  --accent-secondary: #a78bfa;
+  --accent-tertiary: #f472b6;
+
+  /* Landing page specific */
+  --landing-bg: #f8fafc;
+  --landing-bg-secondary: #f1f5f9;
+  --landing-bg-tertiary: #e2e8f0;
+  --landing-text: #0f172a;
+  --landing-text-secondary: #475569;
+  --landing-text-muted: #64748b;
+  --landing-border: #e2e8f0;
+  --landing-border-muted: #f1f5f9;
+
+  /* Code/terminal backgrounds */
+  --code-bg: #f1f5f9;
+  --code-border: #e2e8f0;
+
+  /* Card gradients for feature cards */
+  --card-gradient-from: #ffffff;
+  --card-gradient-to: #f8fafc;
+  --card-gradient-dark-from: #f1f5f9;
+  --card-gradient-dark-to: #e2e8f0;
+
+  /* Gradient orb colors (more subtle in light mode) */
+  --orb-indigo: rgba(99, 102, 241, 0.15);
+  --orb-purple: rgba(139, 92, 246, 0.15);
+  --orb-pink: rgba(236, 72, 153, 0.12);
+  --orb-violet: rgba(139, 92, 246, 0.15);
+  --orb-emerald: rgba(16, 185, 129, 0.12);
+  --orb-cyan: rgba(6, 182, 212, 0.12);
+
+  /* Status colors */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --danger: #ef4444;
+  --danger-foreground: #ffffff;
+
+  /* Ring/focus */
+  --ring: #6366f1;
 }
 
 .dark {
+  /* Base backgrounds */
   --background: #020617;
   --foreground: #f8fafc;
+
+  /* Field/Input colors (HeroUI) */
+  --field-background: #1e293b;
+  --field-foreground: #f8fafc;
+  --field-placeholder: #94a3b8;
+  --field-border: #334155;
+
+  /* Surface colors - for cards, sections */
+  --surface: #0f172a;
+  --surface-secondary: #1e293b;
+  --surface-elevated: #1e293b;
+
+  /* Muted colors */
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  /* Border colors */
+  --border: #1e293b;
+  --border-muted: #334155;
+
+  /* Card */
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+
+  /* Primary brand colors */
+  --primary: #818cf8;
+  --primary-foreground: #0f172a;
+
+  /* Secondary */
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  /* Accent colors for gradients and highlights */
+  --accent: #818cf8;
+  --accent-foreground: #0f172a;
+  --accent-secondary: #a78bfa;
+  --accent-tertiary: #f472b6;
+
+  /* Landing page specific */
+  --landing-bg: #0a0a0f;
+  --landing-bg-secondary: #0f172a;
+  --landing-bg-tertiary: #1e293b;
+  --landing-text: #f8fafc;
+  --landing-text-secondary: #cbd5e1;
+  --landing-text-muted: #94a3b8;
+  --landing-border: #1e293b;
+  --landing-border-muted: #334155;
+
+  /* Code/terminal backgrounds */
+  --code-bg: #0d0d12;
+  --code-border: #1e293b;
+
+  /* Card gradients for feature cards */
+  --card-gradient-from: #18181b;
+  --card-gradient-to: #09090b;
+  --card-gradient-dark-from: #27272a;
+  --card-gradient-dark-to: #18181b;
+
+  /* Gradient orb colors (more visible in dark mode) */
+  --orb-indigo: rgba(99, 102, 241, 0.25);
+  --orb-purple: rgba(139, 92, 246, 0.2);
+  --orb-pink: rgba(236, 72, 153, 0.2);
+  --orb-violet: rgba(139, 92, 246, 0.2);
+  --orb-emerald: rgba(16, 185, 129, 0.15);
+  --orb-cyan: rgba(6, 182, 212, 0.15);
+
+  /* Status colors */
+  --success: #10b981;
+  --success-foreground: #0f172a;
+  --warning: #f59e0b;
+  --warning-foreground: #0f172a;
+  --danger: #ef4444;
+  --danger-foreground: #ffffff;
+
+  /* Ring/focus */
+  --ring: #818cf8;
 }
 
 @theme inline {
+  /* Base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* Surfaces */
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+
+  /* Muted */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Border */
+  --color-border: var(--border);
+  --color-border-muted: var(--border-muted);
+
+  /* Card */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Primary */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-tertiary: var(--accent-tertiary);
+
+  /* Landing */
+  --color-landing-bg: var(--landing-bg);
+  --color-landing-bg-secondary: var(--landing-bg-secondary);
+  --color-landing-bg-tertiary: var(--landing-bg-tertiary);
+  --color-landing-text: var(--landing-text);
+  --color-landing-text-secondary: var(--landing-text-secondary);
+  --color-landing-text-muted: var(--landing-text-muted);
+  --color-landing-border: var(--landing-border);
+  --color-landing-border-muted: var(--landing-border-muted);
+
+  /* Code */
+  --color-code-bg: var(--code-bg);
+  --color-code-border: var(--code-border);
+
+  /* Card gradients */
+  --color-card-gradient-from: var(--card-gradient-from);
+  --color-card-gradient-to: var(--card-gradient-to);
+  --color-card-gradient-dark-from: var(--card-gradient-dark-from);
+  --color-card-gradient-dark-to: var(--card-gradient-dark-to);
+
+  /* Orbs */
+  --color-orb-indigo: var(--orb-indigo);
+  --color-orb-purple: var(--orb-purple);
+  --color-orb-pink: var(--orb-pink);
+  --color-orb-violet: var(--orb-violet);
+  --color-orb-emerald: var(--orb-emerald);
+  --color-orb-cyan: var(--orb-cyan);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+
+  /* Ring */
+  --color-ring: var(--ring);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-inter: var(--font-inter);
@@ -21,8 +248,71 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
+    /* Base backgrounds */
     --background: #020617;
     --foreground: #f8fafc;
+
+    /* Field/Input colors (HeroUI) */
+    --field-background: #1e293b;
+    --field-foreground: #f8fafc;
+    --field-placeholder: #94a3b8;
+    --field-border: #334155;
+
+    /* Surface colors */
+    --surface: #0f172a;
+    --surface-secondary: #1e293b;
+    --surface-elevated: #1e293b;
+
+    /* Muted colors */
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+
+    /* Border colors */
+    --border: #1e293b;
+    --border-muted: #334155;
+
+    /* Card */
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+
+    /* Primary brand colors */
+    --primary: #818cf8;
+    --primary-foreground: #0f172a;
+
+    /* Secondary */
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+
+    /* Landing page specific */
+    --landing-bg: #0a0a0f;
+    --landing-bg-secondary: #0f172a;
+    --landing-bg-tertiary: #1e293b;
+    --landing-text: #f8fafc;
+    --landing-text-secondary: #cbd5e1;
+    --landing-text-muted: #94a3b8;
+    --landing-border: #1e293b;
+    --landing-border-muted: #334155;
+
+    /* Code/terminal backgrounds */
+    --code-bg: #0d0d12;
+    --code-border: #1e293b;
+
+    /* Card gradients for feature cards */
+    --card-gradient-from: #18181b;
+    --card-gradient-to: #09090b;
+    --card-gradient-dark-from: #27272a;
+    --card-gradient-dark-to: #18181b;
+
+    /* Gradient orb colors */
+    --orb-indigo: rgba(99, 102, 241, 0.25);
+    --orb-purple: rgba(139, 92, 246, 0.2);
+    --orb-pink: rgba(236, 72, 153, 0.2);
+    --orb-violet: rgba(139, 92, 246, 0.2);
+    --orb-emerald: rgba(16, 185, 129, 0.15);
+    --orb-cyan: rgba(6, 182, 212, 0.15);
+
+    /* Ring/focus */
+    --ring: #818cf8;
   }
 }
 
@@ -30,5 +320,14 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Smooth transitions for theme changes */
+
+/* Disable transitions on page load to prevent flash */
+.no-transitions * {
+  transition: none !important;
 }

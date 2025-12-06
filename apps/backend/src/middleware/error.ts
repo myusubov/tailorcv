@@ -9,7 +9,7 @@ export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   // Log the error for debugging
   console.error(`[Error] ${err.name}: ${err.message}`);
@@ -24,7 +24,7 @@ export const errorHandler = (
       err.message,
       err.statusCode,
       err.errorCode,
-      err.details
+      err.details,
     );
   }
 
@@ -35,30 +35,29 @@ export const errorHandler = (
       'Validation Error',
       400,
       ErrorCode.VALIDATION_ERROR,
-      err.issues
+      err.issues,
     );
   }
 
   // Handle Clerk Authentication Errors (if any specific ones bubble up)
   if (err.message.includes('Clerk')) {
-     return errorResponse(
+    return errorResponse(
       res,
       'Authentication Error',
       401,
-      ErrorCode.UNAUTHORIZED
+      ErrorCode.UNAUTHORIZED,
     );
   }
 
   // Handle Unknown Errors
-  const message = env.NODE_ENV === 'production' 
-    ? 'Internal Server Error' 
-    : err.message;
+  const message =
+    env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message;
 
   return errorResponse(
     res,
     message,
     500,
     ErrorCode.INTERNAL_ERROR,
-    env.NODE_ENV === 'development' ? err.stack : undefined
+    env.NODE_ENV === 'development' ? err.stack : undefined,
   );
 };

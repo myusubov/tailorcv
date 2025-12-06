@@ -7,7 +7,9 @@ dotenv.config();
 // Define the schema for environment variables
 const envSchema = z.object({
   // Server
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.string().transform(Number).pipe(z.number().positive()).default(4000),
 
   // Database
