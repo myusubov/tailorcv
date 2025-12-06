@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.6",
+    "@iconify/react": "^6.0.2",
+    "@tailwindcss/postcss": "^4",
     "framer-motion": "^12.23.25",
     "@heroui/react": "^3.0.0-beta.2",
     "@heroui/styles": "^3.0.0-beta.2",
@@ -25,17 +27,15 @@
     "react-hook-form": "^7.68.0",
     "shared": "*",
     "sonner": "^2.0.7",
+    "tailwindcss": "^4",
     "tanstack": "^1.0.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@iconify/react": "^6.0.2",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint-config-next": "16.0.4",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }
