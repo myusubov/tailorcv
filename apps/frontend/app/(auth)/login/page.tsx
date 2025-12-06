@@ -24,7 +24,8 @@ import { AnimatedError } from '@/app/components/ui';
 
 import { loginSchema, LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils';
-import { config } from '@/lib/config';
+import { config, LOGOS } from '@/lib/config';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -112,7 +113,15 @@ export default function LoginPage() {
               className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner ring-1 ring-white/20 backdrop-blur-md">
-                <Icon icon="lucide:file-text" className="size-6 text-white" />
+                <Image
+                  src={LOGOS.TAILORCV}
+                  alt="TailorCV Logo"
+                  width={40}
+                  height={40}
+                  priority
+                  quality={100}
+                  loading="eager"
+                />
               </div>
               TailorCV
             </NextLink>
