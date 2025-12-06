@@ -3,17 +3,29 @@
 import { useSignUp } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import NextLink from 'next/link';
-import { Form, TextField, Label, Input, Button, Checkbox, Link, Separator, FieldError, Spinner, InputOTP, Card } from '@heroui/react';
+import {
+  Form,
+  TextField,
+  Label,
+  Input,
+  Button,
+  Checkbox,
+  Link,
+  Separator,
+  FieldError,
+  Spinner,
+  InputOTP,
+  Card,
+} from '@heroui/react';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils';
-
 
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -25,16 +37,20 @@ export default function RegisterPage() {
   const [resending, setResending] = useState(false);
   const router = useRouter();
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
       email: '',
       password: '',
-      terms: false
+      terms: false,
     },
-    mode: "onSubmit"
+    mode: 'onSubmit',
   });
 
   // Handle submission of the sign-up form
@@ -102,6 +118,7 @@ export default function RegisterPage() {
 
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
+        router.push('/test');
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -113,104 +130,145 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignUp = async () => {
-    const isGoogleButton = document.activeElement?.id === "google-signup-btn";
     if (!isLoaded) return;
     try {
       setGoogleLoading(true);
       await signUp.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/dashboard',
+        redirectUrlComplete: '/test',
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Oauth failed')
+      setGlobalError(clerkError || 'Oauth failed');
     } finally {
       setGoogleLoading(false);
     }
-  }
+  };
 
   if (verifying) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-8">
-        <NextLink href="/" className="mb-8 flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-80">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Icon icon="lucide:file-text" className="size-5" />
-          </div>
-          TailorCV
-        </NextLink>
+      <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <NextLink
+            href="/"
+            className="mb-8 flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-80"
+          >
+            <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
+              <Icon icon="lucide:file-text" className="size-5" />
+            </div>
+            TailorCV
+          </NextLink>
+        </motion.div>
 
-        <Card className="w-full max-w-[400px]">
-          <Card.Header className="flex flex-col gap-1 text-center">
-            <Card.Title className="text-2xl">Check your email</Card.Title>
-            <Card.Description>
-              We've sent a 6-digit verification code to <span className="text-foreground font-medium">{control._formValues.email}</span>
-            </Card.Description>
-          </Card.Header>
-          <Card.Content>
-            <form onSubmit={handleVerification} className="flex flex-col gap-6">
-              <div className="flex justify-center py-4">
-                <InputOTP
-                  maxLength={6}
-                  value={code}
-                  onChange={setCode}
-                  pattern="^[0-9]*$"
-                  inputMode="numeric"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="w-full max-w-[400px]"
+        >
+          <Card className="w-full max-w-[400px]">
+            <Card.Header className="flex flex-col gap-1 text-center">
+              <Card.Title className="text-2xl">Check your email</Card.Title>
+              <Card.Description>
+                We&apos;ve sent a 6-digit verification code to{' '}
+                <span className="text-foreground font-medium">
+                  {control._formValues.email}
+                </span>
+              </Card.Description>
+            </Card.Header>
+            <Card.Content>
+              <form
+                onSubmit={handleVerification}
+                className="flex flex-col gap-6"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className="flex justify-center py-4"
                 >
-                  <InputOTP.Group>
-                    <InputOTP.Slot index={0} />
-                    <InputOTP.Slot index={1} />
-                    <InputOTP.Slot index={2} />
-                  </InputOTP.Group>
-                  <InputOTP.Separator />
-                  <InputOTP.Group>
-                    <InputOTP.Slot index={3} />
-                    <InputOTP.Slot index={4} />
-                    <InputOTP.Slot index={5} />
-                  </InputOTP.Group>
-                </InputOTP>
-              </div>
+                  <InputOTP
+                    maxLength={6}
+                    value={code}
+                    onChange={setCode}
+                    pattern="^[0-9]*$"
+                    inputMode="numeric"
+                  >
+                    <InputOTP.Group>
+                      <InputOTP.Slot index={0} />
+                      <InputOTP.Slot index={1} />
+                      <InputOTP.Slot index={2} />
+                    </InputOTP.Group>
+                    <InputOTP.Separator />
+                    <InputOTP.Group>
+                      <InputOTP.Slot index={3} />
+                      <InputOTP.Slot index={4} />
+                      <InputOTP.Slot index={5} />
+                    </InputOTP.Group>
+                  </InputOTP>
+                </motion.div>
 
-              {globalError && (
-                <div className="flex items-center gap-2 rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger">
-                  <Icon icon="lucide:alert-circle" className="size-4 shrink-0" />
-                  {globalError}
-                </div>
-              )}
+                <AnimatePresence mode="wait">
+                  {globalError && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-danger-50 text-danger flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
+                    >
+                      <Icon
+                        icon="lucide:alert-circle"
+                        className="size-4 shrink-0"
+                      />
+                      {globalError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              <Button
-                type="submit"
-                isDisabled={code.length !== 6}
-                className="w-full shadow-sm group"
-              >
-                {isVerifying ? (
-                  <>
-                  <Spinner color="current" size="sm" />
-                    Verifying...</>
-                ) : (
-                  <>
-                    Verify Email
-                    <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
-                  </>
-                )}
-              </Button>
-            </form>
-          </Card.Content>
-          <Card.Footer className="flex-col gap-2 border-t border-divider pt-4">
-            <p className="text-center text-sm text-muted-foreground">
-              Didn't receive the code?{' '}
-              <button
-                type="button"
-                className="text-primary hover:underline font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleResend}
-                disabled={resending}
-              >
-                {resending ? 'Resending...' : 'Resend code'}
-              </button>
-            </p>
-          </Card.Footer>
-        </Card>
+                <Button
+                  type="submit"
+                  isDisabled={code.length !== 6 || isVerifying}
+                  className="group w-full shadow-sm"
+                >
+                  {isVerifying ? (
+                    <>
+                      <Spinner color="current" size="sm" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      Verify Email
+                      <Icon
+                        icon="lucide:arrow-right"
+                        className="ml-2 size-4 transition-all group-hover:translate-x-1"
+                      />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Card.Content>
+            <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
+              <p className="text-muted-foreground text-center text-sm">
+                Didn&apos;t receive the code?{' '}
+                <button
+                  type="button"
+                  className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handleResend}
+                  disabled={resending}
+                >
+                  {resending ? 'Resending...' : 'Resend code'}
+                </button>
+              </p>
+            </Card.Footer>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -218,229 +276,372 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {/* Left Panel - Branding (Desktop Only) */}
-      <div className="relative hidden w-full flex-col justify-between overflow-hidden bg-[#020617] p-12 text-white lg:flex lg:w-[45%] xl:p-16">
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="relative hidden w-full flex-col justify-between overflow-hidden bg-[#020617] p-12 text-white lg:flex lg:w-[45%] xl:p-16"
+      >
         {/* Background Effects */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(79,70,229,0.15),_transparent)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,_rgba(59,130,246,0.15),_transparent)]" />
-        <div className="absolute -left-20 -top-20 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[100px]" />
-        <div className="absolute -bottom-20 -right-20 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
+        <div className="absolute -top-20 -left-20 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[100px]" />
+        <div className="absolute -right-20 -bottom-20 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
 
         <div className="relative z-10">
-          <NextLink href="/" className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner backdrop-blur-md ring-1 ring-white/20">
-              <Icon icon="lucide:file-text" className="size-6 text-white" />
-            </div>
-            TailorCV
-          </NextLink>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <NextLink
+              href="/"
+              className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner ring-1 ring-white/20 backdrop-blur-md">
+                <Icon icon="lucide:file-text" className="size-6 text-white" />
+              </div>
+              TailorCV
+            </NextLink>
+          </motion.div>
 
-          <div className="mt-24 max-w-lg">
-            <h1 className="text-5xl font-bold tracking-tight leading-tight lg:text-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-24 max-w-lg"
+          >
+            <h1 className="text-5xl leading-tight font-bold tracking-tight lg:text-6xl">
               Tailor your CV <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+              <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 in 30 seconds
               </span>
             </h1>
             <p className="mt-8 text-xl leading-relaxed text-slate-300">
-              Stop sending generic resumes. Our AI analyzes the job description and customizes your CV to match perfectly.
+              Stop sending generic resumes. Our AI analyzes the job description
+              and customizes your CV to match perfectly.
             </p>
-          </div>
+          </motion.div>
         </div>
 
         <div className="relative z-10 mt-12 space-y-6">
           {[
-            "AI-powered customization",
-            "ATS-friendly templates",
-            "Instant PDF download"
+            'AI-powered customization',
+            'ATS-friendly templates',
+            'Instant PDF download',
           ].map((feature, i) => (
-            <div key={i} className="flex items-center gap-4 group">
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
+              className="group flex items-center gap-4"
+            >
               <div className="flex size-8 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30 transition-colors group-hover:bg-indigo-500/30 group-hover:text-indigo-200">
                 <Icon icon="lucide:check" className="size-4" />
               </div>
-              <span className="text-lg font-medium text-slate-200">{feature}</span>
-            </div>
+              <span className="text-lg font-medium text-slate-200">
+                {feature}
+              </span>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Right Panel - Form */}
-      <div className="flex w-full flex-col justify-center bg-background p-6 lg:w-[55%] lg:px-24 lg:py-12">
-        <div className="mx-auto w-full max-w-[440px] space-y-10">
-
+      <div className="bg-background flex w-full flex-col justify-center p-6 lg:w-[55%] lg:px-24 lg:py-12">
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="mx-auto w-full max-w-[440px] space-y-10"
+        >
           {/* Mobile Logo - Centered */}
-          <div className="flex justify-center lg:hidden mb-8">
-            <NextLink href="/" className="flex items-center gap-2.5 text-2xl font-bold text-foreground transition-opacity hover:opacity-80">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mb-8 flex justify-center lg:hidden"
+          >
+            <NextLink
+              href="/"
+              className="text-foreground flex items-center gap-2.5 text-2xl font-bold transition-opacity hover:opacity-80"
+            >
+              <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-xl">
                 <Icon icon="lucide:file-text" className="size-5" />
               </div>
               TailorCV
             </NextLink>
-          </div>
+          </motion.div>
 
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Create account</h2>
-            <p className="mt-3 text-muted-foreground text-lg">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-center lg:text-left"
+          >
+            <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
+              Create account
+            </h2>
+            <p className="text-muted-foreground mt-3 text-lg">
               Start building your resume for free.
             </p>
-          </div>
+          </motion.div>
 
           <Form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-
             <div className="grid grid-cols-2 gap-4">
-              <Controller
-                name="firstName"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <TextField className="w-full" isInvalid={!!fieldState.error}>
-                    <Label className="text-base">First Name</Label>
-                    <Input
-                      {...field}
-                      placeholder="John"
-                    />
-                    {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                  </TextField>
-                )}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <Controller
+                  name="firstName"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      className="w-full"
+                      isInvalid={!!fieldState.error}
+                    >
+                      <Label className="text-base">First Name</Label>
+                      <Input {...field} placeholder="John" />
+                      {fieldState.error && (
+                        <FieldError>{fieldState.error.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                />
+              </motion.div>
 
-              <Controller
-                name="lastName"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <TextField className="w-full" isInvalid={!!fieldState.error}>
-                    <Label className="text-base">Last Name</Label>
-                    <Input
-                      {...field}
-                      placeholder="Doe"
-                    />
-                    {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                  </TextField>
-                )}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.35 }}
+              >
+                <Controller
+                  name="lastName"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      className="w-full"
+                      isInvalid={!!fieldState.error}
+                    >
+                      <Label className="text-base">Last Name</Label>
+                      <Input {...field} placeholder="Doe" />
+                      {fieldState.error && (
+                        <FieldError>{fieldState.error.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                />
+              </motion.div>
             </div>
 
-            <Controller
-              name="email"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label className="text-base">Email</Label>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="john@example.com"
-                  />
-                  {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                </TextField>
-              )}
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              <Controller
+                name="email"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField className="w-full" isInvalid={!!fieldState.error}>
+                    <Label className="text-base">Email</Label>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="john@example.com"
+                    />
+                    {fieldState.error && (
+                      <FieldError>{fieldState.error.message}</FieldError>
+                    )}
+                  </TextField>
+                )}
+              />
+            </motion.div>
 
-            <Controller
-              name="password"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label className="text-base">Password</Label>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Min. 8 characters"
-                  />
-                  {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                </TextField>
-              )}
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
+              <Controller
+                name="password"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField className="w-full" isInvalid={!!fieldState.error}>
+                    <Label className="text-base">Password</Label>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Min. 8 characters"
+                    />
+                    {fieldState.error && (
+                      <FieldError>{fieldState.error.message}</FieldError>
+                    )}
+                  </TextField>
+                )}
+              />
+            </motion.div>
 
-            <Controller
-              name="terms"
-              control={control}
-              render={({ field: { value, onChange, ...field }, fieldState }) => (
-                <div className="flex flex-col gap-1">
-                  <Checkbox
-                    className="flex items-start pt-1"
-                    isSelected={value}
-                    onChange={onChange}
-                    isInvalid={!!fieldState.error}
-                    {...field}
-                  >
-                    <Checkbox.Control className='size-5'>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                    <Checkbox.Content>
-                      <span className="text-sm text-muted-foreground leading-snug">
-                        I agree to the <Link href="/terms" className="text-primary hover:text-primary/80 font-bold">Terms</Link> and <Link href="/privacy" className="text-primary hover:text-primary/80 font-bold">Privacy Policy</Link>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 }}
+            >
+              <Controller
+                name="terms"
+                control={control}
+                render={({
+                  field: { value, onChange, ...field },
+                  fieldState,
+                }) => (
+                  <div className="flex flex-col gap-1">
+                    <Checkbox
+                      className="flex items-start pt-1"
+                      isSelected={value}
+                      onChange={onChange}
+                      isInvalid={!!fieldState.error}
+                      {...field}
+                    >
+                      <Checkbox.Control className="size-5">
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <Checkbox.Content>
+                        <span className="text-muted-foreground text-sm leading-snug">
+                          I agree to the{' '}
+                          <Link
+                            href="/terms"
+                            className="text-primary hover:text-primary/80 font-bold"
+                          >
+                            Terms
+                          </Link>{' '}
+                          and{' '}
+                          <Link
+                            href="/privacy"
+                            className="text-primary hover:text-primary/80 font-bold"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </span>
+                      </Checkbox.Content>
+                    </Checkbox>
+                    {fieldState.error && (
+                      <span className="text-tiny text-danger">
+                        {fieldState.error.message}
                       </span>
-                    </Checkbox.Content>
-                  </Checkbox>
-                  {fieldState.error && <span className="text-tiny text-danger">{fieldState.error.message}</span>}
-                </div>
+                    )}
+                  </div>
+                )}
+              />
+            </motion.div>
+
+            <AnimatePresence mode="wait">
+              {globalError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-danger-50 text-danger flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
+                >
+                  <Icon
+                    icon="lucide:alert-circle"
+                    className="size-4 shrink-0"
+                  />
+                  {globalError}
+                </motion.div>
               )}
-            />
-
-
-            {globalError && (
-              <div className="flex items-center gap-2 rounded-lg bg-danger-50 px-4 py-3 text-sm font-medium text-danger">
-                <Icon icon="lucide:alert-circle" className="size-4 shrink-0" />
-                {globalError}
-              </div>
-            )}
+            </AnimatePresence>
 
             <div id="clerk-captcha" />
 
-            <Button
-              type="submit"
-              isDisabled={isSubmitting || googleLoading}
-              className="w-full font-semibold shadow-sm group"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
             >
-              {isSubmitting ? (
-                <>
-                  <Spinner color="current" size="sm" />
-                  Creating Account...
-                </>
-              ) : (
-                <>
-                  Create Account
-                  <Icon icon="lucide:arrow-right" className="ml-2 size-4 group-hover:translate-x-1 transition-all" />
-                </>
-              )}
-            </Button>
+              <Button
+                type="submit"
+                isDisabled={isSubmitting || googleLoading}
+                className="group w-full font-semibold shadow-sm"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Spinner color="current" size="sm" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <Icon
+                      icon="lucide:arrow-right"
+                      className="ml-2 size-4 transition-all group-hover:translate-x-1"
+                    />
+                  </>
+                )}
+              </Button>
+            </motion.div>
 
-            <div className="relative py-2">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.8 }}
+              className="relative py-2"
+            >
               <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full border-divider" />
+                <Separator className="border-divider w-full" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase tracking-wider">
-                <span className="bg-background px-4 text-muted-foreground font-medium">Or</span>
+              <div className="relative flex justify-center text-xs tracking-wider uppercase">
+                <span className="bg-background text-muted-foreground px-4 font-medium">
+                  Or
+                </span>
               </div>
-            </div>
+            </motion.div>
 
-            <Button
-              type="button"
-              variant="secondary"
-              isDisabled={googleLoading || isSubmitting}
-              className="w-full font-medium"
-              onPress={handleGoogleSignUp}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.9 }}
             >
-              {googleLoading ? (
-                <>
-                  <Spinner color="current" size="sm" />
-                  Signing up with Google...
-                </>
-              ) : (
-                <>
-                  <Icon icon="logos:google-icon" className="size-5" />
-                  Continue with Google
-                </>
-              )}
-            </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                isDisabled={googleLoading || isSubmitting}
+                className="w-full font-medium"
+                onPress={handleGoogleSignUp}
+              >
+                {googleLoading ? (
+                  <>
+                    <Spinner color="current" size="sm" />
+                    Signing up with Google...
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="logos:google-icon" className="size-5" />
+                    Continue with Google
+                  </>
+                )}
+              </Button>
+            </motion.div>
 
-            <p className="text-center text-sm text-muted-foreground">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 1.0 }}
+              className="text-muted-foreground text-center text-sm"
+            >
               Already have an account?{' '}
-              <NextLink href="/login" className="font-semibold text-primary hover:text-primary/80 hover:underline underline-offset-4">
+              <NextLink
+                href="/login"
+                className="text-primary hover:text-primary/80 font-semibold underline-offset-4 hover:underline"
+              >
                 Log in
               </NextLink>
-            </p>
-
+            </motion.p>
           </Form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
