@@ -1,13 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from './providers/theme-provider';
@@ -30,13 +23,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/login">
       <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${inter.variable} antialiased`}
-        >
+        <body className={`${inter.variable} antialiased`}>
           <ThemeProvider>
-            <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+            <Suspense
+              fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                  Loading...
+                </div>
+              }
+            >
               {children}
             </Suspense>
             <ThemeToggle />

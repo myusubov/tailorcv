@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { loginSchema, LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils';
+import { config } from '@/lib/config';
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -54,7 +55,7 @@ export default function LoginPage() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.push('/test');
+        router.push(config.auth.afterSignInUrl as string);
       } else {
         console.log(JSON.stringify(result, null, 2));
       }
@@ -72,7 +73,7 @@ export default function LoginPage() {
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/test',
+        redirectUrlComplete: config.auth.afterSignInUrl,
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));

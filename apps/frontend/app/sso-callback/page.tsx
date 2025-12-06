@@ -1,11 +1,13 @@
 import { AuthenticateWithRedirectCallback } from '@clerk/nextjs';
 
+import { config } from '@/lib/config';
+
 export default function SSOCallbackPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center">
       <AuthenticateWithRedirectCallback
-        signInFallbackRedirectUrl="/test"
-        signUpFallbackRedirectUrl="/test"
+        signInFallbackRedirectUrl={config.auth.signInFallbackUrl}
+        signUpFallbackRedirectUrl={config.auth.signUpFallbackUrl}
       />
 
       {/* Required for sign-up flows - Clerk's bot sign-up protection */}

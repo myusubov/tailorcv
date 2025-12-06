@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils';
+import { config } from '@/lib/config';
 
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -118,7 +119,7 @@ export default function RegisterPage() {
 
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
-        router.push('/test');
+        router.push(config.auth.afterSignUpUrl as string);
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -136,7 +137,7 @@ export default function RegisterPage() {
       await signUp.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/test',
+        redirectUrlComplete: config.auth.afterSignUpUrl,
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));

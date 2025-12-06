@@ -9,6 +9,7 @@ import {
   ResetPasswordView,
 } from '@/app/components/auth/forgot-password';
 import { getClerkErrorMessage } from '@/lib/utils';
+import { config } from '@/lib/config';
 
 export default function ForgotPasswordPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -75,7 +76,7 @@ export default function ForgotPasswordPage() {
         setGlobalError('Two-factor authentication is required');
       } else if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.push('/test');
+        router.push(config.auth.afterSignInUrl);
       } else {
         console.log(JSON.stringify(result, null, 2));
       }
