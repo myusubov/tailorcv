@@ -1,0 +1,64 @@
+import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
+import { AppError } from '../utils/AppError';
+import { errorResponse } from '../utils/response';
+import { ErrorCode } from 'shared';
+import { env } from '../config/env';
+
+export const errorHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // Log the error for debugging
+  console.error(`[Error] ${err.name}: ${err.message}`);
+  if (env.NODE_ENV === 'development') {
+    console.error(err.stack);
+  }
+
+  // Handle AppError (operational errors)
+  if (err instanceof AppError) {
+    return errorResponse(
+      res,
+      err.message,
+      err.statusCode,
+      err.errorCode,
+      err.details
+    );
+  }
+
+  // Handle Zod Validation Errors
+  if (err instanceof ZodError) {
+    return errorResponse(
+      res,
+      'Validation Error',
+      400,
+      ErrorCode.VALIDATION_ERROR,
+      err.issues
+    );
+  }
+
+  // Handle Clerk Authentication Errors (if any specific ones bubble up)
+  if (err.message.includes('Clerk')) {
+     return errorResponse(
+      res,
+      'Authentication Error',
+      401,
+      ErrorCode.UNAUTHORIZED
+    );
+  }
+
+  // Handle Unknown Errors
+  const message = env.NODE_ENV === 'production' 
+    ? 'Internal Server Error' 
+    : err.message;
+
+  return errorResponse(
+    res,
+    message,
+    500,
+    ErrorCode.INTERNAL_ERROR,
+    env.NODE_ENV === 'development' ? err.stack : undefined
+  );
+};

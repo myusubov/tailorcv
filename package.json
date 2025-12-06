@@ -7,6 +7,9 @@
     "packages/*"
   ],
   "scripts": {
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "start:frontend": "npm run start --workspace=frontend",
+    "start:backend": "npm run start --workspace=backend",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
@@ -22,5 +25,10 @@
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@clerk/express": "^1.7.55",
+    "dotenv": "^17.2.3",
+    "zod": "^4.1.13"
   }
 }

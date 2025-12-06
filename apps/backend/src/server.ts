@@ -2,16 +2,23 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { healthRouter } from './routes/health';
+import { clerkMiddleware, requireAuth } from '@clerk/express'
+import { env } from './config/env';
+import { errorHandler } from './middleware/error';
+import { AppError } from './utils/AppError';
+import { ErrorCode } from 'shared';
+
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = env.PORT
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(clerkMiddleware());
 
 // Routes
 app.use('/health', healthRouter);
@@ -28,21 +35,12 @@ app.get('/', (req, res) => {
 });
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Cannot ${req.method} ${req.path}`,
-  });
+app.use((req, res, next) => {
+  next(new AppError(`Cannot ${req.method} ${req.path}`, ErrorCode.NOT_FOUND, 404));
 });
 
-// Error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
-  });
-});
+// Global Error Handler
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
