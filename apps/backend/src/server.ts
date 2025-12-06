@@ -1,12 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { healthRouter } from './routes/health';
+
 import { clerkMiddleware, requireAuth } from '@clerk/express'
+import { v1Router } from './routes';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error';
 import { AppError } from './utils/AppError';
 import { ErrorCode } from 'shared';
+
 
 
 dotenv.config();
@@ -21,16 +23,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 // Routes
-app.use('/health', healthRouter);
+app.use('/api/v1', v1Router);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'TailorCV Backend API',
     version: '0.1.0',
-    endpoints: {
-      health: '/health',
-    },
+    // endpoints: {
+    //   health: '/health',
+    // },
   });
 });
 

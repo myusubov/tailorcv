@@ -8,18 +8,13 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from './providers/theme-provider';
 import { ThemeToggle } from './components/theme-toggle';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
@@ -37,24 +32,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${inter.variable} antialiased`}
         >
           <ThemeProvider>
-            <header className="flex h-16 items-center justify-end gap-4 p-4">
-              <Suspense fallback={null}>
-                <SignedOut>
-                  <SignInButton />
-                  <SignUpButton>
-                    <button className="h-10 cursor-pointer rounded-full bg-[#6c47ff] px-4 text-sm font-medium text-white sm:h-12 sm:px-5 sm:text-base">
-                      Sign Up
-                    </button>
-                  </SignUpButton>
-                </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
-              </Suspense>
-            </header>
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
               {children}
             </Suspense>
