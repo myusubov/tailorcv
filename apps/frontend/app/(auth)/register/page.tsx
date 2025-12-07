@@ -46,7 +46,8 @@ export default function RegisterPage() {
     control,
     handleSubmit,
     formState: { isSubmitting },
-    setValue
+    setValue,
+    reset
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -124,6 +125,10 @@ export default function RegisterPage() {
 
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
+        setIsVerifying(false)
+        setVerifying(false)
+        setCode("")
+        reset()
         router.push(config.auth.afterSignUpUrl);
       }
     } catch (err: unknown) {
