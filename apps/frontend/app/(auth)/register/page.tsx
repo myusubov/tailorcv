@@ -16,6 +16,7 @@ import {
   Spinner,
   InputOTP,
   Card,
+  Tooltip,
 } from '@heroui/react';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
@@ -45,6 +46,7 @@ export default function RegisterPage() {
     control,
     handleSubmit,
     formState: { isSubmitting },
+    setValue
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -133,6 +135,11 @@ export default function RegisterPage() {
     }
   };
 
+  const handleGoBack = () => {
+    setVerifying(false)
+    setValue('email', '')
+  }
+
   const handleGoogleSignUp = async () => {
     if (!isLoaded) return;
     try {
@@ -180,9 +187,24 @@ export default function RegisterPage() {
             <Card.Header className="flex flex-col gap-1 text-center">
               <Card.Title className="text-2xl">Check your email</Card.Title>
               <Card.Description>
-                We&apos;ve sent a 6-digit verification code to{' '}
-                <span className="text-foreground font-medium">
-                  {control._formValues.email}
+                We&apos;ve sent a 6-digit code to{' '}
+                <span className="relative inline-flex items-center justify-center">
+                  <span className="text-foreground font-medium">
+                    {control._formValues.email}
+                  </span>
+                  <Tooltip delay={500}>
+                    <Button
+                      isIconOnly
+                      className="absolute -top-4 size-5 -right-4 text-muted-foreground hover:text-foreground bg-surface-elevated/90"
+                      onClick={handleGoBack}
+                      // TODO: wire this to go back and change email
+                    >
+                      <Icon icon="lucide:undo-2" className="h-3 w-3" />
+                    </Button>
+                    <Tooltip.Content>
+                      Wrong email address ? Change it back
+                    </Tooltip.Content>
+                  </Tooltip>
                 </span>
               </Card.Description>
             </Card.Header>
@@ -309,7 +331,7 @@ export default function RegisterPage() {
           >
             <h1 className="text-5xl leading-tight font-bold tracking-tight lg:text-6xl">
               Tailor your CV <br />
-              <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 in 30 seconds
               </span>
             </h1>

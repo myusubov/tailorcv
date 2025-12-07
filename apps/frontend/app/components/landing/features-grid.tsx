@@ -46,7 +46,7 @@ const features = [
     description:
       'Auto-import your work. Connect once and we pull your projects, languages, and contributions.',
     gradient: 'from-zinc-400 to-zinc-600',
-    iconBg: 'bg-muted',
+    iconBg: 'bg-surface-secondary',
     iconColor: 'text-landing-text-muted',
   },
   {

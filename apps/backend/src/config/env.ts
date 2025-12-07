@@ -14,11 +14,11 @@ const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.url(),
-  SHADOW_DATABASE_URL: z.url().optional(),
+  SHADOW_DATABASE_URL: z.url(),
 
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1),
-  CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  CLERK_PUBLISHABLE_KEY: z.string().min(1),
 
   // Anthropic AI
   ANTHROPIC_API_KEY: z.string().min(1),

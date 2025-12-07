@@ -111,7 +111,7 @@ function AnimatedMockup() {
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
                       step.active
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                        ? 'bg-lienar-to-br from-indigo-500 to-purple-600 text-white'
                         : 'bg-surface-secondary text-landing-text-muted'
                     }`}
                   >
@@ -173,9 +173,9 @@ function AnimatedMockup() {
                 transition={{ delay: 2.5 }}
                 className="bg-surface-secondary border-landing-border rounded-lg border p-3"
               >
-                <div className="bg-muted mb-2 h-2 w-full rounded" />
-                <div className="bg-muted mb-2 h-2 w-3/4 rounded" />
-                <div className="bg-muted h-2 w-1/2 rounded" />
+                <div className="bg-surface-secondary mb-2 h-2 w-full rounded" />
+                <div className="bg-surface-secondary mb-2 h-2 w-3/4 rounded" />
+                <div className="bg-surface-secondary h-2 w-1/2 rounded" />
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
