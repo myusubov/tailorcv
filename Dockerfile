@@ -1,31 +1,41 @@
-FROM node:20-slim AS build
+# syntax=docker/dockerfile:1
+
+# Base image
+ARG NODE_VERSION=20.19.0
+FROM node:${NODE_VERSION}-slim AS base
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Install root and workspace dependencies
-COPY package*.json ./
-COPY apps/backend/package*.json apps/backend/
-COPY packages/shared/package*.json packages/shared/
-RUN npm ci
+# Install dependencies (workspace-aware)
+FROM base AS deps
+RUN apt-get update -qq \
+  && apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 \
+  && rm -rf /var/lib/apt/lists/*
 
-# Copy the full repo and build workspaces
+# Copy manifests so npm can install all workspaces (backend + shared)
+COPY package.json package-lock.json ./
+COPY apps/backend/package.json apps/backend/
+COPY packages/shared/package.json packages/shared/
+RUN npm ci --include=dev
+
+# Build shared + backend only
+FROM deps AS build
 COPY . .
-# Provide a placeholder DB URL so Prisma generate succeeds at build time
+# Placeholder DB URL so prisma generate works at build time
 ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 RUN npm run prisma:generate --workspace=backend \
   && npm run build --workspace=shared \
   && npm run build --workspace=backend
 
-FROM node:20-slim AS runner
+# Runtime image
+FROM base AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-
-# Install production dependencies
-COPY package*.json ./
-COPY apps/backend/package*.json apps/backend/
-COPY packages/shared/package*.json packages/shared/
+COPY package.json package-lock.json ./
+COPY apps/backend/package.json apps/backend/
+COPY packages/shared/package.json packages/shared/
 RUN npm ci --omit=dev
 
-# Bring in built artifacts
+# Copy built artifacts
 COPY --from=build /app/apps/backend/prisma apps/backend/prisma
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 COPY --from=build /app/apps/backend/dist apps/backend/dist
