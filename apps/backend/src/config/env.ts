@@ -10,15 +10,16 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().positive()).default(4000),
+  PORT: z.string().transform(Number).pipe(z.number().positive()).default(8080),
 
   // Database
   DATABASE_URL: z.url(),
-  SHADOW_DATABASE_URL: z.url().optional(),
+  SHADOW_DATABASE_URL: z.url(),
 
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1),
-  CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  CLERK_PUBLISHABLE_KEY: z.string().min(1),
+  CLERK_WEBHOOK_SECRET: z.string().min(1),
 
   // Anthropic AI
   ANTHROPIC_API_KEY: z.string().min(1),

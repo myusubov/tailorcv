@@ -40,7 +40,8 @@ export type UserMinAggregateOutputType = {
   id: string | null
   clerkUserId: string | null
   email: string | null
-  name: string | null
+  firstName: string | null
+  lastName: string | null
   plan: $Enums.Plan | null
   creditsUsed: number | null
   creditsLimit: number | null
@@ -53,7 +54,8 @@ export type UserMaxAggregateOutputType = {
   id: string | null
   clerkUserId: string | null
   email: string | null
-  name: string | null
+  firstName: string | null
+  lastName: string | null
   plan: $Enums.Plan | null
   creditsUsed: number | null
   creditsLimit: number | null
@@ -66,7 +68,8 @@ export type UserCountAggregateOutputType = {
   id: number
   clerkUserId: number
   email: number
-  name: number
+  firstName: number
+  lastName: number
   plan: number
   creditsUsed: number
   creditsLimit: number
@@ -91,7 +94,8 @@ export type UserMinAggregateInputType = {
   id?: true
   clerkUserId?: true
   email?: true
-  name?: true
+  firstName?: true
+  lastName?: true
   plan?: true
   creditsUsed?: true
   creditsLimit?: true
@@ -104,7 +108,8 @@ export type UserMaxAggregateInputType = {
   id?: true
   clerkUserId?: true
   email?: true
-  name?: true
+  firstName?: true
+  lastName?: true
   plan?: true
   creditsUsed?: true
   creditsLimit?: true
@@ -117,7 +122,8 @@ export type UserCountAggregateInputType = {
   id?: true
   clerkUserId?: true
   email?: true
-  name?: true
+  firstName?: true
+  lastName?: true
   plan?: true
   creditsUsed?: true
   creditsLimit?: true
@@ -217,7 +223,8 @@ export type UserGroupByOutputType = {
   id: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan: $Enums.Plan
   creditsUsed: number
   creditsLimit: number
@@ -253,7 +260,8 @@ export type UserWhereInput = {
   id?: Prisma.StringFilter<"User"> | string
   clerkUserId?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
-  name?: Prisma.StringFilter<"User"> | string
+  firstName?: Prisma.StringFilter<"User"> | string
+  lastName?: Prisma.StringFilter<"User"> | string
   plan?: Prisma.EnumPlanFilter<"User"> | $Enums.Plan
   creditsUsed?: Prisma.IntFilter<"User"> | number
   creditsLimit?: Prisma.IntFilter<"User"> | number
@@ -268,7 +276,8 @@ export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   clerkUserId?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  name?: Prisma.SortOrder
+  firstName?: Prisma.SortOrder
+  lastName?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   creditsUsed?: Prisma.SortOrder
   creditsLimit?: Prisma.SortOrder
@@ -287,7 +296,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
-  name?: Prisma.StringFilter<"User"> | string
+  firstName?: Prisma.StringFilter<"User"> | string
+  lastName?: Prisma.StringFilter<"User"> | string
   plan?: Prisma.EnumPlanFilter<"User"> | $Enums.Plan
   creditsUsed?: Prisma.IntFilter<"User"> | number
   creditsLimit?: Prisma.IntFilter<"User"> | number
@@ -301,7 +311,8 @@ export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   clerkUserId?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  name?: Prisma.SortOrder
+  firstName?: Prisma.SortOrder
+  lastName?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   creditsUsed?: Prisma.SortOrder
   creditsLimit?: Prisma.SortOrder
@@ -322,7 +333,8 @@ export type UserScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   clerkUserId?: Prisma.StringWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
-  name?: Prisma.StringWithAggregatesFilter<"User"> | string
+  firstName?: Prisma.StringWithAggregatesFilter<"User"> | string
+  lastName?: Prisma.StringWithAggregatesFilter<"User"> | string
   plan?: Prisma.EnumPlanWithAggregatesFilter<"User"> | $Enums.Plan
   creditsUsed?: Prisma.IntWithAggregatesFilter<"User"> | number
   creditsLimit?: Prisma.IntWithAggregatesFilter<"User"> | number
@@ -335,7 +347,8 @@ export type UserCreateInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -350,7 +363,8 @@ export type UserUncheckedCreateInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -365,7 +379,8 @@ export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -380,7 +395,8 @@ export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -395,7 +411,8 @@ export type UserCreateManyInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -408,7 +425,8 @@ export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -421,7 +439,8 @@ export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -434,7 +453,8 @@ export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   clerkUserId?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  name?: Prisma.SortOrder
+  firstName?: Prisma.SortOrder
+  lastName?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   creditsUsed?: Prisma.SortOrder
   creditsLimit?: Prisma.SortOrder
@@ -452,7 +472,8 @@ export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   clerkUserId?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  name?: Prisma.SortOrder
+  firstName?: Prisma.SortOrder
+  lastName?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   creditsUsed?: Prisma.SortOrder
   creditsLimit?: Prisma.SortOrder
@@ -465,7 +486,8 @@ export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   clerkUserId?: Prisma.SortOrder
   email?: Prisma.SortOrder
-  name?: Prisma.SortOrder
+  firstName?: Prisma.SortOrder
+  lastName?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   creditsUsed?: Prisma.SortOrder
   creditsLimit?: Prisma.SortOrder
@@ -540,7 +562,8 @@ export type UserCreateWithoutBaseResumesInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -554,7 +577,8 @@ export type UserUncheckedCreateWithoutBaseResumesInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -584,7 +608,8 @@ export type UserUpdateWithoutBaseResumesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -598,7 +623,8 @@ export type UserUncheckedUpdateWithoutBaseResumesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -612,7 +638,8 @@ export type UserCreateWithoutCustomizedResumesInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -626,7 +653,8 @@ export type UserUncheckedCreateWithoutCustomizedResumesInput = {
   id?: string
   clerkUserId: string
   email: string
-  name: string
+  firstName: string
+  lastName: string
   plan?: $Enums.Plan
   creditsUsed?: number
   creditsLimit?: number
@@ -656,7 +684,8 @@ export type UserUpdateWithoutCustomizedResumesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -670,7 +699,8 @@ export type UserUncheckedUpdateWithoutCustomizedResumesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   clerkUserId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   creditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
   creditsLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -724,7 +754,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   clerkUserId?: boolean
   email?: boolean
-  name?: boolean
+  firstName?: boolean
+  lastName?: boolean
   plan?: boolean
   creditsUsed?: boolean
   creditsLimit?: boolean
@@ -740,7 +771,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   clerkUserId?: boolean
   email?: boolean
-  name?: boolean
+  firstName?: boolean
+  lastName?: boolean
   plan?: boolean
   creditsUsed?: boolean
   creditsLimit?: boolean
@@ -753,7 +785,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   clerkUserId?: boolean
   email?: boolean
-  name?: boolean
+  firstName?: boolean
+  lastName?: boolean
   plan?: boolean
   creditsUsed?: boolean
   creditsLimit?: boolean
@@ -766,7 +799,8 @@ export type UserSelectScalar = {
   id?: boolean
   clerkUserId?: boolean
   email?: boolean
-  name?: boolean
+  firstName?: boolean
+  lastName?: boolean
   plan?: boolean
   creditsUsed?: boolean
   creditsLimit?: boolean
@@ -775,7 +809,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "clerkUserId" | "email" | "name" | "plan" | "creditsUsed" | "creditsLimit" | "stripeCustomerId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "clerkUserId" | "email" | "firstName" | "lastName" | "plan" | "creditsUsed" | "creditsLimit" | "stripeCustomerId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   baseResumes?: boolean | Prisma.User$baseResumesArgs<ExtArgs>
   customizedResumes?: boolean | Prisma.User$customizedResumesArgs<ExtArgs>
@@ -794,7 +828,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: string
     clerkUserId: string
     email: string
-    name: string
+    firstName: string
+    lastName: string
     plan: $Enums.Plan
     creditsUsed: number
     creditsLimit: number
@@ -1229,7 +1264,8 @@ export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
   readonly clerkUserId: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
-  readonly name: Prisma.FieldRef<"User", 'String'>
+  readonly firstName: Prisma.FieldRef<"User", 'String'>
+  readonly lastName: Prisma.FieldRef<"User", 'String'>
   readonly plan: Prisma.FieldRef<"User", 'Plan'>
   readonly creditsUsed: Prisma.FieldRef<"User", 'Int'>
   readonly creditsLimit: Prisma.FieldRef<"User", 'Int'>

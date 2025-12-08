@@ -239,12 +239,12 @@ export default function LoginPage() {
                   <TextField className="w-full" isInvalid={!!fieldState.error}>
                     <div className="flex items-center justify-between">
                       <Label className="text-base">Password</Label>
-                      <Link
+                      <NextLink
                         href="/forgot-password"
-                        className="text-primary text-sm font-medium"
+                        className="text-primary text-sm font-medium hover:underline"
                       >
                         Forgot password?
-                      </Link>
+                      </NextLink>
                     </div>
                     <Input
                       {...field}

@@ -5,6 +5,9 @@ import { PrismaClient } from '../../prisma/generated/client/client.js';
 // Create a PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 // Create the Prisma adapter
