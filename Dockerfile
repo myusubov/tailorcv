@@ -24,7 +24,8 @@ COPY . .
 # Placeholder DB URLs so prisma generate works at build time
 ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db" \
     SHADOW_DATABASE_URL="postgresql://user:pass@localhost:5432/shadow"
-RUN npm run prisma:generate --workspace=backend \
+RUN rm -rf apps/backend/dist packages/shared/dist \
+  && npm run prisma:generate --workspace=backend \
   && npm run build --workspace=shared \
   && npm run build --workspace=backend
 
