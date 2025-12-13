@@ -29,6 +29,12 @@ const envSchema = z.object({
 
   // Optional: Additional configs
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // Dev-only auth bypass (for local testing without Clerk tokens)
+  DEV_AUTH_BYPASS: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v === 'true'),
 });
 
 // Parse and validate environment variables
