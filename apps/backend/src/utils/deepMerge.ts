@@ -11,6 +11,7 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
  * Deep-merge two JSON-like values.
  * - Plain objects are merged recursively
  * - Arrays are replaced (not merged)
+ * - `null` deletes keys (object merge only)
  * - Primitives are replaced
  */
 export const deepMerge = <T>(target: T, patch: unknown): T => {
@@ -21,6 +22,11 @@ export const deepMerge = <T>(target: T, patch: unknown): T => {
   const result: Record<string, unknown> = { ...(target as any) };
 
   for (const [key, patchValue] of Object.entries(patch)) {
+    if (patchValue === null) {
+      delete result[key];
+      continue;
+    }
+
     const targetValue = (result as any)[key];
 
     if (Array.isArray(patchValue)) {
@@ -38,4 +44,3 @@ export const deepMerge = <T>(target: T, patch: unknown): T => {
 
   return result as T;
 };
-
