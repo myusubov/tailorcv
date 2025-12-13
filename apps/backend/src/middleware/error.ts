@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError';
 import { errorResponse } from '../utils/response';
 import { ErrorCode } from 'shared';
 import { env } from '../config/env';
+import { Prisma } from '../../prisma/generated/client/client.js';
 
 export const errorHandler = (
   err: Error,
@@ -36,6 +37,37 @@ export const errorHandler = (
       400,
       ErrorCode.VALIDATION_ERROR,
       err.issues,
+    );
+  }
+
+  // Handle Prisma errors
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    // Foreign key constraint failed (e.g., user row missing)
+    if (err.code === 'P2003') {
+      const fieldName = (err.meta as any)?.field_name as string | undefined;
+      if (fieldName?.toLowerCase().includes('userid')) {
+        return errorResponse(
+          res,
+          'User not found in database (did Clerk webhook run?)',
+          404,
+          ErrorCode.USER_NOT_FOUND,
+        );
+      }
+      return errorResponse(
+        res,
+        'Foreign key constraint failed',
+        400,
+        ErrorCode.BAD_REQUEST,
+        err.meta,
+      );
+    }
+
+    return errorResponse(
+      res,
+      'Database request failed',
+      400,
+      ErrorCode.BAD_REQUEST,
+      { code: err.code, meta: err.meta },
     );
   }
 
