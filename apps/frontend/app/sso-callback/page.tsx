@@ -8,7 +8,7 @@ export default function SSOCallbackPage() {
     <div className="bg-background flex min-h-screen items-center justify-center">
       <div className="flex max-w-md flex-col items-center gap-3 text-center">
         <h1 className="text-lg font-semibold">Finishing sign in…</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted text-sm">
           You&apos;ll be redirected automatically once the sign-in is complete.
         </p>
 

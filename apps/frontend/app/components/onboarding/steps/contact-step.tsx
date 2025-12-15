@@ -1,15 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TextField, Label, Input, Description, Button } from '@heroui/react';
+import { TextField, Label, Input, Description, Button, FieldError } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { StepHeader } from '../step-header';
-import type { ContactInfo } from '../../../onboarding/types';
+import { Controller, useFormContext } from 'react-hook-form';
+import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 
 interface ContactStepProps {
-  data: ContactInfo;
-  onChange: (data: ContactInfo) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
 const fieldVariants = {
@@ -21,10 +21,8 @@ const fieldVariants = {
   }),
 };
 
-export function ContactStep({ data, onChange, onNext }: ContactStepProps) {
-  const updateField = (field: keyof ContactInfo, value: string) => {
-    onChange({ ...data, [field]: value });
-  };
+export function ContactStep({ onNext, onBack }: ContactStepProps) {
+  const { control } = useFormContext<OnboardingFormInput>();
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -42,95 +40,126 @@ export function ContactStep({ data, onChange, onNext }: ContactStepProps) {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <motion.div custom={0} variants={fieldVariants}>
-            <TextField className="w-full">
-              <Label>Full Name *</Label>
-              <Input
-                placeholder="John Doe"
-                value={data.fullName}
-                onChange={(e) => updateField('fullName', e.target.value)}
-              />
-            </TextField>
+            <Controller
+              name="contact.fullName"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <Label>Full Name *</Label>
+                  <Input {...field} placeholder="John Doe" />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </TextField>
+              )}
+            />
           </motion.div>
 
           <motion.div custom={1} variants={fieldVariants}>
-            <TextField className="w-full" type="email">
-              <Label>Email Address *</Label>
-              <Input
-                placeholder="john@example.com"
-                value={data.email}
-                onChange={(e) => updateField('email', e.target.value)}
-              />
-            </TextField>
+            <Controller
+              name="contact.email"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <Label>Email Address *</Label>
+                  <Input {...field} type="email" placeholder="john@example.com" />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </TextField>
+              )}
+            />
           </motion.div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <motion.div custom={2} variants={fieldVariants}>
-            <TextField className="w-full">
-              <Label>Phone Number</Label>
-              <Input
-                placeholder="+1 (555) 123-4567"
-                value={data.phone}
-                onChange={(e) => updateField('phone', e.target.value)}
-              />
-              <Description>Optional</Description>
-            </TextField>
+            <Controller
+              name="contact.phone"
+              control={control}
+              render={({ field }) => (
+                <TextField className="w-full">
+                  <Label>Phone Number</Label>
+                  <Input {...field} placeholder="+1 (555) 123-4567" />
+                  <Description>Optional</Description>
+                </TextField>
+              )}
+            />
           </motion.div>
 
           <motion.div custom={3} variants={fieldVariants}>
-            <TextField className="w-full">
-              <Label>Location *</Label>
-              <Input
-                placeholder="San Francisco, CA"
-                value={data.location}
-                onChange={(e) => updateField('location', e.target.value)}
-              />
-            </TextField>
+            <Controller
+              name="contact.location"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <Label>Location *</Label>
+                  <Input {...field} placeholder="San Francisco, CA" />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </TextField>
+              )}
+            />
           </motion.div>
         </div>
 
         <motion.div custom={4} variants={fieldVariants}>
-          <TextField className="w-full">
-            <Label>GitHub</Label>
-            <Input
-              placeholder="github.com/username"
-              value={data.github}
-              onChange={(e) => updateField('github', e.target.value)}
-            />
-          </TextField>
+          <Controller
+            name="contact.github"
+            control={control}
+            render={({ field }) => (
+              <TextField className="w-full">
+                <Label>GitHub</Label>
+                <Input {...field} placeholder="github.com/username" />
+              </TextField>
+            )}
+          />
         </motion.div>
 
         <motion.div custom={5} variants={fieldVariants}>
-          <TextField className="w-full">
-            <Label>LinkedIn</Label>
-            <Input
-              placeholder="linkedin.com/in/username"
-              value={data.linkedin}
-              onChange={(e) => updateField('linkedin', e.target.value)}
-            />
-            <Description>Optional</Description>
-          </TextField>
+          <Controller
+            name="contact.linkedin"
+            control={control}
+            render={({ field }) => (
+              <TextField className="w-full">
+                <Label>LinkedIn</Label>
+                <Input {...field} placeholder="linkedin.com/in/username" />
+                <Description>Optional</Description>
+              </TextField>
+            )}
+          />
         </motion.div>
 
         <motion.div custom={6} variants={fieldVariants}>
-          <TextField className="w-full">
-            <Label>Portfolio Website</Label>
-            <Input
-              placeholder="yourwebsite.com"
-              value={data.portfolio}
-              onChange={(e) => updateField('portfolio', e.target.value)}
-            />
-            <Description>Optional</Description>
-          </TextField>
+          <Controller
+            name="contact.portfolio"
+            control={control}
+            render={({ field }) => (
+              <TextField className="w-full">
+                <Label>Portfolio Website</Label>
+                <Input {...field} placeholder="yourwebsite.com" />
+                <Description>Optional</Description>
+              </TextField>
+            )}
+          />
         </motion.div>
       </motion.div>
 
       <motion.div
-        className="mt-8 flex justify-end"
+        className="mt-8 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
+        <Button
+          variant="ghost"
+          onPress={onBack}
+          className="text-muted hover:text-foreground"
+        >
+          <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
+          Back
+        </Button>
         <Button onPress={onNext} className="group px-6">
           Next: Professional Summary
           <Icon

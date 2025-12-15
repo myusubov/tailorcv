@@ -200,7 +200,7 @@ export default function RegisterPage() {
                   <Tooltip delay={500}>
                     <Button
                       isIconOnly
-                      className="text-muted-foreground hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
+                      className="text-muted hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
                       onClick={handleGoBack}
                       // TODO: wire this to go back and change email
                     >
@@ -270,7 +270,7 @@ export default function RegisterPage() {
               </form>
             </Card.Content>
             <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-              <p className="text-muted-foreground text-center text-sm">
+              <p className="text-muted text-center text-sm">
                 Didn&apos;t receive the code?{' '}
                 <button
                   type="button"
@@ -406,7 +406,7 @@ export default function RegisterPage() {
             <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
               Create account
             </h2>
-            <p className="text-muted-foreground mt-3 text-lg">
+            <p className="text-muted mt-3 text-lg">
               Start building your resume for free.
             </p>
           </motion.div>
@@ -532,7 +532,7 @@ export default function RegisterPage() {
                         <Checkbox.Indicator />
                       </Checkbox.Control>
                       <Checkbox.Content>
-                        <span className="text-muted-foreground text-sm leading-snug">
+                        <span className="text-muted text-sm leading-snug">
                           I agree to the{' '}
                           <Link
                             href="/terms"
@@ -601,7 +601,7 @@ export default function RegisterPage() {
                 <Separator className="border-divider w-full" />
               </div>
               <div className="relative flex justify-center text-xs tracking-wider uppercase">
-                <span className="bg-background text-muted-foreground px-4 font-medium">
+                <span className="bg-background text-muted px-4 font-medium">
                   Or
                 </span>
               </div>
@@ -637,7 +637,7 @@ export default function RegisterPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 1.0 }}
-              className="text-muted-foreground text-center text-sm"
+              className="text-muted text-center text-sm"
             >
               Already have an account?{' '}
               <NextLink

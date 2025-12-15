@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Button } from '@heroui/react';
-import { Icon } from '@iconify/react';
+import { Form } from '@heroui/react';
 import { ProgressBar } from './progress-bar';
 import {
   ContactStep,
@@ -12,91 +11,95 @@ import {
   ProjectsStep,
   EducationStep,
 } from './steps';
-import type {
-  ManualEntryStep,
-  OnboardingFormData,
-  ContactInfo,
-  Experience,
-  Project,
-  Education,
-} from '../../onboarding/types';
+import type { ManualEntryStep } from '../../onboarding/types';
 import { MANUAL_STEPS } from '../../onboarding/types';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  onboardingSchema,
+  type OnboardingFormInput,
+  type OnboardingFormValues,
+} from '@/lib/schemas/onboarding';
 
 interface ManualEntryFormProps {
   onBack: () => void;
-  onComplete: (data: OnboardingFormData) => void;
+  onComplete: (data: OnboardingFormValues) => void;
 }
-
-const initialContactInfo: ContactInfo = {
-  fullName: '',
-  email: '',
-  phone: '',
-  location: '',
-  github: '',
-  linkedin: '',
-  portfolio: '',
-};
-
-const initialEducation: Education = {
-  degree: '',
-  school: '',
-  graduationYear: '',
-  isSelfTaught: false,
-};
 
 export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
-  const [formData, setFormData] = useState<OnboardingFormData>({
-    contact: initialContactInfo,
-    summary: '',
-    experiences: [],
-    projects: [],
-    skills: [],
-    education: initialEducation,
+  const [direction, setDirection] = useState<1 | -1>(1);
+
+  const form = useForm<OnboardingFormInput>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      contact: {
+        fullName: '',
+        email: '',
+        phone: '',
+        location: '',
+        github: '',
+        linkedin: '',
+        portfolio: '',
+      },
+      summary: '',
+      experiences: [],
+      projects: [],
+      skills: [],
+      education: {
+        degree: '',
+        school: '',
+        graduationYear: '',
+        isSelfTaught: false,
+      },
+    },
+    mode: 'onSubmit',
   });
 
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
 
+  const stepFields = useMemo(() => {
+    switch (currentStep) {
+      case 'contact':
+        return ['contact'] as const;
+      case 'summary':
+        return ['summary'] as const;
+      case 'experience':
+        return ['experiences'] as const;
+      case 'projects':
+        return ['projects', 'skills'] as const;
+      case 'education':
+        return ['education'] as const;
+      default:
+        return [] as const;
+    }
+  }, [currentStep]);
+
   const goToNextStep = () => {
     if (currentIndex < MANUAL_STEPS.length - 1) {
+      setDirection(1);
       setCurrentStep(MANUAL_STEPS[currentIndex + 1].key);
     }
   };
 
   const goToPreviousStep = () => {
     if (currentIndex > 0) {
+      setDirection(-1);
       setCurrentStep(MANUAL_STEPS[currentIndex - 1].key);
     } else {
       onBack();
     }
   };
 
-  const handleFinish = () => {
-    onComplete(formData);
+  const handleNext = async () => {
+    const ok = await form.trigger(stepFields as any, { shouldFocus: true });
+    if (ok) goToNextStep();
   };
 
-  const updateContact = (contact: ContactInfo) => {
-    setFormData((prev) => ({ ...prev, contact }));
-  };
-
-  const updateSummary = (summary: string) => {
-    setFormData((prev) => ({ ...prev, summary }));
-  };
-
-  const updateExperiences = (experiences: Experience[]) => {
-    setFormData((prev) => ({ ...prev, experiences }));
-  };
-
-  const updateProjects = (projects: Project[]) => {
-    setFormData((prev) => ({ ...prev, projects }));
-  };
-
-  const updateSkills = (skills: string[]) => {
-    setFormData((prev) => ({ ...prev, skills }));
-  };
-
-  const updateEducation = (education: Education) => {
-    setFormData((prev) => ({ ...prev, education }));
+  const handleFinish = async () => {
+    const ok = await form.trigger(undefined, { shouldFocus: true });
+    if (!ok) return;
+    onComplete(onboardingSchema.parse(form.getValues()));
   };
 
   const slideVariants = {
@@ -117,58 +120,23 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
   const renderStep = () => {
     switch (currentStep) {
       case 'contact':
-        return (
-          <ContactStep
-            data={formData.contact}
-            onChange={updateContact}
-            onNext={goToNextStep}
-          />
-        );
+        return <ContactStep onNext={handleNext} onBack={goToPreviousStep} />;
       case 'summary':
-        return (
-          <SummaryStep
-            data={formData.summary}
-            onChange={updateSummary}
-            onNext={goToNextStep}
-            onBack={goToPreviousStep}
-          />
-        );
+        return <SummaryStep onNext={handleNext} onBack={goToPreviousStep} />;
       case 'experience':
-        return (
-          <ExperienceStep
-            data={formData.experiences}
-            onChange={updateExperiences}
-            onNext={goToNextStep}
-            onBack={goToPreviousStep}
-          />
-        );
+        return <ExperienceStep onNext={handleNext} onBack={goToPreviousStep} />;
       case 'projects':
-        return (
-          <ProjectsStep
-            projects={formData.projects}
-            skills={formData.skills}
-            onProjectsChange={updateProjects}
-            onSkillsChange={updateSkills}
-            onNext={goToNextStep}
-            onBack={goToPreviousStep}
-          />
-        );
+        return <ProjectsStep onNext={handleNext} onBack={goToPreviousStep} />;
       case 'education':
-        return (
-          <EducationStep
-            data={formData.education}
-            onChange={updateEducation}
-            onFinish={handleFinish}
-            onBack={goToPreviousStep}
-          />
-        );
+        return <EducationStep onFinish={handleFinish} onBack={goToPreviousStep} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-100px)] flex-col">
+    <FormProvider {...form}>
+      <Form className="flex min-h-[calc(100vh-100px)] flex-col">
       {/* Header with back button and progress */}
       <motion.div
         className="mb-8"
@@ -180,10 +148,10 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
 
       {/* Step Content with Animation */}
       <div className="relative flex-1 overflow-hidden">
-        <AnimatePresence mode="wait" custom={1}>
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
-            custom={1}
+            custom={direction}
             variants={slideVariants}
             initial="enter"
             animate="center"
@@ -197,6 +165,7 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
           </motion.div>
         </AnimatePresence>
       </div>
-    </div>
+      </Form>
+    </FormProvider>
   );
 }

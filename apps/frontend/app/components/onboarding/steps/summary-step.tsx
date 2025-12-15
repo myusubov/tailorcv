@@ -1,23 +1,30 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TextField, Label, TextArea, Description, Button } from '@heroui/react';
+import {
+  TextField,
+  Label,
+  TextArea,
+  Description,
+  Button,
+  FieldError,
+} from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { StepHeader } from '../step-header';
+import { Controller, useFormContext } from 'react-hook-form';
+import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 
 interface SummaryStepProps {
-  data: string;
-  onChange: (data: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
 export function SummaryStep({
-  data,
-  onChange,
   onNext,
   onBack,
 }: SummaryStepProps) {
+  const { control } = useFormContext<OnboardingFormInput>();
+
   return (
     <div className="mx-auto w-full max-w-xl">
       <StepHeader
@@ -31,19 +38,27 @@ export function SummaryStep({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <TextField className="w-full">
-          <Label>Your Summary</Label>
-          <TextArea
-            placeholder="I'm a full-stack developer with 3 years of experience building scalable web applications. I specialize in React, TypeScript, and Node.js, with a passion for creating user-friendly interfaces..."
-            rows={6}
-            value={data}
-            onChange={(e) => onChange(e.target.value)}
-          />
-          <Description>
-            Mention your role, experience level, and main technologies.
-            We&apos;ll refine this later.
-          </Description>
-        </TextField>
+        <Controller
+          name="summary"
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
+              <Label>Your Summary</Label>
+              <TextArea
+                {...field}
+                placeholder="I'm a full-stack developer with 3 years of experience building scalable web applications..."
+                rows={6}
+              />
+              {fieldState.error ? (
+                <FieldError>{fieldState.error.message}</FieldError>
+              ) : null}
+              <Description>
+                Mention your role, experience level, and main technologies.
+                We&apos;ll refine this later.
+              </Description>
+            </TextField>
+          )}
+        />
       </motion.div>
 
       <motion.div
@@ -58,7 +73,7 @@ export function SummaryStep({
           </div>
           <div>
             <p className="text-foreground text-sm font-medium">Need help?</p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
+            <p className="text-muted mt-0.5 text-sm">
               Not sure what to write? You can skip this and we&apos;ll generate
               one based on your experience and projects.
             </p>

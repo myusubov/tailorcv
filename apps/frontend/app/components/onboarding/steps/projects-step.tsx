@@ -1,72 +1,68 @@
 'use client';
 
 import { useState, type KeyboardEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  TextField,
-  Label,
-  Input,
-  Description,
   Button,
   Card,
   Chip,
+  Description,
+  FieldError,
+  Input,
+  Label,
+  TextField,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
+import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
-import type { Project } from '../../../onboarding/types';
 
 interface ProjectsStepProps {
-  projects: Project[];
-  skills: string[];
-  onProjectsChange: (projects: Project[]) => void;
-  onSkillsChange: (skills: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function ProjectsStep({
-  projects,
-  skills,
-  onProjectsChange,
-  onSkillsChange,
-  onNext,
-  onBack,
-}: ProjectsStepProps) {
+export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
+  const { control, watch, setValue } = useFormContext<OnboardingFormInput>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'projects',
+  });
+
+  const skills = watch('skills') ?? [];
   const [skillInput, setSkillInput] = useState('');
 
   const addProject = () => {
-    const newProject: Project = {
+    append({
       id: crypto.randomUUID(),
       name: '',
       description: '',
       techStack: '',
       link: '',
-    };
-    onProjectsChange([...projects, newProject]);
-  };
-
-  const updateProject = (id: string, field: keyof Project, value: string) => {
-    onProjectsChange(
-      projects.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
-    );
-  };
-
-  const removeProject = (id: string) => {
-    onProjectsChange(projects.filter((p) => p.id !== id));
+    });
   };
 
   const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && skillInput.trim()) {
-      e.preventDefault();
-      if (!skills.includes(skillInput.trim())) {
-        onSkillsChange([...skills, skillInput.trim()]);
-      }
-      setSkillInput('');
+    if (e.key !== 'Enter') return;
+    const nextSkill = skillInput.trim();
+    if (!nextSkill) return;
+
+    e.preventDefault();
+    if (!skills.includes(nextSkill)) {
+      setValue('skills', [...skills, nextSkill], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
+    setSkillInput('');
   };
 
   const removeSkill = (skill: string) => {
-    onSkillsChange(skills.filter((s) => s !== skill));
+    setValue(
+      'skills',
+      skills.filter((s) => s !== skill),
+      { shouldDirty: true, shouldValidate: true },
+    );
   };
 
   return (
@@ -77,7 +73,6 @@ export function ProjectsStep({
         description="Showcase your best work and technical abilities."
       />
 
-      {/* Projects Section */}
       <motion.div
         className="mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -90,7 +85,7 @@ export function ProjectsStep({
         </h3>
 
         <AnimatePresence mode="popLayout">
-          {projects.map((project, index) => (
+          {fields.map((project, index) => (
             <motion.div
               key={project.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -104,66 +99,82 @@ export function ProjectsStep({
                   <Card.Title className="text-base">
                     Project #{index + 1}
                   </Card.Title>
-                  {projects.length > 1 && (
+                  {fields.length > 1 && (
                     <Button
                       isIconOnly
                       variant="ghost"
                       size="sm"
-                      onPress={() => removeProject(project.id)}
+                      onPress={() => remove(index)}
                       className="text-danger"
                     >
                       <Icon icon="lucide:trash-2" className="size-4" />
                     </Button>
                   )}
                 </Card.Header>
+
                 <Card.Content className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <TextField className="w-full">
-                      <Label>Project Name</Label>
-                      <Input
-                        placeholder="TailorCV"
-                        value={project.name}
-                        onChange={(e) =>
-                          updateProject(project.id, 'name', e.target.value)
-                        }
-                      />
-                    </TextField>
+                    <Controller
+                      name={`projects.${index}.name`}
+                      control={control}
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          className="w-full"
+                          isInvalid={!!fieldState.error}
+                        >
+                          <Label>Project Name</Label>
+                          <Input {...field} placeholder="TailorCV" />
+                          {fieldState.error ? (
+                            <FieldError>{fieldState.error.message}</FieldError>
+                          ) : null}
+                        </TextField>
+                      )}
+                    />
 
-                    <TextField className="w-full">
-                      <Label>Tech Stack</Label>
-                      <Input
-                        placeholder="Next.js, TypeScript, Tailwind"
-                        value={project.techStack}
-                        onChange={(e) =>
-                          updateProject(project.id, 'techStack', e.target.value)
-                        }
-                      />
-                    </TextField>
+                    <Controller
+                      name={`projects.${index}.techStack`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField className="w-full">
+                          <Label>Tech Stack</Label>
+                          <Input
+                            {...field}
+                            placeholder="Next.js, TypeScript, Tailwind"
+                          />
+                        </TextField>
+                      )}
+                    />
                   </div>
 
-                  <TextField className="w-full">
-                    <Label>Description</Label>
-                    <Input
-                      placeholder="AI-powered resume builder that helps developers..."
-                      value={project.description}
-                      onChange={(e) =>
-                        updateProject(project.id, 'description', e.target.value)
-                      }
-                    />
-                    <Description>Brief 1-2 sentence description</Description>
-                  </TextField>
+                  <Controller
+                    name={`projects.${index}.description`}
+                    control={control}
+                    render={({ field }) => (
+                      <TextField className="w-full">
+                        <Label>Description</Label>
+                        <Input
+                          {...field}
+                          placeholder="AI-powered resume builder that helps developers..."
+                        />
+                        <Description>Brief 1-2 sentence description</Description>
+                      </TextField>
+                    )}
+                  />
 
-                  <TextField className="w-full">
-                    <Label>Link</Label>
-                    <Input
-                      placeholder="github.com/username/project"
-                      value={project.link}
-                      onChange={(e) =>
-                        updateProject(project.id, 'link', e.target.value)
-                      }
-                    />
-                    <Description>Optional</Description>
-                  </TextField>
+                  <Controller
+                    name={`projects.${index}.link`}
+                    control={control}
+                    render={({ field }) => (
+                      <TextField className="w-full">
+                        <Label>Link</Label>
+                        <Input
+                          {...field}
+                          placeholder="github.com/username/project"
+                        />
+                        <Description>Optional</Description>
+                      </TextField>
+                    )}
+                  />
                 </Card.Content>
               </Card>
             </motion.div>
@@ -172,11 +183,10 @@ export function ProjectsStep({
 
         <Button variant="secondary" onPress={addProject} className="w-full">
           <Icon icon="lucide:plus" className="mr-2 size-4" />
-          Add {projects.length > 0 ? 'Another ' : ''}Project
+          Add {fields.length > 0 ? 'Another ' : ''}Project
         </Button>
       </motion.div>
 
-      {/* Skills Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -202,7 +212,7 @@ export function ProjectsStep({
 
             {skills.length > 0 && (
               <div>
-                <Label className="text-muted-foreground mb-2 block text-sm">
+                <Label className="text-muted mb-2 block text-sm">
                   Your Skills:
                 </Label>
                 <div className="flex flex-wrap gap-2">

@@ -1,14 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TextField, Label, Input, Button, Checkbox, Card } from '@heroui/react';
+import { Button, Card, Checkbox, Input, Label, TextField } from '@heroui/react';
 import { Icon } from '@iconify/react';
+import { Controller, useFormContext } from 'react-hook-form';
+import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
-import type { Education } from '../../../onboarding/types';
 
 interface EducationStepProps {
-  data: Education;
-  onChange: (data: Education) => void;
   onFinish: () => void;
   onBack: () => void;
 }
@@ -16,15 +15,9 @@ interface EducationStepProps {
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
 
-export function EducationStep({
-  data,
-  onChange,
-  onFinish,
-  onBack,
-}: EducationStepProps) {
-  const updateField = (field: keyof Education, value: string | boolean) => {
-    onChange({ ...data, [field]: value });
-  };
+export function EducationStep({ onFinish, onBack }: EducationStepProps) {
+  const { control, watch } = useFormContext<OnboardingFormInput>();
+  const isSelfTaught = !!watch('education.isSelfTaught');
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -41,64 +34,86 @@ export function EducationStep({
       >
         <Card variant="secondary">
           <Card.Content className="space-y-5 pt-4">
-            <TextField className="w-full">
-              <Label>Degree / Certification</Label>
-              <Input
-                placeholder="Bachelor's in Computer Science"
-                value={data.degree}
-                onChange={(e) => updateField('degree', e.target.value)}
-                disabled={data.isSelfTaught}
-              />
-            </TextField>
+            <Controller
+              name="education.degree"
+              control={control}
+              render={({ field }) => (
+                <TextField className="w-full">
+                  <Label>Degree / Certification</Label>
+                  <Input
+                    {...field}
+                    placeholder="Bachelor's in Computer Science"
+                    disabled={isSelfTaught}
+                  />
+                </TextField>
+              )}
+            />
 
-            <TextField className="w-full">
-              <Label>School / Institution</Label>
-              <Input
-                placeholder="University of Technology"
-                value={data.school}
-                onChange={(e) => updateField('school', e.target.value)}
-                disabled={data.isSelfTaught}
-              />
-            </TextField>
+            <Controller
+              name="education.school"
+              control={control}
+              render={({ field }) => (
+                <TextField className="w-full">
+                  <Label>School / Institution</Label>
+                  <Input
+                    {...field}
+                    placeholder="University of Technology"
+                    disabled={isSelfTaught}
+                  />
+                </TextField>
+              )}
+            />
 
-            <div>
-              <Label className="text-foreground mb-2 block text-sm font-medium">
-                Graduation Year
-              </Label>
-              <select
-                className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                value={data.graduationYear}
-                onChange={(e) => updateField('graduationYear', e.target.value)}
-                disabled={data.isSelfTaught}
-              >
-                <option value="">Select year</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Controller
+              name="education.graduationYear"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <Label className="text-foreground mb-2 block text-sm font-medium">
+                    Graduation Year
+                  </Label>
+                  <select
+                    className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    disabled={isSelfTaught}
+                  >
+                    <option value="">Select year</option>
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            />
 
             <div className="border-divider relative border-t pt-4">
-              <span className="bg-surface-secondary text-muted-foreground absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-sm">
+              <span className="bg-surface-secondary text-muted absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-sm">
                 Or
               </span>
             </div>
 
-            <Checkbox
-              isSelected={data.isSelfTaught}
-              onChange={(isSelected) => updateField('isSelfTaught', isSelected)}
-            >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <span className="text-sm">
-                  I&apos;m self-taught / bootcamp graduate
-                </span>
-              </Checkbox.Content>
-            </Checkbox>
+            <Controller
+              name="education.isSelfTaught"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  isSelected={!!field.value}
+                  onChange={(isSelected) => field.onChange(isSelected)}
+                >
+                  <Checkbox.Control className="size-5">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <span className="text-sm">
+                      I&apos;m self-taught / bootcamp graduate
+                    </span>
+                  </Checkbox.Content>
+                </Checkbox>
+              )}
+            />
           </Card.Content>
         </Card>
       </motion.div>
@@ -117,7 +132,7 @@ export function EducationStep({
             <p className="text-foreground text-sm font-medium">
               You&apos;re all set!
             </p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
+            <p className="text-muted mt-0.5 text-sm">
               Click the button below to generate your professional resume.
             </p>
           </div>

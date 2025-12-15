@@ -15,10 +15,10 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-muted-foreground text-sm font-medium">
+        <span className="text-muted text-sm font-medium">
           Step {currentIndex + 1} of {MANUAL_STEPS.length}
         </span>
-        <span className="text-muted-foreground text-sm">
+        <span className="text-muted text-sm">
           {Math.round(progress)}%
         </span>
       </div>
@@ -45,7 +45,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
                   ? 'bg-primary/10 text-primary'
                   : isCurrent
                     ? 'bg-surface-secondary text-foreground'
-                    : 'text-muted-foreground'
+                    : 'text-muted'
               }`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

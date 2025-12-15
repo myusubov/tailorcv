@@ -53,7 +53,7 @@ export default function OnboardingPage() {
               <h2 className="text-foreground text-2xl font-bold">
                 Connect GitHub
               </h2>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-muted mt-2">
                 GitHub integration coming soon...
               </p>
               {/* <button
@@ -85,7 +85,7 @@ export default function OnboardingPage() {
               <h2 className="text-foreground text-2xl font-bold">
                 Upload About Me
               </h2>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-muted mt-2">
                 File upload coming soon...
               </p>
               {/* <button
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
           {!isMethodSelected && (
             <motion.button
               type="button"
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
+              className="text-muted hover:text-foreground flex items-center gap-1 text-sm transition-colors"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
