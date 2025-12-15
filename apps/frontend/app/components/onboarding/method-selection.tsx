@@ -61,7 +61,7 @@ const itemVariants = {
 
 export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
   return (
-    <div className="flex min-h-[calc(100vh-200px)] flex-col items-center justify-center px-4">
+    <div className="flex min-h-[calc(100vh-200px)] flex-col items-center justify-center">
       <motion.div
         className="mb-10 text-center"
         initial={{ opacity: 0, y: -30 }}

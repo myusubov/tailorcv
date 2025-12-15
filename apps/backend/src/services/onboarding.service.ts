@@ -1,5 +1,8 @@
 import { prisma } from '../lib';
-import type { GetOnboardingStatusInput, OnboardingStatus } from '../types/onboarding';
+import type {
+  GetOnboardingStatusInput,
+  OnboardingStatus,
+} from '../types/onboarding';
 
 export async function getOnboardingStatus(
   input: GetOnboardingStatusInput,

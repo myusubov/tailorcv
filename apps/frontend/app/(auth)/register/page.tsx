@@ -47,7 +47,7 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { isSubmitting },
     setValue,
-    reset
+    reset,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -125,10 +125,10 @@ export default function RegisterPage() {
 
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
-        setIsVerifying(false)
-        setVerifying(false)
-        setCode("")
-        reset()
+        setIsVerifying(false);
+        setVerifying(false);
+        setCode('');
+        reset();
         router.push(config.auth.afterSignUpUrl);
       }
     } catch (err: unknown) {
@@ -141,9 +141,9 @@ export default function RegisterPage() {
   };
 
   const handleGoBack = () => {
-    setVerifying(false)
-    setValue('email', '')
-  }
+    setVerifying(false);
+    setValue('email', '');
+  };
 
   const handleGoogleSignUp = async () => {
     if (!isLoaded) return;
@@ -200,7 +200,7 @@ export default function RegisterPage() {
                   <Tooltip delay={500}>
                     <Button
                       isIconOnly
-                      className="absolute -top-4 size-5 -right-4 text-muted-foreground hover:text-foreground bg-surface-elevated/90"
+                      className="text-muted-foreground hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
                       onClick={handleGoBack}
                       // TODO: wire this to go back and change email
                     >

@@ -175,12 +175,6 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="mb-6 flex items-center justify-between">
-          <Button variant="ghost" onPress={currentIndex === 0 ? onBack : goToPreviousStep}>
-            <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
-            {currentIndex === 0 ? 'Back to methods' : 'Back'}
-          </Button>
-        </div>
         <ProgressBar currentStep={currentStep} />
       </motion.div>
 

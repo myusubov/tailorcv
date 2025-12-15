@@ -6,4 +6,3 @@ export type OnboardingStatus = {
   hasBaseResume: boolean;
   latestBaseResumeId: string | null;
 };
-

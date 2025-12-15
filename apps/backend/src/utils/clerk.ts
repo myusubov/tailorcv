@@ -51,4 +51,3 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
     },
   });
 };
-

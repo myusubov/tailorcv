@@ -2,7 +2,15 @@
 
 import { useState, type KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TextField, Label, Input, Description, Button, Card, Chip } from '@heroui/react';
+import {
+  TextField,
+  Label,
+  Input,
+  Description,
+  Button,
+  Card,
+  Chip,
+} from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { StepHeader } from '../step-header';
 import type { Project } from '../../../onboarding/types';
@@ -38,7 +46,9 @@ export function ProjectsStep({
   };
 
   const updateProject = (id: string, field: keyof Project, value: string) => {
-    onProjectsChange(projects.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+    onProjectsChange(
+      projects.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+    );
   };
 
   const removeProject = (id: string) => {
@@ -91,7 +101,9 @@ export function ProjectsStep({
             >
               <Card className="mb-4" variant="secondary">
                 <Card.Header className="flex-row items-center justify-between">
-                  <Card.Title className="text-base">Project #{index + 1}</Card.Title>
+                  <Card.Title className="text-base">
+                    Project #{index + 1}
+                  </Card.Title>
                   {projects.length > 1 && (
                     <Button
                       isIconOnly
@@ -111,7 +123,9 @@ export function ProjectsStep({
                       <Input
                         placeholder="TailorCV"
                         value={project.name}
-                        onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                        onChange={(e) =>
+                          updateProject(project.id, 'name', e.target.value)
+                        }
                       />
                     </TextField>
 
@@ -120,7 +134,9 @@ export function ProjectsStep({
                       <Input
                         placeholder="Next.js, TypeScript, Tailwind"
                         value={project.techStack}
-                        onChange={(e) => updateProject(project.id, 'techStack', e.target.value)}
+                        onChange={(e) =>
+                          updateProject(project.id, 'techStack', e.target.value)
+                        }
                       />
                     </TextField>
                   </div>
@@ -130,7 +146,9 @@ export function ProjectsStep({
                     <Input
                       placeholder="AI-powered resume builder that helps developers..."
                       value={project.description}
-                      onChange={(e) => updateProject(project.id, 'description', e.target.value)}
+                      onChange={(e) =>
+                        updateProject(project.id, 'description', e.target.value)
+                      }
                     />
                     <Description>Brief 1-2 sentence description</Description>
                   </TextField>
@@ -140,7 +158,9 @@ export function ProjectsStep({
                     <Input
                       placeholder="github.com/username/project"
                       value={project.link}
-                      onChange={(e) => updateProject(project.id, 'link', e.target.value)}
+                      onChange={(e) =>
+                        updateProject(project.id, 'link', e.target.value)
+                      }
                     />
                     <Description>Optional</Description>
                   </TextField>
@@ -182,7 +202,9 @@ export function ProjectsStep({
 
             {skills.length > 0 && (
               <div>
-                <Label className="text-muted-foreground mb-2 block text-sm">Your Skills:</Label>
+                <Label className="text-muted-foreground mb-2 block text-sm">
+                  Your Skills:
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   <AnimatePresence>
                     {skills.map((skill) => (
@@ -214,12 +236,12 @@ export function ProjectsStep({
       </motion.div>
 
       <motion.div
-        className="mt-8 flex justify-between"
+        className="mt-8 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Button variant="ghost" onPress={onBack}>
+        <Button variant="ghost" onPress={onBack} className="text-muted hover:text-foreground">
           <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
           Back
         </Button>

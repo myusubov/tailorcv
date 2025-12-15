@@ -16,7 +16,12 @@ interface EducationStepProps {
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
 
-export function EducationStep({ data, onChange, onFinish, onBack }: EducationStepProps) {
+export function EducationStep({
+  data,
+  onChange,
+  onFinish,
+  onBack,
+}: EducationStepProps) {
   const updateField = (field: keyof Education, value: string | boolean) => {
     onChange({ ...data, [field]: value });
   };
@@ -89,7 +94,9 @@ export function EducationStep({ data, onChange, onFinish, onBack }: EducationSte
                 <Checkbox.Indicator />
               </Checkbox.Control>
               <Checkbox.Content>
-                <span className="text-sm">I&apos;m self-taught / bootcamp graduate</span>
+                <span className="text-sm">
+                  I&apos;m self-taught / bootcamp graduate
+                </span>
               </Checkbox.Content>
             </Checkbox>
           </Card.Content>
@@ -107,7 +114,9 @@ export function EducationStep({ data, onChange, onFinish, onBack }: EducationSte
             <Icon icon="lucide:check-circle" className="size-4" />
           </div>
           <div>
-            <p className="text-foreground text-sm font-medium">You&apos;re all set!</p>
+            <p className="text-foreground text-sm font-medium">
+              You&apos;re all set!
+            </p>
             <p className="text-muted-foreground mt-0.5 text-sm">
               Click the button below to generate your professional resume.
             </p>
@@ -116,16 +125,19 @@ export function EducationStep({ data, onChange, onFinish, onBack }: EducationSte
       </motion.div>
 
       <motion.div
-        className="mt-8 flex justify-between"
+        className="mt-8 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Button variant="ghost" onPress={onBack}>
+        <Button variant="ghost" onPress={onBack} className="text-muted hover:text-foreground">
           <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
           Back
         </Button>
-        <Button onPress={onFinish} className="group bg-green-600 px-6 hover:bg-green-700">
+        <Button
+          onPress={onFinish}
+          className="group bg-green-600 px-6 hover:bg-green-700"
+        >
           <Icon icon="lucide:sparkles" className="mr-2 size-4" />
           Generate Resume!
         </Button>

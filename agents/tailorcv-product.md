@@ -14,9 +14,11 @@
 ## Problem Statement
 
 ### The Pain Point
+
 Developers waste 15-20 minutes per job application copying their resume and job descriptions to ChatGPT, then manually reformatting the AI's output. When applying to 50-100 jobs, this wastes 12-33 hours of valuable time.
 
 ### Current "Solution" (Manual ChatGPT Workflow)
+
 1. Open ChatGPT
 2. Copy entire resume
 3. Copy job description
@@ -35,9 +37,11 @@ Developers waste 15-20 minutes per job application copying their resume and job 
 ## Solution: TailorCV
 
 ### What It Does
+
 TailorCV stores your base resume once, then instantly customizes it for any job in 30 seconds using AI. One-click download of perfectly formatted, ATS-friendly PDFs.
 
 ### Core Value Proposition
+
 - **Speed:** 30 seconds vs 15-20 minutes (30x faster)
 - **Quality:** AI-optimized for each specific job
 - **Organization:** Track which resume for which job
@@ -49,7 +53,9 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Target Users
 
 ### Primary Audience
+
 **Self-taught and junior developers actively job searching**
+
 - Age: 18-30
 - Experience: 0-5 years
 - Education: Self-taught, bootcamp, or recent CS grads
@@ -58,7 +64,9 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Willingness to pay: $10-20/month during active search
 
 ### Secondary Audience
+
 **Mid-level developers switching jobs**
+
 - Experience: 5-10 years
 - Pain: Need to tailor resume for senior roles
 - Frequency: Every 2-3 years during job search
@@ -66,6 +74,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ### User Personas
 
 **Persona 1: Murad (Primary)**
+
 - 18 years old, self-taught developer
 - 3 years experience, no CS degree
 - Currently applying to 100+ international remote jobs
@@ -74,6 +83,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Needs: Speed, quality customization, version tracking
 
 **Persona 2: Sarah (Secondary)**
+
 - 26, bootcamp grad, 2 years experience
 - Switching from frontend to full-stack roles
 - Applying to 30-50 jobs
@@ -85,8 +95,10 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Core Features (MVP - Week 1-8)
 
 ### 1. Base Resume Storage
+
 **Description:** User creates account and inputs resume once  
 **Components:**
+
 - Contact information (name, email, phone, location, LinkedIn, GitHub, portfolio)
 - Professional summary (2-3 sentences)
 - Work experience (company, title, dates, bullet points, tech stack)
@@ -95,6 +107,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Education (degree, school, dates)
 
 **User Flow:**
+
 1. Sign up with email or Google OAuth
 2. Complete onboarding form (step-by-step)
 3. Preview base resume
@@ -105,13 +118,16 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### 2. Job Description Input
+
 **Description:** User pastes job description for customization  
 **Components:**
+
 - Text area for job description (required)
 - Company name field (optional)
 - Job title field (optional)
 
 **User Flow:**
+
 1. Click "Customize Resume"
 2. Paste job description
 3. Add company/title (optional)
@@ -122,21 +138,25 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### 3. AI Customization Engine
+
 **Description:** AI analyzes job requirements and rewrites resume to match  
 **Technology:** Anthropic Claude API (Sonnet 4.5)
 
 **What Gets Customized:**
+
 - Professional summary (rewritten to match role)
 - Experience bullet points (reordered and reworded)
 - Projects (highlighted relevant ones)
 - Skills (reordered by relevance)
 
 **What Stays the Same:**
+
 - Contact information
 - Company names and dates (factual data)
 - Core structure
 
 **User Flow:**
+
 1. AI processes job description + base resume
 2. Shows before/after comparison
 3. User can accept or reject changes
@@ -149,10 +169,12 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### 4. Resume Download (PDF Export)
+
 **Description:** One-click download of customized resume as PDF  
 **Technology:** @react-pdf/renderer (client-side)
 
 **Features:**
+
 - Clean, ATS-friendly format
 - Professional template (developer-focused)
 - No watermarks (even on free tier)
@@ -160,6 +182,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Format: Letter (8.5" x 11")
 
 **User Flow:**
+
 1. Click "Download PDF"
 2. PDF generates in 1-2 seconds
 3. Downloads to user's computer
@@ -167,8 +190,10 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### 5. Resume Version History
+
 **Description:** Track every customized resume with metadata  
 **Data Stored:**
+
 - Customized resume data (JSON)
 - Job title
 - Company name
@@ -177,6 +202,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Match score (future feature)
 
 **User Flow:**
+
 1. View all past customized resumes
 2. Click to view details
 3. Download old version
@@ -187,15 +213,18 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### 6. Usage Limits & Payment
+
 **Description:** Freemium model with Stripe integration
 
 **Free Tier:**
+
 - 3 customized resumes per month
 - 1 base resume storage
 - Basic PDF template
 - Email support
 
 **Pro Monthly ($12/month):**
+
 - Unlimited customized resumes
 - Multiple base resumes (3)
 - Premium PDF templates (3 designs)
@@ -203,6 +232,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Priority support
 
 **Pro Lifetime ($39 one-time):**
+
 - Everything in Pro Monthly
 - Pay once, use forever
 - Future feature updates included
@@ -215,12 +245,14 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Post-MVP Features (Week 9-12)
 
 ### Phase 2 Features
+
 - Multiple PDF templates (3 professional designs)
 - Cover letter generation (AI-powered)
 - Match score (85% fit indicator)
 - Skills highlighting (visual emphasis on matching skills)
 
 ### Phase 3 Features
+
 - GitHub profile import (auto-populate projects)
 - LinkedIn import (auto-populate experience)
 - Chrome extension (apply directly from job boards)
@@ -234,6 +266,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ### Tech Stack
 
 **Frontend (apps/frontend):**
+
 - Framework: Next.js 15 (App Router)
 - Language: TypeScript
 - Styling: Tailwind CSS
@@ -245,6 +278,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Notifications: react-hot-toast
 
 **Backend (apps/backend):**
+
 - Runtime: Node.js
 - Framework: Express + TypeScript
 - Database: PostgreSQL
@@ -255,6 +289,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Email: Resend (Week 6)
 
 **Shared (packages/shared):**
+
 - TypeScript types/interfaces
 - Zod schemas
 - Utility functions
@@ -267,6 +302,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ### Database Schema
 
 **User Table:**
+
 - id (primary key)
 - clerkUserId (unique)
 - email (unique)
@@ -278,6 +314,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - updatedAt
 
 **BaseResume Table:**
+
 - id (primary key)
 - userId (foreign key)
 - name (e.g., "Software Engineer Resume")
@@ -286,6 +323,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - updatedAt
 
 **CustomizedResume Table:**
+
 - id (primary key)
 - userId (foreign key)
 - baseResumeId (foreign key)
@@ -301,11 +339,13 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ### API Endpoints
 
 **Authentication:**
+
 - POST /api/auth/register - Create account
 - POST /api/auth/login - Login
 - GET /api/user/me - Get user info
 
 **Resume Management:**
+
 - GET /api/resume - Get all base resumes
 - POST /api/resume - Create base resume
 - GET /api/resume/:id - Get single resume
@@ -313,11 +353,13 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - DELETE /api/resume/:id - Delete resume
 
 **AI Customization:**
+
 - POST /api/customize - Main AI customization endpoint
 - GET /api/customize/:id - Get customized resume
 - GET /api/customize - Get all customized resumes
 
 **PDF & Payments:**
+
 - POST /api/pdf - Generate PDF
 - POST /api/webhooks/stripe - Stripe webhook
 - PATCH /api/user/settings - Update user settings
@@ -327,6 +369,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## User Flows
 
 ### Flow 1: First-Time User Onboarding
+
 1. Land on homepage (tailorcv.xyz)
 2. Click "Get Started"
 3. Sign up (email or Google)
@@ -344,6 +387,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Flow 2: Customizing Resume for Job
+
 1. Dashboard: Click "Customize Resume"
 2. Paste job description
 3. Add company name (optional)
@@ -359,6 +403,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Flow 3: Viewing Application History
+
 1. Dashboard: Navigate to "My Applications"
 2. See table of all customized resumes
 3. Columns: Job Title, Company, Date, Actions
@@ -369,6 +414,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Flow 4: Upgrading to Pro
+
 1. Hit free tier limit (3 resumes)
 2. See "Upgrade to Pro" banner
 3. Click upgrade
@@ -383,17 +429,20 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Success Metrics
 
 ### Week 2 Goals (Internal MVP)
+
 - âœ… Used tool for 5 real job applications
 - âœ… Saves 10+ minutes per application
 - âœ… Quality matches manual ChatGPT output
 
 ### Week 4 Goals (Friends Beta)
+
 - âœ… 3-5 developer friends tested
 - âœ… 20+ customized resumes generated
 - âœ… No major bugs
 - âœ… Positive feedback on UX
 
 ### Week 8 Goals (Public Launch)
+
 - ðŸŽ¯ 50-100 signups
 - ðŸŽ¯ 3-5 paying customers
 - ðŸŽ¯ $50-150 revenue
@@ -401,12 +450,14 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - ðŸŽ¯ Reddit posts (r/cscareerquestions, r/webdev)
 
 ### Month 3 Goals
+
 - ðŸŽ¯ 500+ signups
 - ðŸŽ¯ 25-50 paying customers
 - ðŸŽ¯ $300-600 MRR
 - ðŸŽ¯ 10%+ free-to-paid conversion
 
 ### Month 6 Goals
+
 - ðŸŽ¯ 1,000+ signups
 - ðŸŽ¯ 50-100 paying customers
 - ðŸŽ¯ $500-1,000 MRR (initial target achieved)
@@ -417,9 +468,11 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## 8-Week Development Timeline
 
 ### Week 1-2: Foundation & Core Features
+
 **Goals:** Monorepo setup, auth, base resume input, AI customization
 
 **Tasks:**
+
 - âœ… Monorepo structure (npm workspaces)
 - âœ… Frontend scaffolding (Next.js + Hero UI)
 - âœ… Backend setup (Express + Prisma)
@@ -436,9 +489,11 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Week 3-4: Polish & User Experience
+
 **Goals:** PDF export, versioning, UI improvements
 
 **Tasks:**
+
 - PDF generation (@react-pdf/renderer)
 - Resume version history (database + UI)
 - Application tracker (list view)
@@ -453,9 +508,11 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Week 5-6: Monetization & Premium Features
+
 **Goals:** Stripe integration, usage limits, premium templates
 
 **Tasks:**
+
 - Stripe integration (monthly + lifetime plans)
 - Free tier enforcement (3/month limit)
 - Usage tracking in database
@@ -470,9 +527,11 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Week 7: Testing & Bug Fixes
+
 **Goals:** Beta testing, polish, performance
 
 **Tasks:**
+
 - Beta testing with 5-10 developer friends
 - Bug fixes based on feedback
 - Performance optimization (Lighthouse 95+)
@@ -486,9 +545,11 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### Week 8: Launch Week
+
 **Goals:** Public launch, get first users and customers
 
 **Tasks:**
+
 - Product Hunt launch (prepare assets, schedule)
 - Reddit launch posts:
   - r/cscareerquestions
@@ -508,6 +569,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Marketing & Growth Strategy
 
 ### Launch Channels (Week 8)
+
 1. **Product Hunt** - Target #1-3 Product of the Day
 2. **Reddit** - Developer communities (8M+ members)
 3. **Twitter/X** - #BuildInPublic, #IndieDev, #DevTools
@@ -516,12 +578,14 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 6. **Hacker News** - "Show HN" post
 
 ### Content Marketing (Post-Launch)
+
 - Weekly blog posts (resume tips, job search advice)
 - YouTube videos (demo, tutorials)
 - Twitter threads (job search lessons)
 - Email newsletter (weekly tips)
 
 ### SEO Keywords
+
 - "customize resume for job"
 - "AI resume builder for developers"
 - "tailor cv for job application"
@@ -533,11 +597,13 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Competitive Analysis
 
 ### Direct Competitors
+
 **Rezi.ai** - $29/month, ATS scoring  
 **Resume Worded** - $49/month, detailed feedback  
-**Teal HQ** - $29/month, full job search suite  
+**Teal HQ** - $29/month, full job search suite
 
 **TailorCV Advantages:**
+
 - âœ… Cheaper ($12/month vs $29-49/month)
 - âœ… Faster (30 seconds vs 5+ minutes)
 - âœ… Developer-focused (not generic)
@@ -545,6 +611,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - âœ… Lifetime option ($39)
 
 ### Indirect Competitors
+
 **ChatGPT** - Free, but manual and slow  
 **Canva Resume Builder** - Visual, not AI-powered  
 **Indeed Resume** - Free, basic, no customization
@@ -554,28 +621,36 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Risks & Mitigation
 
 ### Risk 1: Low Conversion (Free â†’ Paid)
+
 **Mitigation:**
+
 - 3 free resumes = enough to test, not enough for full search
 - Clear upgrade prompts at limit
 - Show time saved and value provided
 - Offer lifetime deal ($39 = impulse buy)
 
 ### Risk 2: AI Quality Issues
+
 **Mitigation:**
+
 - Extensive prompt engineering
 - Manual editing allowed
 - Before/after comparison
 - User feedback loop
 
 ### Risk 3: Competition from Free Tools
+
 **Mitigation:**
+
 - Emphasize speed (30 seconds)
 - Version tracking (ChatGPT doesn't have)
 - Professional output (better than manual)
 - Developer-specific features
 
 ### Risk 4: Low Organic Traffic
+
 **Mitigation:**
+
 - Product Hunt launch for initial boost
 - Reddit posts for developer audience
 - SEO optimization for long-term growth
@@ -586,13 +661,16 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Financial Projections
 
 ### Costs
+
 **Monthly Fixed Costs:**
+
 - Domain: $1/month (tailorcv.xyz)
 - Vercel: $0 (free tier, then $20/month at scale)
 - Railway: $5/month (backend hosting)
 - Total: ~$6-26/month
 
 **Variable Costs:**
+
 - Anthropic API: $0.002 per customization
 - At 1,000 customizations/month: $2
 - At 10,000 customizations/month: $20
@@ -604,18 +682,21 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ### Revenue Projections
 
 **Month 1 (Launch):**
+
 - 100 signups
 - 5 paid ($12/month) = $60 MRR
 - 0 lifetime = $0
 - **Total: $60 MRR**
 
 **Month 3:**
+
 - 500 signups
 - 25 monthly ($12) = $300 MRR
 - 10 lifetime ($39) = $390 one-time
 - **Total: $300 MRR + $390 one-time**
 
 **Month 6:**
+
 - 1,000 signups
 - 50 monthly ($12) = $600 MRR
 - 20 lifetime ($39) = $780 one-time
@@ -629,18 +710,22 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Design Principles
 
 ### Visual Identity
+
 **Colors:**
+
 - Primary: Blue (#3B82F6) - Trust, professionalism
 - Secondary: Indigo (#6366F1) - Tech-forward
 - Accent: Green (#10B981) - Success, action
 - Neutral: Gray (#6B7280) - Text, backgrounds
 
 **Typography:**
+
 - Headings: Inter (bold, modern)
 - Body: Inter (regular, readable)
 - Code: JetBrains Mono (developer aesthetic)
 
 **Style:**
+
 - Clean, minimal, professional
 - Generous whitespace
 - Clear hierarchy
@@ -650,6 +735,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ---
 
 ### UI/UX Principles
+
 1. **Speed First** - Every action should feel instant
 2. **Zero Learning Curve** - Obvious what to do next
 3. **Progressive Disclosure** - Show advanced features after basics
@@ -662,6 +748,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Technical Constraints
 
 ### Performance Targets
+
 - Lighthouse Performance: 95+
 - Time to First Byte: <200ms
 - First Contentful Paint: <1.0s
@@ -669,6 +756,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - PDF generation: <2s
 
 ### Browser Support
+
 - Chrome/Edge (latest 2 versions)
 - Firefox (latest 2 versions)
 - Safari (latest 2 versions)
@@ -676,6 +764,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Chrome Mobile (latest)
 
 ### Accessibility
+
 - WCAG 2.1 Level AA compliance
 - Keyboard navigation
 - Screen reader support
@@ -687,6 +776,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Legal & Compliance
 
 ### Privacy
+
 - GDPR compliant (EU users)
 - CCPA compliant (California users)
 - Data encryption at rest and in transit
@@ -695,6 +785,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Clear privacy policy
 
 ### Terms of Service
+
 - User owns their resume data
 - We provide AI assistance, not legal advice
 - No guarantee of job placement
@@ -702,6 +793,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - Refund policy (14 days for monthly, 30 days for lifetime)
 
 ### AI Usage
+
 - Transparent about AI usage
 - Users can edit AI output
 - Not responsible for AI errors
@@ -712,6 +804,7 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 ## Support & Documentation
 
 ### Help Resources
+
 - FAQ page (common questions)
 - Video tutorials (YouTube)
 - Blog posts (tips and guides)
@@ -719,11 +812,14 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 - In-app tooltips
 
 ### Support Channels
+
 **Free Tier:**
+
 - Email support (48-hour response)
 - FAQ and docs
 
 **Pro Tier:**
+
 - Priority email (24-hour response)
 - Live chat (future)
 
@@ -735,16 +831,18 @@ TailorCV stores your base resume once, then instantly customizes it for any job 
 **Age:** 18  
 **Location:** Giresun, Turkey (originally from Baku, Azerbaijan)  
 **Experience:** 3 years self-taught full-stack development  
-**Current Role:** Frontend Team Lead at SoftSync  
+**Current Role:** Frontend Team Lead at SoftSync
 
 **Motivation:**
 Building TailorCV to:
+
 1. Solve personal job search pain (applying to 100+ jobs)
 2. Create portfolio piece for job applications
 3. Generate $500-1,000/month passive income
 4. Demonstrate shipping ability to employers
 
 **Timeline:** Must ship in 8 weeks due to:
+
 - Current job has payment reliability issues
 - Active job searching (1-2 hours/day for applications)
 - Limited financial runway
@@ -755,26 +853,31 @@ Building TailorCV to:
 ## Appendix: Key Decisions Log
 
 ### Decision 1: Tech Stack
+
 **Decision:** Express + REST (not NestJS + GraphQL)  
 **Reasoning:** Faster to build, simpler architecture, sufficient for 13 API endpoints  
 **Made:** Week 0 (planning)
 
 ### Decision 2: Monorepo Structure
+
 **Decision:** npm workspaces (not pnpm, not Turborepo)  
 **Reasoning:** Already using npm, simpler for solo developer  
 **Made:** Week 1
 
 ### Decision 3: PDF Generation
+
 **Decision:** @react-pdf/renderer (client-side)  
 **Reasoning:** Faster, cheaper, lower server costs. Can upgrade to Puppeteer later if quality issues  
 **Made:** Week 1
 
 ### Decision 4: Pricing Model
+
 **Decision:** Freemium with lifetime option ($12/month or $39 lifetime)  
 **Reasoning:** Reduces churn, developers prefer one-time payments, competitive vs market ($29-49/month)  
 **Made:** Week 0 (planning)
 
 ### Decision 5: AI Provider
+
 **Decision:** Anthropic Claude (not OpenAI)  
 **Reasoning:** Better instruction following, lower cost, faster processing  
 **Made:** Week 0 (planning)

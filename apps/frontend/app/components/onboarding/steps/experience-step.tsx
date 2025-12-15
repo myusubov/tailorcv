@@ -40,7 +40,12 @@ const months = [
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
 
-export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceStepProps) {
+export function ExperienceStep({
+  data,
+  onChange,
+  onNext,
+  onBack,
+}: ExperienceStepProps) {
   const addExperience = () => {
     const newExp: Experience = {
       id: crypto.randomUUID(),
@@ -56,8 +61,14 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
     onChange([...data, newExp]);
   };
 
-  const updateExperience = (id: string, field: keyof Experience, value: string | boolean) => {
-    onChange(data.map((exp) => (exp.id === id ? { ...exp, [field]: value } : exp)));
+  const updateExperience = (
+    id: string,
+    field: keyof Experience,
+    value: string | boolean,
+  ) => {
+    onChange(
+      data.map((exp) => (exp.id === id ? { ...exp, [field]: value } : exp)),
+    );
   };
 
   const removeExperience = (id: string) => {
@@ -104,7 +115,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                     <Input
                       placeholder="Frontend Developer"
                       value={exp.jobTitle}
-                      onChange={(e) => updateExperience(exp.id, 'jobTitle', e.target.value)}
+                      onChange={(e) =>
+                        updateExperience(exp.id, 'jobTitle', e.target.value)
+                      }
                     />
                   </TextField>
 
@@ -113,7 +126,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                     <Input
                       placeholder="Acme Inc."
                       value={exp.company}
-                      onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
+                      onChange={(e) =>
+                        updateExperience(exp.id, 'company', e.target.value)
+                      }
                     />
                   </TextField>
                 </div>
@@ -127,7 +142,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                       <select
                         className="bg-surface-tertiary border-divider text-foreground flex-1 rounded-lg border px-3 py-2 text-sm"
                         value={exp.startMonth}
-                        onChange={(e) => updateExperience(exp.id, 'startMonth', e.target.value)}
+                        onChange={(e) =>
+                          updateExperience(exp.id, 'startMonth', e.target.value)
+                        }
                       >
                         <option value="">Month</option>
                         {months.map((m) => (
@@ -139,7 +156,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                       <select
                         className="bg-surface-tertiary border-divider text-foreground flex-1 rounded-lg border px-3 py-2 text-sm"
                         value={exp.startYear}
-                        onChange={(e) => updateExperience(exp.id, 'startYear', e.target.value)}
+                        onChange={(e) =>
+                          updateExperience(exp.id, 'startYear', e.target.value)
+                        }
                       >
                         <option value="">Year</option>
                         {years.map((y) => (
@@ -159,7 +178,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                       <select
                         className="bg-surface-tertiary border-divider text-foreground flex-1 rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
                         value={exp.endMonth}
-                        onChange={(e) => updateExperience(exp.id, 'endMonth', e.target.value)}
+                        onChange={(e) =>
+                          updateExperience(exp.id, 'endMonth', e.target.value)
+                        }
                         disabled={exp.isCurrent}
                       >
                         <option value="">Month</option>
@@ -172,7 +193,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                       <select
                         className="bg-surface-tertiary border-divider text-foreground flex-1 rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
                         value={exp.endYear}
-                        onChange={(e) => updateExperience(exp.id, 'endYear', e.target.value)}
+                        onChange={(e) =>
+                          updateExperience(exp.id, 'endYear', e.target.value)
+                        }
                         disabled={exp.isCurrent}
                       >
                         <option value="">Year</option>
@@ -188,7 +211,9 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
 
                 <Checkbox
                   isSelected={exp.isCurrent}
-                  onChange={(isSelected) => updateExperience(exp.id, 'isCurrent', isSelected)}
+                  onChange={(isSelected) =>
+                    updateExperience(exp.id, 'isCurrent', isSelected)
+                  }
                 >
                   <Checkbox.Control className="size-5">
                     <Checkbox.Indicator />
@@ -204,10 +229,13 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
                     placeholder="Led frontend development, built React dashboards, mentored junior devs..."
                     rows={3}
                     value={exp.description}
-                    onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
+                    onChange={(e) =>
+                      updateExperience(exp.id, 'description', e.target.value)
+                    }
                   />
                   <Description>
-                    Write 2-3 sentences. We&apos;ll expand this into professional bullet points.
+                    Write 2-3 sentences. We&apos;ll expand this into
+                    professional bullet points.
                   </Description>
                 </TextField>
               </Card.Content>
@@ -228,19 +256,23 @@ export function ExperienceStep({ data, onChange, onNext, onBack }: ExperienceSte
         </Button>
 
         {data.length === 0 && (
-          <Button variant="ghost" onPress={onNext} className="text-muted-foreground w-full">
+          <Button
+            variant="ghost"
+            onPress={onNext}
+            className="text-muted-foreground w-full"
+          >
             Skip - I don&apos;t have work experience yet
           </Button>
         )}
       </motion.div>
 
       <motion.div
-        className="mt-8 flex justify-between"
+        className="mt-8 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <Button variant="ghost" onPress={onBack}>
+        <Button variant="ghost" onPress={onBack} className="text-muted hover:text-foreground">
           <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
           Back
         </Button>

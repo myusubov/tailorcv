@@ -26,4 +26,3 @@ export type UpdateBaseResumeLocals = ClerkLocals & {
   params: ResumeIdParams;
   body: UpdateBaseResumeBody;
 };
-

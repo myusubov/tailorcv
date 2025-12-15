@@ -8,4 +8,4 @@ onboardingRouter.get(
   '/status',
   requireClerkAuth,
   getOnboardingStatusController,
-)
+);

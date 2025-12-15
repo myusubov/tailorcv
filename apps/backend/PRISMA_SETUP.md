@@ -5,6 +5,7 @@ This document explains how to set up and use Prisma 7 in the backend application
 ## 🎯 Overview
 
 Prisma 7 introduces significant changes from previous versions:
+
 - **New Configuration System**: Separated configuration from schema using `prisma.config.ts`
 - **ESM-Only**: Now ships as ES modules only
 - **Rust-Free Client**: Complete rewrite in TypeScript for better performance
@@ -30,6 +31,7 @@ apps/backend/
 ## ⚙️ Configuration Files
 
 ### `prisma.config.ts`
+
 New configuration file that replaces environment variables in the schema:
 
 ```typescript
@@ -51,6 +53,7 @@ export default defineConfig({
 ```
 
 ### `prisma/schema.prisma`
+
 Schema file without database URL (now in config):
 
 ```prisma
@@ -76,6 +79,7 @@ cp .env.example .env
 ```
 
 Required environment variables:
+
 - `DATABASE_URL`: PostgreSQL connection string
 - `SHADOW_DATABASE_URL`: Shadow database for migrations (optional)
 
@@ -110,6 +114,7 @@ npm run prisma:db:seed
 ## 📝 Available Scripts
 
 ### Database Management
+
 - `npm run prisma:generate` - Generate Prisma Client
 - `npm run prisma:migrate` - Run migrations in development
 - `npm run prisma:migrate:deploy` - Deploy migrations to production
@@ -118,11 +123,13 @@ npm run prisma:db:seed
 - `npm run prisma:db:seed` - Run database seeding
 
 ### Development Tools
+
 - `npm run prisma:studio` - Open Prisma Studio
 - `npm run prisma:format` - Format schema file
 - `npm run prisma:validate` - Validate schema
 
 ### Quick Setup
+
 - `npm run db:setup` - Generate client, deploy migrations, and seed
 - `npm run db:reset` - Reset database and reseed
 

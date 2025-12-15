@@ -1,20 +1,20 @@
 import type { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../utils/response';
-import type {
-    ClerkLocals,
-} from '../types/locals';
+import type { ClerkLocals } from '../types/locals';
 import { getOnboardingStatus } from '../services/onboarding.service';
 
 export const getOnboardingStatusController = async (
-    _req: Request,
-    res: Response<any, ClerkLocals>,
-    next: NextFunction,
+  _req: Request,
+  res: Response<any, ClerkLocals>,
+  next: NextFunction,
 ) => {
-    try {
-        const { clerkUserId } = res.locals;
-        const { hasBaseResume, latestBaseResumeId } = await getOnboardingStatus({ clerkUserId });
-        return successResponse(res, { hasBaseResume, latestBaseResumeId }, 200);
-    } catch (err) {
-        next(err);
-    }
+  try {
+    const { clerkUserId } = res.locals;
+    const { hasBaseResume, latestBaseResumeId } = await getOnboardingStatus({
+      clerkUserId,
+    });
+    return successResponse(res, { hasBaseResume, latestBaseResumeId }, 200);
+  } catch (err) {
+    next(err);
+  }
 };

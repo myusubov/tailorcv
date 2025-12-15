@@ -53,7 +53,11 @@ export interface OnboardingFormData {
   education: Education;
 }
 
-export const MANUAL_STEPS: { key: ManualEntryStep; label: string; icon: string }[] = [
+export const MANUAL_STEPS: {
+  key: ManualEntryStep;
+  label: string;
+  icon: string;
+}[] = [
   { key: 'contact', label: 'Contact Info', icon: 'lucide:user' },
   { key: 'summary', label: 'Summary', icon: 'lucide:file-text' },
   { key: 'experience', label: 'Experience', icon: 'lucide:briefcase' },

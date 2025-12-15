@@ -18,7 +18,9 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
         <span className="text-muted-foreground text-sm font-medium">
           Step {currentIndex + 1} of {MANUAL_STEPS.length}
         </span>
-        <span className="text-muted-foreground text-sm">{Math.round(progress)}%</span>
+        <span className="text-muted-foreground text-sm">
+          {Math.round(progress)}%
+        </span>
       </div>
 
       <div className="bg-surface-secondary h-2 w-full overflow-hidden rounded-full">

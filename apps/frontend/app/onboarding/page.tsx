@@ -8,6 +8,7 @@ import { Icon } from '@iconify/react';
 import { MethodSelection, ManualEntryForm } from '../components/onboarding';
 import type { OnboardingMethod, OnboardingFormData } from './types';
 import { LOGOS } from '@/lib/config';
+import { Button } from '@heroui/react';
 
 export default function OnboardingPage() {
   const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>(null);
@@ -55,13 +56,17 @@ export default function OnboardingPage() {
               <p className="text-muted-foreground mt-2">
                 GitHub integration coming soon...
               </p>
-              <button
+              {/* <button
                 type="button"
                 onClick={handleBackToMethods}
                 className="text-primary mt-6 text-sm hover:underline"
               >
                 Back to methods
-              </button>
+              </button> */}
+              <Button onClick={handleBackToMethods} className="mt-6">
+                <Icon icon="lucide:arrow-left" />
+                Back to methods
+              </Button>
             </motion.div>
           </div>
         );
@@ -83,13 +88,17 @@ export default function OnboardingPage() {
               <p className="text-muted-foreground mt-2">
                 File upload coming soon...
               </p>
-              <button
+              {/* <button
                 type="button"
                 onClick={handleBackToMethods}
                 className="text-primary mt-6 text-sm hover:underline"
               >
                 Back to methods
-              </button>
+              </button> */}
+              <Button onClick={handleBackToMethods} className="mt-6">
+                <Icon icon="lucide:arrow-left" />
+                Back to methods
+              </Button>
             </motion.div>
           </div>
         );

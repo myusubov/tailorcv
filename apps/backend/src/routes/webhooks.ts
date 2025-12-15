@@ -22,5 +22,4 @@ webhooksRouter.post('/clerk', async (req, res) => {
       .status(400)
       .json({ success: false, message: 'Webhook verification failed' });
   }
-}
-);
+});

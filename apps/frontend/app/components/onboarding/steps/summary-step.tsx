@@ -12,7 +12,12 @@ interface SummaryStepProps {
   onBack: () => void;
 }
 
-export function SummaryStep({ data, onChange, onNext, onBack }: SummaryStepProps) {
+export function SummaryStep({
+  data,
+  onChange,
+  onNext,
+  onBack,
+}: SummaryStepProps) {
   return (
     <div className="mx-auto w-full max-w-xl">
       <StepHeader
@@ -35,8 +40,8 @@ export function SummaryStep({ data, onChange, onNext, onBack }: SummaryStepProps
             onChange={(e) => onChange(e.target.value)}
           />
           <Description>
-            Mention your role, experience level, and main technologies. We&apos;ll refine this
-            later.
+            Mention your role, experience level, and main technologies.
+            We&apos;ll refine this later.
           </Description>
         </TextField>
       </motion.div>
@@ -54,8 +59,8 @@ export function SummaryStep({ data, onChange, onNext, onBack }: SummaryStepProps
           <div>
             <p className="text-foreground text-sm font-medium">Need help?</p>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Not sure what to write? You can skip this and we&apos;ll generate one based on your
-              experience and projects.
+              Not sure what to write? You can skip this and we&apos;ll generate
+              one based on your experience and projects.
             </p>
           </div>
         </div>
@@ -74,12 +79,12 @@ export function SummaryStep({ data, onChange, onNext, onBack }: SummaryStepProps
       </motion.div>
 
       <motion.div
-        className="mt-8 flex justify-between"
+        className="mt-8 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <Button variant="ghost" onPress={onBack}>
+        <Button variant="ghost" onPress={onBack} className="text-muted hover:text-foreground">
           <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
           Back
         </Button>
