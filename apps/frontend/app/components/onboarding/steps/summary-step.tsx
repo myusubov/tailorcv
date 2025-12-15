@@ -84,7 +84,11 @@ export function SummaryStep({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <Button variant="ghost" onPress={onBack} className="text-muted hover:text-foreground">
+        <Button
+          variant="ghost"
+          onPress={onBack}
+          className="text-muted hover:text-foreground"
+        >
           <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
           Back
         </Button>
