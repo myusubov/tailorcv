@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Modal,
   TextField,
   Label,
   Input,
@@ -11,12 +13,14 @@ import {
   Checkbox,
   Card,
   FieldError,
+  useOverlayState,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
+import { generateUUID } from '@/lib/utils';
 
 interface ExperienceStepProps {
   onNext: () => void;
@@ -42,17 +46,19 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
 
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
-  const { control, watch } = useFormContext<OnboardingFormInput>();
+  const deleteModalState = useOverlayState()
+  const { control, watch, setValue } = useFormContext<OnboardingFormInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'experiences',
   });
 
   const experiences = watch('experiences');
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const addExperience = () => {
     append({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       jobTitle: '',
       company: '',
       startMonth: '',
@@ -64,286 +70,383 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
     });
   };
 
+  const handleDelete = () => {
+    if (deleteIndex === null) return;
+    setTimeout(() => { remove(deleteIndex) }, 300)
+    setDeleteIndex(null);
+  };
+
+
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <StepHeader
-        icon="lucide:briefcase"
-        title="Work Experience"
-        description="Add your professional work history."
-      />
+    <>
+      <div className="mx-auto w-full max-w-2xl">
+        <StepHeader
+          icon="lucide:briefcase"
+          title="Work Experience"
+          description="Add your professional work history."
+        />
 
-      <AnimatePresence mode="popLayout">
-        {fields.map((field, index) => {
-          const isCurrent = !!experiences?.[index]?.isCurrent;
+          <AnimatePresence mode="popLayout">
+          {fields.map((field, index) => {
+            const isCurrent = !!experiences?.[index]?.isCurrent;
 
-          return (
-            <motion.div
-              key={field.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              layout
-            >
-              <Card className="mb-4" variant="secondary">
-                <Card.Header className="flex-row items-center justify-between">
-                  <Card.Title className="text-base">Job #{index + 1}</Card.Title>
-                  {fields.length > 1 && (
+            return (
+              <motion.div
+                key={field.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                layout
+              >
+                <Card className="mb-4">
+                  <Card.Header className="flex-row items-center justify-between">
+                    <Card.Title className="text-base">Job #{index + 1}</Card.Title>
                     <Button
                       isIconOnly
-                      variant="ghost"
+                      variant="danger-soft"
                       size="sm"
-                      onPress={() => remove(index)}
-                      className="text-danger"
+                      onPress={() => {
+                        setDeleteIndex(index);
+                        deleteModalState.open();
+                      }}
                     >
-                      <Icon icon="lucide:trash-2" className="size-4" />
+                      <Icon icon="lucide:trash-2" />
                     </Button>
-                  )}
-                </Card.Header>
 
-                <Card.Content className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
+
+                  </Card.Header>
+
+                  <Card.Content className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Controller
+                        name={`experiences.${index}.jobTitle`}
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <TextField className="w-full" isInvalid={!!fieldState.error}>
+                            <Label>Job Title *</Label>
+                            <Input {...field} placeholder="Frontend Developer" />
+                            {fieldState.error ? (
+                              <FieldError>{fieldState.error.message}</FieldError>
+                            ) : null}
+                          </TextField>
+                        )}
+                      />
+
+                      <Controller
+                        name={`experiences.${index}.company`}
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <TextField className="w-full" isInvalid={!!fieldState.error}>
+                            <Label>Company *</Label>
+                            <Input {...field} placeholder="Acme Inc." />
+                            {fieldState.error ? (
+                              <FieldError>{fieldState.error.message}</FieldError>
+                            ) : null}
+                          </TextField>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-foreground mb-2 block text-sm font-medium">
+                          Start Date *
+                        </Label>
+                        <div className="flex gap-2">
+                          <Controller
+                            name={`experiences.${index}.startMonth`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                >
+                                  <option value="">Month</option>
+                                  {months.map((m) => (
+                                    <option key={m.value} value={m.value}>
+                                      {m.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+
+                          <Controller
+                            name={`experiences.${index}.startYear`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                >
+                                  <option value="">Year</option>
+                                  {years.map((y) => (
+                                    <option key={y} value={y}>
+                                      {y}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-foreground mb-2 block text-sm font-medium">
+                          End Date
+                        </Label>
+                        <div className="flex gap-2">
+                          <Controller
+                            name={`experiences.${index}.endMonth`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  disabled={isCurrent}
+                                >
+                                  <option value="">Month</option>
+                                  {months.map((m) => (
+                                    <option key={m.value} value={m.value}>
+                                      {m.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+
+                          <Controller
+                            name={`experiences.${index}.endYear`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  disabled={isCurrent}
+                                >
+                                  <option value="">Year</option>
+                                  {years.map((y) => (
+                                    <option key={y} value={y}>
+                                      {y}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <Controller
-                      name={`experiences.${index}.jobTitle`}
+                      name={`experiences.${index}.isCurrent`}
                       control={control}
-                      render={({ field, fieldState }) => (
-                        <TextField className="w-full" isInvalid={!!fieldState.error}>
-                          <Label>Job Title *</Label>
-                          <Input {...field} placeholder="Frontend Developer" />
-                          {fieldState.error ? (
-                            <FieldError>{fieldState.error.message}</FieldError>
-                          ) : null}
-                        </TextField>
+                      render={({ field }) => (
+                        <Checkbox
+                          isSelected={!!field.value}
+                          onChange={(selected) => field.onChange(selected)}
+                        >
+                          <Checkbox.Control className="size-5">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Content>
+                            <span className="text-sm">I currently work here</span>
+                          </Checkbox.Content>
+                        </Checkbox>
                       )}
                     />
 
                     <Controller
-                      name={`experiences.${index}.company`}
+                      name={`experiences.${index}.description`}
                       control={control}
                       render={({ field, fieldState }) => (
                         <TextField className="w-full" isInvalid={!!fieldState.error}>
-                          <Label>Company *</Label>
-                          <Input {...field} placeholder="Acme Inc." />
+                          <Label>What did you do? *</Label>
+                          <TextArea
+                            {...field}
+                            placeholder="Led frontend development, built React dashboards, mentored junior devs..."
+                            rows={3}
+                          />
                           {fieldState.error ? (
                             <FieldError>{fieldState.error.message}</FieldError>
                           ) : null}
+                          <Description>
+                            Write 2-3 sentences. We&apos;ll expand this into
+                            professional bullet points.
+                          </Description>
                         </TextField>
                       )}
                     />
-                  </div>
+                  </Card.Content>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label className="text-foreground mb-2 block text-sm font-medium">
-                        Start Date *
-                      </Label>
-                      <div className="flex gap-2">
-                        <Controller
-                          name={`experiences.${index}.startMonth`}
-                          control={control}
-                          render={({ field, fieldState }) => (
-                            <div className="flex-1">
-                              <select
-                                className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                              >
-                                <option value="">Month</option>
-                                {months.map((m) => (
-                                  <option key={m.value} value={m.value}>
-                                    {m.label}
-                                  </option>
-                                ))}
-                              </select>
-                              {fieldState.error ? (
-                                <p className="text-danger mt-1 text-xs">
-                                  {fieldState.error.message}
-                                </p>
-                              ) : null}
-                            </div>
-                          )}
-                        />
+        {fields.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card className="mt-2">
+              <Card.Content className="flex flex-col items-center justify-center px-6 py-8 text-center">
+                <h3 className="text-foreground text-lg font-semibold">
+                  No work experience yet?
+                </h3>
+                <p className="text-muted-foreground mt-2 max-w-md text-sm">
+                  This step is optional. Add a job if you have one — or skip and
+                  we&apos;ll still build a great resume from your projects and
+                  skills.
+                </p>
 
-                        <Controller
-                          name={`experiences.${index}.startYear`}
-                          control={control}
-                          render={({ field, fieldState }) => (
-                            <div className="flex-1">
-                              <select
-                                className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                              >
-                                <option value="">Year</option>
-                                {years.map((y) => (
-                                  <option key={y} value={y}>
-                                    {y}
-                                  </option>
-                                ))}
-                              </select>
-                              {fieldState.error ? (
-                                <p className="text-danger mt-1 text-xs">
-                                  {fieldState.error.message}
-                                </p>
-                              ) : null}
-                            </div>
-                          )}
-                        />
-                      </div>
-                    </div>
+                <div className="mt-6 w-full max-w-sm">
+                  <Button
+                    variant="secondary"
+                    onPress={addExperience}
+                    className="w-full"
+                  >
+                    <Icon icon="lucide:plus" className="mr-2 size-4" />
+                    Add your first job
+                  </Button>
+                </div>
+              </Card.Content>
+            </Card>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="flex flex-col gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Button variant="secondary" onPress={addExperience} className="w-full">
+              <Icon icon="lucide:plus" className="mr-2 size-4" />
+              Add Another Job
+            </Button>
+          </motion.div>
+        )}
 
-                    <div>
-                      <Label className="text-foreground mb-2 block text-sm font-medium">
-                        End Date
-                      </Label>
-                      <div className="flex gap-2">
-                        <Controller
-                          name={`experiences.${index}.endMonth`}
-                          control={control}
-                          render={({ field, fieldState }) => (
-                            <div className="flex-1">
-                              <select
-                                className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                disabled={isCurrent}
-                              >
-                                <option value="">Month</option>
-                                {months.map((m) => (
-                                  <option key={m.value} value={m.value}>
-                                    {m.label}
-                                  </option>
-                                ))}
-                              </select>
-                              {fieldState.error ? (
-                                <p className="text-danger mt-1 text-xs">
-                                  {fieldState.error.message}
-                                </p>
-                              ) : null}
-                            </div>
-                          )}
-                        />
-
-                        <Controller
-                          name={`experiences.${index}.endYear`}
-                          control={control}
-                          render={({ field, fieldState }) => (
-                            <div className="flex-1">
-                              <select
-                                className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                disabled={isCurrent}
-                              >
-                                <option value="">Year</option>
-                                {years.map((y) => (
-                                  <option key={y} value={y}>
-                                    {y}
-                                  </option>
-                                ))}
-                              </select>
-                              {fieldState.error ? (
-                                <p className="text-danger mt-1 text-xs">
-                                  {fieldState.error.message}
-                                </p>
-                              ) : null}
-                            </div>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Controller
-                    name={`experiences.${index}.isCurrent`}
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        isSelected={!!field.value}
-                        onChange={(selected) => field.onChange(selected)}
-                      >
-                        <Checkbox.Control className="size-5">
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Content>
-                          <span className="text-sm">I currently work here</span>
-                        </Checkbox.Content>
-                      </Checkbox>
-                    )}
-                  />
-
-                  <Controller
-                    name={`experiences.${index}.description`}
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <TextField className="w-full" isInvalid={!!fieldState.error}>
-                        <Label>What did you do? *</Label>
-                        <TextArea
-                          {...field}
-                          placeholder="Led frontend development, built React dashboards, mentored junior devs..."
-                          rows={3}
-                        />
-                        {fieldState.error ? (
-                          <FieldError>{fieldState.error.message}</FieldError>
-                        ) : null}
-                        <Description>
-                          Write 2-3 sentences. We&apos;ll expand this into
-                          professional bullet points.
-                        </Description>
-                      </TextField>
-                    )}
-                  />
-                </Card.Content>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-
-      <motion.div
-        className="flex flex-col gap-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Button variant="secondary" onPress={addExperience} className="w-full">
-          <Icon icon="lucide:plus" className="mr-2 size-4" />
-          Add {fields.length > 0 ? 'Another ' : ''}Job
-        </Button>
-
-        {fields.length === 0 && (
+        <motion.div
+          className="mt-8 flex items-center justify-between gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <Button
             variant="ghost"
-            onPress={onNext}
-            className="text-muted w-full"
+            onPress={onBack}
+            className="text-muted-foreground hover:text-foreground"
           >
-            Skip - I don&apos;t have work experience yet
+            <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
+            Back
           </Button>
-        )}
-      </motion.div>
+          <Button onPress={onNext} className="group px-6">
+            {fields.length === 0 ? 'Skip: Projects & Skills' : 'Next: Projects & Skills'}
+            <Icon
+              icon="lucide:arrow-right"
+              className="ml-2 size-4 transition-transform group-hover:translate-x-1"
+            />
+          </Button>
+        </motion.div>
 
-      <motion.div
-        className="mt-8 flex items-center justify-between gap-3"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+
+      </div>
+
+
+      <Modal.Container
+        variant="blur"
+        isOpen={deleteModalState.isOpen}
+        onOpenChange={deleteModalState.setOpen}
+        className="max-w-md w-full"
       >
-        <Button
-          variant="ghost"
-          onPress={onBack}
-          className="text-muted hover:text-foreground"
-        >
-          <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
-          Back
-        </Button>
-        <Button onPress={onNext} className="group px-6">
-          Next: Projects & Skills
-          <Icon
-            icon="lucide:arrow-right"
-            className="ml-2 size-4 transition-transform group-hover:translate-x-1"
-          />
-        </Button>
-      </motion.div>
-    </div>
+        <Modal.Dialog>
+          {({ close }) => {
+            const company =
+              deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
+            const jobTitle =
+              deleteIndex !== null ? experiences?.[deleteIndex]?.jobTitle : '';
+            const labelParts = [jobTitle, company].filter(Boolean);
+            const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
+
+            return (
+              <>
+                <Modal.Header>
+                  <Modal.Icon className="bg-danger-soft text-foreground">
+                    <Icon icon="lucide:trash-2" className="text-danger size-5" />
+                  </Modal.Icon>
+                  <Modal.Heading>Remove job?</Modal.Heading>
+                </Modal.Header>
+                <Modal.Body>
+                  <p className="text-muted-foreground text-sm">
+                    This will permanently remove{' '}
+                    <span className="text-foreground font-medium">
+                      Job #{deleteIndex !== null ? deleteIndex + 1 : ''}
+                    </span>
+                    {label ? (
+                      <>
+                        {' '}
+                        (<span className="text-foreground">{label}</span>)
+                      </>
+                    ) : null}
+                    .
+                  </p>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    variant="tertiary"
+                    onPress={close}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onPress={() => {
+                      handleDelete();
+                      close()
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </Modal.Footer>
+              </>
+            );
+          }}
+        </Modal.Dialog>
+      </Modal.Container>
+    </>
   );
 }

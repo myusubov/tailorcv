@@ -82,18 +82,6 @@ export function SummaryStep({
       </motion.div>
 
       <motion.div
-        className="bg-surface-secondary mt-4 flex items-center justify-center rounded-xl p-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Button variant="ghost" className="text-primary">
-          <Icon icon="lucide:sparkles" className="mr-2 size-4" />
-          Generate with AI
-        </Button>
-      </motion.div>
-
-      <motion.div
         className="mt-8 flex items-center justify-between gap-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

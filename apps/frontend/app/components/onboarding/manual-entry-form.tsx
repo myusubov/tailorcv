@@ -92,7 +92,7 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
   };
 
   const handleNext = async () => {
-    const ok = await form.trigger(stepFields as any, { shouldFocus: true });
+    const ok = await form.trigger(stepFields, { shouldFocus: true });
     if (ok) goToNextStep();
   };
 
@@ -137,34 +137,34 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
   return (
     <FormProvider {...form}>
       <Form className="flex min-h-[calc(100vh-100px)] flex-col">
-      {/* Header with back button and progress */}
-      <motion.div
-        className="mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <ProgressBar currentStep={currentStep} />
-      </motion.div>
+        {/* Header with back button and progress */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <ProgressBar currentStep={currentStep} />
+        </motion.div>
 
-      {/* Step Content with Animation */}
-      <div className="relative flex-1 overflow-hidden">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentStep}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 },
-            }}
-          >
-            {renderStep()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+        {/* Step Content with Animation */}
+        <div className="relative flex-1 overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={currentStep}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: 'spring', stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 },
+              }}
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </Form>
     </FormProvider>
   );

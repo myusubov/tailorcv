@@ -16,6 +16,7 @@ import { Icon } from '@iconify/react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
+import { generateUUID } from '@/lib/utils';
 
 interface ProjectsStepProps {
   onNext: () => void;
@@ -34,7 +35,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
 
   const addProject = () => {
     append({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: '',
       description: '',
       techStack: '',

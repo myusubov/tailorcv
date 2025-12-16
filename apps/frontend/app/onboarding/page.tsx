@@ -56,13 +56,6 @@ export default function OnboardingPage() {
               <p className="text-muted mt-2">
                 GitHub integration coming soon...
               </p>
-              {/* <button
-                type="button"
-                onClick={handleBackToMethods}
-                className="text-primary mt-6 text-sm hover:underline"
-              >
-                Back to methods
-              </button> */}
               <Button onClick={handleBackToMethods} className="mt-6">
                 <Icon icon="lucide:arrow-left" />
                 Back to methods
@@ -88,13 +81,6 @@ export default function OnboardingPage() {
               <p className="text-muted mt-2">
                 File upload coming soon...
               </p>
-              {/* <button
-                type="button"
-                onClick={handleBackToMethods}
-                className="text-primary mt-6 text-sm hover:underline"
-              >
-                Back to methods
-              </button> */}
               <Button onClick={handleBackToMethods} className="mt-6">
                 <Icon icon="lucide:arrow-left" />
                 Back to methods
