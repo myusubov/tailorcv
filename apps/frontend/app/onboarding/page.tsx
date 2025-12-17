@@ -11,7 +11,7 @@ import { LOGOS } from '@/lib/config';
 import { Button } from '@heroui/react';
 
 export default function OnboardingPage() {
-  const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>("manual");
+  const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>(null);
   const isMethodSelected = selectedMethod !== null;
 
   const handleSelectMethod = (method: OnboardingMethod) => {

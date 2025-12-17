@@ -59,7 +59,7 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
       </motion.div>
 
       <motion.div
-        className="bg-surface-secondary mt-6 rounded-xl p-4"
+        className="bg-surface mt-6 rounded-xl p-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
