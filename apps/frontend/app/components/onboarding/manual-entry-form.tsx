@@ -128,7 +128,9 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
       case 'projects':
         return <ProjectsStep onNext={handleNext} onBack={goToPreviousStep} />;
       case 'education':
-        return <EducationStep onFinish={handleFinish} onBack={goToPreviousStep} />;
+        return (
+          <EducationStep onFinish={handleFinish} onBack={goToPreviousStep} />
+        );
       default:
         return null;
     }

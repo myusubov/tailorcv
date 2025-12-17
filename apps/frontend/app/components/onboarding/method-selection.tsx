@@ -131,9 +131,7 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
                   </Card.Description>
                 </Card.Header>
 
-                <p className="text-muted mt-2 text-xs">
-                  {method.details}
-                </p>
+                <p className="text-muted mt-2 text-xs">{method.details}</p>
 
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-muted flex items-center gap-1.5 text-xs">

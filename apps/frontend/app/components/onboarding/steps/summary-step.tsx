@@ -19,10 +19,7 @@ interface SummaryStepProps {
   onBack: () => void;
 }
 
-export function SummaryStep({
-  onNext,
-  onBack,
-}: SummaryStepProps) {
+export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
   const { control } = useFormContext<OnboardingFormInput>();
 
   return (
@@ -92,7 +89,7 @@ export function SummaryStep({
           onPress={onBack}
           className="text-muted hover:text-foreground"
         >
-          <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
+          <Icon icon="lucide:arrow-left" className="size-4" />
           Back
         </Button>
         <Button onPress={onNext} className="group px-6">

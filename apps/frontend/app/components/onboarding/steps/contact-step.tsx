@@ -1,7 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TextField, Label, Input, Description, Button, FieldError } from '@heroui/react';
+import {
+  TextField,
+  Label,
+  Input,
+  Description,
+  Button,
+  FieldError,
+} from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { StepHeader } from '../step-header';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -62,7 +69,11 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Email Address *</Label>
-                  <Input {...field} type="email" placeholder="john@example.com" />
+                  <Input
+                    {...field}
+                    type="email"
+                    placeholder="john@example.com"
+                  />
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
                   ) : null}
@@ -157,7 +168,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           onPress={onBack}
           className="text-muted hover:text-foreground"
         >
-          <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
+          <Icon icon="lucide:arrow-left" className="size-4" />
           Back
         </Button>
         <Button onPress={onNext} className="group px-6">

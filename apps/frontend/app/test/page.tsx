@@ -24,10 +24,10 @@ export default function TestPage() {
               </Modal.Header>
               <Modal.Body>
                 <p>
-                  The <code>useOverlayState</code> hook provides dedicated methods for common
-                  operations. No need to manually create callbacks—just use{" "}
-                  <code>state.open()</code>, <code>state.close()</code>, or{" "}
-                  <code>state.toggle()</code>.
+                  The <code>useOverlayState</code> hook provides dedicated
+                  methods for common operations. No need to manually create
+                  callbacks—just use <code>state.open()</code>,{' '}
+                  <code>state.close()</code>, or <code>state.toggle()</code>.
                 </p>
               </Modal.Body>
               <Modal.Footer>

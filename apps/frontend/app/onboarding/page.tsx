@@ -78,9 +78,7 @@ export default function OnboardingPage() {
               <h2 className="text-foreground text-2xl font-bold">
                 Upload About Me
               </h2>
-              <p className="text-muted mt-2">
-                File upload coming soon...
-              </p>
+              <p className="text-muted mt-2">File upload coming soon...</p>
               <Button onClick={handleBackToMethods} className="mt-6">
                 <Icon icon="lucide:arrow-left" />
                 Back to methods

@@ -11,12 +11,14 @@ import {
   Input,
   Label,
   TextField,
+  useOverlayState,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
 import { generateUUID } from '@/lib/utils';
+import { DeleteProjectModal } from '@/app/components/projects/delete-project-modal';
 
 interface ProjectsStepProps {
   onNext: () => void;
@@ -24,14 +26,19 @@ interface ProjectsStepProps {
 }
 
 export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
+  const deleteModalState = useOverlayState();
   const { control, watch, setValue } = useFormContext<OnboardingFormInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'projects',
   });
 
+  const projects = watch('projects');
   const skills = watch('skills') ?? [];
   const [skillInput, setSkillInput] = useState('');
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const projectName =
+    deleteIndex !== null ? projects?.[deleteIndex]?.name : '';
 
   const addProject = () => {
     append({
@@ -66,13 +73,27 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
     );
   };
 
+  const handleDelete = () => {
+    if (deleteIndex === null) return;
+    setTimeout(() => {
+      remove(deleteIndex);
+    }, 300);
+    setDeleteIndex(null);
+  };
+
+  const handleDeleteModalOpenChange = (isOpen: boolean) => {
+    deleteModalState.setOpen(isOpen);
+    if (!isOpen) setDeleteIndex(null);
+  };
+
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <StepHeader
-        icon="lucide:rocket"
-        title="Projects & Skills"
-        description="Showcase your best work and technical abilities."
-      />
+    <>
+      <div className="mx-auto w-full max-w-2xl">
+        <StepHeader
+          icon="lucide:rocket"
+          title="Projects & Skills"
+          description="Showcase your best work and technical abilities."
+        />
 
       <motion.div
         className="mb-8"
@@ -95,23 +116,23 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
               transition={{ duration: 0.3 }}
               layout
             >
-              <Card className="mb-4" variant="secondary">
-                <Card.Header className="flex-row items-center justify-between">
-                  <Card.Title className="text-base">
-                    Project #{index + 1}
-                  </Card.Title>
-                  {fields.length > 1 && (
+                <Card className="mb-4">
+                  <Card.Header className="flex-row items-center justify-between">
+                    <Card.Title className="text-base">
+                      Project #{index + 1}
+                    </Card.Title>
                     <Button
                       isIconOnly
-                      variant="ghost"
+                      variant="danger-soft"
                       size="sm"
-                      onPress={() => remove(index)}
-                      className="text-danger"
+                      onPress={() => {
+                        setDeleteIndex(index);
+                        deleteModalState.open();
+                      }}
                     >
-                      <Icon icon="lucide:trash-2" className="size-4" />
+                      <Icon icon="lucide:trash-2" />
                     </Button>
-                  )}
-                </Card.Header>
+                  </Card.Header>
 
                 <Card.Content className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -157,7 +178,9 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                           {...field}
                           placeholder="AI-powered resume builder that helps developers..."
                         />
-                        <Description>Brief 1-2 sentence description</Description>
+                        <Description>
+                          Brief 1-2 sentence description
+                        </Description>
                       </TextField>
                     )}
                   />
@@ -183,7 +206,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
         </AnimatePresence>
 
         <Button variant="secondary" onPress={addProject} className="w-full">
-          <Icon icon="lucide:plus" className="mr-2 size-4" />
+          <Icon icon="lucide:plus" className="size-4" />
           Add {fields.length > 0 ? 'Another ' : ''}Project
         </Button>
       </motion.div>
@@ -198,8 +221,8 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           Technical Skills
         </h3>
 
-        <Card variant="secondary">
-          <Card.Content className="space-y-4 pt-4">
+        <Card>
+          <Card.Content className="space-y-4">
             <TextField className="w-full">
               <Label>Add Skills</Label>
               <Input
@@ -257,7 +280,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           onPress={onBack}
           className="text-muted hover:text-foreground"
         >
-          <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
+          <Icon icon="lucide:arrow-left" className="size-4" />
           Back
         </Button>
         <Button onPress={onNext} className="group px-6">
@@ -268,6 +291,15 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           />
         </Button>
       </motion.div>
-    </div>
+      </div>
+
+      <DeleteProjectModal
+        isOpen={deleteModalState.isOpen}
+        onOpenChange={handleDeleteModalOpenChange}
+        projectNumber={deleteIndex !== null ? deleteIndex + 1 : null}
+        label={projectName ? projectName : ''}
+        onConfirm={handleDelete}
+      />
+    </>
   );
 }

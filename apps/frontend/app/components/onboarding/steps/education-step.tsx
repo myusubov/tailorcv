@@ -150,14 +150,14 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
           onPress={onBack}
           className="text-muted hover:text-foreground"
         >
-          <Icon icon="lucide:arrow-left" className="mr-2 size-4" />
+          <Icon icon="lucide:arrow-left" className="size-4" />
           Back
         </Button>
         <Button
           onPress={onFinish}
           className="group bg-green-600 px-6 hover:bg-green-700"
         >
-          <Icon icon="lucide:sparkles" className="mr-2 size-4" />
+          <Icon icon="lucide:sparkles" className="size-4" />
           Generate Resume!
         </Button>
       </motion.div>
