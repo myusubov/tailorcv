@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Button, Card, Checkbox, Input, Label, TextField } from '@heroui/react';
+import { Button, Card, Checkbox, Input, Label, TextField, FieldError, cn } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext } from 'react-hook-form';
+
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
 
@@ -32,19 +33,25 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card variant="secondary">
+        <Card>
           <Card.Content className="space-y-5 pt-4">
             <Controller
               name="education.degree"
               control={control}
-              render={({ field }) => (
-                <TextField className="w-full">
+              render={({ field, fieldState }) => (
+                <TextField
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
                   <Label>Degree / Certification</Label>
                   <Input
                     {...field}
                     placeholder="Bachelor's in Computer Science"
                     disabled={isSelfTaught}
                   />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
                 </TextField>
               )}
             />
@@ -52,14 +59,20 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
             <Controller
               name="education.school"
               control={control}
-              render={({ field }) => (
-                <TextField className="w-full">
+              render={({ field, fieldState }) => (
+                <TextField
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
                   <Label>School / Institution</Label>
                   <Input
                     {...field}
                     placeholder="University of Technology"
                     disabled={isSelfTaught}
                   />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
                 </TextField>
               )}
             />
@@ -67,13 +80,16 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
             <Controller
               name="education.graduationYear"
               control={control}
-              render={({ field }) => (
-                <div>
-                  <Label className="text-foreground mb-2 block text-sm font-medium">
+              render={({ field, fieldState }) => (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-foreground text-sm font-medium">
                     Graduation Year
                   </Label>
                   <select
-                    className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                    className={cn(
+                      'bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50',
+                      fieldState.error && 'border-danger focus:border-danger'
+                    )}
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value)}
                     disabled={isSelfTaught}
@@ -85,12 +101,15 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
                       </option>
                     ))}
                   </select>
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
                 </div>
               )}
             />
 
             <div className="border-divider relative border-t pt-4">
-              <span className="bg-surface-secondary text-muted absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-sm">
+              <span className="bg-surface text-muted absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-sm">
                 Or
               </span>
             </div>
@@ -119,7 +138,7 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
       </motion.div>
 
       <motion.div
-        className="bg-surface-secondary mt-6 rounded-xl p-4"
+        className="bg-surface mt-6 rounded-xl p-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}

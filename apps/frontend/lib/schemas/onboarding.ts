@@ -26,14 +26,14 @@ const experienceSchema = z
     if (v.isCurrent) return;
     if (!v.endMonth) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: 'End month is required unless current',
         path: ['endMonth'],
       });
     }
     if (!v.endYear) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: 'End year is required unless current',
         path: ['endYear'],
       });
@@ -48,12 +48,31 @@ const projectSchema = z.object({
   link: z.string().trim().optional().default(''),
 });
 
-const educationSchema = z.object({
-  degree: z.string().trim().optional().default(''),
-  school: z.string().trim().optional().default(''),
-  graduationYear: z.string().trim().optional().default(''),
-  isSelfTaught: z.boolean().default(false),
-});
+const educationSchema = z
+  .object({
+    degree: z.string().trim().optional().default(''),
+    school: z.string().trim().optional().default(''),
+    graduationYear: z.string().trim().optional().default(''),
+    isSelfTaught: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.isSelfTaught) {
+      if (!data.degree) {
+        ctx.addIssue({
+          code: "custom",
+          message: 'Degree is required unless you select Self-Taught',
+          path: ['degree'],
+        });
+      }
+      if (!data.school) {
+        ctx.addIssue({
+          code: "custom",
+          message: 'School is required unless you select Self-Taught',
+          path: ['school'],
+        });
+      }
+    }
+  });
 
 export const onboardingSchema = z.object({
   contact: contactSchema,

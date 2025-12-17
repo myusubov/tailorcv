@@ -21,7 +21,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
         <span className="text-muted text-sm">{Math.round(progress)}%</span>
       </div>
 
-      <div className="bg-surface-secondary h-2 w-full overflow-hidden rounded-full">
+      <div className="bg-surface h-2 w-full overflow-hidden rounded-full">
         <motion.div
           className="bg-primary h-full rounded-full"
           initial={{ width: 0 }}
@@ -51,9 +51,9 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
             >
               <Icon
                 icon={isCompleted ? 'lucide:check-circle' : step.icon}
-                className={`size-4 flex-shrink-0 ${isCompleted ? 'text-primary' : ''}`}
+                className={`size-4 shrink-0 ${isCompleted ? 'text-primary' : ''}`}
               />
-              <span className="hidden truncate lg:block">{step.label}</span>
+              <span className="hidden truncate sm:block">{step.label}</span>
             </motion.div>
           );
         })}
