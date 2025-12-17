@@ -27,7 +27,7 @@ interface ManualEntryFormProps {
 }
 
 export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
-  const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
+  const [currentStep, setCurrentStep] = useState<ManualEntryStep>('experience');
   const [direction, setDirection] = useState<1 | -1>(1);
 
   const form = useForm<OnboardingFormInput>({

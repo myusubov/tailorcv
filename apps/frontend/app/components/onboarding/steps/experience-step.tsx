@@ -21,6 +21,7 @@ import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { generateUUID } from '@/lib/utils';
 import { DeleteExperienceModal } from '@/app/components/experience/delete-experience-modal';
+import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 
 interface ExperienceStepProps {
   onNext: () => void;
@@ -48,13 +49,16 @@ const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const deleteModalState = useOverlayState();
   const { control, watch } = useFormContext<OnboardingFormInput>();
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'experiences',
   });
+  console.log({ fields })
+  // Removed: hoveredIndex, hoverTimeoutRef
 
   const experiences = watch('experiences');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+
   const company =
     deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
   const jobTitle =
@@ -89,6 +93,14 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
     if (!isOpen) setDeleteIndex(null);
   };
 
+  const handleMoveUp = (idx: number) => {
+    move(idx, idx - 1);
+  };
+
+  const handleMoveDown = (idx: number) => {
+    move(idx, idx + 1);
+  };
+
   return (
     <>
       <div className="mx-auto w-full max-w-2xl">
@@ -103,30 +115,58 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
             const isCurrent = !!experiences?.[index]?.isCurrent;
 
             return (
-              <motion.div
+              <ReorderableItem
                 key={field.id}
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
                 layout
+                isFirst={index === 0}
+                isLast={index === fields.length - 1}
+                onMoveUp={() => handleMoveUp(index)}
+                onMoveDown={() => handleMoveDown(index)}
               >
-                <Card className="mb-4">
+                <Card className="mb-4 overflow-visible">
                   <Card.Header className="flex-row items-center justify-between">
                     <Card.Title className="text-base">
                       Job #{index + 1}
                     </Card.Title>
-                    <Button
-                      isIconOnly
-                      variant="danger-soft"
-                      size="sm"
-                      onPress={() => {
-                        setDeleteIndex(index);
-                        deleteModalState.open();
-                      }}
-                    >
-                      <Icon icon="lucide:trash-2" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {/* Mobile Reorder Controls */}
+                      <div className="flex items-center gap-1 lg:hidden">
+                        <Button
+                          onPress={() => handleMoveUp(index)}
+                          isDisabled={index === 0}
+                          isIconOnly
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <Icon icon="lucide:arrow-up" />
+                        </Button>
+                        <Button
+                          onPress={() => handleMoveDown(index)}
+                          isDisabled={index === fields.length - 1}
+                          isIconOnly
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <Icon icon="lucide:arrow-down" />
+                        </Button>
+                      </div>
+
+                      <Button
+                        isIconOnly
+                        variant="danger-soft"
+                        size="sm"
+                        onPress={() => {
+                          setDeleteIndex(index);
+                          deleteModalState.open();
+                        }}
+                      >
+                        <Icon icon="lucide:trash-2" />
+                      </Button>
+                    </div>
                   </Card.Header>
 
                   <Card.Content className="space-y-4">
@@ -349,7 +389,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
                     />
                   </Card.Content>
                 </Card>
-              </motion.div>
+              </ReorderableItem>
             );
           })}
         </AnimatePresence>
@@ -360,7 +400,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <Card className="mt-2">
+            <Card className="mt-2 ">
               <Card.Content className="flex flex-col items-center justify-center px-6 py-8 text-center">
                 <h3 className="text-foreground text-lg font-semibold">
                   No work experience yet?
