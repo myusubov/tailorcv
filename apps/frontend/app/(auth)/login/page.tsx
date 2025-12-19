@@ -60,7 +60,7 @@ export default function LoginPage() {
         await setActive({ session: result.createdSessionId });
         router.push(config.auth.afterSignInUrl as string);
       } else {
-        console.log(JSON.stringify(result, null, 2));
+        
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));

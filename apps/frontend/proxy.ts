@@ -49,23 +49,23 @@ export default clerkMiddleware(async (auth, req) => {
 
   // If user is logged in but doesn't have a base resume, force onboarding.
   // Use the BFF route handler so auth stays server-side.
-  if (userId && isProtectedRoute(req) && !pathname.startsWith('/onboarding')) {
-    const response = await fetch(new URL('/api/onboarding/status', req.url), {
-      headers: { cookie: req.headers.get('cookie') ?? '' },
-      cache: 'no-store',
-    });
+  // if (userId && isProtectedRoute(req) && !pathname.startsWith('/onboarding')) {
+  //   const response = await fetch(new URL('/api/onboarding/status', req.url), {
+  //     headers: { cookie: req.headers.get('cookie') ?? '' },
+  //     cache: 'no-store',
+  //   });
 
-    const json = (await response.json().catch(() => null)) as {
-      ok: boolean;
-      data?: { hasBaseResume?: boolean };
-    } | null;
+  //   const json = (await response.json().catch(() => null)) as {
+  //     ok: boolean;
+  //     data?: { hasBaseResume?: boolean };
+  //   } | null;
 
-    const hasBaseResume = Boolean(json?.ok && json?.data?.hasBaseResume);
+  //   const hasBaseResume = Boolean(json?.ok && json?.data?.hasBaseResume);
 
-    if (!hasBaseResume) {
-      return NextResponse.redirect(new URL('/onboarding', req.url));
-    }
-  }
+  //   if (!hasBaseResume) {
+  //     return NextResponse.redirect(new URL('/onboarding', req.url));
+  //   }
+  // }
 
   // For public routes or authenticated users accessing allowed routes, continue
   return NextResponse.next();

@@ -9,6 +9,7 @@ import { MethodSelection, ManualEntryForm } from '../components/onboarding';
 import type { OnboardingMethod, OnboardingFormData } from './types';
 import { LOGOS } from '@/lib/config';
 import { Button } from '@heroui/react';
+import { generateOnboardingAction } from '@/lib/actions/onboarding.actions';
 
 export default function OnboardingPage() {
   const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>(null);
@@ -28,8 +29,10 @@ export default function OnboardingPage() {
     setSelectedMethod(null);
   };
 
-  const handleFormComplete = (data: OnboardingFormData) => {
-    console.log('Form completed:', data);
+  const handleFormComplete = async (data: OnboardingFormData) => {
+    const res = await generateOnboardingAction(data)
+
+    console.log({ res })
     // TODO: Wire up API call
   };
 

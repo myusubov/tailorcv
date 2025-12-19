@@ -14,6 +14,7 @@ import {
 import type { ManualEntryStep } from '../../onboarding/types';
 import { MANUAL_STEPS } from '../../onboarding/types';
 import { useForm, FormProvider } from 'react-hook-form';
+import { useController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   onboardingSchema,
@@ -27,7 +28,7 @@ interface ManualEntryFormProps {
 }
 
 export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
-  const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
+  const [currentStep, setCurrentStep] = useState<ManualEntryStep>('projects');
   const [direction, setDirection] = useState<1 | -1>(1);
 
   const form = useForm<OnboardingFormInput>({
@@ -56,6 +57,9 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
     mode: 'onSubmit',
   });
 
+  console.log(form.formState.errors)
+
+  // Register array fields that are only updated via `setValue` (no Controller/input).
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
 
   const stepFields = useMemo(() => {
@@ -99,7 +103,9 @@ export function ManualEntryForm({ onBack, onComplete }: ManualEntryFormProps) {
   const handleFinish = async () => {
     const ok = await form.trigger(undefined, { shouldFocus: true });
     if (!ok) return;
-    onComplete(onboardingSchema.parse(form.getValues()));
+    onComplete(
+      onboardingSchema.parse(form.getValues()) as OnboardingFormValues,
+    );
   };
 
   const slideVariants = {

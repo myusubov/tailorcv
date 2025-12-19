@@ -19,8 +19,6 @@ export async function GET() {
 
   const result = await getOnboardingStatus({ params: { userId } });
 
-  console.log(result);
-
   const status = result.ok
     ? 200
     : result.status && result.status > 0

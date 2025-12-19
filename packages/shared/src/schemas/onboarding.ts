@@ -43,8 +43,14 @@ const experienceSchema = z
 const projectSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1, 'Project name is required'),
-  description: z.string().trim().optional().default(''),
-  techStack: z.string().trim().optional().default(''),
+  description: z
+    .string()
+    .trim()
+    .min(20, 'Project description must be at least 20 characters'),
+  techStack: z
+    .string()
+    .trim()
+    .min(10, 'Tech stack must be at least 10 characters'),
   link: z.string().trim().optional().default(''),
 });
 
@@ -78,8 +84,14 @@ export const onboardingSchema = z.object({
   contact: contactSchema,
   summary: z.string().trim().optional().default(''),
   experiences: z.array(experienceSchema).default([]),
-  projects: z.array(projectSchema).default([]),
-  skills: z.array(z.string().trim().min(1)).default([]),
+  projects: z
+    .array(projectSchema)
+    .min(1, { error: 'Add at least 1 project' })
+    .default([]),
+  skills: z
+    .array(z.string().trim().min(1))
+    .min(3, { error: 'Add at least 3 skills' })
+    .default([]),
   education: educationSchema,
 });
 

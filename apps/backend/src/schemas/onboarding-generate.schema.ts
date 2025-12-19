@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { onboardingSchema } from 'shared';
 
 export const onboardingGenerateBaseBodySchema = onboardingSchema
-  .extend({
+  .safeExtend({
     model: z.string().trim().min(1).optional(),
   })
   .strict();

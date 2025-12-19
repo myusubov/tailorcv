@@ -18,7 +18,7 @@ import {
   Controller,
   useFieldArray,
   useFormContext,
-  useWatch,
+  useFormState,
 } from 'react-hook-form';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
@@ -36,13 +36,16 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const deleteModalState = useOverlayState();
   const { control, watch, setValue, getValues } =
     useFormContext<OnboardingFormInput>();
+
+  const { errors } = useFormState({ control });
+
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'projects',
   });
 
   const projects = watch('projects');
-  const skills = useWatch({ control, name: 'skills' }) ?? [];
+  const skills = watch('skills') ?? [];
   const [skillInput, setSkillInput] = useState('');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const projectName = deleteIndex !== null ? projects?.[deleteIndex]?.name : '';
@@ -114,6 +117,26 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           description="Showcase your best work and technical abilities."
         />
 
+        <Card className="mb-6">
+          <Card.Content className="space-y-2">
+            <p className="text-foreground text-sm font-medium">
+              Before we generate your resume:
+            </p>
+            <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
+              <li>Add at least 3 skills</li>
+              <li>
+                Add at least 1 project or 1 experience with some details
+                (description or tech stack)
+              </li>
+            </ul>
+            {errors.projects?.message ? (
+              <p className="text-danger text-sm">
+                {String(errors.projects.message)}
+              </p>
+            ) : null}
+          </Card.Content>
+        </Card>
+
         <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -124,6 +147,9 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
             <Icon icon="lucide:folder-code" className="size-5" />
             Projects
           </h3>
+          {fields.length === 0 && errors.projects?.message ? (
+            <FieldError>{String(errors.projects.message)}</FieldError>
+          ) : null}
 
           <AnimatePresence mode="popLayout">
             {fields.map((project, index) => (
@@ -205,13 +231,21 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                       <Controller
                         name={`projects.${index}.techStack`}
                         control={control}
-                        render={({ field }) => (
-                          <TextField className="w-full">
+                        render={({ field, fieldState }) => (
+                          <TextField
+                            className="w-full"
+                            isInvalid={!!fieldState.error}
+                          >
                             <Label>Tech Stack</Label>
                             <Input
                               {...field}
                               placeholder="Next.js, TypeScript, Tailwind"
                             />
+                            {fieldState.error ? (
+                              <FieldError>
+                                {fieldState.error.message}
+                              </FieldError>
+                            ) : null}
                           </TextField>
                         )}
                       />
@@ -220,8 +254,11 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                     <Controller
                       name={`projects.${index}.description`}
                       control={control}
-                      render={({ field }) => (
-                        <TextField className="w-full">
+                      render={({ field, fieldState }) => (
+                        <TextField
+                          className="w-full"
+                          isInvalid={!!fieldState.error}
+                        >
                           <Label>Description</Label>
                           <Input
                             {...field}
@@ -230,6 +267,9 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                           <Description>
                             Brief 1-2 sentence description
                           </Description>
+                          {fieldState.error ? (
+                            <FieldError>{fieldState.error.message}</FieldError>
+                          ) : null}
                         </TextField>
                       )}
                     />
@@ -272,7 +312,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
 
           <Card>
             <Card.Content className="space-y-4">
-              <TextField className="w-full">
+              <TextField className="w-full" isInvalid={!!errors.skills}>
                 <Label>Add Skills</Label>
                 <Input
                   placeholder="Type a skill and press Enter..."
@@ -281,6 +321,9 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                   onKeyDown={handleSkillKeyDown}
                 />
                 <Description>Press Enter to add each skill</Description>
+                {errors.skills?.message ? (
+                  <FieldError>{String(errors.skills.message)}</FieldError>
+                ) : null}
               </TextField>
 
               <div className="text-muted-foreground flex items-center gap-2 text-xs">

@@ -14,6 +14,6 @@ export const getOnboardingStatus = defineGet<
   path: 'onboarding/status',
   keyPrefix: 'onboarding',
   staticParts: ['status'],
-  dynamicParts: ({ params }) => [params.userId],
-  defaults: { cache: 'no-store', auth: 'required', priority: 'high' },
+  dynamicParts: ({ params: { userId } }) => [userId],
+  defaults: { cache: 'no-store', auth: 'required' },
 });

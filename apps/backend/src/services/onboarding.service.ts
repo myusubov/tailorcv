@@ -54,6 +54,8 @@ export async function generateOnboarding(
     maxOutputTokens: 2500,
   });
 
+  console.log({ text, finishReason, system })
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
