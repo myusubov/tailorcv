@@ -1,7 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Button, Card, Checkbox, Input, Label, TextField, FieldError, cn } from '@heroui/react';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Input,
+  Label,
+  TextField,
+  FieldError,
+  cn,
+} from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -39,10 +48,7 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
               name="education.degree"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField
-                  className="w-full"
-                  isInvalid={!!fieldState.error}
-                >
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Degree / Certification</Label>
                   <Input
                     {...field}
@@ -60,10 +66,7 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
               name="education.school"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField
-                  className="w-full"
-                  isInvalid={!!fieldState.error}
-                >
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>School / Institution</Label>
                   <Input
                     {...field}
@@ -88,7 +91,7 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
                   <select
                     className={cn(
                       'bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50',
-                      fieldState.error && 'border-danger focus:border-danger'
+                      fieldState.error && 'border-danger focus:border-danger',
                     )}
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value)}

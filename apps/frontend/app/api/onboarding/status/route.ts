@@ -21,9 +21,11 @@ export async function GET() {
 
   console.log(result);
 
-  const status =
-    result.ok ? 200 : result.status && result.status > 0 ? result.status : 502;
+  const status = result.ok
+    ? 200
+    : result.status && result.status > 0
+      ? result.status
+      : 502;
 
   return NextResponse.json(result, { status });
 }
-

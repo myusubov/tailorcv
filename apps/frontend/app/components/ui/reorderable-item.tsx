@@ -62,10 +62,10 @@ export function ReorderableItem({
           setIsHovered(true);
         }}
         className={cn(
-          'absolute z-10 p-4 top-1/2 hidden lg:flex -translate-y-1/2 flex-col gap-2 transition-all duration-300 ease-out',
+          'absolute top-1/2 z-10 hidden -translate-y-1/2 flex-col gap-2 p-4 transition-all duration-300 ease-out lg:flex',
           isHovered
-            ? 'opacity-100 -right-17 pointer-events-auto'
-            : 'opacity-0 right-0 pointer-events-none'
+            ? 'pointer-events-auto -right-17 opacity-100'
+            : 'pointer-events-none right-0 opacity-0',
         )}
       >
         <Tooltip delay={150}>
@@ -82,7 +82,9 @@ export function ReorderableItem({
               className="transition-transform group-hover:-translate-y-1"
             />
           </Button>
-          <Tooltip.Content showArrow placement="right">Move up</Tooltip.Content>
+          <Tooltip.Content showArrow placement="right">
+            Move up
+          </Tooltip.Content>
         </Tooltip>
         <Tooltip delay={150}>
           <Button
@@ -98,7 +100,9 @@ export function ReorderableItem({
               className="transition-transform group-hover:translate-y-1"
             />
           </Button>
-          <Tooltip.Content showArrow placement="right">Move down</Tooltip.Content>
+          <Tooltip.Content showArrow placement="right">
+            Move down
+          </Tooltip.Content>
         </Tooltip>
       </div>
 

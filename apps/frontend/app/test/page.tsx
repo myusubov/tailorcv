@@ -6,7 +6,7 @@ export default async function TestPage() {
   const status = await getOnboardingStatus({
     params: {
       userId: '123',
-    }
+    },
   });
 
   console.log(status);

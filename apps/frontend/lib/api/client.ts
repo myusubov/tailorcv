@@ -99,15 +99,18 @@ export async function backendRequest<T>(
       next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | ApiResponse<T>
-      | null;
+    const payload = (await response
+      .json()
+      .catch(() => null)) as ApiResponse<T> | null;
 
     if (!payload) {
       return {
         ok: false,
         status: response.status || 502,
-        error: { message: 'Invalid response from server', code: 'INVALID_RESPONSE' },
+        error: {
+          message: 'Invalid response from server',
+          code: 'INVALID_RESPONSE',
+        },
       };
     }
 
@@ -116,7 +119,8 @@ export async function backendRequest<T>(
         ok: false,
         status: response.status,
         error: {
-          message: payload.error?.message ?? response.statusText ?? 'Request failed',
+          message:
+            payload.error?.message ?? response.statusText ?? 'Request failed',
           code: payload.error?.code ?? ErrorCode.INTERNAL_ERROR,
           details: payload.error?.details,
         },

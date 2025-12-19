@@ -20,9 +20,7 @@ type DefineGetConfig<TParams> = {
   path: string | ((params: TParams) => string);
   keyPrefix: string;
   staticParts?: CacheKeyPart[];
-  dynamicParts?: (
-    params: TParams,
-  ) => CacheKeyPart[] | Promise<CacheKeyPart[]>;
+  dynamicParts?: (params: TParams) => CacheKeyPart[] | Promise<CacheKeyPart[]>;
   defaults?: BackendRequestOptions;
 };
 
@@ -31,10 +29,16 @@ export function defineGet<TResponse>(
 ): (options?: DefineGetOptions) => Promise<ApiResult<TResponse>>;
 export function defineGet<TParams, TResponse>(
   config: DefineGetConfig<TParams>,
-): (params: TParams, options?: DefineGetOptions) => Promise<ApiResult<TResponse>>;
+): (
+  params: TParams,
+  options?: DefineGetOptions,
+) => Promise<ApiResult<TResponse>>;
 export function defineGet<TParams, TResponse>(
   config: DefineGetConfig<TParams>,
-): (params: TParams, options?: DefineGetOptions) => Promise<ApiResult<TResponse>> {
+): (
+  params: TParams,
+  options?: DefineGetOptions,
+) => Promise<ApiResult<TResponse>> {
   return async (params: TParams, options?: DefineGetOptions) => {
     const path =
       typeof config.path === 'function'

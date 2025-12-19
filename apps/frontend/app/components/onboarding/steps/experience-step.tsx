@@ -53,7 +53,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
     control,
     name: 'experiences',
   });
-  console.log({ fields })
+  console.log({ fields });
   // Removed: hoveredIndex, hoverTimeoutRef
 
   const experiences = watch('experiences');
@@ -400,7 +400,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <Card className="mt-2 ">
+            <Card className="mt-2">
               <Card.Content className="flex flex-col items-center justify-center px-6 py-8 text-center">
                 <h3 className="text-foreground text-lg font-semibold">
                   No work experience yet?

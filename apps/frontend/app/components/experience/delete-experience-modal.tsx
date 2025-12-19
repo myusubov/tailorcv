@@ -69,4 +69,3 @@ export function DeleteExperienceModal({
     </Modal.Container>
   );
 }
-

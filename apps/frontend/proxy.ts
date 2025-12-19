@@ -55,9 +55,10 @@ export default clerkMiddleware(async (auth, req) => {
       cache: 'no-store',
     });
 
-    const json = (await response.json().catch(() => null)) as
-      | { ok: boolean; data?: { hasBaseResume?: boolean } }
-      | null;
+    const json = (await response.json().catch(() => null)) as {
+      ok: boolean;
+      data?: { hasBaseResume?: boolean };
+    } | null;
 
     const hasBaseResume = Boolean(json?.ok && json?.data?.hasBaseResume);
 

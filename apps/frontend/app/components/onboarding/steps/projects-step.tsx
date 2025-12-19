@@ -14,7 +14,12 @@ import {
   useOverlayState,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
 import { generateUUID } from '@/lib/utils';
@@ -29,7 +34,8 @@ interface ProjectsStepProps {
 
 export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const deleteModalState = useOverlayState();
-  const { control, watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
+  const { control, watch, setValue, getValues } =
+    useFormContext<OnboardingFormInput>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'projects',
@@ -39,8 +45,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const skills = useWatch({ control, name: 'skills' }) ?? [];
   const [skillInput, setSkillInput] = useState('');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const projectName =
-    deleteIndex !== null ? projects?.[deleteIndex]?.name : '';
+  const projectName = deleteIndex !== null ? projects?.[deleteIndex]?.name : '';
 
   const addProject = () => {
     append({
@@ -189,7 +194,9 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                             <Label>Project Name</Label>
                             <Input {...field} placeholder="TailorCV" />
                             {fieldState.error ? (
-                              <FieldError>{fieldState.error.message}</FieldError>
+                              <FieldError>
+                                {fieldState.error.message}
+                              </FieldError>
                             ) : null}
                           </TextField>
                         )}
@@ -276,11 +283,11 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                 <Description>Press Enter to add each skill</Description>
               </TextField>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <Icon icon="lucide:sparkles" className="text-warning size-3" />
                 <span>
-                  Tip: Don&apos;t worry about categories. AI will organize them for
-                  you.
+                  Tip: Don&apos;t worry about categories. AI will organize them
+                  for you.
                 </span>
               </div>
 
