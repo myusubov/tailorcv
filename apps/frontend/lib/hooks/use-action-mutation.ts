@@ -88,4 +88,3 @@ export function useActionMutation<TInput, TOutput>(
 
   return mutation;
 }
-

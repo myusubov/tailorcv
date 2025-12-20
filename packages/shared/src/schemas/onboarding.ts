@@ -52,6 +52,7 @@ const projectSchema = z.object({
     .trim()
     .min(10, 'Tech stack must be at least 10 characters'),
   link: z.string().trim().optional().default(''),
+  repoUrl: z.string().trim().optional().default(''),
 });
 
 const educationSchema = z

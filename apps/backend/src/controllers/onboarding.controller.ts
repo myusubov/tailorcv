@@ -1,7 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../utils/response';
 import type { ClerkLocals, GenerateOnboardingLocals } from '../types/locals';
-import { generateOnboarding, getOnboardingStatus } from '../services/onboarding.service';
+import {
+  generateOnboarding,
+  getOnboardingStatus,
+} from '../services/onboarding.service';
 
 export const getOnboardingStatusController = async (
   _req: Request,

@@ -1,9 +1,15 @@
 'use server';
 
 import { defineAction } from './_action';
-import type { GenerateOnboardingInput, GenerateOnboardingOutput } from '@/lib/types/onboarding';
+import type {
+  GenerateOnboardingInput,
+  GenerateOnboardingOutput,
+} from '@/lib/types/onboarding';
 
-const _generateOnboardingImpl = defineAction<GenerateOnboardingInput, GenerateOnboardingOutput>({
+const _generateOnboardingImpl = defineAction<
+  GenerateOnboardingInput,
+  GenerateOnboardingOutput
+>({
   method: 'POST',
   path: 'onboarding/generate',
   auth: 'required',

@@ -74,11 +74,7 @@ export default function OnboardingPage() {
         );
 
       case 'manual':
-        return (
-          <ManualEntryForm
-            onBack={handleBackToMethods}
-          />
-        );
+        return <ManualEntryForm onBack={handleBackToMethods} />;
 
       default:
         return <MethodSelection onSelectMethod={handleSelectMethod} />;

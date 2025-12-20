@@ -31,4 +31,3 @@ export type UpdateBaseResumeLocals = ClerkLocals & {
 export type GenerateOnboardingLocals = ClerkLocals & {
   body: OnboardingGenerateBaseBody;
 };
-  

@@ -57,6 +57,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
       description: '',
       techStack: '',
       link: '',
+      repoUrl: '',
     });
   };
 
@@ -274,20 +275,39 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                       )}
                     />
 
-                    <Controller
-                      name={`projects.${index}.link`}
-                      control={control}
-                      render={({ field }) => (
-                        <TextField className="w-full">
-                          <Label>Link</Label>
-                          <Input
-                            {...field}
-                            placeholder="github.com/username/project"
-                          />
-                          <Description>Optional</Description>
-                        </TextField>
-                      )}
-                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Controller
+                        name={`projects.${index}.link`}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField className="w-full">
+                            <Label>Project URL</Label>
+                            <Input
+                              {...field}
+                              placeholder="https://myproject.com"
+                            />
+                            <Description>Live demo link (Optional)</Description>
+                          </TextField>
+                        )}
+                      />
+
+                      <Controller
+                        name={`projects.${index}.repoUrl`}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField className="w-full">
+                            <Label>GitHub URL</Label>
+                            <Input
+                              {...field}
+                              placeholder="github.com/username/project"
+                            />
+                            <Description>
+                              Repository link (Optional)
+                            </Description>
+                          </TextField>
+                        )}
+                      />
+                    </div>
                   </Card.Content>
                 </Card>
               </ReorderableItem>

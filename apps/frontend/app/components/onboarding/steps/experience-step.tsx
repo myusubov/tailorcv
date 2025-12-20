@@ -53,7 +53,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
     control,
     name: 'experiences',
   });
-  
+
   const experiences = watch('experiences');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 

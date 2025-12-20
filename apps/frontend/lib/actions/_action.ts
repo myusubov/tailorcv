@@ -17,18 +17,20 @@ export type DefineActionConfig<TInput> = {
   };
 };
 
-export function defineAction<TInput, TOutput>(config: DefineActionConfig<TInput>) {
+export function defineAction<TInput, TOutput>(
+  config: DefineActionConfig<TInput>,
+) {
   return async (input: TInput): Promise<ApiResult<TOutput>> => {
-    const path = typeof config.path === 'function' ? config.path(input) : config.path;
+    const path =
+      typeof config.path === 'function' ? config.path(input) : config.path;
 
-    const keyTags =
-      config.keyPrefix
-        ? makeCacheTags(
-            config.keyPrefix,
-            ...(config.staticParts ?? []),
-            ...(config.dynamicParts ? config.dynamicParts(input) : []),
-          )
-        : [];
+    const keyTags = config.keyPrefix
+      ? makeCacheTags(
+          config.keyPrefix,
+          ...(config.staticParts ?? []),
+          ...(config.dynamicParts ? config.dynamicParts(input) : []),
+        )
+      : [];
 
     const result = await backendRequest<TOutput>(path, {
       method: config.method,
@@ -41,7 +43,8 @@ export function defineAction<TInput, TOutput>(config: DefineActionConfig<TInput>
         ...(config.revalidate?.fromKey ? keyTags : []),
         ...(config.revalidate?.tags ?? []),
       ];
-      for (const tag of new Set(tagsToRevalidate)) revalidateTag(tag, 'default');
+      for (const tag of new Set(tagsToRevalidate))
+        revalidateTag(tag, 'default');
 
       for (const pathToRevalidate of new Set(config.revalidate?.paths ?? [])) {
         revalidatePath(pathToRevalidate, 'page');
