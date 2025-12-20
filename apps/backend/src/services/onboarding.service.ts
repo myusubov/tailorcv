@@ -51,53 +51,91 @@ export async function generateOnboarding(
     JSON.stringify(body, null, 2),
   ].join('\n');
 
-  const { text, finishReason } = await geminiGenerateText({
-    model,
-    system,
-    prompt,
-    temperature: 0.1,
-    maxOutputTokens: 16384,
-  });
+  let attempts = 0;
+  const maxAttempts = 3;
+  let lastError: any;
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
+  while (attempts < maxAttempts) {
+    attempts++;
+    console.info(
+      `AI generation attempt ${attempts}/${maxAttempts} for user ${clerkUserId}`,
+    );
+
     try {
-      parsed = JSON.parse(extractJsonObject(text));
-    } catch (err) {
-      throw new AppError(
-        'Failed to parse AI response as JSON',
-        ErrorCode.AI_PARSE_ERROR,
-        500,
-        { rawText: text },
-      );
+      const { text, finishReason } = await geminiGenerateText({
+        model,
+        system,
+        prompt,
+        temperature: 0.1,
+        maxOutputTokens: 16384,
+        responseMimeType: 'application/json',
+      });
+
+      if (finishReason && finishReason !== 'STOP') {
+        process.env.NODE_ENV === 'development' &&
+          console.warn(`AI finished with reason: ${finishReason}`);
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch (err) {
+        try {
+          parsed = JSON.parse(extractJsonObject(text));
+        } catch (innerErr) {
+          console.error('Failed to parse AI response as JSON:', text);
+          throw new AppError(
+            'Failed to parse AI response as JSON',
+            ErrorCode.AI_PARSE_ERROR,
+            500,
+            { rawText: text },
+          );
+        }
+      }
+
+      const result = baseResumeDataSchema.safeParse(parsed);
+      if (!result.success) {
+        throw new AppError(
+          'AI-generated data validation failed',
+          ErrorCode.VALIDATION_ERROR,
+          500,
+          result.error.issues,
+        );
+      }
+
+      const data = result.data;
+
+      const baseResume = await prisma.baseResume.create({
+        data: {
+          userId: clerkUserId,
+          name: 'My First Resume',
+          data,
+        },
+      });
+
+      return {
+        baseResumeId: baseResume.id,
+        data,
+        meta: { model, finishReason },
+      };
+    } catch (err: any) {
+      lastError = err;
+      console.error(`Attempt ${attempts} failed:`, err.message);
+
+      // If it's a validation error or something that retrying won't fix, throw immediately
+      if (
+        err instanceof AppError &&
+        err.errorCode === ErrorCode.VALIDATION_ERROR
+      ) {
+        throw err;
+      }
+
+      // Small delay before retry
+      if (attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
+      }
     }
   }
 
-  const result = baseResumeDataSchema.safeParse(parsed);
-  if (!result.success) {
-    throw new AppError(
-      'AI-generated data validation failed',
-      ErrorCode.VALIDATION_ERROR,
-      500,
-      result.error.issues,
-    );
-  }
-
-  const data = result.data;
-
-  const baseResume = await prisma.baseResume.create({
-    data: {
-      userId: clerkUserId,
-      name: 'My First Resume',
-      data,
-    },
-  });
-
-  return {
-    baseResumeId: baseResume.id,
-    data,
-    meta: { model, finishReason },
-  };
+  throw lastError;
 }

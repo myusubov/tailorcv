@@ -20,6 +20,7 @@ export type GeminiGenerateTextInput = {
   topP?: number;
   topK?: number;
   timeoutMs?: number;
+  responseMimeType?: 'text/plain' | 'application/json';
 };
 
 type GeminiGenerateContentResponse = {
@@ -65,6 +66,9 @@ export async function geminiGenerateText(
           : {}),
         ...(input.topP !== undefined ? { topP: input.topP } : {}),
         ...(input.topK !== undefined ? { topK: input.topK } : {}),
+        ...(input.responseMimeType !== undefined
+          ? { response_mime_type: input.responseMimeType }
+          : {}),
       },
     };
 
