@@ -2,7 +2,6 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 // Public routes that don't require authentication
-// Note: These routes are accessible without login
 const isPublicRoute = createRouteMatcher([
   '/',
   '/login(.*)',
@@ -19,6 +18,7 @@ const isAuthRoute = createRouteMatcher([
   '/login(.*)',
   '/register(.*)',
   '/forgot-password(.*)',
+  '/'
 ]);
 
 // Protected routes that require authentication
@@ -27,30 +27,28 @@ const isProtectedRoute = createRouteMatcher([
   '/profile(.*)',
   '/settings(.*)',
   '/test(.*)',
-  '/',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
   const { pathname } = req.nextUrl;
 
-  // If user is logged in and trying to access auth routes, redirect to dashboard
+  const isOnboardingRoute = pathname.startsWith('/onboarding');
+
+  // 1. If user is logged in and trying to access auth routes (including root '/'), redirect to dashboard
   if (userId && isAuthRoute(req)) {
-    const dashboardUrl = new URL('/dashboard', req.url);
-    return NextResponse.redirect(dashboardUrl);
+    return NextResponse.redirect(new URL('/test', req.url));
   }
 
-  // If user is not logged in and trying to access protected routes, redirect to login
-  if (!userId && isProtectedRoute(req)) {
+  // 2. If user is not logged in and trying to access protected routes or onboarding, redirect to login
+  if (!userId && (isProtectedRoute(req) || isOnboardingRoute)) {
     const loginUrl = new URL('/login', req.url);
-    // Optionally add the original URL as a redirect parameter
     loginUrl.searchParams.set('redirect_url', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is logged in but doesn't have a base resume, force onboarding.
-  // Use the BFF route handler so auth stays server-side.
-  if (userId && isProtectedRoute(req) && !pathname.startsWith('/onboarding')) {
+  // 3. Resume status check for authenticated users
+  if (userId && (isProtectedRoute(req) || isOnboardingRoute)) {
     const response = await fetch(new URL('/api/onboarding/status', req.url), {
       headers: { cookie: req.headers.get('cookie') ?? '' },
       cache: 'no-store',
@@ -63,12 +61,17 @@ export default clerkMiddleware(async (auth, req) => {
 
     const hasBaseResume = Boolean(json?.ok && json?.data?.hasBaseResume);
 
-    if (!hasBaseResume) {
+    // If they have a base resume but are trying to access onboarding, redirect home/dashboard
+    if (hasBaseResume && isOnboardingRoute) {
+      return NextResponse.redirect(new URL('/test', req.url));
+    }
+
+    // If they DON'T have a base resume and are NOT on the onboarding page, force them to onboarding
+    if (!hasBaseResume && !isOnboardingRoute) {
       return NextResponse.redirect(new URL('/onboarding', req.url));
     }
   }
 
-  // For public routes or authenticated users accessing allowed routes, continue
   return NextResponse.next();
 });
 

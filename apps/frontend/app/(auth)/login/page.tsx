@@ -280,7 +280,7 @@ export default function LoginPage() {
                     Sign In
                     <Icon
                       icon="lucide:arrow-right"
-                      className="ml-2 size-4 transition-all group-hover:translate-x-1"
+                      className="size-4 transition-all group-hover:translate-x-1"
                     />
                   </>
                 )}
