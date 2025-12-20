@@ -53,9 +53,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
     control,
     name: 'experiences',
   });
-  console.log({ fields });
-  // Removed: hoveredIndex, hoverTimeoutRef
-
+  
   const experiences = watch('experiences');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 

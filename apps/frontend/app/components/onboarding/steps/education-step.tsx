@@ -20,12 +20,17 @@ import { StepHeader } from '../step-header';
 interface EducationStepProps {
   onFinish: () => void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
 
-export function EducationStep({ onFinish, onBack }: EducationStepProps) {
+export function EducationStep({
+  onFinish,
+  onBack,
+  isLoading,
+}: EducationStepProps) {
   const { control, watch } = useFormContext<OnboardingFormInput>();
   const isSelfTaught = !!watch('education.isSelfTaught');
 
@@ -178,9 +183,13 @@ export function EducationStep({ onFinish, onBack }: EducationStepProps) {
         <Button
           onPress={onFinish}
           className="group bg-green-600 px-6 hover:bg-green-700"
+          isDisabled={isLoading}
         >
-          <Icon icon="lucide:sparkles" className="size-4" />
-          Generate Resume!
+          <Icon
+            icon={isLoading ? 'lucide:loader-2' : 'lucide:sparkles'}
+            className={cn('size-4', isLoading && 'animate-spin')}
+          />
+          {isLoading ? 'Generating...' : 'Generate Resume!'}
         </Button>
       </motion.div>
     </div>

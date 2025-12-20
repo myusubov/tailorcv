@@ -1,5 +1,5 @@
 import { geminiGenerateText, prisma } from '../lib';
-import { baseResumeDataSchema } from 'shared';
+import { baseResumeDataSchema, ErrorCode } from 'shared';
 import type {
   GetOnboardingStatusInput,
   OnboardingStatus,
@@ -7,12 +7,18 @@ import type {
   GenerateOnboardingOutput,
 } from '../types/onboarding';
 import { env } from '../config/env';
+import { AppError } from '../utils/AppError';
 
 function extractJsonObject(text: string) {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start === -1 || end === -1 || end <= start) {
-    throw new Error('AI returned non-JSON output');
+    throw new AppError(
+      'AI returned non-JSON output',
+      ErrorCode.AI_PARSE_ERROR,
+      500,
+      { rawText: text },
+    );
   }
   return text.slice(start, end + 1);
 }
@@ -38,7 +44,6 @@ export async function generateOnboarding(
   const { clerkUserId, body } = input;
 
   const model = body.model ?? 'gemini-3-flash-preview';
-
   const system = env.GEMINI_ONBOARDING_SYSTEM_PROMPT;
 
   const prompt = [
@@ -50,20 +55,37 @@ export async function generateOnboarding(
     model,
     system,
     prompt,
-    temperature: 0.25,
-    maxOutputTokens: 2500,
+    temperature: 0.1,
+    maxOutputTokens: 16384,
   });
-
-  console.log({ text, finishReason, system })
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    parsed = JSON.parse(extractJsonObject(text));
+    try {
+      parsed = JSON.parse(extractJsonObject(text));
+    } catch (err) {
+      throw new AppError(
+        'Failed to parse AI response as JSON',
+        ErrorCode.AI_PARSE_ERROR,
+        500,
+        { rawText: text },
+      );
+    }
   }
 
-  const data = baseResumeDataSchema.parse(parsed);
+  const result = baseResumeDataSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new AppError(
+      'AI-generated data validation failed',
+      ErrorCode.VALIDATION_ERROR,
+      500,
+      result.error.issues,
+    );
+  }
+
+  const data = result.data;
 
   const baseResume = await prisma.baseResume.create({
     data: {

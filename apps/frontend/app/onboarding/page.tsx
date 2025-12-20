@@ -2,38 +2,21 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import NextLink from 'next/link';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { MethodSelection, ManualEntryForm } from '../components/onboarding';
-import type { OnboardingMethod, OnboardingFormData } from './types';
-import { LOGOS } from '@/lib/config';
+import type { OnboardingMethod } from './types';
 import { Button } from '@heroui/react';
-import { generateOnboardingAction } from '@/lib/actions/onboarding.actions';
 
 export default function OnboardingPage() {
   const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>(null);
   const isMethodSelected = selectedMethod !== null;
 
   const handleSelectMethod = (method: OnboardingMethod) => {
-    // if (method === null) {
-    //   // Skip - redirect to dashboard
-    //   console.log('Skipping onboarding, redirecting to dashboard...');
-    //   return;
-    // }
-
     setSelectedMethod(method);
   };
 
   const handleBackToMethods = () => {
     setSelectedMethod(null);
-  };
-
-  const handleFormComplete = async (data: OnboardingFormData) => {
-    const res = await generateOnboardingAction(data)
-
-    console.log({ res })
-    // TODO: Wire up API call
   };
 
   const renderContent = () => {
@@ -94,7 +77,6 @@ export default function OnboardingPage() {
         return (
           <ManualEntryForm
             onBack={handleBackToMethods}
-            onComplete={handleFormComplete}
           />
         );
 

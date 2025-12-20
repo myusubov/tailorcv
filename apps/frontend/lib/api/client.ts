@@ -17,7 +17,7 @@ export type ApiOk<T> = {
 export type ApiErr = {
   ok: false;
   status: number;
-  error: { message: string; code: string; details?: unknown };
+  error: { message: string; code: ErrorCode; details?: unknown };
   meta?: ApiResponse['meta'];
 };
 
@@ -109,7 +109,7 @@ export async function backendRequest<T>(
         status: response.status || 502,
         error: {
           message: 'Invalid response from server',
-          code: 'INVALID_RESPONSE',
+          code: ErrorCode.INVALID_RESPONSE,
         },
       };
     }
@@ -121,7 +121,7 @@ export async function backendRequest<T>(
         error: {
           message:
             payload.error?.message ?? response.statusText ?? 'Request failed',
-          code: payload.error?.code ?? ErrorCode.INTERNAL_ERROR,
+          code: (payload.error?.code as ErrorCode) ?? ErrorCode.INTERNAL_ERROR,
           details: payload.error?.details,
         },
         meta: payload.meta,
@@ -138,7 +138,7 @@ export async function backendRequest<T>(
     return {
       ok: false,
       status: 0,
-      error: { message: 'Network error', code: 'NETWORK_ERROR' },
+      error: { message: 'Network error', code: ErrorCode.NETWORK_ERROR },
     };
   }
 }

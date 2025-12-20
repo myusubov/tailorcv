@@ -1,4 +1,6 @@
+import { ErrorCode } from 'shared';
 import { env } from '../config/env';
+import { AppError } from '../utils/AppError';
 
 export type GeminiRole = 'user' | 'model';
 
@@ -34,7 +36,7 @@ export async function geminiGenerateText(
   input: GeminiGenerateTextInput,
 ): Promise<{ text: string; finishReason?: string }> {
   const model = input.model ?? 'gemini-3-flash-preview';
-  const timeoutMs = input.timeoutMs ?? 20_000;
+  const timeoutMs = input.timeoutMs ?? 180_000;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -80,7 +82,7 @@ export async function geminiGenerateText(
     if (!res.ok) {
       const message =
         json?.error?.message ?? (res.statusText || 'Gemini request failed');
-      throw new Error(message);
+      throw new AppError(message, ErrorCode.AI_GENERATION_ERROR, res.status);
     }
 
     const candidate = json?.candidates?.[0];
@@ -88,6 +90,15 @@ export async function geminiGenerateText(
       candidate?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
 
     return { text, finishReason: candidate?.finishReason };
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new AppError(
+        'Gemini request timed out',
+        ErrorCode.AI_TIMEOUT_ERROR,
+        504,
+      );
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
