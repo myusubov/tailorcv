@@ -41,6 +41,7 @@
   "dependencies": {
     "@clerk/express": "^1.7.55",
     "dotenv": "^17.2.3",
+    "uuid": "^13.0.0",
     "zod": "^4.1.13"
   }
 }

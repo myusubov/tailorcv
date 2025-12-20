@@ -1,4 +1,5 @@
 # TailorCV - Step 1: Onboarding Flow
+
 ## Complete Visual Guide with Screen Designs
 
 **Last Updated:** December 5, 2025  
@@ -62,11 +63,13 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Text Details:**
+
 - **Headline:** "Create Your Perfect Resume in 30 Seconds"
 - **Buttons:** Large, centered, with icons
 - **Footer:** Small legal text
 
 **What Happens:**
+
 - User clicks "Continue with Google" â†’ Google OAuth popup â†’ Account created
 - User clicks "Continue with Email" â†’ Email/password form â†’ Account created
 - After success â†’ Redirect to `/onboarding`
@@ -135,6 +138,7 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Text Details:**
+
 - **Headline:** Large, friendly "Welcome to TailorCV!"
 - **Subheadline:** "Let's create your base resume in 2 minutes"
 - **Cards:** Each method is a separate clickable card
@@ -142,6 +146,7 @@ This document visualizes the complete onboarding journey from signup to first re
 - **Skip button:** Top right (takes to empty dashboard)
 
 **Card Styling:**
+
 - White background
 - Subtle shadow
 - Hover effect (slight lift)
@@ -149,6 +154,7 @@ This document visualizes the complete onboarding journey from signup to first re
 - "Recommended" badge on GitHub option
 
 **What Happens:**
+
 - User clicks "Connect GitHub" â†’ Path A
 - User clicks "Upload File" â†’ Path B
 - User clicks "Manual Entry" â†’ Path C
@@ -200,12 +206,14 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Text Details:**
+
 - **Headline:** Clear and action-oriented
 - **Bullet list:** What we'll import
 - **Privacy section:** Build trust with lock icon
 - **Button:** Large, green (GitHub color)
 
 **What Happens:**
+
 - User clicks "Authorize with GitHub"
 - GitHub OAuth popup appears
 - User signs in to GitHub (if not already)
@@ -251,11 +259,13 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Animation:**
+
 - Steps complete one by one with checkmarks
 - Loading spinner at top
 - Smooth transitions
 
 **Backend Process:**
+
 1. Fetch GitHub profile data
 2. Get top 10 repositories
 3. Extract languages, stars, descriptions
@@ -359,23 +369,27 @@ This document visualizes the complete onboarding journey from signup to first re
 **Key UI Elements:**
 
 **Green Section (âœ… What We Found):**
+
 - Shows all successfully extracted data
 - Collapsed view (expandable if user wants details)
 - Green checkmarks for completed sections
 
 **Yellow Section (âš ï¸ Please Confirm):**
+
 - Shows uncertain detections
 - Radio buttons for quick yes/no
 - If "Yes" â†’ Shows additional fields to fill
 - If "No" â†’ Hides those fields
 
 **Red Section (âŒ Missing):**
+
 - Shows what couldn't be found
 - Each item in a separate card
 - Two buttons: "Add" or "Skip"
 - Explains why it's optional
 
 **Bottom Actions:**
+
 - **Primary:** "Save & Continue" (large, blue)
 - **Secondary:** "Preview Resume PDF" (ghost button)
 
@@ -440,6 +454,7 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Different Messaging:**
+
 - Less celebratory (50% vs 85%)
 - More "Add" buttons for missing critical fields
 - Option to "Switch to Manual Entry" if GitHub wasn't helpful
@@ -486,6 +501,7 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Key Features:**
+
 - Simple, focused form
 - Only asks essential fields
 - Text area for brief description (not full bullets)
@@ -523,6 +539,7 @@ This document visualizes the complete onboarding journey from signup to first re
 ```
 
 **Key Features:**
+
 - Even simpler than work experience
 - Checkbox for self-taught (common for devs)
 - Optional field (can skip entirely)
@@ -595,18 +612,21 @@ This document visualizes the complete onboarding journey from signup to first re
 **Key UI Elements:**
 
 **Drag & Drop Zone:**
+
 - Large, obvious target area
 - Dashed border
 - File icon
 - Clear instructions
 
 **Text Area:**
+
 - Alternative to file upload
 - Shows example structure
 - Large enough to see content
 - Syntax highlighting for markdown (nice-to-have)
 
 **Template Link:**
+
 - Downloads a pre-formatted about.md template
 - Helps users structure their info correctly
 
@@ -638,13 +658,14 @@ Copy this template, fill it out, and upload to TailorCV!
 ## Professional Summary
 
 Write 2-3 sentences about yourself:
+
 - What you do (your role/specialty)
 - Years of experience
 - Key technologies or focus areas
 
 Example:
-"I'm a full-stack developer with 3 years of experience building scalable 
-web applications. Currently focused on React, TypeScript, and Node.js. 
+"I'm a full-stack developer with 3 years of experience building scalable
+web applications. Currently focused on React, TypeScript, and Node.js.
 Passionate about creating user-friendly interfaces and writing clean code."
 
 ---
@@ -652,20 +673,23 @@ Passionate about creating user-friendly interfaces and writing clean code."
 ## Work Experience
 
 ### Job Title @ Company Name
+
 **Duration:** January 2023 - Present _(or specific dates)_
 
 Brief description of what you do/did:
+
 - Main responsibilities
 - Key achievements
 - Technologies used
 
 Example:
 "Frontend Team Lead @ TechCorp (Jan 2024 - Present)
-Led a team of 3 developers building React dashboards. Improved page 
+Led a team of 3 developers building React dashboards. Improved page
 load times by 40%. Mentored junior developers on TypeScript best practices.
 Tech stack: React, TypeScript, Tailwind CSS, PostgreSQL"
 
 ### Previous Job Title @ Previous Company
+
 **Duration:** June 2021 - December 2023
 
 Another job description following the same format...
@@ -682,12 +706,12 @@ List 3-5 of your best projects:
 
 Examples:
 
-**TailorCV:** AI-powered resume builder that helps developers customize 
+**TailorCV:** AI-powered resume builder that helps developers customize
 their CVs for job applications in 30 seconds.  
 **Tech Stack:** Next.js, TypeScript, Tailwind CSS, Anthropic Claude API  
 **Link:** github.com/murad/tailorcv
 
-**E-commerce Platform:** Full-stack online store with Stripe integration 
+**E-commerce Platform:** Full-stack online store with Stripe integration
 and admin dashboard.  
 **Tech Stack:** React, Node.js, PostgreSQL, Stripe API
 
@@ -697,7 +721,7 @@ and admin dashboard.
 
 List your technical skills (separated by commas):
 
-React, TypeScript, JavaScript, Node.js, PostgreSQL, MongoDB, 
+React, TypeScript, JavaScript, Node.js, PostgreSQL, MongoDB,
 Tailwind CSS, Next.js, Express, REST APIs, Git, Docker, AWS, etc.
 
 ---
@@ -728,6 +752,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Template Features:**
+
 - Clear section headers
 - Examples for every section
 - Formatting guidelines
@@ -825,6 +850,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Key Differences from GitHub Results:**
+
 - Higher completion % (95% vs 85%)
 - Less uncertain fields (user provided the data)
 - Fewer missing items
@@ -885,8 +911,9 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Step 1 Features:**
+
 - Progress bar at top (visual feedback)
-- Required fields marked with *
+- Required fields marked with \*
 - Optional fields clearly labeled
 - Single "Next" button (no "Back" needed on step 1)
 - Clean, spacious layout
@@ -935,6 +962,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Step 2 Features:**
+
 - Text area for user input
 - AI generation button (shortcut)
 - Helpful tip below
@@ -995,6 +1023,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Step 3 Features:**
+
 - Repeatable job entry
 - Add/Remove buttons
 - Checkbox for current job
@@ -1049,6 +1078,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Step 4 Features:**
+
 - Projects: Repeatable entries
 - Skills: Tag-style input (type + enter)
 - Remove tags easily (Ã— button)
@@ -1095,6 +1125,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Step 5 Features:**
+
 - Final step (100% progress)
 - Simple education form
 - Self-taught checkbox
@@ -1194,6 +1225,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Success Screen Features:**
+
 - Celebratory tone (100% complete!)
 - Clear summary of what was created
 - Two clear next actions
@@ -1257,6 +1289,7 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 ```
 
 **Dashboard Features:**
+
 - Sidebar navigation (persistent)
 - Welcome message with user's name
 - Three clear action cards
@@ -1269,13 +1302,13 @@ Completed online courses in web development (freeCodeCamp, Udemy, etc.)
 
 ## Path Comparison
 
-| Metric | GitHub | About Me | Manual |
-|--------|--------|----------|--------|
-| **Time** | 2-3 min | 1-2 min | 5-10 min |
-| **Completeness** | 80-95% | 90-100% | 100% |
-| **User Effort** | Lowest | Low | High |
-| **Data Quality** | Good | Excellent | Excellent |
-| **Suitable For** | Active devs | Prepared users | Everyone |
+| Metric           | GitHub      | About Me       | Manual    |
+| ---------------- | ----------- | -------------- | --------- |
+| **Time**         | 2-3 min     | 1-2 min        | 5-10 min  |
+| **Completeness** | 80-95%      | 90-100%        | 100%      |
+| **User Effort**  | Lowest      | Low            | High      |
+| **Data Quality** | Good        | Excellent      | Excellent |
+| **Suitable For** | Active devs | Prepared users | Everyone  |
 
 ---
 

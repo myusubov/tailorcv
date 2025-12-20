@@ -3,6 +3,7 @@ import type {
   ResumeIdParams,
   UpdateBaseResumeBody,
 } from '../schemas/resumes.schema';
+import type { OnboardingGenerateBaseBody } from '../schemas/onboarding-generate.schema';
 
 export type ClerkLocals = {
   clerkUserId: string;
@@ -27,3 +28,6 @@ export type UpdateBaseResumeLocals = ClerkLocals & {
   body: UpdateBaseResumeBody;
 };
 
+export type GenerateOnboardingLocals = ClerkLocals & {
+  body: OnboardingGenerateBaseBody;
+};

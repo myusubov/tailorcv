@@ -1,5 +1,5 @@
-
 # TailorCV - Step 2: First Job Customization Flow
+
 ## Complete Visual Guide with Screen Designs
 
 **Last Updated:** December 6, 2025  
@@ -178,11 +178,11 @@ Now let's customize it for a real job and see the magic happen!
 
 ──────────────────────────── KEY IMPROVEMENTS ───────────────────────────────
 
- ✓ Summary rewritten for React-focused seniority  
- ✓ Skills reordered to match job requirements  
- ✓ Experience bullets rewritten & expanded  
- ✓ Keywords “scalable,” “architecture,” “lead” inserted  
- ✓ ATS optimization applied  
+ ✓ Summary rewritten for React-focused seniority
+ ✓ Skills reordered to match job requirements
+ ✓ Experience bullets rewritten & expanded
+ ✓ Keywords “scalable,” “architecture,” “lead” inserted
+ ✓ ATS optimization applied
 
 ──────────────────────────────────────────────────────────────────────────────
 
@@ -236,7 +236,7 @@ SoftSync — Frontend Team Lead (Jan 2024 – Present)           [ Reset AI ]
 ```
 ┌───────────────────────────── DASHBOARD ─────────────────────────────────────┐
 
-Welcome, Murad! 👋  
+Welcome, Murad! 👋
 Your base resume is ready. Start customizing to land interviews faster.
 
 ──────────────────────────── QUICK ACTIONS ───────────────────────────────────
@@ -258,7 +258,7 @@ Your base resume is ready. Start customizing to land interviews faster.
 └────────────────────────────────────────────────────────────────────────────┘
 
 ──────────────────────────────────────────────────────────────────────────────
- PLAN: Free — 3 Customizations Remaining  
+ PLAN: Free — 3 Customizations Remaining
 ```
 
 ---

@@ -1,5 +1,6 @@
 import { isClerkAPIResponseError } from '@clerk/shared/error';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 export function getClerkErrorMessage(error: unknown): string {
   // Check if it's a Clerk API Response Error
@@ -21,4 +22,8 @@ export function handleClerkError(error: unknown) {
   const message = getClerkErrorMessage(error);
   toast.error(message);
   return message;
+}
+
+export function generateUUID() {
+  return uuidv4();
 }

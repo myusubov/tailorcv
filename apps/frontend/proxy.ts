@@ -27,6 +27,7 @@ const isProtectedRoute = createRouteMatcher([
   '/profile(.*)',
   '/settings(.*)',
   '/test(.*)',
+  '/',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -47,6 +48,26 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(loginUrl);
   }
 
+  // If user is logged in but doesn't have a base resume, force onboarding.
+  // Use the BFF route handler so auth stays server-side.
+  if (userId && isProtectedRoute(req) && !pathname.startsWith('/onboarding')) {
+    const response = await fetch(new URL('/api/onboarding/status', req.url), {
+      headers: { cookie: req.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    });
+
+    const json = (await response.json().catch(() => null)) as {
+      ok: boolean;
+      data?: { hasBaseResume?: boolean };
+    } | null;
+
+    const hasBaseResume = Boolean(json?.ok && json?.data?.hasBaseResume);
+
+    if (!hasBaseResume) {
+      return NextResponse.redirect(new URL('/onboarding', req.url));
+    }
+  }
+
   // For public routes or authenticated users accessing allowed routes, continue
   return NextResponse.next();
 });
@@ -55,7 +76,5 @@ export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
   ],
 };
