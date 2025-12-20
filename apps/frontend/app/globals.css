@@ -81,6 +81,10 @@
 
   /* Ring/focus */
   --ring: #6366f1;
+
+  /* Content colors */
+  --content1: #ffffff;
+  --content1-foreground: #0f172a;
 }
 
 .dark {
@@ -163,6 +167,10 @@
 
   /* Ring/focus */
   --ring: #818cf8;
+
+  /* Content colors */
+  --content1: #18181b;
+  --content1-foreground: #ffffff;
 }
 
 @theme inline {
@@ -239,6 +247,10 @@
 
   /* Ring */
   --color-ring: var(--ring);
+
+  /* Content */
+  --color-content1: var(--content1);
+  --color-content1-foreground: var(--content1-foreground);
 
   /* Fonts */
   --font-sans: var(--font-geist-sans);

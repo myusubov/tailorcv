@@ -12,6 +12,7 @@ import {
   ProjectsStep,
   EducationStep,
 } from './steps';
+import { GenerationOverlay } from './generation-overlay';
 import type { ManualEntryStep } from '../../onboarding/types';
 import { MANUAL_STEPS } from '../../onboarding/types';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -241,6 +242,7 @@ export function ManualEntryForm({
           </AnimatePresence>
         </div>
       </Form>
+      <GenerationOverlay isVisible={isPending} />
     </FormProvider>
   );
 }
