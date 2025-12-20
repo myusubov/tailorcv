@@ -9,6 +9,9 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
 
+  // Backend API URL (Server-only preferred)
+  API_URL: z.url().optional(),
+
   // Clerk Authentication (Public - available on client)
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
 
@@ -44,6 +47,7 @@ export type Env = z.infer<typeof envSchema>;
 const parseEnv = (): Env => {
   const parsed = envSchema.safeParse({
     NODE_ENV: process.env.NODE_ENV,
+    API_URL: process.env.API_URL,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
@@ -92,7 +96,7 @@ export const config = {
   isTest: env.NODE_ENV === 'test',
 
   // URLs
-  apiUrl: env.NEXT_PUBLIC_API_URL,
+  apiUrl: env.API_URL ?? env.NEXT_PUBLIC_API_URL,
   appUrl: env.NEXT_PUBLIC_APP_URL,
 
   // Auth routes (cast to Route for Next.js router compatibility)

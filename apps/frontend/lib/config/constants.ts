@@ -5,7 +5,8 @@
 export const ASSETS = {
   // Brand logos and images
   LOGOS: {
-    TAILORCV: 'https://9nghnaawajmv9mqf.public.blob.vercel-storage.com/tailorcv-logo',
+    TAILORCV:
+      'https://9nghnaawajmv9mqf.public.blob.vercel-storage.com/tailorcv-logo',
   },
 
   // Common icons or other reusable images can be added here
