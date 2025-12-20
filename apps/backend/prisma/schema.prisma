@@ -11,8 +11,8 @@ model User {
   id                String             @id @default(uuid())
   clerkUserId       String             @unique
   email             String             @unique
-  firstName         String
-  lastName          String
+  firstName         String?
+  lastName          String?
   plan              Plan               @default(FREE)
   creditsUsed       Int                @default(0)
   creditsLimit      Int                @default(3)
