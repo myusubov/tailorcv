@@ -24,9 +24,13 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
     const clerkUserId = (evt.data as any)?.id as string | undefined;
     if (!clerkUserId) return;
 
-    await prisma.user.deleteMany({
-      where: { clerkUserId },
-    });
+    try {
+      await prisma.user.delete({
+        where: { clerkUserId },
+      });
+    } catch (error) {
+      console.error(`Error deleting user ${clerkUserId}:`, error);
+    }
     return;
   }
 

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client"
   output   = "./generated/client"
@@ -10,70 +7,55 @@ datasource db {
   provider = "postgresql"
 }
 
-// ============================================
-// USER MODEL
-// ============================================
 model User {
-  id               String   @id @default(uuid())
-  clerkUserId      String   @unique
-  email            String   @unique
-  firstName        String
-  lastName         String
-  plan             Plan     @default(FREE)
-  creditsUsed      Int      @default(0)
-  creditsLimit     Int      @default(3) // 3 for FREE, -1 for unlimited
-  stripeCustomerId String?  @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relations
+  id                String             @id @default(uuid())
+  clerkUserId       String             @unique
+  email             String             @unique
+  firstName         String
+  lastName          String
+  plan              Plan               @default(FREE)
+  creditsUsed       Int                @default(0)
+  creditsLimit      Int                @default(3)
+  stripeCustomerId  String?            @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   baseResumes       BaseResume[]
   customizedResumes CustomizedResume[]
 
   @@map("users")
 }
 
-enum Plan {
-  FREE
-  PRO_MONTHLY
-  PRO_LIFETIME
-}
-
-// ============================================
-// BASE RESUME MODEL
-// ============================================
 model BaseResume {
-  id        String   @id @default(uuid())
-  userId    String
-  name      String   @default("My Resume") // e.g., "Software Engineer Resume"
-  data      Json // Entire resume structure as JSON
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
+  id                String             @id @default(uuid())
+  userId            String
+  name              String             @default("My Resume")
+  data              Json
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   user              User               @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
   customizedResumes CustomizedResume[]
 
   @@map("base_resumes")
 }
 
-// ============================================
-// CUSTOMIZED RESUME MODEL
-// ============================================
 model CustomizedResume {
-  id             String   @id @default(uuid())
+  id             String     @id @default(uuid())
   userId         String
   baseResumeId   String
-  jobTitle       String? // e.g., "Senior Frontend Engineer"
-  companyName    String? // e.g., "Google"
-  jobDescription String   @db.Text // Full job description
-  customizedData Json // AI-customized resume data
-  matchScore     Int?     @default(0) // 0-100, future feature
-  createdAt      DateTime @default(now())
-
-  // Relations
- user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
- baseResume BaseResume @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
+  jobTitle       String?
+  companyName    String?
+  jobDescription String
+  customizedData Json
+  matchScore     Int?       @default(0)
+  createdAt      DateTime   @default(now())
+  baseResume     BaseResume @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
+  user           User       @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
 
   @@map("customized_resumes")
+}
+
+enum Plan {
+  FREE
+  PRO_MONTHLY
+  PRO_LIFETIME
 }
