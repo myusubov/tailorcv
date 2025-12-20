@@ -31,45 +31,32 @@ export default function SSOCallbackPage() {
   useEffect(() => {
     if (!isSignInLoaded || !isSignUpLoaded) return;
 
-
     const handleSession = async () => {
-      // 1. Handle Sign In Complete (User exists and is fully verified)
+      // 1. Handle Sign In Complete
       if (signIn?.status === 'complete') {
         await setSignInActive({ session: signIn.createdSessionId });
         router.push(config.auth.afterSignInUrl as string);
         return;
       }
 
-      // 2. Handle Sign Up Complete (New user fully verified)
+      // 2. Handle Sign Up Complete
       if (signUp?.status === 'complete') {
         await setSignUpActive({ session: signUp.createdSessionId });
         router.push(config.auth.afterSignUpUrl);
         return;
       }
 
-      // 3. Handle Missing Requirements (e.g. missing Last Name from Google)
-      if (signUp?.status === 'missing_requirements') {
-        // Redirection to register will trigger the "Complete Profile" form we built
-        router.push('/register');
-        return;
-      }
-
-      // 4. Handle 2FA (Multi-Factor Authentication)
-      if (signIn?.status === 'needs_second_factor') {
-        // TODO: ideally we redirect to a 2FA verification page. 
-        // For now, sending to login.
-        router.push('/login');
-        return;
-      }
-
-      // 5. Fallback for unhandled states (prevent infinite spinner)
-      // If we are loaded, have a sign in/up attempt, but no matching status above:
+      // 3. Fallback for unhandled states (including 2FA etc.)
       if (signIn || signUp) {
+        if (signIn?.status === 'needs_second_factor') {
+          router.push('/login');
+          return;
+        }
+
         console.warn('Unhandled auth state:', {
           signInStatus: signIn?.status,
           signUpStatus: signUp?.status
         });
-        // Give a short delay to ensure we don't race, then redirect
         setTimeout(() => router.push('/login'), 2000);
       }
     };

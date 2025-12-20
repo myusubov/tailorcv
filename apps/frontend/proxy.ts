@@ -36,7 +36,8 @@ export default clerkMiddleware(async (auth, req) => {
   const isOnboardingRoute = pathname.startsWith('/onboarding');
 
   // 1. If user is logged in and trying to access auth routes (including root '/'), redirect to dashboard
-  if (userId && isAuthRoute(req)) {
+  // CRITICAL: Explicitly skip /sso-callback to prevent loops during OAuth finalization
+  if (userId && isAuthRoute(req) && pathname !== '/sso-callback') {
     return NextResponse.redirect(new URL('/test', req.url));
   }
 

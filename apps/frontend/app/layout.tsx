@@ -24,7 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider afterSignOutUrl="/login">
+    <ClerkProvider 
+      afterSignOutUrl="/login"
+      signInUrl="/login"
+      signUpUrl="/register"
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} antialiased`}>
           <ThemeProvider>
