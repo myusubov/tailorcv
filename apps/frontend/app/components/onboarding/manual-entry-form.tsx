@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Form } from '@heroui/react';
+import { Button, Form } from '@heroui/react';
 import { ProgressBar } from './progress-bar';
 import {
   ContactStep,
@@ -25,6 +25,7 @@ import {
 import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 import { generateOnboardingAction } from '@/lib/actions/onboarding.actions';
 import type { GenerateOnboardingOutput } from '@/lib/types/onboarding';
+import { fillValues } from '@/lib/data/mock-onboarding';
 
 interface ManualEntryFormProps {
   onBack: () => void;
@@ -197,6 +198,9 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
         onOpenChange={setShowSuccessModal}
         data={generatedData}
       />
+      <Button onClick={() => {
+        form.reset(fillValues())
+      }} className="fixed bottom-4 right-4">Fill Values</Button>
     </FormProvider>
   );
 }

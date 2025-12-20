@@ -323,3 +323,202 @@ export const MOCK_ONBOARDING_FORM_VALUES: OnboardingFormInput = {
     isSelfTaught: false,
   },
 };
+
+export const MOCK_ONBOARDING_FORM_VALUES_V2: OnboardingFormInput = {
+  contact: {
+    fullName: 'Sarah Chen',
+    email: 'sarah.chen@design.co',
+    phone: '+1 555 012 3456',
+    location: 'San Francisco, CA',
+    github: 'github.com/schen-design',
+    linkedin: 'linkedin.com/in/sarahchen-design',
+    portfolio: 'sarahchen.design',
+  },
+  summary:
+    'Award-winning Senior Product Designer with 6+ years of experience crafting intuitive digital experiences. Specialized in design systems, accessibility, and user research. Passionate about bridging the gap between design and engineering to build scalable products.',
+  experiences: [
+    {
+      id: 'techflow-id',
+      jobTitle: 'Senior Product Designer',
+      company: 'TechFlow',
+      startMonth: '03',
+      startYear: '2022',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
+      description:
+        'Leading the design system team for a major enterprise SaaS platform. Reduced design-to-dev handoff time by 40% through a comprehensive component library in Figma. Mentoring 2 junior designers and conducting weekly design critiques.',
+    },
+    {
+      id: 'creative-sol-id',
+      jobTitle: 'UX Designer',
+      company: 'Creative Solutions',
+      startMonth: '06',
+      startYear: '2019',
+      endMonth: '02',
+      endYear: '2022',
+      isCurrent: false,
+      description:
+        'Designed end-to-end mobile app experiences for various fintech clients. Conducted user interviews, created wireframes and high-fidelity prototypes. Collaborated closely with developers to ensure design fidelity in production.',
+    },
+  ],
+  projects: [
+    {
+      id: 'fintech-ds-id',
+      name: 'Fintech Design System',
+      description:
+        'A comprehensive design system for a banking application, including typography, color palette, and accessible component library.',
+      techStack: 'Figma, Storybook, React, CSS Modules',
+      link: 'https://design.fintech.com',
+      repoUrl: '',
+    },
+    {
+      id: 'a11y-audit-id',
+      name: 'Accessibility Audit Tool',
+      description:
+        'An internal tool to automated accessibility checks for design files, ensuring WCAG 2.1 compliance before handoff.',
+      techStack: 'Figma Plugin API, TypeScript, React',
+      link: '',
+      repoUrl: 'github.com/schen-design/a11y-audit',
+    },
+  ],
+  skills: [
+    'Figma',
+    'Sketch',
+    'Adobe XD',
+    'Prototyping',
+    'User Research',
+    'Wireframing',
+    'HTML',
+    'CSS',
+    'Sass',
+    'Storybook',
+    'Accessibility (WCAG)',
+    'Design Systems',
+  ],
+  education: {
+    degree: 'BFA in Interaction Design',
+    school: 'California College of the Arts',
+    graduationYear: '2019',
+    isSelfTaught: false,
+  },
+};
+
+export const MOCK_ONBOARDING_FORM_VALUES_V3: OnboardingFormInput = {
+  contact: {
+    fullName: 'Michael Ross',
+    email: 'm.ross@data.io',
+    phone: '+44 20 7123 4567',
+    location: 'London, UK',
+    github: 'github.com/mross-data',
+    linkedin: 'linkedin.com/in/michael-ross-ds',
+    portfolio: 'mross-data.io',
+  },
+  summary:
+    'Analytical Data Scientist with a strong background in machine learning and statistical modeling. Experienced in building predictive models, data pipelines, and visualizing complex datasets. Proficient in Python, SQL, and cloud infrastructure for deploying ML models.',
+  experiences: [
+    {
+      id: 'datacorp-id',
+      jobTitle: 'Data Scientist',
+      company: 'DataCorp',
+      startMonth: '09',
+      startYear: '2023',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
+      description:
+        'Developing churn prediction models for a telecom client, achieving 85% accuracy. Building automated ETL pipelines using Apache Airflow and DBT. Creating interactive dashboards in Tableau for executive reporting.',
+    },
+    {
+      id: 'fintech-inc-id',
+      jobTitle: 'Junior Data Analyst',
+      company: 'FinTech Inc.',
+      startMonth: '07',
+      startYear: '2021',
+      endMonth: '08',
+      endYear: '2023',
+      isCurrent: false,
+      description:
+        'Analyzed transaction data to identify fraud patterns, reducing fraudulent activities by 15%. Assisted in the migration of on-premise data warehouses to AWS Redshift. Wrote complex SQL queries for ad-hoc business analysis.',
+    },
+  ],
+  projects: [
+    {
+      id: 'fraud-detect-id',
+      name: 'Real-time Fraud Detection',
+      description:
+        'A real-time fraud detection system using Random Forest and Gradient Boosting algorithms. Processes thousands of transactions per second with low latency.',
+      techStack: 'Python, Scikit-learn, Kafka, AWS Lambda',
+      link: '',
+      repoUrl: 'github.com/mross-data/fraud-detect',
+    },
+    {
+      id: 'stock-pred-id',
+      name: 'Stock Price Predictor',
+      description:
+        'An experimental LSTM model to predict short-term stock price movements based on historical data and sentiment analysis of news headlines.',
+      techStack: 'Python, TensorFlow, Keras, Pandas, NLP',
+      link: 'https://stock-pred-demo.herokuapp.com',
+      repoUrl: 'github.com/mross-data/stock-pred',
+    },
+  ],
+  skills: [
+    'Python',
+    'R',
+    'SQL',
+    'TensorFlow',
+    'PyTorch',
+    'Scikit-learn',
+    'Pandas',
+    'NumPy',
+    'Tableau',
+    'Power BI',
+    'AWS',
+    'Spark',
+    'Airflow',
+    'Git',
+  ],
+  education: {
+    degree: 'MS in Data Science',
+    school: 'Imperial College London',
+    graduationYear: '2021',
+    isSelfTaught: false,
+  },
+};
+
+export const MOCK_ONBOARDING_EMPTY_FORM_VALUES: OnboardingFormInput = {
+        contact: {
+        fullName: '',
+        email: '',
+        phone: '',
+        location: '',
+        github: '',
+        linkedin: '',
+        portfolio: '',
+      },
+      summary: '',
+      experiences: [],
+      projects: [],
+      skills: [],
+      education: {
+        degree: '',
+        school: '',
+        graduationYear: '',
+        isSelfTaught: false,
+      },
+}
+
+const fillOptions = [
+  MOCK_ONBOARDING_FORM_VALUES,
+  MOCK_ONBOARDING_FORM_VALUES_V2,
+  MOCK_ONBOARDING_FORM_VALUES_V3,
+  MOCK_ONBOARDING_EMPTY_FORM_VALUES,
+];
+
+let currentFillIndex = 0;
+
+export const fillValues = () => {
+  const value = fillOptions[currentFillIndex];
+  currentFillIndex = (currentFillIndex + 1) % fillOptions.length;
+  return value;
+};
