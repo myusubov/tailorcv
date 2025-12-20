@@ -20,7 +20,7 @@ import {
 } from '@heroui/react';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
@@ -31,6 +31,14 @@ import { registerSchema, RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils';
 import { config, LOGOS } from '@/lib/config';
 import Image from 'next/image';
+import { z } from 'zod';
+
+const completeProfileSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+});
+
+type CompleteProfileValues = z.infer<typeof completeProfileSchema>;
 
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -59,6 +67,48 @@ export default function RegisterPage() {
     },
     mode: 'onSubmit',
   });
+
+  const {
+    control: completeControl,
+    handleSubmit: handleCompleteSubmit,
+    formState: { isSubmitting: isCompleting },
+    setValue: setCompleteValue,
+  } = useForm<CompleteProfileValues>({
+    resolver: zodResolver(completeProfileSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+    },
+  });
+
+  // Check for missing requirements and pre-fill form
+  useEffect(() => {
+    if (isLoaded && signUp?.status === 'missing_requirements') {
+      if (signUp.firstName) setCompleteValue('firstName', signUp.firstName);
+      if (signUp.lastName) setCompleteValue('lastName', signUp.lastName);
+    }
+  }, [isLoaded, signUp, setCompleteValue]);
+
+  const onCompleteProfile = async (data: CompleteProfileValues) => {
+    if (!isLoaded || !signUp) return;
+    setGlobalError('');
+
+    try {
+      await signUp.update({
+        firstName: data.firstName,
+        lastName: data.lastName,
+      });
+
+      if (signUp.status === 'complete') {
+        await setActive({ session: signUp.createdSessionId });
+        router.push(config.auth.afterSignUpUrl);
+      }
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Failed to update profile');
+    }
+  };
 
   // Handle submission of the sign-up form
   const onSubmit = async (data: RegisterFormValues) => {
@@ -162,6 +212,110 @@ export default function RegisterPage() {
       setGoogleLoading(false);
     }
   };
+
+  if (isLoaded && signUp?.status === 'missing_requirements') {
+    return (
+      <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <NextLink
+            href="/"
+            className="mb-8 flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-80"
+          >
+            <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
+              <Icon icon="lucide:file-text" className="size-5" />
+            </div>
+            TailorCV
+          </NextLink>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="w-full max-w-[400px]"
+        >
+          <Card className="w-full">
+            <Card.Header className="flex flex-col gap-1 text-center">
+              <Card.Title className="text-2xl">Complete your profile</Card.Title>
+              <Card.Description>
+                Please provide your name to finish setting up your account.
+              </Card.Description>
+            </Card.Header>
+            <Card.Content>
+              <form
+                onSubmit={handleCompleteSubmit(onCompleteProfile)}
+                className="flex flex-col gap-6"
+              >
+                <div className="flex flex-col gap-4">
+                  <Controller
+                    name="firstName"
+                    control={completeControl}
+                    render={({ field, fieldState }) => (
+                      <TextField
+                        className="w-full"
+                        isInvalid={!!fieldState.error}
+                      >
+                        <Label className="text-base">First Name</Label>
+                        <Input {...field} placeholder="John" />
+                        {fieldState.error && (
+                          <FieldError>{fieldState.error.message}</FieldError>
+                        )}
+                      </TextField>
+                    )}
+                  />
+
+                  <Controller
+                    name="lastName"
+                    control={completeControl}
+                    render={({ field, fieldState }) => (
+                      <TextField
+                        className="w-full"
+                        isInvalid={!!fieldState.error}
+                      >
+                        <Label className="text-base">Last Name</Label>
+                        <Input {...field} placeholder="Doe" />
+                        {fieldState.error && (
+                          <FieldError>{fieldState.error.message}</FieldError>
+                        )}
+                      </TextField>
+                    )}
+                  />
+                </div>
+
+                <AnimatedError message={globalError} />
+                <div id="clerk-captcha" />
+
+                <Button
+                  type="submit"
+                  isDisabled={isCompleting}
+                  className="group w-full shadow-sm"
+                >
+                  {isCompleting ? (
+                    <>
+                      <Spinner color="current" size="sm" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Complete Sign Up
+                      <Icon
+                        icon="lucide:arrow-right"
+                        className="ml-2 size-4 transition-all group-hover:translate-x-1"
+                      />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Card.Content>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (verifying) {
     return (
