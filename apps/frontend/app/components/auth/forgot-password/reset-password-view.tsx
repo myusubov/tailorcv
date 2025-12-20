@@ -211,7 +211,7 @@ export function ResetPasswordView({
             </Form>
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-            <p className="text-muted-foreground text-center text-sm">
+            <p className="text-muted text-center text-sm">
               Didn&apos;t receive the code?{' '}
               <button
                 type="button"
@@ -222,7 +222,7 @@ export function ResetPasswordView({
                 {isResending ? 'Resending...' : 'Resend code'}
               </button>
             </p>
-            <p className="text-muted-foreground text-center text-sm">
+            <p className="text-muted text-center text-sm">
               <button
                 type="button"
                 className="text-primary cursor-pointer font-medium hover:underline"

@@ -19,8 +19,7 @@ export const updateBaseResumeBodySchema = z
   .strict()
   .refine((v) => v.name !== undefined || v.data !== undefined, {
     message: 'Provide at least one of: name, data',
-  }); 
-
+  });
 
 export type CreateBaseResumeBody = z.infer<typeof createBaseResumeBodySchema>;
 export type UpdateBaseResumeBody = z.infer<typeof updateBaseResumeBodySchema>;
