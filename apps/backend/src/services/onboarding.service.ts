@@ -66,10 +66,18 @@ export async function generateOnboarding(
         model,
         system,
         prompt,
-        temperature: 0.1,
+        temperature: 0,
         maxOutputTokens: 16384,
         responseMimeType: 'application/json',
       });
+
+      if (finishReason === 'MAX_TOKENS') {
+        const message = attempts < maxAttempts 
+          ? 'AI response truncated, retrying...' 
+          : 'The response was too long and got cut off after multiple attempts. Please try reducing the input detail.';
+        
+        throw new AppError(message, ErrorCode.AI_GENERATION_ERROR, 500);
+      }
 
       if (finishReason && finishReason !== 'STOP') {
         process.env.NODE_ENV === 'development' &&
@@ -122,7 +130,7 @@ export async function generateOnboarding(
       lastError = err;
       console.error(`Attempt ${attempts} failed:`, err.message);
 
-      // If it's a validation error or something that retrying won't fix, throw immediately
+      // If it's a validation error, throw immediately (retrying won't change schema validation)
       if (
         err instanceof AppError &&
         err.errorCode === ErrorCode.VALIDATION_ERROR
