@@ -7,6 +7,8 @@ export const registerSchema = z.object({
     .trim()
     .min(1, 'Password is required')
     .min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().trim().optional(),
+  lastName: z.string().trim().optional(),
   terms: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms',
   }),
