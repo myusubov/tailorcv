@@ -30,6 +30,7 @@ import Image from 'next/image';
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const [globalError, setGlobalError] = useState('');
+  const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
 
@@ -83,6 +84,24 @@ export default function LoginPage() {
       setGlobalError(clerkError || 'OAuth failed');
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (!isLoaded) return;
+    try {
+      setAppleLoading(true);
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_apple',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: config.auth.afterSignInUrl,
+      });
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'OAuth failed');
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -324,6 +343,31 @@ export default function LoginPage() {
                   <>
                     <Icon icon="logos:google-icon" className="size-5" />
                     Continue with Google
+                  </>
+                )}
+              </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
+            >
+              <Button
+                type="button"
+                variant="tertiary"
+                isDisabled={appleLoading || isSubmitting || googleLoading}
+                className="w-full font-medium"
+                onPress={handleAppleSignIn}
+              >
+                {appleLoading ? (
+                  <>
+                    <Spinner color="current" size="sm" />
+                    Signing in with Apple...
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="logos:apple" className="size-5 fill-current" />
+                    Continue with Apple
                   </>
                 )}
               </Button>

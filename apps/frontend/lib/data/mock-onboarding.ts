@@ -487,26 +487,26 @@ export const MOCK_ONBOARDING_FORM_VALUES_V3: OnboardingFormInput = {
 };
 
 export const MOCK_ONBOARDING_EMPTY_FORM_VALUES: OnboardingFormInput = {
-        contact: {
-        fullName: '',
-        email: '',
-        phone: '',
-        location: '',
-        github: '',
-        linkedin: '',
-        portfolio: '',
-      },
-      summary: '',
-      experiences: [],
-      projects: [],
-      skills: [],
-      education: {
-        degree: '',
-        school: '',
-        graduationYear: '',
-        isSelfTaught: false,
-      },
-}
+  contact: {
+    fullName: '',
+    email: '',
+    phone: '',
+    location: '',
+    github: '',
+    linkedin: '',
+    portfolio: '',
+  },
+  summary: '',
+  experiences: [],
+  projects: [],
+  skills: [],
+  education: {
+    degree: '',
+    school: '',
+    graduationYear: '',
+    isSelfTaught: false,
+  },
+};
 
 const fillOptions = [
   MOCK_ONBOARDING_FORM_VALUES,

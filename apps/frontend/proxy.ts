@@ -18,7 +18,7 @@ const isAuthRoute = createRouteMatcher([
   '/login(.*)',
   '/register(.*)',
   '/forgot-password(.*)',
-  '/'
+  '/',
 ]);
 
 // Protected routes that require authentication
