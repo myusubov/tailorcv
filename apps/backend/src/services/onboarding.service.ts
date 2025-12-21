@@ -72,18 +72,22 @@ export async function generateOnboarding(
       });
 
       if (finishReason === 'MAX_TOKENS') {
-        const message = attempts < maxAttempts 
-          ? 'AI response truncated, retrying...' 
-          : 'The response was too long and got cut off after multiple attempts. Please try reducing the input detail.';
-        
-        throw new AppError(message, ErrorCode.AI_GENERATION_ERROR, 500);
+        if (attempts < maxAttempts) {
+          console.warn(
+            `[Attempt ${attempts}] AI truncated by MAX_TOKENS. Retrying with conciseness...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
+          continue;
+        }
+
+        throw new AppError(
+          'The resume is too large for the AI to process in one go. Please reduce your input detail.',
+          ErrorCode.AI_GENERATION_ERROR,
+          400,
+        );
       }
 
-      if (finishReason && finishReason !== 'STOP') {
-        process.env.NODE_ENV === 'development' &&
-          console.warn(`AI finished with reason: ${finishReason}`);
-      }
-
+      // 2. Parse Logic
       let parsed: unknown;
       try {
         parsed = JSON.parse(text);
@@ -91,9 +95,12 @@ export async function generateOnboarding(
         try {
           parsed = JSON.parse(extractJsonObject(text));
         } catch (innerErr) {
-          console.error('Failed to parse AI response as JSON:', text);
+          if (attempts < maxAttempts) {
+            console.warn(`[Attempt ${attempts}] JSON Parse failed. Retrying...`);
+            continue;
+          }
           throw new AppError(
-            'Failed to parse AI response as JSON',
+            'AI returned unparseable JSON after multiple attempts.',
             ErrorCode.AI_PARSE_ERROR,
             500,
             { rawText: text },
@@ -111,34 +118,27 @@ export async function generateOnboarding(
         );
       }
 
-      const data = result.data;
-
       const baseResume = await prisma.baseResume.create({
         data: {
           userId: clerkUserId,
           name: 'My First Resume',
-          data,
+          data: result.data,
         },
       });
 
       return {
         baseResumeId: baseResume.id,
-        data,
+        data: result.data,
         meta: { model, finishReason },
       };
     } catch (err: any) {
       lastError = err;
-      console.error(`Attempt ${attempts} failed:`, err.message);
 
-      // If it's a validation error, throw immediately (retrying won't change schema validation)
-      if (
-        err instanceof AppError &&
-        err.errorCode === ErrorCode.VALIDATION_ERROR
-      ) {
+      if (err instanceof AppError && err.errorCode === ErrorCode.VALIDATION_ERROR) {
         throw err;
       }
 
-      // Small delay before retry
+      console.error(`[Attempt ${attempts}] Critical system error:`, err.message);
       if (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
       }
