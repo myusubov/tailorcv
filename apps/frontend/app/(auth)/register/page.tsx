@@ -55,6 +55,8 @@ export default function RegisterPage() {
     defaultValues: {
       email: '',
       password: '',
+      firstName: '',
+      lastName: '',
       terms: false,
     },
     mode: 'onSubmit',
@@ -69,6 +71,8 @@ export default function RegisterPage() {
       await signUp.create({
         emailAddress: data.email,
         password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
       });
 
       // Send the user an email with the verification code
@@ -426,6 +430,48 @@ export default function RegisterPage() {
           </motion.div>
 
           <Form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <Controller
+                  name="firstName"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField className="w-full" isInvalid={!!fieldState.error}>
+                      <Label className="text-base">First name</Label>
+                      <Input {...field} type="text" placeholder="John" />
+                      {fieldState.error && (
+                        <FieldError>{fieldState.error.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.35 }}
+              >
+                <Controller
+                  name="lastName"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField className="w-full" isInvalid={!!fieldState.error}>
+                      <Label className="text-base">Last name</Label>
+                      <Input {...field} type="text" placeholder="Doe" />
+                      {fieldState.error && (
+                        <FieldError>{fieldState.error.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                />
+              </motion.div>
+            </div>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
