@@ -33,13 +33,13 @@ import { config, LOGOS } from '@/lib/config';
 import Image from 'next/image';
 import { z } from 'zod';
 
-
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const [verifying, setVerifying] = useState(false);
   const [code, setCode] = useState('');
   const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const router = useRouter();
@@ -159,7 +159,23 @@ export default function RegisterPage() {
     }
   };
 
-
+  const handleAppleSignUp = async () => {
+    if (!isLoaded) return;
+    try {
+      setAppleLoading(true);
+      await signUp.authenticateWithRedirect({
+        strategy: 'oauth_apple',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: config.auth.afterSignUpUrl,
+      });
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Oauth failed');
+    } finally {
+      setAppleLoading(false);
+    }
+  };
 
   if (verifying) {
     return (
@@ -410,7 +426,6 @@ export default function RegisterPage() {
           </motion.div>
 
           <Form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -566,7 +581,7 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 variant="secondary"
-                isDisabled={googleLoading || isSubmitting}
+                isDisabled={googleLoading || isSubmitting || appleLoading}
                 className="w-full font-medium"
                 onPress={handleGoogleSignUp}
               >
@@ -579,6 +594,31 @@ export default function RegisterPage() {
                   <>
                     <Icon icon="logos:google-icon" className="size-5" />
                     Continue with Google
+                  </>
+                )}
+              </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.9 }}
+            >
+              <Button
+                type="button"
+                variant="tertiary"
+                isDisabled={appleLoading || isSubmitting || googleLoading}
+                className="w-full font-medium"
+                onPress={handleAppleSignUp}
+              >
+                {appleLoading ? (
+                  <>
+                    <Spinner color="current" size="sm" />
+                    Signing up with Apple...
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="logos:apple" className="size-5 fill-current" />
+                    Continue with Apple
                   </>
                 )}
               </Button>

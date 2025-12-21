@@ -198,9 +198,14 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
         onOpenChange={setShowSuccessModal}
         data={generatedData}
       />
-      <Button onClick={() => {
-        form.reset(fillValues())
-      }} className="fixed bottom-4 right-4">Fill Values</Button>
+      <Button
+        onClick={() => {
+          form.reset(fillValues());
+        }}
+        className="fixed right-4 bottom-4"
+      >
+        Fill Values
+      </Button>
     </FormProvider>
   );
 }
