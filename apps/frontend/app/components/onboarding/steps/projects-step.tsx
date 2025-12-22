@@ -10,6 +10,7 @@ import {
   FieldError,
   Input,
   Label,
+  TextArea,
   TextField,
   useOverlayState,
 } from '@heroui/react';
@@ -261,9 +262,10 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                           isInvalid={!!fieldState.error}
                         >
                           <Label>Description</Label>
-                          <Input
+                          <TextArea
                             {...field}
                             placeholder="AI-powered resume builder that helps developers..."
+                            rows={4}
                           />
                           <Description>
                             Brief 1-2 sentence description
