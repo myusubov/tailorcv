@@ -1,6 +1,7 @@
 import { ErrorCode } from 'shared';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
+import { logger } from './logger';
 
 export type GeminiRole = 'user' | 'model';
 
@@ -43,6 +44,7 @@ export async function geminiGenerateText(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    const startedAt = Date.now();
     const url = new URL(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     );
@@ -72,6 +74,19 @@ export async function geminiGenerateText(
       },
     };
 
+    logger.info(
+      {
+        model,
+        timeoutMs,
+        maxOutputTokens: input.maxOutputTokens ?? null,
+        temperature: input.temperature ?? null,
+        responseMimeType: input.responseMimeType ?? null,
+        promptChars: input.prompt.length,
+        systemChars: input.system ? input.system.length : 0,
+      },
+      'gemini request start',
+    );
+
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -86,6 +101,17 @@ export async function geminiGenerateText(
     if (!res.ok) {
       const message =
         json?.error?.message ?? (res.statusText || 'Gemini request failed');
+      logger.warn(
+        {
+          model,
+          status: res.status,
+          statusText: res.statusText,
+          errorStatus: json?.error?.status,
+          errorCode: json?.error?.code,
+          elapsedMs: Date.now() - startedAt,
+        },
+        'gemini request failed',
+      );
       throw new AppError(message, ErrorCode.AI_GENERATION_ERROR, res.status);
     }
 
@@ -93,9 +119,20 @@ export async function geminiGenerateText(
     const text =
       candidate?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
 
+    logger.info(
+      {
+        model,
+        finishReason: candidate?.finishReason ?? null,
+        textChars: text.length,
+        elapsedMs: Date.now() - startedAt,
+      },
+      'gemini request success',
+    );
+
     return { text, finishReason: candidate?.finishReason };
   } catch (err: any) {
     if (err.name === 'AbortError') {
+      logger.warn({ model, timeoutMs }, 'gemini request timeout');
       throw new AppError(
         'Gemini request timed out',
         ErrorCode.AI_TIMEOUT_ERROR,

@@ -3,9 +3,10 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { ApiResult } from '@/lib/api';
 import type { GetOnboardingJobOutput, GenerateOnboardingOutput } from '@/lib/types/onboarding';
 import type { BaseResume } from '@/lib/types/resumes';
+import { getOnboardingJobClient } from '@/lib/http/onboarding-client';
+import { getBaseResumeClient } from '@/lib/http/resumes-client';
 
 const STORAGE_KEY = 'onboardingJobId';
 
@@ -34,24 +35,6 @@ function storeJobId(jobId: string) {
 
 function clearStoredJobId() {
   localStorage.removeItem(STORAGE_KEY);
-}
-
-async function fetchJob(jobId: string) {
-  return (await fetch(`/api/onboarding/jobs/${jobId}`, {
-    method: 'GET',
-    cache: 'no-store',
-  })
-    .then((r) => r.json())
-    .catch(() => null)) as ApiResult<GetOnboardingJobOutput> | null;
-}
-
-async function fetchBaseResume(baseResumeId: string) {
-  return (await fetch(`/api/resumes/base/${baseResumeId}`, {
-    method: 'GET',
-    cache: 'no-store',
-  })
-    .then((r) => r.json())
-    .catch(() => null)) as ApiResult<BaseResume> | null;
 }
 
 export function OnboardingJobProvider({ children }: { children: React.ReactNode }) {
@@ -86,16 +69,22 @@ export function OnboardingJobProvider({ children }: { children: React.ReactNode 
     const poll = async () => {
       if (inFlight) return;
       inFlight = true;
-      const result = await fetchJob(jobId);
+      const result = await getOnboardingJobClient({ id: jobId });
       inFlight = false;
       if (cancelled) return;
-      if (!result || !result.ok) return;
+      if (!result || !result.ok) {
+        if(result?.status === 404) {
+          clearJob();
+          return;
+        }
+        return;
+      }
 
       setStage(result.data.stage);
       setProgressPct(result.data.progressPct);
 
       if (result.data.status === 'SUCCEEDED' && result.data.resultBaseResumeId) {
-        const baseResumeResult = await fetchBaseResume(result.data.resultBaseResumeId);
+        const baseResumeResult = await getBaseResumeClient({ id: result.data.resultBaseResumeId });
         if (!baseResumeResult || !baseResumeResult.ok) {
           toast.error('Resume generated, but failed to load it.');
           clearJob();
@@ -152,4 +141,3 @@ export function useOnboardingJob() {
   if (!ctx) throw new Error('useOnboardingJob must be used within OnboardingJobProvider');
   return ctx;
 }
-
