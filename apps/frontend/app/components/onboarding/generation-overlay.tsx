@@ -4,6 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 
+import {
+  clampProgressPct,
+  reassuranceFromElapsedMs,
+  stageToLabel,
+} from './generation-overlay.utils';
+
+type GenerationOverlayProps = {
+  isVisible: boolean;
+  stage?: string;
+  progressPct?: number;
+};
+
 const LOADING_STEPS = [
   'Initializing engine...',
   'Analyzing your unique career narrative...',
@@ -14,12 +26,18 @@ const LOADING_STEPS = [
   'Finalizing your base resume...',
 ];
 
-export function GenerationOverlay({ isVisible }: { isVisible: boolean }) {
+export function GenerationOverlay({
+  isVisible,
+  stage,
+  progressPct,
+}: GenerationOverlayProps) {
   const [stepIndex, setStepIndex] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
     if (!isVisible) {
       setStepIndex(0);
+      setElapsedMs(0);
       return;
     }
 
@@ -27,8 +45,20 @@ export function GenerationOverlay({ isVisible }: { isVisible: boolean }) {
       setStepIndex((prev) => (prev + 1) % LOADING_STEPS.length);
     }, 3000);
 
-    return () => clearInterval(interval);
+    const startedAt = Date.now();
+    const elapsedInterval = setInterval(() => {
+      setElapsedMs(Date.now() - startedAt);
+    }, 250);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(elapsedInterval);
+    };
   }, [isVisible]);
+
+  const stageLabel = stageToLabel(stage);
+  const safeProgress = clampProgressPct(progressPct);
+  const reassurance = reassuranceFromElapsedMs(elapsedMs);
 
   return (
     <AnimatePresence>
@@ -109,10 +139,36 @@ export function GenerationOverlay({ isVisible }: { isVisible: boolean }) {
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                     className="text-default-500/80 text-lg font-medium"
                   >
-                    {LOADING_STEPS[stepIndex]}
+                    {stageLabel ?? LOADING_STEPS[stepIndex]}
                   </motion.p>
                 </AnimatePresence>
               </div>
+
+              {safeProgress !== null ? (
+                <div className="mx-auto w-full max-w-sm">
+                  <div className="bg-default-200/40 h-2 w-full overflow-hidden rounded-full">
+                    <motion.div
+                      className="bg-primary h-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${safeProgress}%` }}
+                      transition={{ type: 'tween', duration: 0.3 }}
+                    />
+                  </div>
+                  <p className="text-default-500/70 mt-2 text-xs">
+                    {safeProgress}% complete
+                  </p>
+                </div>
+              ) : null}
+
+              {reassurance ? (
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-default-500/70 text-sm"
+                >
+                  {reassurance}
+                </motion.p>
+              ) : null}
             </div>
           </div>
         </motion.div>

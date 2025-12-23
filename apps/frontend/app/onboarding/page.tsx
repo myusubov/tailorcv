@@ -6,6 +6,8 @@ import { Icon } from '@iconify/react';
 import { MethodSelection, ManualEntryForm } from '../components/onboarding';
 import type { OnboardingMethod } from './types';
 import { Button } from '@heroui/react';
+import { OnboardingJobProvider } from '../components/onboarding/onboarding-job-context';
+import { OnboardingJobUI } from '../components/onboarding/onboarding-job-ui';
 
 export default function OnboardingPage() {
   const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>(null);
@@ -82,7 +84,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <OnboardingJobProvider>
+      <div className="bg-background min-h-screen">
       {/* Header */}
       {/* <motion.header
         className="border-divider border-b"
@@ -138,6 +141,8 @@ export default function OnboardingPage() {
           </motion.div>
         </AnimatePresence>
       </main>
+      <OnboardingJobUI />
     </div>
+    </OnboardingJobProvider>
   );
 }

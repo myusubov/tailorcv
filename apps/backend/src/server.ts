@@ -8,6 +8,7 @@ import { env } from './config/env';
 import { errorHandler } from './middleware/error';
 import { AppError } from './utils/AppError';
 import { ErrorCode } from 'shared';
+import { logger, requestLogger } from './lib/logger';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
+app.use(requestLogger);
 
 // Routes
 app.use('/api/v1', v1Router);
@@ -45,6 +47,5 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`📊 Health check available at http://localhost:${PORT}/health`);
+  logger.info({ port: PORT }, 'Backend server listening');
 });

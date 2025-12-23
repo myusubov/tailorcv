@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { Button, Form } from '@heroui/react';
 import { ProgressBar } from './progress-bar';
 import {
@@ -12,7 +11,6 @@ import {
   ProjectsStep,
   EducationStep,
 } from './steps';
-import { GenerationOverlay, SuccessModal } from './index';
 import type { ManualEntryStep } from '../../onboarding/types';
 import { MANUAL_STEPS } from '../../onboarding/types';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -20,12 +18,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   onboardingSchema,
   type OnboardingFormInput,
-  type OnboardingFormValues,
 } from '@/lib/schemas/onboarding';
 import { useActionMutation } from '@/lib/hooks/use-action-mutation';
-import { generateOnboardingAction } from '@/lib/actions/onboarding.actions';
-import type { GenerateOnboardingOutput } from '@/lib/types/onboarding';
+import { startOnboardingJobAction } from '@/lib/actions/onboarding.actions';
 import { fillValues } from '@/lib/data/mock-onboarding';
+import { useOnboardingJob } from './onboarding-job-context';
 
 interface ManualEntryFormProps {
   onBack: () => void;
@@ -34,10 +31,7 @@ interface ManualEntryFormProps {
 export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [generatedData, setGeneratedData] =
-    useState<GenerateOnboardingOutput | null>(null);
-  const router = useRouter();
+  const { beginJob } = useOnboardingJob();
 
   const form = useForm<OnboardingFormInput>({
     resolver: zodResolver(onboardingSchema),
@@ -65,15 +59,16 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
     mode: 'onSubmit',
   });
 
-  const { mutate, isPending } = useActionMutation(generateOnboardingAction, {
-    successMessage: 'Resume generated successfully!',
-    onSuccess: (res) => {
-      setGeneratedData(res);
-      console.log(res);
-      setShowSuccessModal(true);
+  const { mutate: startJob, isPending } = useActionMutation(
+    startOnboardingJobAction,
+    {
+      successMessage: 'Generating your resume…',
+      onSuccess: (res) => {
+        beginJob(res.jobId);
+      },
+      form,
     },
-    form,
-  });
+  );
 
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
 
@@ -119,7 +114,7 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
     const ok = await form.trigger(undefined, { shouldFocus: true });
     if (!ok) return;
     const data = onboardingSchema.parse(form.getValues());
-    mutate(data);
+    startJob(data);
   };
 
   const slideVariants = {
@@ -192,12 +187,6 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           </AnimatePresence>
         </div>
       </Form>
-      <GenerationOverlay isVisible={isPending} />
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onOpenChange={setShowSuccessModal}
-        data={generatedData}
-      />
       <Button
         onClick={() => {
           form.reset(fillValues());

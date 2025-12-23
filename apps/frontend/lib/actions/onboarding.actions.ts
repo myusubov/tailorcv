@@ -3,12 +3,14 @@
 import { defineAction } from './_action';
 import type {
   GenerateOnboardingInput,
-  GenerateOnboardingOutput,
+  StartOnboardingJobOutput,
+  GetOnboardingJobOutput,
 } from '@/lib/types/onboarding';
+import { backendRequest } from '@/lib/api';
 
-const _generateOnboardingImpl = defineAction<
+const _startOnboardingJobImpl = defineAction<
   GenerateOnboardingInput,
-  GenerateOnboardingOutput
+  StartOnboardingJobOutput
 >({
   method: 'POST',
   path: 'onboarding/generate',
@@ -18,6 +20,14 @@ const _generateOnboardingImpl = defineAction<
   revalidate: { fromKey: true },
 });
 
-export async function generateOnboardingAction(input: GenerateOnboardingInput) {
-  return _generateOnboardingImpl(input);
+export async function startOnboardingJobAction(input: GenerateOnboardingInput) {
+  return _startOnboardingJobImpl(input);
+}
+
+export async function getOnboardingJobAction(jobId: string) {
+  return backendRequest<GetOnboardingJobOutput>(`onboarding/jobs/${jobId}`, {
+    method: 'GET',
+    auth: 'required',
+    revalidate: 0,
+  });
 }
