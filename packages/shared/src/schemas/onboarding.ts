@@ -127,9 +127,7 @@ const experienceSchema = z
       .string()
       .trim()
       .min(1, 'Description is required')
-      .pipe(
-        maxChars('Description', LIMITS.experienceDescriptionMaxChars),
-      ),
+      .pipe(maxChars('Description', LIMITS.experienceDescriptionMaxChars)),
   })
   .superRefine((v, ctx) => {
     if (v.isCurrent) return;
@@ -172,9 +170,7 @@ const projectSchema = z.object({
     .string()
     .trim()
     .min(20, 'Project description must be at least 20 characters')
-    .pipe(
-      maxChars('Project description', LIMITS.projectDescriptionMaxChars),
-    ),
+    .pipe(maxChars('Project description', LIMITS.projectDescriptionMaxChars)),
   techStack: z
     .string()
     .trim()
@@ -211,9 +207,7 @@ const educationSchema = z
     graduationYear: z
       .string()
       .trim()
-      .pipe(
-        maxChars('Graduation year', LIMITS.educationGraduationYearMaxChars),
-      )
+      .pipe(maxChars('Graduation year', LIMITS.educationGraduationYearMaxChars))
       .optional()
       .default(''),
     isSelfTaught: z.boolean().default(false),
@@ -256,11 +250,7 @@ export const onboardingSchema = z.object({
     .default([]),
   skills: z
     .array(
-      z
-        .string()
-        .trim()
-        .min(1)
-        .pipe(maxChars('Skill', LIMITS.skillMaxChars)),
+      z.string().trim().min(1).pipe(maxChars('Skill', LIMITS.skillMaxChars)),
     )
     .min(3, { error: 'Add at least 3 skills' })
     .pipe(maxItems('Skills', LIMITS.skillsMaxCount))

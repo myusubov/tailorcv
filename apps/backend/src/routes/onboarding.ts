@@ -3,6 +3,7 @@ import { requireClerkAuth } from '../middleware/auth';
 import {
   getOnboardingStatusController,
   generateOnboardingController,
+  getOnboardingJobController,
 } from '../controllers/onboarding.controller';
 import { validateBody } from '../middleware/validate';
 import { onboardingGenerateBaseBodySchema } from '../schemas/onboarding-generate.schema';
@@ -20,4 +21,10 @@ onboardingRouter.post(
   requireClerkAuth,
   validateBody(onboardingGenerateBaseBodySchema),
   generateOnboardingController,
+);
+
+onboardingRouter.get(
+  '/jobs/:id',
+  requireClerkAuth,
+  getOnboardingJobController,
 );

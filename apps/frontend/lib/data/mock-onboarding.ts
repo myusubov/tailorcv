@@ -508,11 +508,268 @@ export const MOCK_ONBOARDING_EMPTY_FORM_VALUES: OnboardingFormInput = {
   },
 };
 
+export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
+  contact: {
+    fullName: 'Max Limit User',
+    email: 'max.limit.user@example.com',
+    phone: '+1 555 000 0000',
+    location: 'Remote',
+    github: 'github.com/max-limit-user',
+    linkedin: 'linkedin.com/in/max-limit-user',
+    portfolio: 'maxlimit.dev',
+  },
+  summary:
+    'Full-stack engineer focused on building reliable web products with measurable impact across web apps, APIs, and infrastructure. Comfortable owning end-to-end delivery from scoping and design to implementation, monitoring, and iteration with stakeholders. Known for improving performance, reducing defects, and shipping high-quality features quickly while keeping code maintainable and ATS-friendly.',
+  experiences: [
+    {
+      id: 'exp-max-01',
+      jobTitle: 'Software Engineer I',
+      company: 'Company 01',
+      startMonth: '01',
+      startYear: '2016',
+      endMonth: '01',
+      endYear: '2017',
+      isCurrent: false,
+      description:
+        'Owned development of customer-facing features and internal tools, collaborating with design and product to deliver incremental releases. Improved page performance, refactored legacy UI patterns, and added unit/integration tests to reduce regressions. Built REST endpoints, wrote SQL queries, and instrumented logging/alerts for core workflows. Mentored peers through code reviews and documentation while improving developer experience. Delivered multiple projects on time by breaking work into milestones, communicating risks, and validating outcomes with users. Maintained high quality through PR standards, consistent linting, and pragmatic engineering tradeoffs. Helped improve reliability by adding retries, timeouts, and graceful error handling. Supported production incidents with root-cause analysis and follow-up fixes.',
+    },
+    {
+      id: 'exp-max-02',
+      jobTitle: 'Software Engineer II',
+      company: 'Company 02',
+      startMonth: '02',
+      startYear: '2017',
+      endMonth: '02',
+      endYear: '2018',
+      isCurrent: false,
+      description:
+        'Built and maintained scalable frontend components and backend APIs for a multi-tenant product. Implemented pagination, filtering, and role-based access control while ensuring secure data handling. Optimized slow queries and improved caching strategies to reduce latency in high-traffic endpoints. Partnered with QA to define test plans and created automated checks for critical flows. Introduced better observability dashboards and on-call runbooks to improve incident response. Worked closely with stakeholders to clarify requirements and ship iterative improvements. Reduced technical debt by migrating old modules to a shared design system. Ensured accessibility best practices and cross-browser support for core experiences.',
+    },
+    {
+      id: 'exp-max-03',
+      jobTitle: 'Software Engineer',
+      company: 'Company 03',
+      startMonth: '03',
+      startYear: '2018',
+      endMonth: '03',
+      endYear: '2019',
+      isCurrent: false,
+      description:
+        'Delivered new product capabilities end-to-end, including UI flows, API contracts, and database changes. Improved performance by reducing bundle size, optimizing rendering, and trimming unused dependencies. Added CI checks, improved code review guidelines, and standardized release notes. Built resilient background jobs and improved error handling for edge cases. Collaborated cross-functionally to validate designs and ship features that improved user satisfaction. Reduced support burden by adding better validation, self-serve tooling, and clearer UX messaging. Maintained clean architecture through modularization and consistent code patterns. Helped onboard new teammates and documented common workflows.',
+    },
+    {
+      id: 'exp-max-04',
+      jobTitle: 'Software Engineer',
+      company: 'Company 04',
+      startMonth: '04',
+      startYear: '2019',
+      endMonth: '04',
+      endYear: '2020',
+      isCurrent: false,
+      description:
+        'Implemented customer-requested features for a SaaS platform with attention to usability and reliability. Built reusable UI components, validated forms, and improved navigation patterns. Designed and shipped API endpoints with proper validation, pagination, and rate limiting. Tuned database indexes and improved query performance for reporting screens. Added integration tests for high-value flows and improved monitoring to detect regressions early. Collaborated with customer support to triage issues and deliver fixes quickly. Improved developer productivity via scripts, templates, and clearer local setup docs. Kept code maintainable through refactoring and consistent patterns.',
+    },
+    {
+      id: 'exp-max-05',
+      jobTitle: 'Software Engineer',
+      company: 'Company 05',
+      startMonth: '05',
+      startYear: '2020',
+      endMonth: '05',
+      endYear: '2021',
+      isCurrent: false,
+      description:
+        'Shipped product enhancements across frontend and backend, ensuring strong typing and predictable state management. Implemented secure authentication and authorization flows and improved session handling. Built dashboards with filtering and export features, improving customer visibility into key metrics. Optimized API response times by adding caching and reducing payload sizes. Partnered with design to refine UI components and improve accessibility compliance. Improved CI reliability and added smoke tests for critical journeys. Reduced bugs by tightening validation and adding edge-case coverage. Helped drive consistent engineering practices across the team.',
+    },
+    {
+      id: 'exp-max-06',
+      jobTitle: 'Software Engineer',
+      company: 'Company 06',
+      startMonth: '06',
+      startYear: '2021',
+      endMonth: '06',
+      endYear: '2022',
+      isCurrent: false,
+      description:
+        'Built and maintained a data-heavy UI with complex tables, search, and saved filters. Improved frontend performance by optimizing rendering and memoization patterns. Implemented backend endpoints with clear contracts and improved error handling semantics. Added monitoring and alerting to catch failures and reduce MTTR. Coordinated with product to prioritize high-impact improvements and reduce churn drivers. Improved documentation and onboarding for new engineers. Standardized code style and encouraged small PRs for faster iteration. Delivered improvements while keeping stability high.',
+    },
+    {
+      id: 'exp-max-07',
+      jobTitle: 'Senior Software Engineer',
+      company: 'Company 07',
+      startMonth: '07',
+      startYear: '2022',
+      endMonth: '07',
+      endYear: '2023',
+      isCurrent: false,
+      description:
+        'Led delivery of multiple features from discovery to release, aligning technical execution with business goals. Implemented robust patterns for feature flags, migrations, and backward compatibility. Improved reliability by addressing flaky jobs and strengthening retry/timeout policies. Tuned performance for key pages and reduced API latency through profiling and caching. Partnered with stakeholders to define scope, de-risk timelines, and ship iteratively. Mentored teammates through pairing and reviews, raising code quality and consistency. Wrote clear technical docs and supported incident response with root-cause analysis. Delivered measurable improvements in UX and system stability.',
+    },
+    {
+      id: 'exp-max-08',
+      jobTitle: 'Senior Software Engineer',
+      company: 'Company 08',
+      startMonth: '08',
+      startYear: '2023',
+      endMonth: '08',
+      endYear: '2024',
+      isCurrent: false,
+      description:
+        'Drove improvements across the stack, focusing on performance, reliability, and developer experience. Built new UI flows with strong validation and clear user feedback. Implemented API changes with migrations and safe rollout plans. Improved observability with dashboards, logs, and alerts for critical paths. Reduced errors by adding consistent input validation and better edge-case handling. Collaborated cross-functionally to ship features that improved adoption and retention. Documented best practices and helped standardize release processes. Maintained high delivery velocity with predictable iteration cycles.',
+    },
+    {
+      id: 'exp-max-09',
+      jobTitle: 'Lead Software Engineer',
+      company: 'Company 09',
+      startMonth: '09',
+      startYear: '2024',
+      endMonth: '09',
+      endYear: '2025',
+      isCurrent: false,
+      description:
+        'Led technical execution for a team shipping customer-facing features and platform improvements. Set standards for code quality, testing, and release safety, improving overall reliability. Designed scalable APIs and improved data access patterns for performance. Implemented better error handling and monitoring to reduce incident frequency. Worked with product to prioritize roadmap items and ensure clear acceptance criteria. Mentored engineers and improved onboarding through documentation and templates. Delivered incremental improvements with regular feedback loops. Balanced speed and quality to ship consistently.',
+    },
+    {
+      id: 'exp-max-10',
+      jobTitle: 'Lead Software Engineer',
+      company: 'Company 10',
+      startMonth: '10',
+      startYear: '2025',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
+      description:
+        'Owning delivery of high-impact initiatives across frontend and backend, emphasizing performance, stability, and maintainability. Building reusable components, improving API design, and strengthening observability to catch issues early. Collaborating with stakeholders to define scope and deliver in small, measurable iterations. Improving CI/CD, test coverage, and developer tooling to raise overall velocity. Driving best practices in code review, documentation, and incident response. Supporting product growth by improving onboarding flows and reducing friction in key journeys. Ensuring accessible and responsive UI patterns across devices. Continuously refining architecture to keep the system scalable.',
+    },
+  ],
+  projects: [
+    {
+      id: 'proj-max-01',
+      name: 'Project 01',
+      description:
+        'Built a production-ready web app with authentication, data persistence, and polished UI flows. Implemented dashboards, search, and export features with strong validation and clear UX feedback. Focused on maintainable architecture, testing, and performance optimization for real users at scale.',
+      techStack:
+        'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Observability, Caching, Auth',
+      link: 'https://example.com/project-1',
+      repoUrl: 'github.com/max-limit-user/project-1',
+    },
+    {
+      id: 'proj-max-02',
+      name: 'Project 02',
+      description:
+        'Shipped an internal tooling platform to streamline common workflows and reduce manual effort. Added role-based access, audit logs, and robust error handling. Improved reliability with monitoring, retries, and clear operational documentation for on-call support.',
+      techStack:
+        'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Monitoring, Logging, RBAC',
+      link: 'https://example.com/project-2',
+      repoUrl: 'github.com/max-limit-user/project-2',
+    },
+    {
+      id: 'proj-max-03',
+      name: 'Project 03',
+      description:
+        'Created a data-heavy analytics dashboard with filters, saved views, and fast rendering. Optimized API payloads and caching strategies to keep interactions snappy. Included automated tests, CI checks, and performance profiling to prevent regressions.',
+      techStack:
+        'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Performance, Caching',
+      link: 'https://example.com/project-3',
+      repoUrl: 'github.com/max-limit-user/project-3',
+    },
+    {
+      id: 'proj-max-04',
+      name: 'Project 04',
+      description:
+        'Built a job application helper that organizes projects, experience, and skills into structured data. Implemented form flows, validation, and PDF export with a clean ATS-friendly layout. Focused on usability, accessibility, and reliable generation results.',
+      techStack:
+        'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, PDF, Accessibility',
+      link: 'https://example.com/project-4',
+      repoUrl: 'github.com/max-limit-user/project-4',
+    },
+    {
+      id: 'proj-max-05',
+      name: 'Project 05',
+      description:
+        'Delivered a lightweight CRM-style prototype with contact management, notes, and task tracking. Added search, filtering, and basic reporting. Emphasized modular components, consistent state handling, and strong input validation throughout.',
+      techStack:
+        'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Forms, Validation',
+      link: 'https://example.com/project-5',
+      repoUrl: 'github.com/max-limit-user/project-5',
+    },
+    {
+      id: 'proj-max-06',
+      name: 'Project 06',
+      description:
+        'Built a multi-step onboarding experience with progressive disclosure, good defaults, and clear guidance. Added guardrails for max lengths/counts and improved long-running generation UX with reassuring messaging. Prioritized fast completion and clean data shape.',
+      techStack:
+        'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Zod, React Hook Form',
+      link: 'https://example.com/project-6',
+      repoUrl: 'github.com/max-limit-user/project-6',
+    },
+  ],
+  skills: [
+    'Skill-01',
+    'Skill-02',
+    'Skill-03',
+    'Skill-04',
+    'Skill-05',
+    'Skill-06',
+    'Skill-07',
+    'Skill-08',
+    'Skill-09',
+    'Skill-10',
+    'Skill-11',
+    'Skill-12',
+    'Skill-13',
+    'Skill-14',
+    'Skill-15',
+    'Skill-16',
+    'Skill-17',
+    'Skill-18',
+    'Skill-19',
+    'Skill-20',
+    'Skill-21',
+    'Skill-22',
+    'Skill-23',
+    'Skill-24',
+    'Skill-25',
+    'Skill-26',
+    'Skill-27',
+    'Skill-28',
+    'Skill-29',
+    'Skill-30',
+    'Skill-31',
+    'Skill-32',
+    'Skill-33',
+    'Skill-34',
+    'Skill-35',
+    'Skill-36',
+    'Skill-37',
+    'Skill-38',
+    'Skill-39',
+    'Skill-40',
+    'Skill-41',
+    'Skill-42',
+    'Skill-43',
+    'Skill-44',
+    'Skill-45',
+    'Skill-46',
+    'Skill-47',
+    'Skill-48',
+    'Skill-49',
+    'Skill-50',
+  ],
+  education: {
+    degree: 'BSc Computer Science',
+    school: 'Example University',
+    graduationYear: '2020',
+    isSelfTaught: false,
+  },
+};
+
 const fillOptions = [
   MOCK_ONBOARDING_FORM_VALUES,
   MOCK_ONBOARDING_FORM_VALUES_V2,
   MOCK_ONBOARDING_FORM_VALUES_V3,
   MOCK_ONBOARDING_EMPTY_FORM_VALUES,
+  MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES,
 ];
 
 let currentFillIndex = 0;

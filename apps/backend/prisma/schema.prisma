@@ -21,6 +21,7 @@ model User {
   updatedAt         DateTime           @updatedAt
   baseResumes       BaseResume[]
   customizedResumes CustomizedResume[]
+  onboardingJobs    OnboardingJob[]
 
   @@map("users")
 }
@@ -54,8 +55,44 @@ model CustomizedResume {
   @@map("customized_resumes")
 }
 
+model OnboardingJob {
+  id                 String              @id @default(uuid())
+  userId             String
+  status             OnboardingJobStatus @default(QUEUED)
+  stage              OnboardingJobStage  @default(QUEUED)
+  progressPct        Int                 @default(0)
+  payload            Json
+  result             Json?
+  resultBaseResumeId String?
+  error              Json?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@map("onboarding_jobs")
+}
+
 enum Plan {
   FREE
   PRO_MONTHLY
   PRO_LIFETIME
+}
+
+enum OnboardingJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum OnboardingJobStage {
+  QUEUED
+  CALLING_AI
+  RETRYING
+  VALIDATING
+  SAVING
+  DONE
+  FAILED
 }

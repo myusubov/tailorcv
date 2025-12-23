@@ -282,13 +282,13 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
 
         {/* EXPERIENCE */}
         {experience && experience.length > 0 && (
-          <View style={styles.block}>
+          <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Experience</Text>
               <View style={styles.line} />
             </View>
             {experience.map((exp, index) => (
-              <View key={exp.id || index} style={styles.block}>
+              <View key={exp.id || index} style={styles.block} wrap>
                 {/* Company Name & Date */}
                 <View style={styles.row}>
                   <Text style={styles.primaryText}>{exp.company}</Text>
@@ -321,18 +321,18 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                 </View>
               </View>
             ))}
-          </View>
+          </>
         )}
 
         {/* PROJECTS */}
         {projects && projects.length > 0 && (
-          <View style={styles.block}>
+          <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Projects</Text>
               <View style={styles.line} />
             </View>
             {projects.map((proj, index) => (
-              <View key={proj.id || index} style={styles.block}>
+              <View key={proj.id || index} style={styles.block} wrap>
                 <View style={styles.row}>
                   <Text style={styles.primaryText}>{proj.name}</Text>
                   <Text style={styles.dateText}>
@@ -390,12 +390,12 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                 </View>
               </View>
             ))}
-          </View>
+          </>
         )}
 
         {/* SKILLS */}
         {skills && skills.length > 0 && (
-          <View style={styles.block}>
+          <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Technical Skills</Text>
               <View style={styles.line} />
@@ -425,7 +425,7 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                 </View>
               ))}
             </View>
-          </View>
+          </>
         )}
       </Page>
     </Document>

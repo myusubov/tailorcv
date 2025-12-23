@@ -8,6 +8,7 @@ import type {
 } from '../types/onboarding';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
+import { compressOnboardingBody } from '../utils/onboardingCompression';
 
 function extractJsonObject(text: string) {
   const start = text.indexOf('{');
@@ -46,11 +47,6 @@ export async function generateOnboarding(
   const model = body.model ?? 'gemini-3-flash-preview';
   const system = env.GEMINI_ONBOARDING_SYSTEM_PROMPT;
 
-  const prompt = [
-    'Onboarding form input (JSON):',
-    JSON.stringify(body, null, 2),
-  ].join('\n');
-
   let attempts = 0;
   const maxAttempts = 3;
   let lastError: any;
@@ -62,6 +58,13 @@ export async function generateOnboarding(
     );
 
     try {
+      const compressionLevel = Math.min(attempts - 1, 2) as 0 | 1 | 2;
+      const aiBody = compressOnboardingBody(body, compressionLevel);
+      const prompt = [
+        'Onboarding form input (JSON):',
+        JSON.stringify(aiBody, null, 2),
+      ].join('\n');
+
       const { text, finishReason } = await geminiGenerateText({
         model,
         system,
@@ -74,7 +77,7 @@ export async function generateOnboarding(
       if (finishReason === 'MAX_TOKENS') {
         if (attempts < maxAttempts) {
           console.warn(
-            `[Attempt ${attempts}] AI truncated by MAX_TOKENS. Retrying with conciseness...`,
+            `[Attempt ${attempts}] AI truncated by MAX_TOKENS. Retrying with more compression...`,
           );
           await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
           continue;
@@ -96,7 +99,9 @@ export async function generateOnboarding(
           parsed = JSON.parse(extractJsonObject(text));
         } catch (innerErr) {
           if (attempts < maxAttempts) {
-            console.warn(`[Attempt ${attempts}] JSON Parse failed. Retrying...`);
+            console.warn(
+              `[Attempt ${attempts}] JSON Parse failed. Retrying...`,
+            );
             continue;
           }
           throw new AppError(
@@ -134,11 +139,17 @@ export async function generateOnboarding(
     } catch (err: any) {
       lastError = err;
 
-      if (err instanceof AppError && err.errorCode === ErrorCode.VALIDATION_ERROR) {
+      if (
+        err instanceof AppError &&
+        err.errorCode === ErrorCode.VALIDATION_ERROR
+      ) {
         throw err;
       }
 
-      console.error(`[Attempt ${attempts}] Critical system error:`, err.message);
+      console.error(
+        `[Attempt ${attempts}] Critical system error:`,
+        err.message,
+      );
       if (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
       }

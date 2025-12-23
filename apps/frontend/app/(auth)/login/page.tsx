@@ -59,7 +59,7 @@ export default function LoginPage() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.push(config.auth.afterSignInUrl as string);
+        router.push(config.auth.afterSignInUrl);
       } else {
       }
     } catch (err: unknown) {
