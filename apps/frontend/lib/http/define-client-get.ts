@@ -3,7 +3,7 @@ import { clientGet, type ClientGetOptions } from '@/lib/http/client-get';
 
 export type CacheKeyPart = string | number | null | undefined;
 
-type DefineClientGetConfig<TParams> = {
+export type DefineClientGetConfig<TParams> = {
   path: string | ((params: TParams) => string);
   keyPrefix: string;
   staticParts?: CacheKeyPart[];
@@ -13,7 +13,7 @@ type DefineClientGetConfig<TParams> = {
 
 type DefineClientGetOptions = ClientGetOptions & { keyParts?: CacheKeyPart[] };
 
-function makeKey(prefix: string, ...parts: CacheKeyPart[]) {
+export function makeKey(prefix: string, ...parts: CacheKeyPart[]) {
   const key: Array<string | number> = [prefix];
   for (const part of parts) {
     if (part === '' || part === null || part === undefined) continue;
@@ -30,6 +30,7 @@ export type ClientGetFn<TParams, TResponse> = ((
     params: TParams,
     options?: DefineClientGetOptions,
   ) => Promise<Array<string | number>>;
+  config: DefineClientGetConfig<TParams>;
 };
 
 export function defineClientGet<TResponse>(
@@ -37,10 +38,7 @@ export function defineClientGet<TResponse>(
 ): ClientGetFn<void, TResponse>;
 export function defineClientGet<TParams, TResponse>(
   config: DefineClientGetConfig<TParams>,
-): (
-  params: TParams,
-  options?: DefineClientGetOptions,
-) => Promise<ApiResult<TResponse> | null>;
+): ClientGetFn<TParams, TResponse>;
 export function defineClientGet<TParams, TResponse>(
   config: DefineClientGetConfig<TParams>,
 ) {
@@ -71,5 +69,5 @@ export function defineClientGet<TParams, TResponse>(
     );
   };
 
-  return Object.assign(fn, { key }) as ClientGetFn<TParams, TResponse>;
+  return Object.assign(fn, { key, config }) as ClientGetFn<TParams, TResponse>;
 }

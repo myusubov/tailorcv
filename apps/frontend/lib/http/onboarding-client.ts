@@ -11,3 +11,6 @@ export const getOnboardingJobClient = defineClientGet<
   defaults: { cache: 'no-store' },
 });
 
+import { defineQuery } from '@/lib/http/define-query';
+export const useOnboardingJobQuery = defineQuery(getOnboardingJobClient);
+
