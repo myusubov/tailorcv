@@ -1,12 +1,11 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { GetOnboardingJobOutput, GenerateOnboardingOutput } from '@/lib/types/onboarding';
-import type { BaseResume } from '@/lib/types/resumes';
-import { getOnboardingJobClient } from '@/lib/http/onboarding-client';
-import { getBaseResumeClient } from '@/lib/http/resumes-client';
+import type { GenerateOnboardingOutput } from '@/lib/types/onboarding';
+import { useOnboardingJobQuery } from '@/lib/http/onboarding-client';
+import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 
 const STORAGE_KEY = 'onboardingJobId';
 
@@ -39,17 +38,29 @@ function clearStoredJobId() {
 
 export function OnboardingJobProvider({ children }: { children: React.ReactNode }) {
   const [jobId, setJobId] = useState<string | null>(() => readStoredJobId());
-  const [stage, setStage] = useState<string | null>(null);
-  const [progressPct, setProgressPct] = useState<number | null>(null);
   const [generatedData, setGeneratedData] = useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const pollingRef = useRef<number | null>(null);
+  const { data: jobData } = useOnboardingJobQuery(
+    { id: jobId ?? '' },
+    {
+      enabled: !!jobId,
+      refetchInterval: (query: any) => {
+        const status = query.state.data?.status;
+        if (status === 'SUCCEEDED' || status === 'FAILED') return false;
+        return 1500;
+      },
+    },
+  );
+
+  const resumeId = jobData?.resultBaseResumeId;
+  const { data: resumeData } = useBaseResumeQuery(
+    { id: resumeId ?? '' },
+    { enabled: !!resumeId }
+  );
 
   const clearJob = () => {
     setJobId(null);
-    setStage(null);
-    setProgressPct(null);
     clearStoredJobId();
   };
 
@@ -61,68 +72,29 @@ export function OnboardingJobProvider({ children }: { children: React.ReactNode 
   };
 
   useEffect(() => {
-    if (!jobId) return;
+    if (jobData?.status === 'FAILED') {
+      toast.error(jobData.error?.message ?? 'Failed to generate resume');
+      clearJob();
+    }
+  }, [jobData?.status, jobData?.error]);
 
-    let cancelled = false;
-    let inFlight = false;
-
-    const poll = async () => {
-      if (inFlight) return;
-      inFlight = true;
-      const result = await getOnboardingJobClient({ id: jobId });
-      inFlight = false;
-      if (cancelled) return;
-      if (!result || !result.ok) {
-        if(result?.status === 404) {
-          clearJob();
-          return;
-        }
-        return;
-      }
-
-      setStage(result.data.stage);
-      setProgressPct(result.data.progressPct);
-
-      if (result.data.status === 'SUCCEEDED' && result.data.resultBaseResumeId) {
-        const baseResumeResult = await getBaseResumeClient({ id: result.data.resultBaseResumeId });
-        if (!baseResumeResult || !baseResumeResult.ok) {
-          toast.error('Resume generated, but failed to load it.');
-          clearJob();
-          return;
-        }
-
-        const baseResume = baseResumeResult.data;
-        setGeneratedData({
-          baseResumeId: baseResume.id,
-          data: baseResume.data,
-          meta: { model: 'worker', finishReason: 'STOP' },
-        });
-        setShowSuccessModal(true);
-        clearJob();
-        return;
-      }
-
-      if (result.data.status === 'FAILED') {
-        toast.error(result.data.error?.message ?? 'Failed to generate resume');
-        clearJob();
-      }
-    };
-
-    void poll();
-    pollingRef.current = window.setInterval(poll, 1500);
-
-    return () => {
-      cancelled = true;
-      if (pollingRef.current) window.clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    };
-  }, [jobId]);
+  useEffect(() => {
+    if (resumeData && jobData?.status === 'SUCCEEDED') {
+      setGeneratedData({
+        baseResumeId: resumeData.id,
+        data: resumeData.data,
+        meta: { model: 'worker', finishReason: 'STOP' },
+      });
+      setShowSuccessModal(true);
+      clearJob();
+    }
+  }, [resumeData, jobData?.status]);
 
   const value = useMemo<OnboardingJobContextValue>(
     () => ({
       jobId,
-      stage,
-      progressPct,
+      stage: jobData?.stage ?? null,
+      progressPct: jobData?.progressPct ?? null,
       isActive: Boolean(jobId),
       generatedData,
       showSuccessModal,
@@ -130,7 +102,7 @@ export function OnboardingJobProvider({ children }: { children: React.ReactNode 
       beginJob,
       clearJob,
     }),
-    [jobId, stage, progressPct, generatedData, showSuccessModal],
+    [jobData?.stage, jobData?.progressPct, jobId, generatedData, showSuccessModal],
   );
 
   return <OnboardingJobContext.Provider value={value}>{children}</OnboardingJobContext.Provider>;
