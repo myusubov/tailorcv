@@ -139,7 +139,7 @@ export function GenerationOverlay({
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                     className="text-default-500/80 text-lg font-medium"
                   >
-                    {stageLabel ?? LOADING_STEPS[stepIndex]}
+                    {LOADING_STEPS[stepIndex]}
                   </motion.p>
                 </AnimatePresence>
               </div>
