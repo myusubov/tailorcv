@@ -70,7 +70,7 @@ export async function generateOnboarding(
         system,
         prompt,
         temperature: 0,
-        maxOutputTokens: 16384,
+        maxOutputTokens: 32000,
         responseMimeType: 'application/json',
       });
 
