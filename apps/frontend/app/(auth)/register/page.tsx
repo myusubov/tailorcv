@@ -440,7 +440,10 @@ export default function RegisterPage() {
                   name="firstName"
                   control={control}
                   render={({ field, fieldState }) => (
-                    <TextField className="w-full" isInvalid={!!fieldState.error}>
+                    <TextField
+                      className="w-full"
+                      isInvalid={!!fieldState.error}
+                    >
                       <Label className="text-base">First name</Label>
                       <Input {...field} type="text" placeholder="John" />
                       {fieldState.error && (
@@ -460,7 +463,10 @@ export default function RegisterPage() {
                   name="lastName"
                   control={control}
                   render={({ field, fieldState }) => (
-                    <TextField className="w-full" isInvalid={!!fieldState.error}>
+                    <TextField
+                      className="w-full"
+                      isInvalid={!!fieldState.error}
+                    >
                       <Label className="text-base">Last name</Label>
                       <Input {...field} type="text" placeholder="Doe" />
                       {fieldState.error && (
@@ -547,14 +553,14 @@ export default function RegisterPage() {
                         <span className="text-muted text-sm leading-snug">
                           I agree to the{' '}
                           <Link
-                            href="/terms"
+                            href="#"
                             className="text-primary hover:text-primary/80 font-bold"
                           >
                             Terms
                           </Link>{' '}
                           and{' '}
                           <Link
-                            href="/privacy"
+                            href="#"
                             className="text-primary hover:text-primary/80 font-bold"
                           >
                             Privacy Policy

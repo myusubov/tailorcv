@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Check, Sparkles, Crown, Zap, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Route } from 'next';
 
 const plans = [
   {
@@ -181,7 +182,7 @@ function PricingCard({
         {/* CTA Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Link
-            href={plan.ctaLink}
+            href={plan.ctaLink as Route}
             className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 ${
               plan.popular
                 ? `bg-gradient-to-r ${plan.gradient} text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40`
