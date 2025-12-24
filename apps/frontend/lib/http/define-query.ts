@@ -1,4 +1,3 @@
-
 import {
   useQuery,
   type UseQueryOptions,
@@ -11,10 +10,7 @@ import {
   makeKey,
 } from './define-client-get';
 
-type DefineQueryOptions = Omit<
-  UseQueryOptions,
-  'queryKey' | 'queryFn'
-> & {
+type DefineQueryOptions = Omit<UseQueryOptions, 'queryKey' | 'queryFn'> & {
   keyParts?: unknown[];
 };
 
@@ -35,7 +31,7 @@ export function defineQuery<TParams, TResponse>(
         ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (config.dynamicParts(params) as any[])
         : []),
-      ...(keyParts as any[] ?? []),
+      ...((keyParts as any[]) ?? []),
     );
 
     const queryFn = async () => {

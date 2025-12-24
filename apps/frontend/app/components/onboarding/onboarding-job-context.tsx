@@ -21,7 +21,9 @@ type OnboardingJobContextValue = {
   clearJob: () => void;
 };
 
-const OnboardingJobContext = createContext<OnboardingJobContextValue | null>(null);
+const OnboardingJobContext = createContext<OnboardingJobContextValue | null>(
+  null,
+);
 
 function readStoredJobId() {
   if (typeof window === 'undefined') return null;
@@ -36,9 +38,14 @@ function clearStoredJobId() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export function OnboardingJobProvider({ children }: { children: React.ReactNode }) {
+export function OnboardingJobProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [jobId, setJobId] = useState<string | null>(() => readStoredJobId());
-  const [generatedData, setGeneratedData] = useState<GenerateOnboardingOutput | null>(null);
+  const [generatedData, setGeneratedData] =
+    useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { data: jobData } = useOnboardingJobQuery(
@@ -56,7 +63,7 @@ export function OnboardingJobProvider({ children }: { children: React.ReactNode 
   const resumeId = jobData?.resultBaseResumeId;
   const { data: resumeData } = useBaseResumeQuery(
     { id: resumeId ?? '' },
-    { enabled: !!resumeId }
+    { enabled: !!resumeId },
   );
 
   const clearJob = () => {
@@ -102,14 +109,27 @@ export function OnboardingJobProvider({ children }: { children: React.ReactNode 
       beginJob,
       clearJob,
     }),
-    [jobData?.stage, jobData?.progressPct, jobId, generatedData, showSuccessModal],
+    [
+      jobData?.stage,
+      jobData?.progressPct,
+      jobId,
+      generatedData,
+      showSuccessModal,
+    ],
   );
 
-  return <OnboardingJobContext.Provider value={value}>{children}</OnboardingJobContext.Provider>;
+  return (
+    <OnboardingJobContext.Provider value={value}>
+      {children}
+    </OnboardingJobContext.Provider>
+  );
 }
 
 export function useOnboardingJob() {
   const ctx = useContext(OnboardingJobContext);
-  if (!ctx) throw new Error('useOnboardingJob must be used within OnboardingJobProvider');
+  if (!ctx)
+    throw new Error(
+      'useOnboardingJob must be used within OnboardingJobProvider',
+    );
   return ctx;
 }

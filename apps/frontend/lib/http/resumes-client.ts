@@ -11,4 +11,3 @@ export const getBaseResumeClient = defineClientGet<{ id: string }, BaseResume>({
 });
 
 export const useBaseResumeQuery = defineQuery(getBaseResumeClient);
-

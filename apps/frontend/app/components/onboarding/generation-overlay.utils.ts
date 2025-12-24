@@ -30,4 +30,3 @@ export function reassuranceFromElapsedMs(elapsedMs: number) {
     return 'Still working — larger profiles can take up to ~30 seconds.';
   return null;
 }
-

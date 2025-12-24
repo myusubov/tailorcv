@@ -60,7 +60,7 @@ function FooterLinkColumn({
         {links.map((link) => (
           <li key={link.name}>
             <Link
-              href={"#"}
+              href={'#'}
               className="text-landing-text-muted hover:text-landing-text text-sm transition-colors"
             >
               {link.name}

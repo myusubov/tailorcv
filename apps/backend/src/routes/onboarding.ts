@@ -23,8 +23,4 @@ onboardingRouter.post(
   generateOnboardingController,
 );
 
-onboardingRouter.get(
-  '/jobs/:id',
-  requireClerkAuth,
-  getOnboardingJobController,
-);
+onboardingRouter.get('/jobs/:id', requireClerkAuth, getOnboardingJobController);

@@ -13,4 +13,3 @@ export const getOnboardingJobClient = defineClientGet<
 
 import { defineQuery } from '@/lib/http/define-query';
 export const useOnboardingJobQuery = defineQuery(getOnboardingJobClient);
-
