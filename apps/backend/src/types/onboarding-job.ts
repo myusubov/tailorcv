@@ -24,4 +24,3 @@ export type OnboardingJobError = {
   code: string;
   details?: unknown;
 };
-

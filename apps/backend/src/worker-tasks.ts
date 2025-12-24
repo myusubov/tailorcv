@@ -67,23 +67,29 @@ export const tasks: TaskList = {
         error: Prisma.JsonNull,
       },
     });
-    logger.info({
-      jobId: job.id,
-      userId: job.userId,
-      stage: 'CALLING_AI',
-      progressPct: 10,
-    }, 'worker onboarding.generate running');
+    logger.info(
+      {
+        jobId: job.id,
+        userId: job.userId,
+        stage: 'CALLING_AI',
+        progressPct: 10,
+      },
+      'worker onboarding.generate running',
+    );
 
     try {
       await prisma.onboardingJob.update({
         where: { id: job.id },
         data: { stage: 'CALLING_AI', progressPct: 25 },
       });
-      logger.info({
-        jobId: job.id,
-        stage: 'CALLING_AI',
-        progressPct: 25,
-      }, 'worker onboarding.generate stage');
+      logger.info(
+        {
+          jobId: job.id,
+          stage: 'CALLING_AI',
+          progressPct: 25,
+        },
+        'worker onboarding.generate stage',
+      );
 
       const result = await generateOnboarding({
         clerkUserId: job.userId,
@@ -94,11 +100,14 @@ export const tasks: TaskList = {
         where: { id: job.id },
         data: { stage: 'SAVING', progressPct: 90 },
       });
-      logger.info({
-        jobId: job.id,
-        stage: 'SAVING',
-        progressPct: 90,
-      }, 'worker onboarding.generate stage');
+      logger.info(
+        {
+          jobId: job.id,
+          stage: 'SAVING',
+          progressPct: 90,
+        },
+        'worker onboarding.generate stage',
+      );
 
       await prisma.onboardingJob.update({
         where: { id: job.id },
@@ -111,12 +120,15 @@ export const tasks: TaskList = {
           error: Prisma.JsonNull,
         },
       });
-      logger.info({
-        jobId: job.id,
-        userId: job.userId,
-        baseResumeId: result.baseResumeId,
-        elapsedMs: Date.now() - startedAt,
-      }, 'worker onboarding.generate success');
+      logger.info(
+        {
+          jobId: job.id,
+          userId: job.userId,
+          baseResumeId: result.baseResumeId,
+          elapsedMs: Date.now() - startedAt,
+        },
+        'worker onboarding.generate success',
+      );
     } catch (err) {
       logger.error(
         {

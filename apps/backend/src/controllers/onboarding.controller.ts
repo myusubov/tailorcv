@@ -1,9 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { successResponse } from '../utils/response';
 import type { ClerkLocals, GenerateOnboardingLocals } from '../types/locals';
-import {
-  getOnboardingStatus,
-} from '../services/onboarding.service';
+import { getOnboardingStatus } from '../services/onboarding.service';
 import {
   getOnboardingJob,
   startOnboardingJob,
@@ -33,7 +31,10 @@ export const generateOnboardingController = async (
 ) => {
   try {
     const { body, clerkUserId } = res.locals;
-    logger.info({ clerkUserId, model: body.model ?? null }, 'onboarding enqueue start');
+    logger.info(
+      { clerkUserId, model: body.model ?? null },
+      'onboarding enqueue start',
+    );
     logger.debug(
       {
         clerkUserId,
@@ -59,7 +60,10 @@ export const getOnboardingJobController = async (
 ) => {
   try {
     const { clerkUserId } = res.locals;
-    logger.debug({ clerkUserId, jobId: req.params.id }, 'onboarding job status request');
+    logger.debug(
+      { clerkUserId, jobId: req.params.id },
+      'onboarding job status request',
+    );
     const job = await getOnboardingJob({ clerkUserId, jobId: req.params.id });
     logger.info(
       {

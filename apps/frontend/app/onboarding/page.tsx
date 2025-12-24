@@ -86,8 +86,8 @@ export default function OnboardingPage() {
   return (
     <OnboardingJobProvider>
       <div className="bg-background min-h-screen">
-      {/* Header */}
-      {/* <motion.header
+        {/* Header */}
+        {/* <motion.header
         className="border-divider border-b"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -127,22 +127,22 @@ export default function OnboardingPage() {
         </div>
       </motion.header> */}
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={isMethodSelected ? selectedMethod : 'selection'}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-      <OnboardingJobUI />
-    </div>
+        {/* Main Content */}
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isMethodSelected ? selectedMethod : 'selection'}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+        <OnboardingJobUI />
+      </div>
     </OnboardingJobProvider>
   );
 }

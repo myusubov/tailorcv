@@ -8,4 +8,3 @@ export type BaseResume = {
   createdAt: string;
   updatedAt: string;
 };
-

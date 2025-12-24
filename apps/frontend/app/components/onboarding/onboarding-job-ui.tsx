@@ -5,8 +5,14 @@ import { SuccessModal } from './success-modal';
 import { useOnboardingJob } from './onboarding-job-context';
 
 export function OnboardingJobUI() {
-  const { isActive, stage, progressPct, generatedData, showSuccessModal, setShowSuccessModal } =
-    useOnboardingJob();
+  const {
+    isActive,
+    stage,
+    progressPct,
+    generatedData,
+    showSuccessModal,
+    setShowSuccessModal,
+  } = useOnboardingJob();
 
   return (
     <>
@@ -23,4 +29,3 @@ export function OnboardingJobUI() {
     </>
   );
 }
-
