@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   Chip,
+  Checkbox,
   Description,
   FieldError,
   Input,
@@ -33,6 +34,24 @@ interface ProjectsStepProps {
   onBack: () => void;
 }
 
+const months = [
+  { value: '01', label: 'Jan' },
+  { value: '02', label: 'Feb' },
+  { value: '03', label: 'Mar' },
+  { value: '04', label: 'Apr' },
+  { value: '05', label: 'May' },
+  { value: '06', label: 'Jun' },
+  { value: '07', label: 'Jul' },
+  { value: '08', label: 'Aug' },
+  { value: '09', label: 'Sep' },
+  { value: '10', label: 'Oct' },
+  { value: '11', label: 'Nov' },
+  { value: '12', label: 'Dec' },
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
+
 export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const deleteModalState = useOverlayState();
   const { control, watch, setValue, getValues } =
@@ -57,6 +76,11 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
       name: '',
       description: '',
       techStack: '',
+      startMonth: '',
+      startYear: '',
+      endMonth: '',
+      endYear: '',
+      isCurrent: false,
       link: '',
       repoUrl: '',
     });
@@ -219,7 +243,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                             className="w-full"
                             isInvalid={!!fieldState.error}
                           >
-                            <Label>Project Name</Label>
+                            <Label>Project Name *</Label>
                             <Input {...field} placeholder="TailorCV" />
                             {fieldState.error ? (
                               <FieldError>
@@ -238,7 +262,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                             className="w-full"
                             isInvalid={!!fieldState.error}
                           >
-                            <Label>Tech Stack</Label>
+                            <Label>Tech Stack *</Label>
                             <Input
                               {...field}
                               placeholder="Next.js, TypeScript, Tailwind"
@@ -261,7 +285,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                           className="w-full"
                           isInvalid={!!fieldState.error}
                         >
-                          <Label>Description</Label>
+                          <Label>Description *</Label>
                           <TextArea
                             {...field}
                             placeholder="AI-powered resume builder that helps developers..."
@@ -310,6 +334,156 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                         )}
                       />
                     </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-foreground mb-2 block text-sm font-medium">
+                          Start Date (Optional)
+                        </Label>
+                        <div className="flex gap-2">
+                          <Controller
+                            name={`projects.${index}.startMonth`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                >
+                                  <option value="">Month</option>
+                                  {months.map((m) => (
+                                    <option key={m.value} value={m.value}>
+                                      {m.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+
+                          <Controller
+                            name={`projects.${index}.startYear`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                >
+                                  <option value="">Year</option>
+                                  {years.map((y) => (
+                                    <option key={y} value={y}>
+                                      {y}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-foreground mb-2 block text-sm font-medium">
+                          End Date (Optional)
+                        </Label>
+                        <div className="flex gap-2">
+                          <Controller
+                            name={`projects.${index}.endMonth`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  disabled={projects?.[index]?.isCurrent}
+                                >
+                                  <option value="">Month</option>
+                                  {months.map((m) => (
+                                    <option key={m.value} value={m.value}>
+                                      {m.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+
+                          <Controller
+                            name={`projects.${index}.endYear`}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                              <div className="flex-1">
+                                <select
+                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                  disabled={projects?.[index]?.isCurrent}
+                                >
+                                  <option value="">Year</option>
+                                  {years.map((y) => (
+                                    <option key={y} value={y}>
+                                      {y}
+                                    </option>
+                                  ))}
+                                </select>
+                                {fieldState.error ? (
+                                  <p className="text-danger mt-1 text-xs">
+                                    {fieldState.error.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Controller
+                      name={`projects.${index}.isCurrent`}
+                      control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          isSelected={!!field.value}
+                          onChange={(selected) => field.onChange(selected)}
+                        >
+                          <Checkbox.Control className="size-5">
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Content>
+                            <span className="text-sm">
+                              I am currently working on this project
+                            </span>
+                          </Checkbox.Content>
+                        </Checkbox>
+                      )}
+                    />
                   </Card.Content>
                 </Card>
               </ReorderableItem>

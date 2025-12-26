@@ -50,12 +50,6 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         level: 'ADVANCED',
       },
       {
-        id: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b',
-        name: 'Remix',
-        category: 'Frontend',
-        level: 'INTERMEDIATE',
-      },
-      {
         id: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c',
         name: 'Node.js',
         category: 'Backend',
@@ -116,19 +110,19 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         tech: ['Next.js', 'GraphQL', 'Shadcn UI', 'TypeScript'],
         bullets: [
           {
-            id: 'b1',
+            id: '8a7b6c5d-4e3f-41a2-b3c4-d5e6f7a8b9c0',
             text: 'Architected and developed 90% of the initial UI for an AI-powered CRM, featuring advanced table views with keyboard navigation and drag-and-drop pipelines.',
           },
           {
-            id: 'b2',
+            id: '7a6b5c4d-3e2f-41a2-b3c4-d5e6f7a8b9c1',
             text: 'Managed a frontend team of 3 developers, establishing best practices for Next.js and GraphQL integration to ensure scalable application growth.',
           },
           {
-            id: 'b3',
+            id: '6a5b4c3d-2e1f-41a2-b3c4-d5e6f7a8b9c2',
             text: 'Engineered complex features including automated email syncing, workspace analysis, and dynamic filtering systems to enhance user productivity.',
           },
           {
-            id: 'b4',
+            id: '5a4b3c2d-1e0f-41a2-b3c4-d5e6f7a8b9c3',
             text: 'Implemented agentic AI capabilities within the CRM interface, enabling seamless interaction between users and automated AI workflows.',
           },
         ],
@@ -144,15 +138,15 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         tech: ['Remix', 'React Router', 'Stripe', 'Tailwind CSS'],
         bullets: [
           {
-            id: 'b5',
+            id: '4a3b2c1d-0e9f-41a2-b3c4-d5e6f7a8b9c4',
             text: 'Developed a creator-focused content platform using Remix, facilitating subscription tier management and secure pay-per-view video locking.',
           },
           {
-            id: 'b6',
+            id: '3a2b1c0d-9e8f-41a2-b3c4-d5e6f7a8b9c5',
             text: 'Collaborated in a high-velocity team to deliver a responsive content delivery system integrated with Stripe for global payment processing.',
           },
           {
-            id: 'b7',
+            id: '2a1b0c9d-8e7f-41a2-b3c4-d5e6f7a8b9c6',
             text: 'Optimized user account workflows and onboarding sequences, resulting in a streamlined experience for both creators and subscribers.',
           },
         ],
@@ -165,6 +159,7 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         role: 'Full Stack Developer',
         startDate: '2024-01',
         endDate: null,
+        isCurrent: true,
         url: 'https://scopematter.xyz',
         repoUrl: 'https://github.com/biolater/scopematter',
         tech: [
@@ -177,15 +172,15 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         ],
         bullets: [
           {
-            id: 'b8',
+            id: '1a0b9c8d-7e6f-41a2-b3c4-d5e6f7a8b9c7',
             text: 'Engineered a scope creep prevention tool for freelancers, featuring a comprehensive dashboard for real-time project health tracking.',
           },
           {
-            id: 'b9',
+            id: '0a9b8c7d-6e5f-41a2-b3c4-d5e6f7a8b9c8',
             text: 'Developed automated change order generation and request management systems to formalize project requirements and protect revenue.',
           },
           {
-            id: 'b10',
+            id: '9c8d7e6f-5a4b-41a2-b3c4-d5e6f7a8b9c9',
             text: 'Leveraged Next.js 15 and Redis to ensure high-performance data handling and a seamless user experience for complex project workflows.',
           },
         ],
@@ -195,7 +190,8 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         name: 'Student Budget Buddy',
         role: 'Full Stack Developer',
         startDate: '2023-08',
-        endDate: null,
+        endDate: '2023-12',
+        isCurrent: false,
         url: 'https://student-bugdet-buddy-lyje.vercel.app',
         repoUrl: 'https://github.com/biolater/student-budget-buddy',
         tech: [
@@ -208,15 +204,15 @@ export const MOCK_GENERATED_RESUME: GenerateOnboardingOutput = {
         ],
         bullets: [
           {
-            id: 'b11',
+            id: '8d7e6f5a-4b3c-41a2-b3c4-d5e6f7a8b9d0',
             text: 'Created a multi-currency financial tracking application featuring interactive data visualizations with Charts.js for student expense management.',
           },
           {
-            id: 'b12',
+            id: '7e6f5a4b-3c2d-41a2-b3c4-d5e6f7a8b9d1',
             text: 'Integrated ChatGPT API to provide personalized, AI-powered financial insights and budgeting recommendations based on user spending habits.',
           },
           {
-            id: 'b13',
+            id: '6f5a4b3c-2d1e-41a2-b3c4-d5e6f7a8b9d2',
             text: 'Implemented robust recurring transaction management and secure authentication using Clerk and Prisma ORM.',
           },
         ],
@@ -256,7 +252,7 @@ export const MOCK_ONBOARDING_FORM_VALUES: OnboardingFormInput = {
     'Driven Full Stack Engineer (contractor) specializing in building complex, data-heavy web applications. Proven track record in developing AI-powered CRM systems and creator economy platforms using Next.js and React. Passionate about writing clean code, solving complex architectural problems, and delivering high-performance, user-centric solutions.',
   experiences: [
     {
-      id: 'softsync-id',
+      id: 'd9b3a7e2-4c5d-4f6a-8b9c-0d1e2f3a4b5c',
       jobTitle: 'Lead Frontend Developer',
       company: 'SoftSync',
       startMonth: '05',
@@ -268,7 +264,7 @@ export const MOCK_ONBOARDING_FORM_VALUES: OnboardingFormInput = {
         'Lead frontend development of a complex AI-powered CRM with agentic capabilities. Built 90% of the initial UI, including advanced table views with keyboard navigation, drag-and-drop pipelines, and dynamic filtering. Managed a frontend team of 3 developers, implementing Next.js, GraphQL, and Shadcn UI. Integrated key features like email syncing, automatic merging, and AI-driven workspace analysis.',
     },
     {
-      id: 'ascnd-id',
+      id: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
       jobTitle: 'Frontend Developer',
       company: 'Ascnd',
       startMonth: '02',
@@ -282,20 +278,30 @@ export const MOCK_ONBOARDING_FORM_VALUES: OnboardingFormInput = {
   ],
   projects: [
     {
-      id: 'scopematter-id',
+      id: 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e',
       name: 'Scope Matter',
       description:
         'A scope creep prevention tool for freelancers to formalize project requirements. Features a comprehensive dashboard for tracking project health, request management, and automated change order generation.',
       techStack: 'Next.js 15, TypeScript, Supabase, PostgreSQL, Redis, Clerk',
+      startMonth: '01',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://scopematter.xyz',
       repoUrl: 'github.com/Biolater/scopematter',
     },
     {
-      id: 'budget-buddy-id',
+      id: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
       name: 'Student Budget Buddy',
       description:
         'A multi-currency financial tracking application featuring data visualization with Charts.js, recurring transaction management, and AI-powered financial insights using ChatGPT API.',
       techStack: 'Next.js, PostgreSQL, Prisma, Tailwind CSS, Clerk',
+      startMonth: '08',
+      startYear: '2023',
+      endMonth: '12',
+      endYear: '2023',
+      isCurrent: false,
       link: 'https://student-bugdet-buddy-lyje.vercel.app',
       repoUrl: 'github.com/Biolater/Student-Budget-Buddy',
     },
@@ -338,7 +344,7 @@ export const MOCK_ONBOARDING_FORM_VALUES_V2: OnboardingFormInput = {
     'Award-winning Senior Product Designer with 6+ years of experience crafting intuitive digital experiences. Specialized in design systems, accessibility, and user research. Passionate about bridging the gap between design and engineering to build scalable products.',
   experiences: [
     {
-      id: 'techflow-id',
+      id: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a',
       jobTitle: 'Senior Product Designer',
       company: 'TechFlow',
       startMonth: '03',
@@ -350,7 +356,7 @@ export const MOCK_ONBOARDING_FORM_VALUES_V2: OnboardingFormInput = {
         'Leading the design system team for a major enterprise SaaS platform. Reduced design-to-dev handoff time by 40% through a comprehensive component library in Figma. Mentoring 2 junior designers and conducting weekly design critiques.',
     },
     {
-      id: 'creative-sol-id',
+      id: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b',
       jobTitle: 'UX Designer',
       company: 'Creative Solutions',
       startMonth: '06',
@@ -364,20 +370,30 @@ export const MOCK_ONBOARDING_FORM_VALUES_V2: OnboardingFormInput = {
   ],
   projects: [
     {
-      id: 'fintech-ds-id',
+      id: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c',
       name: 'Fintech Design System',
       description:
         'A comprehensive design system for a banking application, including typography, color palette, and accessible component library.',
       techStack: 'Figma, Storybook, React, CSS Modules',
+      startMonth: '01',
+      startYear: '2023',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://design.fintech.com',
       repoUrl: '',
     },
     {
-      id: 'a11y-audit-id',
+      id: 'a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d',
       name: 'Accessibility Audit Tool',
       description:
         'An internal tool to automated accessibility checks for design files, ensuring WCAG 2.1 compliance before handoff.',
       techStack: 'Figma Plugin API, TypeScript, React',
+      startMonth: '06',
+      startYear: '2022',
+      endMonth: '12',
+      endYear: '2022',
+      isCurrent: false,
       link: '',
       repoUrl: 'github.com/schen-design/a11y-audit',
     },
@@ -418,7 +434,7 @@ export const MOCK_ONBOARDING_FORM_VALUES_V3: OnboardingFormInput = {
     'Analytical Data Scientist with a strong background in machine learning and statistical modeling. Experienced in building predictive models, data pipelines, and visualizing complex datasets. Proficient in Python, SQL, and cloud infrastructure for deploying ML models.',
   experiences: [
     {
-      id: 'datacorp-id',
+      id: 'b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e',
       jobTitle: 'Data Scientist',
       company: 'DataCorp',
       startMonth: '09',
@@ -430,7 +446,7 @@ export const MOCK_ONBOARDING_FORM_VALUES_V3: OnboardingFormInput = {
         'Developing churn prediction models for a telecom client, achieving 85% accuracy. Building automated ETL pipelines using Apache Airflow and DBT. Creating interactive dashboards in Tableau for executive reporting.',
     },
     {
-      id: 'fintech-inc-id',
+      id: 'c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f',
       jobTitle: 'Junior Data Analyst',
       company: 'FinTech Inc.',
       startMonth: '07',
@@ -444,20 +460,30 @@ export const MOCK_ONBOARDING_FORM_VALUES_V3: OnboardingFormInput = {
   ],
   projects: [
     {
-      id: 'fraud-detect-id',
+      id: 'd0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a',
       name: 'Real-time Fraud Detection',
       description:
         'A real-time fraud detection system using Random Forest and Gradient Boosting algorithms. Processes thousands of transactions per second with low latency.',
       techStack: 'Python, Scikit-learn, Kafka, AWS Lambda',
+      startMonth: '01',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: '',
       repoUrl: 'github.com/mross-data/fraud-detect',
     },
     {
-      id: 'stock-pred-id',
+      id: 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b',
       name: 'Stock Price Predictor',
       description:
         'An experimental LSTM model to predict short-term stock price movements based on historical data and sentiment analysis of news headlines.',
       techStack: 'Python, TensorFlow, Keras, Pandas, NLP',
+      startMonth: '05',
+      startYear: '2023',
+      endMonth: '12',
+      endYear: '2023',
+      isCurrent: false,
       link: 'https://stock-pred-demo.herokuapp.com',
       repoUrl: 'github.com/mross-data/stock-pred',
     },
@@ -522,7 +548,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
     'Full-stack engineer focused on building reliable web products with measurable impact across web apps, APIs, and infrastructure. Comfortable owning end-to-end delivery from scoping and design to implementation, monitoring, and iteration with stakeholders. Known for improving performance, reducing defects, and shipping high-quality features quickly while keeping code maintainable and ATS-friendly.',
   experiences: [
     {
-      id: 'exp-max-01',
+      id: 'f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c',
       jobTitle: 'Software Engineer I',
       company: 'Company 01',
       startMonth: '01',
@@ -534,7 +560,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Owned development of customer-facing features and internal tools, collaborating with design and product to deliver incremental releases. Improved page performance, refactored legacy UI patterns, and added unit/integration tests to reduce regressions. Built REST endpoints, wrote SQL queries, and instrumented logging/alerts for core workflows. Mentored peers through code reviews and documentation while improving developer experience. Delivered multiple projects on time by breaking work into milestones, communicating risks, and validating outcomes with users. Maintained high quality through PR standards, consistent linting, and pragmatic engineering tradeoffs. Helped improve reliability by adding retries, timeouts, and graceful error handling. Supported production incidents with root-cause analysis and follow-up fixes.',
     },
     {
-      id: 'exp-max-02',
+      id: 'a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d',
       jobTitle: 'Software Engineer II',
       company: 'Company 02',
       startMonth: '02',
@@ -546,7 +572,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Built and maintained scalable frontend components and backend APIs for a multi-tenant product. Implemented pagination, filtering, and role-based access control while ensuring secure data handling. Optimized slow queries and improved caching strategies to reduce latency in high-traffic endpoints. Partnered with QA to define test plans and created automated checks for critical flows. Introduced better observability dashboards and on-call runbooks to improve incident response. Worked closely with stakeholders to clarify requirements and ship iterative improvements. Reduced technical debt by migrating old modules to a shared design system. Ensured accessibility best practices and cross-browser support for core experiences.',
     },
     {
-      id: 'exp-max-03',
+      id: 'b4c5d6e7-f8a9-4b0c-1d2e-3f4a5b6c7d8e',
       jobTitle: 'Software Engineer',
       company: 'Company 03',
       startMonth: '03',
@@ -558,7 +584,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Delivered new product capabilities end-to-end, including UI flows, API contracts, and database changes. Improved performance by reducing bundle size, optimizing rendering, and trimming unused dependencies. Added CI checks, improved code review guidelines, and standardized release notes. Built resilient background jobs and improved error handling for edge cases. Collaborated cross-functionally to validate designs and ship features that improved user satisfaction. Reduced support burden by adding better validation, self-serve tooling, and clearer UX messaging. Maintained clean architecture through modularization and consistent code patterns. Helped onboard new teammates and documented common workflows.',
     },
     {
-      id: 'exp-max-04',
+      id: 'c5d6e7f8-a9b0-4c1d-2e3f-4a5b6c7d8e9f',
       jobTitle: 'Software Engineer',
       company: 'Company 04',
       startMonth: '04',
@@ -570,7 +596,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Implemented customer-requested features for a SaaS platform with attention to usability and reliability. Built reusable UI components, validated forms, and improved navigation patterns. Designed and shipped API endpoints with proper validation, pagination, and rate limiting. Tuned database indexes and improved query performance for reporting screens. Added integration tests for high-value flows and improved monitoring to detect regressions early. Collaborated with customer support to triage issues and deliver fixes quickly. Improved developer productivity via scripts, templates, and clearer local setup docs. Kept code maintainable through refactoring and consistent patterns.',
     },
     {
-      id: 'exp-max-05',
+      id: 'd6e7f8a9-b0c1-4d2e-3f4a-5b6c7d8e9f0a',
       jobTitle: 'Software Engineer',
       company: 'Company 05',
       startMonth: '05',
@@ -582,7 +608,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Shipped product enhancements across frontend and backend, ensuring strong typing and predictable state management. Implemented secure authentication and authorization flows and improved session handling. Built dashboards with filtering and export features, improving customer visibility into key metrics. Optimized API response times by adding caching and reducing payload sizes. Partnered with design to refine UI components and improve accessibility compliance. Improved CI reliability and added smoke tests for critical journeys. Reduced bugs by tightening validation and adding edge-case coverage. Helped drive consistent engineering practices across the team.',
     },
     {
-      id: 'exp-max-06',
+      id: 'e7f8a9b0-c1d2-4e3f-4a5b-6c7d8e9f0a1b',
       jobTitle: 'Software Engineer',
       company: 'Company 06',
       startMonth: '06',
@@ -594,7 +620,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Built and maintained a data-heavy UI with complex tables, search, and saved filters. Improved frontend performance by optimizing rendering and memoization patterns. Implemented backend endpoints with clear contracts and improved error handling semantics. Added monitoring and alerting to catch failures and reduce MTTR. Coordinated with product to prioritize high-impact improvements and reduce churn drivers. Improved documentation and onboarding for new engineers. Standardized code style and encouraged small PRs for faster iteration. Delivered improvements while keeping stability high.',
     },
     {
-      id: 'exp-max-07',
+      id: 'f8a9b0c1-d2e3-4f4a-5b6c-7d8e9f0a1b2c',
       jobTitle: 'Senior Software Engineer',
       company: 'Company 07',
       startMonth: '07',
@@ -606,7 +632,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Led delivery of multiple features from discovery to release, aligning technical execution with business goals. Implemented robust patterns for feature flags, migrations, and backward compatibility. Improved reliability by addressing flaky jobs and strengthening retry/timeout policies. Tuned performance for key pages and reduced API latency through profiling and caching. Partnered with stakeholders to define scope, de-risk timelines, and ship iteratively. Mentored teammates through pairing and reviews, raising code quality and consistency. Wrote clear technical docs and supported incident response with root-cause analysis. Delivered measurable improvements in UX and system stability.',
     },
     {
-      id: 'exp-max-08',
+      id: 'a9b0c1d2-e3f4-4a5b-6c7d-8e9f0a1b2c3d',
       jobTitle: 'Senior Software Engineer',
       company: 'Company 08',
       startMonth: '08',
@@ -618,7 +644,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Drove improvements across the stack, focusing on performance, reliability, and developer experience. Built new UI flows with strong validation and clear user feedback. Implemented API changes with migrations and safe rollout plans. Improved observability with dashboards, logs, and alerts for critical paths. Reduced errors by adding consistent input validation and better edge-case handling. Collaborated cross-functionally to ship features that improved adoption and retention. Documented best practices and helped standardize release processes. Maintained high delivery velocity with predictable iteration cycles.',
     },
     {
-      id: 'exp-max-09',
+      id: 'b0c1d2e3-f4a5-4b6c-7d8e-9f0a1b2c3d4e',
       jobTitle: 'Lead Software Engineer',
       company: 'Company 09',
       startMonth: '09',
@@ -630,7 +656,7 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
         'Led technical execution for a team shipping customer-facing features and platform improvements. Set standards for code quality, testing, and release safety, improving overall reliability. Designed scalable APIs and improved data access patterns for performance. Implemented better error handling and monitoring to reduce incident frequency. Worked with product to prioritize roadmap items and ensure clear acceptance criteria. Mentored engineers and improved onboarding through documentation and templates. Delivered incremental improvements with regular feedback loops. Balanced speed and quality to ship consistently.',
     },
     {
-      id: 'exp-max-10',
+      id: 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f',
       jobTitle: 'Lead Software Engineer',
       company: 'Company 10',
       startMonth: '10',
@@ -644,62 +670,92 @@ export const MOCK_ONBOARDING_MAX_LIMITS_FORM_VALUES: OnboardingFormInput = {
   ],
   projects: [
     {
-      id: 'proj-max-01',
+      id: 'd2e3f4a5-b6c7-4d8e-9f0a-1b2c3d4e5f6a',
       name: 'Project 01',
       description:
         'Built a production-ready web app with authentication, data persistence, and polished UI flows. Implemented dashboards, search, and export features with strong validation and clear UX feedback. Focused on maintainable architecture, testing, and performance optimization for real users at scale.',
       techStack:
         'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Observability, Caching, Auth',
+      startMonth: '01',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://example.com/project-1',
       repoUrl: 'github.com/max-limit-user/project-1',
     },
     {
-      id: 'proj-max-02',
+      id: 'e3f4a5b6-c7d8-4e9f-0a1b-2c3d4e5f6a7b',
       name: 'Project 02',
       description:
         'Shipped an internal tooling platform to streamline common workflows and reduce manual effort. Added role-based access, audit logs, and robust error handling. Improved reliability with monitoring, retries, and clear operational documentation for on-call support.',
       techStack:
         'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Monitoring, Logging, RBAC',
+      startMonth: '02',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://example.com/project-2',
       repoUrl: 'github.com/max-limit-user/project-2',
     },
     {
-      id: 'proj-max-03',
+      id: 'f4a5b6c7-d8e9-4f0a-1b2c-3d4e5f6a7b8c',
       name: 'Project 03',
       description:
         'Created a data-heavy analytics dashboard with filters, saved views, and fast rendering. Optimized API payloads and caching strategies to keep interactions snappy. Included automated tests, CI checks, and performance profiling to prevent regressions.',
       techStack:
         'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Performance, Caching',
+      startMonth: '03',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://example.com/project-3',
       repoUrl: 'github.com/max-limit-user/project-3',
     },
     {
-      id: 'proj-max-04',
+      id: 'a5b6c7d8-e9f0-4a1b-2c3d-4e5f6a7b8c9d',
       name: 'Project 04',
       description:
         'Built a job application helper that organizes projects, experience, and skills into structured data. Implemented form flows, validation, and PDF export with a clean ATS-friendly layout. Focused on usability, accessibility, and reliable generation results.',
       techStack:
         'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, PDF, Accessibility',
+      startMonth: '04',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://example.com/project-4',
       repoUrl: 'github.com/max-limit-user/project-4',
     },
     {
-      id: 'proj-max-05',
+      id: 'b6c7d8e9-f0a1-4b2c-3d4e-5f6a7b8c9d0e',
       name: 'Project 05',
       description:
         'Delivered a lightweight CRM-style prototype with contact management, notes, and task tracking. Added search, filtering, and basic reporting. Emphasized modular components, consistent state handling, and strong input validation throughout.',
       techStack:
         'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Forms, Validation',
+      startMonth: '05',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://example.com/project-5',
       repoUrl: 'github.com/max-limit-user/project-5',
     },
     {
-      id: 'proj-max-06',
+      id: 'c7d8e9f0-a1b2-4c3d-4e5f-6a7b8c9d0e1f',
       name: 'Project 06',
       description:
         'Built a multi-step onboarding experience with progressive disclosure, good defaults, and clear guidance. Added guardrails for max lengths/counts and improved long-running generation UX with reassuring messaging. Prioritized fast completion and clean data shape.',
       techStack:
         'Next.js, TypeScript, React, Node.js, PostgreSQL, Prisma, Tailwind CSS, Docker, AWS, Redis, CI/CD, Testing, Zod, React Hook Form',
+      startMonth: '06',
+      startYear: '2024',
+      endMonth: '',
+      endYear: '',
+      isCurrent: true,
       link: 'https://example.com/project-6',
       repoUrl: 'github.com/max-limit-user/project-6',
     },

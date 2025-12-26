@@ -12,7 +12,8 @@ function clampString(value: Primitive, maxChars: number) {
 }
 
 function toYearMonth(year: Primitive, month: Primitive) {
-  if (typeof year !== 'string' || typeof month !== 'string') return null;
+  if (typeof year !== 'string' || typeof month !== 'string' || !year || !month)
+    return null;
   const y = Number(year);
   const m = Number(month);
   if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
@@ -106,17 +107,32 @@ export function compressOnboardingBody<T extends Record<string, any>>(
         link: safe(p.link, 200),
         repoUrl: safe(p.repoUrl, 200),
       }))
-      .map((p: any) => ({
-        p,
-        score:
+      .sort((a: any, b: any) => {
+        // Sort projects by recency (end date, then start date)
+        const aEnd = a.isCurrent
+          ? Number.POSITIVE_INFINITY
+          : (toYearMonth(a.endYear, a.endMonth) ?? -1);
+        const bEnd = b.isCurrent
+          ? Number.POSITIVE_INFINITY
+          : (toYearMonth(b.endYear, b.endMonth) ?? -1);
+
+        if (bEnd !== aEnd) return bEnd - aEnd;
+
+        const aStart = toYearMonth(a.startYear, a.startMonth) ?? -1;
+        const bStart = toYearMonth(b.startYear, b.startMonth) ?? -1;
+
+        if (bStart !== aStart) return bStart - aStart;
+
+        // Fallback to score (detail level) if dates are identical/missing
+        const getScore = (p: any) =>
           (typeof p.description === 'string' ? p.description.length : 0) +
           (typeof p.techStack === 'string' ? p.techStack.length : 0) +
           (p.link ? 50 : 0) +
-          (p.repoUrl ? 50 : 0),
-      }))
-      .sort((a: any, b: any) => b.score - a.score)
-      .slice(0, limits.projects)
-      .map((x: any) => x.p);
+          (p.repoUrl ? 50 : 0);
+
+        return getScore(b) - getScore(a);
+      })
+      .slice(0, limits.projects);
 
     next.projects = projects;
   }

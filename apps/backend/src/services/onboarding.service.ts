@@ -63,6 +63,10 @@ export async function generateOnboarding(
       const prompt = [
         'Onboarding form input (JSON):',
         JSON.stringify(aiBody, null, 2),
+        '',
+        'CRITICAL INSTRUCTION: You MUST verify that every experience and project object includes the "isCurrent": boolean field.',
+        'If an item has no end date, set "endDate": null AND "isCurrent": true.',
+        'DATE FORMAT: All dates (startDate, endDate) MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01".',
       ].join('\n');
 
       const { text, finishReason } = await geminiGenerateText({
@@ -113,11 +117,34 @@ export async function generateOnboarding(
         }
       }
 
-      const result = baseResumeDataSchema.safeParse(parsed);
+      // Pre-validation "fix-up" for common AI laziness (like YYYY instead of YYYY-MM)
+      const fixDates = (obj: any): any => {
+        if (!obj || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(fixDates);
+
+        const newObj = { ...obj };
+        for (const key in newObj) {
+          const val = newObj[key];
+          // Look for potential date strings that are just 4 digits (YYYY)
+          if (
+            typeof val === 'string' &&
+            /^\d{4}$/.test(val) &&
+            (key.toLowerCase().includes('date') ||
+              key.toLowerCase().includes('year'))
+          ) {
+            newObj[key] = `${val}-01`;
+          } else if (val && typeof val === 'object') {
+            newObj[key] = fixDates(val);
+          }
+        }
+        return newObj;
+      };
+
+      const result = baseResumeDataSchema.safeParse(fixDates(parsed));
       if (!result.success) {
         throw new AppError(
           'AI-generated data validation failed',
-          ErrorCode.VALIDATION_ERROR,
+          ErrorCode.AI_GENERATION_ERROR,
           500,
           result.error.issues,
         );

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import type { GenerateOnboardingOutput } from '@/lib/types/onboarding';
 import { useOnboardingJobQuery } from '@/lib/http/onboarding-client';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
+import { showErrorToast } from '@/lib/utils/error-toast';
 
 const STORAGE_KEY = 'onboardingJobId';
 
@@ -48,17 +49,29 @@ export function OnboardingJobProvider({
     useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const { data: jobData } = useOnboardingJobQuery(
-    { id: jobId ?? '' },
+  const { data: jobData, error: jobError } = useOnboardingJobQuery(
+    { id: jobId! },
     {
       enabled: !!jobId,
-      refetchInterval: (query: any) => {
-        const status = query.state.data?.status;
-        if (status === 'SUCCEEDED' || status === 'FAILED') return false;
+      refetchInterval: (query) => {
+        const data = query.state.data as typeof jobData;
+        if (data?.status === 'SUCCEEDED' || data?.status === 'FAILED') {
+          return false;
+        }
         return 1500;
+      },
+      retry: (failureCount, error) => {
+        if (error.status === 404) return false;
+        return failureCount < 3;
       },
     },
   );
+
+  useEffect(() => {
+    if (jobError?.status === 404) {
+      clearJob();
+    }
+  }, [jobError]);
 
   const resumeId = jobData?.resultBaseResumeId;
   const { data: resumeData } = useBaseResumeQuery(
@@ -80,7 +93,7 @@ export function OnboardingJobProvider({
 
   useEffect(() => {
     if (jobData?.status === 'FAILED') {
-      toast.error(jobData.error?.message ?? 'Failed to generate resume');
+      showErrorToast(jobData.error)
       clearJob();
     }
   }, [jobData?.status, jobData?.error]);
