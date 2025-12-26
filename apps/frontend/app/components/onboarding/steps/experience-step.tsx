@@ -15,7 +15,7 @@ import {
   useOverlayState,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
+import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
@@ -110,8 +110,6 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
         <AnimatePresence mode="popLayout">
           {fields.map((field, index) => {
-            const isCurrent = !!experiences?.[index]?.isCurrent;
-
             return (
               <ReorderableItem
                 key={field.id}
@@ -125,268 +123,17 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
                 onMoveUp={() => handleMoveUp(index)}
                 onMoveDown={() => handleMoveDown(index)}
               >
-                <Card className="mb-4 overflow-visible">
-                  <Card.Header className="flex-row items-center justify-between">
-                    <Card.Title className="text-base">
-                      Job #{index + 1}
-                    </Card.Title>
-                    <div className="flex items-center gap-1">
-                      {/* Mobile Reorder Controls */}
-                      <div className="flex items-center gap-1 lg:hidden">
-                        <Button
-                          onPress={() => handleMoveUp(index)}
-                          isDisabled={index === 0}
-                          isIconOnly
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Icon icon="lucide:arrow-up" />
-                        </Button>
-                        <Button
-                          onPress={() => handleMoveDown(index)}
-                          isDisabled={index === fields.length - 1}
-                          isIconOnly
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Icon icon="lucide:arrow-down" />
-                        </Button>
-                      </div>
-
-                      <Button
-                        isIconOnly
-                        variant="danger-soft"
-                        size="sm"
-                        onPress={() => {
-                          setDeleteIndex(index);
-                          deleteModalState.open();
-                        }}
-                      >
-                        <Icon icon="lucide:trash-2" />
-                      </Button>
-                    </div>
-                  </Card.Header>
-
-                  <Card.Content className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Controller
-                        name={`experiences.${index}.jobTitle`}
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <TextField
-                            className="w-full"
-                            isInvalid={!!fieldState.error}
-                          >
-                            <Label>Job Title *</Label>
-                            <Input
-                              {...field}
-                              placeholder="Frontend Developer"
-                            />
-                            {fieldState.error ? (
-                              <FieldError>
-                                {fieldState.error.message}
-                              </FieldError>
-                            ) : null}
-                          </TextField>
-                        )}
-                      />
-
-                      <Controller
-                        name={`experiences.${index}.company`}
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <TextField
-                            className="w-full"
-                            isInvalid={!!fieldState.error}
-                          >
-                            <Label>Company *</Label>
-                            <Input {...field} placeholder="Acme Inc." />
-                            {fieldState.error ? (
-                              <FieldError>
-                                {fieldState.error.message}
-                              </FieldError>
-                            ) : null}
-                          </TextField>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <Label className="text-foreground mb-2 block text-sm font-medium">
-                          Start Date *
-                        </Label>
-                        <div className="flex gap-2">
-                          <Controller
-                            name={`experiences.${index}.startMonth`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                >
-                                  <option value="">Month</option>
-                                  {months.map((m) => (
-                                    <option key={m.value} value={m.value}>
-                                      {m.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-
-                          <Controller
-                            name={`experiences.${index}.startYear`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                >
-                                  <option value="">Year</option>
-                                  {years.map((y) => (
-                                    <option key={y} value={y}>
-                                      {y}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-foreground mb-2 block text-sm font-medium">
-                          End Date
-                        </Label>
-                        <div className="flex gap-2">
-                          <Controller
-                            name={`experiences.${index}.endMonth`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                  disabled={isCurrent}
-                                >
-                                  <option value="">Month</option>
-                                  {months.map((m) => (
-                                    <option key={m.value} value={m.value}>
-                                      {m.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-
-                          <Controller
-                            name={`experiences.${index}.endYear`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                  disabled={isCurrent}
-                                >
-                                  <option value="">Year</option>
-                                  {years.map((y) => (
-                                    <option key={y} value={y}>
-                                      {y}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Controller
-                      name={`experiences.${index}.isCurrent`}
-                      control={control}
-                      render={({ field }) => (
-                        <Checkbox
-                          isSelected={!!field.value}
-                          onChange={(selected) => field.onChange(selected)}
-                        >
-                          <Checkbox.Control className="size-5">
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
-                          <Checkbox.Content>
-                            <span className="text-sm">
-                              I currently work here
-                            </span>
-                          </Checkbox.Content>
-                        </Checkbox>
-                      )}
-                    />
-
-                    <Controller
-                      name={`experiences.${index}.description`}
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <TextField
-                          className="w-full"
-                          isInvalid={!!fieldState.error}
-                        >
-                          <Label>What did you do? *</Label>
-                          <TextArea
-                            {...field}
-                            placeholder="Led frontend development, built React dashboards, mentored junior devs..."
-                            rows={3}
-                          />
-                          {fieldState.error ? (
-                            <FieldError>{fieldState.error.message}</FieldError>
-                          ) : null}
-                          <Description>
-                            Write 2-3 sentences. We&apos;ll expand this into
-                            professional bullet points.
-                          </Description>
-                        </TextField>
-                      )}
-                    />
-                  </Card.Content>
-                </Card>
+                <ExperienceItemContent
+                  index={index}
+                  isFirst={index === 0}
+                  isLast={index === fields.length - 1}
+                  onMoveUp={() => handleMoveUp(index)}
+                  onMoveDown={() => handleMoveDown(index)}
+                  onDelete={() => {
+                    setDeleteIndex(index);
+                    deleteModalState.open();
+                  }}
+                />
               </ReorderableItem>
             );
           })}
@@ -474,5 +221,263 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
         onConfirm={handleDelete}
       />
     </>
+  );
+}
+
+interface ExperienceItemContentProps {
+  index: number;
+  isFirst: boolean;
+  isLast: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDelete: () => void;
+}
+
+function ExperienceItemContent({
+  index,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+}: ExperienceItemContentProps) {
+  const { control } = useFormContext<OnboardingFormInput>();
+  const isCurrent = useWatch({
+    control,
+    name: `experiences.${index}.isCurrent`,
+  });
+
+  return (
+    <Card className="mb-4 overflow-visible">
+      <Card.Header className="flex-row items-center justify-between">
+        <Card.Title className="text-base">Job #{index + 1}</Card.Title>
+        <div className="flex items-center gap-1">
+          {/* Mobile Reorder Controls */}
+          <div className="flex items-center gap-1 lg:hidden">
+            <Button
+              onPress={onMoveUp}
+              isDisabled={isFirst}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+            >
+              <Icon icon="lucide:arrow-up" />
+            </Button>
+            <Button
+              onPress={onMoveDown}
+              isDisabled={isLast}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+            >
+              <Icon icon="lucide:arrow-down" />
+            </Button>
+          </div>
+
+          <Button
+            isIconOnly
+            variant="danger-soft"
+            size="sm"
+            onPress={onDelete}
+          >
+            <Icon icon="lucide:trash-2" />
+          </Button>
+        </div>
+      </Card.Header>
+
+      <Card.Content className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Controller
+            name={`experiences.${index}.jobTitle`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <Label>Job Title *</Label>
+                <Input {...field} placeholder="Frontend Developer" />
+                {fieldState.error ? (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                ) : null}
+              </TextField>
+            )}
+          />
+
+          <Controller
+            name={`experiences.${index}.company`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <Label>Company *</Label>
+                <Input {...field} placeholder="Acme Inc." />
+                {fieldState.error ? (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                ) : null}
+              </TextField>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label className="text-foreground mb-2 block text-sm font-medium">
+              Start Date *
+            </Label>
+            <div className="flex gap-2">
+              <Controller
+                name={`experiences.${index}.startMonth`}
+                control={control}
+                render={({ field, fieldState }) => (
+                  <div className="flex-1">
+                    <select
+                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">Month</option>
+                      {months.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldState.error ? (
+                      <p className="text-danger mt-1 text-xs">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+
+              <Controller
+                name={`experiences.${index}.startYear`}
+                control={control}
+                render={({ field, fieldState }) => (
+                  <div className="flex-1">
+                    <select
+                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">Year</option>
+                      {years.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldState.error ? (
+                      <p className="text-danger mt-1 text-xs">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-foreground mb-2 block text-sm font-medium">
+              End Date
+            </Label>
+            <div className="flex gap-2">
+              <Controller
+                name={`experiences.${index}.endMonth`}
+                control={control}
+                render={({ field, fieldState }) => (
+                  <div className="flex-1">
+                    <select
+                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      disabled={!!isCurrent}
+                    >
+                      <option value="">Month</option>
+                      {months.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldState.error ? (
+                      <p className="text-danger mt-1 text-xs">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+
+              <Controller
+                name={`experiences.${index}.endYear`}
+                control={control}
+                render={({ field, fieldState }) => (
+                  <div className="flex-1">
+                    <select
+                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      disabled={!!isCurrent}
+                    >
+                      <option value="">Year</option>
+                      {years.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldState.error ? (
+                      <p className="text-danger mt-1 text-xs">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+
+        <Controller
+          name={`experiences.${index}.isCurrent`}
+          control={control}
+          render={({ field }) => (
+            <Checkbox
+              isSelected={!!field.value}
+              onChange={(selected) => field.onChange(selected)}
+            >
+              <Checkbox.Control className="size-5">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <span className="text-sm">I currently work here</span>
+              </Checkbox.Content>
+            </Checkbox>
+          )}
+        />
+
+        <Controller
+          name={`experiences.${index}.description`}
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
+              <Label>What did you do? *</Label>
+              <TextArea
+                {...field}
+                placeholder="Led frontend development, built React dashboards, mentored junior devs..."
+                rows={3}
+              />
+              {fieldState.error ? (
+                <FieldError>{fieldState.error.message}</FieldError>
+              ) : null}
+              <Description>
+                Write 2-3 sentences. We&apos;ll expand this into professional
+                bullet points.
+              </Description>
+            </TextField>
+          )}
+        />
+      </Card.Content>
+    </Card>
   );
 }

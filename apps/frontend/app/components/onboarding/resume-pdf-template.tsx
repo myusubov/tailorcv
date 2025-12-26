@@ -155,7 +155,7 @@ const formatDate = (dateString?: string | null) => {
   if (!dateString) return '';
   // Try to parse YYYY-MM
   const parts = dateString.split('-');
-  if (parts.length === 2) {
+  if (parts.length >= 2) {
     const months = [
       'Jan',
       'Feb',
@@ -176,7 +176,43 @@ const formatDate = (dateString?: string | null) => {
       return `${months[monthIndex]} ${year}`; // e.g., "Jan 2023"
     }
   }
-  return dateString;
+  return dateString; // Fallback to raw string (e.g. "2024")
+};
+
+const renderDateRange = (
+  start?: string | null,
+  end?: string | null,
+  isCurrent?: boolean | null,
+) => {
+  const formattedStart = formatDate(start);
+
+  // Treat as present if:
+  // 1. isCurrent is explicitly true (boolean or string)
+  // 2. OR isCurrent is NOT explicitly false, AND end date is missing, AND start date exists.
+  // This handles cases where AI omits isCurrent but leaves endDate null.
+  const isExplicitlyFalse =
+    isCurrent === false || String(isCurrent) === 'false';
+    
+  const isExplicitlyTrue = 
+    isCurrent === true || String(isCurrent) === 'true';
+
+  const isPresent =
+    isExplicitlyTrue || (!isExplicitlyFalse && !end && !!start);
+
+  const formattedEnd = isPresent ? 'Present' : formatDate(end);
+
+  if (!formattedStart && !formattedEnd) return null;
+  
+  if (!formattedStart) {
+    return <Text style={styles.dateText}>{formattedEnd}</Text>;
+  }
+
+  return (
+    <Text style={styles.dateText}>
+      {formattedStart}
+      {formattedEnd ? ` – ${formattedEnd}` : ''}
+    </Text>
+  );
 };
 
 export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
@@ -258,10 +294,7 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
               <View key={edu.id || index} style={{ marginBottom: 4 }}>
                 <View style={styles.row}>
                   <Text style={styles.primaryText}>{edu.school}</Text>
-                  <Text style={styles.dateText}>
-                    {formatDate(edu.startDate)} –{' '}
-                    {formatDate(edu.endDate) || 'Present'}
-                  </Text>
+                  {renderDateRange(edu.startDate, edu.endDate)}
                 </View>
                 <View style={styles.row}>
                   <Text style={styles.subtitleText}>
@@ -292,10 +325,7 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                 {/* Company Name & Date */}
                 <View style={styles.row}>
                   <Text style={styles.primaryText}>{exp.company}</Text>
-                  <Text style={styles.dateText}>
-                    {formatDate(exp.startDate)} –{' '}
-                    {exp.isCurrent ? 'Present' : formatDate(exp.endDate)}
-                  </Text>
+                  {renderDateRange(exp.startDate, exp.endDate, exp.isCurrent)}
                 </View>
 
                 {/* Title & Location */}
@@ -335,10 +365,7 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
               <View key={proj.id || index} style={styles.block} wrap>
                 <View style={styles.row}>
                   <Text style={styles.primaryText}>{proj.name}</Text>
-                  <Text style={styles.dateText}>
-                    {formatDate(proj.startDate)} –{' '}
-                    {formatDate(proj.endDate) || 'Present'}
-                  </Text>
+                  {renderDateRange(proj.startDate, proj.endDate, proj.isCurrent)}
                 </View>
                 <View
                   style={{

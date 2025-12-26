@@ -6,21 +6,35 @@ import {
 
 import {
   type ClientGetFn,
-  type DefineClientGetConfig,
   makeKey,
 } from './define-client-get';
 
-type DefineQueryOptions = Omit<UseQueryOptions, 'queryKey' | 'queryFn'> & {
+type DefineQueryOptions<TResponse, TError = ApiRequestError> = Omit<
+  UseQueryOptions<TResponse, TError>,
+  'queryKey' | 'queryFn'
+> & {
   keyParts?: unknown[];
 };
+
+export class ApiRequestError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    message: string,
+    public readonly details?: unknown,
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
 
 export function defineQuery<TParams, TResponse>(
   clientFn: ClientGetFn<TParams, TResponse>,
 ) {
   return function useGeneratedQuery(
     params: TParams,
-    options?: DefineQueryOptions,
-  ): UseQueryResult<TResponse, Error> {
+    options?: DefineQueryOptions<TResponse>,
+  ): UseQueryResult<TResponse, ApiRequestError> {
     const { config } = clientFn;
     const { keyParts, ...queryOptions } = options ?? {};
 
@@ -40,10 +54,12 @@ export function defineQuery<TParams, TResponse>(
         throw new Error('No result returned from client function');
       }
       if (!result.ok) {
-        const error = new Error(result.error?.message ?? 'Unknown error');
-        // Attach the full error object for further inspection if needed
-        (error as any).details = result.error;
-        throw error;
+        throw new ApiRequestError(
+          result.status,
+          result.error.code,
+          result.error.message,
+          result.error.details,
+        );
       }
       return result.data;
     };
@@ -52,6 +68,6 @@ export function defineQuery<TParams, TResponse>(
       queryKey,
       queryFn,
       ...queryOptions,
-    }) as UseQueryResult<TResponse, Error>;
+    }) as UseQueryResult<TResponse, ApiRequestError>;
   };
 }

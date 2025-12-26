@@ -80,6 +80,7 @@ export const baseResumeDataSchema = z
             role: z.string().trim().min(1).nullable().optional(),
             startDate: yearMonthSchema.nullable().optional(),
             endDate: yearMonthSchema.nullable().optional(),
+            isCurrent: z.boolean().nullable().optional(),
             url: urlSchema,
             repoUrl: urlSchema,
             tech: z.array(z.string().trim().min(1)).nullable().optional(),

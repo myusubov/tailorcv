@@ -1,5 +1,8 @@
+"use client";
+
 import { toast } from 'sonner';
 import { ErrorCode } from 'shared';
+import { ApiRequestError } from '../http/define-query';
 
 const FRIENDLY_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.AI_GENERATION_ERROR]:
@@ -22,10 +25,13 @@ interface ShowErrorToastOptions {
  * and automatic 'Retry' actions for specific error codes.
  */
 export function showErrorToast(
-  error: { code: ErrorCode; message: string },
+  error: { code: string; message: string } | ApiRequestError | null | undefined,
   options?: ShowErrorToastOptions,
 ) {
-  const friendlyMessage = FRIENDLY_ERROR_MESSAGES[error.code] || error.message;
+  if (!error) return;
+
+  const code = error.code as ErrorCode;
+  const friendlyMessage = FRIENDLY_ERROR_MESSAGES[code] || error.message;
 
   // Automatically add "Retry" button for specific errors if onRetry is provided
   const needsRetryAction =
@@ -33,7 +39,7 @@ export function showErrorToast(
       ErrorCode.AI_TIMEOUT_ERROR,
       ErrorCode.AI_PARSE_ERROR,
       ErrorCode.NETWORK_ERROR,
-    ].includes(error.code) && !!options?.onRetry;
+    ].includes(code) && !!options?.onRetry;
 
   toast.error(friendlyMessage, {
     action: needsRetryAction

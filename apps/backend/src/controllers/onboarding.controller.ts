@@ -7,6 +7,8 @@ import {
   startOnboardingJob,
 } from '../services/onboarding-jobs.service';
 import { logger } from '../lib/logger';
+import { AppError } from '../utils/AppError';
+import { ErrorCode } from 'shared';
 
 export const getOnboardingStatusController = async (
   _req: Request,

@@ -22,15 +22,30 @@ const LIMITS = {
   educationGraduationYearMaxChars: 4,
 } as const;
 
-const monthSchema = z
+const MonthRegex = /^(0[1-9]|1[0-2])$/;
+const YearRegex = /^\d{4}$/;
+
+const optionalMonthSchema = z
   .string()
   .trim()
-  .regex(/^(0[1-9]|1[0-2])$/, 'Month must be 01-12');
+  .regex(/^$|^(0[1-9]|1[0-2])$/, 'Month must be 01-12');
 
+const optionalYearSchema = z
+  .string()
+  .trim()
+  .regex(/^$|^\d{4}$/, 'Year must be 4 digits')
+  .refine((v) => {
+    if (!v) return true;
+    const year = Number(v);
+    const current = new Date().getFullYear();
+    return year >= 1950 && year <= current + 1;
+  }, 'Year is out of range');
+
+const monthSchema = z.string().trim().regex(MonthRegex, 'Month must be 01-12');
 const yearSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}$/, 'Year must be 4 digits')
+  .regex(YearRegex, 'Year must be 4 digits')
   .refine((v) => {
     const year = Number(v);
     const current = new Date().getFullYear();
@@ -120,8 +135,8 @@ const experienceSchema = z
       .pipe(maxChars('Company name', LIMITS.experienceCompanyMaxChars)),
     startMonth: monthSchema,
     startYear: yearSchema,
-    endMonth: z.string().trim().optional().default(''),
-    endYear: z.string().trim().optional().default(''),
+    endMonth: optionalMonthSchema,
+    endYear: optionalYearSchema,
     isCurrent: z.boolean().default(false),
     description: z
       .string()
@@ -159,36 +174,88 @@ const experienceSchema = z
     }
   });
 
-const projectSchema = z.object({
-  id: z.string().min(1),
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Project name is required')
-    .pipe(maxChars('Project name', LIMITS.projectNameMaxChars)),
-  description: z
-    .string()
-    .trim()
-    .min(20, 'Project description must be at least 20 characters')
-    .pipe(maxChars('Project description', LIMITS.projectDescriptionMaxChars)),
-  techStack: z
-    .string()
-    .trim()
-    .min(10, 'Tech stack must be at least 10 characters')
-    .pipe(maxChars('Tech stack', LIMITS.projectTechStackMaxChars)),
-  link: z
-    .string()
-    .trim()
-    .pipe(maxChars('URL', LIMITS.contactUrlMaxChars))
-    .optional()
-    .default(''),
-  repoUrl: z
-    .string()
-    .trim()
-    .pipe(maxChars('URL', LIMITS.contactUrlMaxChars))
-    .optional()
-    .default(''),
-});
+const projectSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z
+      .string()
+      .trim()
+      .min(1, 'Project name is required')
+      .pipe(maxChars('Project name', LIMITS.projectNameMaxChars)),
+    description: z
+      .string()
+      .trim()
+      .min(20, 'Project description must be at least 20 characters')
+      .pipe(maxChars('Project description', LIMITS.projectDescriptionMaxChars)),
+    techStack: z
+      .string()
+      .trim()
+      .min(10, 'Tech stack must be at least 10 characters')
+      .pipe(maxChars('Tech stack', LIMITS.projectTechStackMaxChars)),
+    startMonth: optionalMonthSchema,
+    startYear: optionalYearSchema,
+    endMonth: optionalMonthSchema,
+    endYear: optionalYearSchema,
+    isCurrent: z.boolean().default(false),
+    link: z
+      .string()
+      .trim()
+      .pipe(maxChars('URL', LIMITS.contactUrlMaxChars))
+      .optional()
+      .default(''),
+    repoUrl: z
+      .string()
+      .trim()
+      .pipe(maxChars('URL', LIMITS.contactUrlMaxChars))
+      .optional()
+      .default(''),
+  })
+  .superRefine((v, ctx) => {
+    if (v.startMonth && !v.startYear) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Start year is required if month is provided',
+        path: ['startYear'],
+      });
+    }
+    if (v.startYear && !v.startMonth) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Start month is required if year is provided',
+        path: ['startMonth'],
+      });
+    }
+
+    if (v.isCurrent) return;
+
+    if (v.endMonth && !v.endYear) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'End year is required if end month is provided',
+        path: ['endYear'],
+      });
+    }
+    if (v.endYear && !v.endMonth) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'End month is required if end year is provided',
+        path: ['endMonth'],
+      });
+    }
+
+    if (v.startMonth && v.startYear && v.endMonth && v.endYear) {
+      const start = toYearMonth(v.startMonth, v.startYear);
+      const end = toYearMonth(v.endMonth, v.endYear);
+      if (start === null || end === null) return;
+      if (end < start) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'End date must be after start date',
+          path: ['endYear'],
+        });
+      }
+    }
+  });
 
 const educationSchema = z
   .object({
