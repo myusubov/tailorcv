@@ -4,7 +4,9 @@ import {
   getOnboardingStatusController,
   generateOnboardingController,
   getOnboardingJobController,
+  generateFromAboutMeController,
 } from '../controllers/onboarding.controller';
+import { upload } from '../middleware/upload';
 import { validateBody } from '../middleware/validate';
 import { onboardingGenerateBaseBodySchema } from '../schemas/onboarding-generate.schema';
 
@@ -21,6 +23,13 @@ onboardingRouter.post(
   requireClerkAuth,
   validateBody(onboardingGenerateBaseBodySchema),
   generateOnboardingController,
+);
+
+onboardingRouter.post(
+  '/about-me',
+  requireClerkAuth,
+  upload.single('file'),
+  generateFromAboutMeController,
 );
 
 onboardingRouter.get('/jobs/:id', requireClerkAuth, getOnboardingJobController);

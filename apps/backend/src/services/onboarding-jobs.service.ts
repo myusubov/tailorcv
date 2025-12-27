@@ -6,6 +6,7 @@ import type { GenerateOnboardingOutput } from '../types/onboarding';
 import { logger } from '../lib/logger';
 import type {
   OnboardingJobError,
+  OnboardingJobPayload,
   OnboardingJobStage,
   OnboardingJobStatus,
 } from '../types/onboarding-job';
@@ -27,14 +28,14 @@ export async function startOnboardingJob(input: {
   clerkUserId: string;
   body: OnboardingGenerateBaseBody;
 }): Promise<StartOnboardingJobOutput> {
-  const startedAt = Date.now();
+  const payload: OnboardingJobPayload = { ...input.body, _type: 'form' };
   const job = await prisma.onboardingJob.create({
     data: {
       userId: input.clerkUserId,
       status: 'QUEUED',
       stage: 'QUEUED',
       progressPct: 0,
-      payload: input.body,
+      payload
     },
     select: { id: true },
   });
@@ -46,13 +47,30 @@ export async function startOnboardingJob(input: {
     { jobKey: job.id },
   );
 
-  logger.info(
-    {
-      jobId: job.id,
-      clerkUserId: input.clerkUserId,
-      elapsedMs: Date.now() - startedAt,
+  return { jobId: job.id };
+}
+
+export async function startOnboardingAboutMeJob(input: {
+  clerkUserId: string;
+  text: string;
+}): Promise<StartOnboardingJobOutput> {
+  const payload: OnboardingJobPayload = { text: input.text, _type: 'about-me' };
+  const job = await prisma.onboardingJob.create({
+    data: {
+      userId: input.clerkUserId,
+      status: 'QUEUED',
+      stage: 'QUEUED',
+      progressPct: 0,
+      payload
     },
-    'onboarding job enqueued',
+    select: { id: true },
+  });
+
+  const workerUtils = await getWorkerUtils();
+  await workerUtils.addJob(
+    'onboarding.generate',
+    { jobId: job.id },
+    { jobKey: job.id },
   );
 
   return { jobId: job.id };

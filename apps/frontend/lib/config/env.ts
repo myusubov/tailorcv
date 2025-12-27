@@ -38,6 +38,11 @@ const envSchema = z.object({
 
   // App URL
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+
+  // Vercel Environment (Public - available on client)
+  NEXT_PUBLIC_VERCEL_ENV: z
+    .enum(['production', 'preview', 'development'])
+    .default('development'),
 });
 
 // Type for the environment
@@ -65,6 +70,7 @@ const parseEnv = (): Env => {
       process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   });
 
   if (!parsed.success) {
@@ -91,9 +97,8 @@ export const isServer = typeof window === 'undefined';
 // Export commonly used values for convenience
 export const config = {
   // Environment
-  isDev: env.NODE_ENV === 'development',
-  isProd: env.NODE_ENV === 'production',
-  isTest: env.NODE_ENV === 'test',
+  isDev: env.NEXT_PUBLIC_VERCEL_ENV === 'development',
+  isProd: env.NEXT_PUBLIC_VERCEL_ENV === 'production',
 
   // URLs
   apiUrl: env.API_URL ?? env.NEXT_PUBLIC_API_URL,
