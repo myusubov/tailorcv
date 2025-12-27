@@ -8,7 +8,7 @@ import {
   clampProgressPct,
   reassuranceFromElapsedMs,
   stageToLabel,
-} from './generation-overlay.utils';
+} from '../../../lib/utils/generation-overlay';
 
 type GenerationOverlayProps = {
   isVisible: boolean;

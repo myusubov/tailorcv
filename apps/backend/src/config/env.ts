@@ -22,8 +22,11 @@ const envSchema = z.object({
   CLERK_WEBHOOK_SECRET: z.string().min(1),
 
   // Gemini AI
-  GEMINI_API_KEY: z.string().min(1),
-  GEMINI_ONBOARDING_SYSTEM_PROMPT: z.string().min(1),
+  // GEMINI_API_KEY: z.string().min(1),
+  OPENAI_ONBOARDING_SYSTEM_PROMPT: z.string().min(1),
+
+  // OpenAI AI
+  OPENAI_API_KEY: z.string().min(1),
 
   // Frontend URL (for CORS)
   FRONTEND_URL: z.url().default('http://localhost:3000'),

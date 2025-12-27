@@ -18,10 +18,20 @@ export function SuccessModal({
   onOpenChange,
   data,
 }: SuccessModalProps) {
-  if (!data) return null;
+  if (!data || !data.data) return null;
 
   const { data: resumeData } = data;
-  const { contact, summary, skills, experience, projects } = resumeData;
+  const { 
+    contact, 
+    summary = '', 
+    skills = [], 
+    experiences = [], 
+    projects = [] 
+  } = resumeData;
+
+  const firstName = contact?.firstName ?? '';
+  const lastName = contact?.lastName ?? '';
+  const headline = contact?.headline ?? 'Software Professional';
 
   return (
     <Modal.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -78,7 +88,7 @@ export function SuccessModal({
                             </div>
                             <PDFDownloadLink
                               document={<ResumePDFTemplate data={resumeData} />}
-                              fileName={`${contact.firstName}_${contact.lastName}_Resume.pdf`}
+                              fileName={`${firstName}_${lastName}_Resume.pdf`}
                             >
                               {({ loading }) => (
                                 <Button
@@ -109,10 +119,10 @@ export function SuccessModal({
                             <div className="mb-8 flex items-start justify-between">
                               <div>
                                 <h3 className="text-3xl leading-tight font-bold text-slate-950">
-                                  {contact.firstName} {contact.lastName}
+                                  {firstName} {lastName}
                                 </h3>
                                 <p className="text-primary mt-1 text-sm font-medium tracking-wider uppercase">
-                                  {contact.headline || 'Software Professional'}
+                                  {headline}
                                 </p>
                               </div>
                             </div>
@@ -141,7 +151,7 @@ export function SuccessModal({
                                   className="text-primary mb-2 size-5"
                                 />
                                 <div className="text-xl font-bold text-slate-950">
-                                  {skills.length}
+                                  {skills?.length ?? 0}
                                 </div>
                                 <div className="text-default-500 text-center text-[10px] font-bold tracking-tight uppercase">
                                   Skills
@@ -153,7 +163,7 @@ export function SuccessModal({
                                   className="text-primary mb-2 size-5"
                                 />
                                 <div className="text-xl font-bold text-slate-950">
-                                  {experience.length}
+                                  {experiences?.length ?? 0}
                                 </div>
                                 <div className="text-default-500 text-center text-[10px] font-bold tracking-tight uppercase">
                                   Exp.
@@ -165,7 +175,7 @@ export function SuccessModal({
                                   className="text-primary mb-2 size-5"
                                 />
                                 <div className="text-xl font-bold text-slate-950">
-                                  {projects.length}
+                                  {projects?.length ?? 0}
                                 </div>
                                 <div className="text-default-500 text-center text-[10px] font-bold tracking-tight uppercase">
                                   Projects

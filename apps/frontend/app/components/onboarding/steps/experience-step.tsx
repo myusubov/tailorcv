@@ -19,7 +19,7 @@ import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
-import { generateUUID } from '@/lib/utils';
+import { generateUUID } from '@/lib/utils/utils';
 import { DeleteExperienceModal } from '@/app/components/experience/delete-experience-modal';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 
@@ -59,15 +59,15 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
   const company =
     deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
-  const jobTitle =
-    deleteIndex !== null ? experiences?.[deleteIndex]?.jobTitle : '';
-  const labelParts = [jobTitle, company].filter(Boolean);
+  const title =
+    deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
+  const labelParts = [title, company].filter(Boolean);
   const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
 
   const addExperience = () => {
     append({
       id: generateUUID(),
-      jobTitle: '',
+      title: '',
       company: '',
       startMonth: '',
       startYear: '',
@@ -288,7 +288,7 @@ function ExperienceItemContent({
       <Card.Content className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Controller
-            name={`experiences.${index}.jobTitle`}
+            name={`experiences.${index}.title`}
             control={control}
             render={({ field, fieldState }) => (
               <TextField className="w-full" isInvalid={!!fieldState.error}>

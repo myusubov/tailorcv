@@ -24,7 +24,7 @@ import {
 } from 'react-hook-form';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
-import { generateUUID } from '@/lib/utils';
+import { generateUUID } from '@/lib/utils/utils';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 
 import { DeleteProjectModal } from '@/app/components/projects/delete-project-modal';
@@ -75,13 +75,13 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
       id: generateUUID(),
       name: '',
       description: '',
-      techStack: '',
+      tech: '',
       startMonth: '',
       startYear: '',
       endMonth: '',
       endYear: '',
       isCurrent: false,
-      link: '',
+      url: '',
       repoUrl: '',
     });
   };
@@ -255,7 +255,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                       />
 
                       <Controller
-                        name={`projects.${index}.techStack`}
+                        name={`projects.${index}.tech`}
                         control={control}
                         render={({ field, fieldState }) => (
                           <TextField
@@ -303,7 +303,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Controller
-                        name={`projects.${index}.link`}
+                        name={`projects.${index}.url`}
                         control={control}
                         render={({ field }) => (
                           <TextField className="w-full">

@@ -22,5 +22,6 @@ export type GenerateOnboardingAboutMeInput = {
 export type GenerateOnboardingOutput = {
   baseResumeId: string;
   data: BaseResumeData;
+  rawAiResponse?: any;
   meta: { model: string; finishReason?: string };
 };

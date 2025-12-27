@@ -48,12 +48,12 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <motion.div custom={0} variants={fieldVariants}>
             <Controller
-              name="contact.fullName"
+              name="contact.firstName"
               control={control}
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>Full Name *</Label>
-                  <Input {...field} placeholder="John Doe" />
+                  <Label>First Name *</Label>
+                  <Input {...field} placeholder="John" />
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
                   ) : null}
@@ -63,6 +63,24 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           </motion.div>
 
           <motion.div custom={1} variants={fieldVariants}>
+            <Controller
+              name="contact.lastName"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <Label>Last Name *</Label>
+                  <Input {...field} placeholder="Doe" />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </TextField>
+              )}
+            />
+          </motion.div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <motion.div custom={2} variants={fieldVariants}>
             <Controller
               name="contact.email"
               control={control}
@@ -81,10 +99,8 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               )}
             />
           </motion.div>
-        </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <motion.div custom={2} variants={fieldVariants}>
+          <motion.div custom={3} variants={fieldVariants}>
             <Controller
               name="contact.phone"
               control={control}
@@ -97,58 +113,59 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               )}
             />
           </motion.div>
+        </div>
 
-          <motion.div custom={3} variants={fieldVariants}>
+        <motion.div custom={4} variants={fieldVariants}>
+          <Controller
+            name="contact.location"
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <Label>Location *</Label>
+                <Input {...field} placeholder="San Francisco, CA" />
+                {fieldState.error ? (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                ) : null}
+              </TextField>
+            )}
+          />
+        </motion.div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <motion.div custom={5} variants={fieldVariants}>
             <Controller
-              name="contact.location"
+              name="contact.githubUrl"
               control={control}
-              render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>Location *</Label>
-                  <Input {...field} placeholder="San Francisco, CA" />
-                  {fieldState.error ? (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+              render={({ field }) => (
+                <TextField className="w-full">
+                  <Label>GitHub URL</Label>
+                  <Input {...field} placeholder="github.com/username" />
+                </TextField>
+              )}
+            />
+          </motion.div>
+
+          <motion.div custom={6} variants={fieldVariants}>
+            <Controller
+              name="contact.linkedinUrl"
+              control={control}
+              render={({ field }) => (
+                <TextField className="w-full">
+                  <Label>LinkedIn URL</Label>
+                  <Input {...field} placeholder="linkedin.com/in/username" />
                 </TextField>
               )}
             />
           </motion.div>
         </div>
 
-        <motion.div custom={4} variants={fieldVariants}>
+        <motion.div custom={7} variants={fieldVariants}>
           <Controller
-            name="contact.github"
+            name="contact.websiteUrl"
             control={control}
             render={({ field }) => (
               <TextField className="w-full">
-                <Label>GitHub</Label>
-                <Input {...field} placeholder="github.com/username" />
-              </TextField>
-            )}
-          />
-        </motion.div>
-
-        <motion.div custom={5} variants={fieldVariants}>
-          <Controller
-            name="contact.linkedin"
-            control={control}
-            render={({ field }) => (
-              <TextField className="w-full">
-                <Label>LinkedIn</Label>
-                <Input {...field} placeholder="linkedin.com/in/username" />
-                <Description>Optional</Description>
-              </TextField>
-            )}
-          />
-        </motion.div>
-
-        <motion.div custom={6} variants={fieldVariants}>
-          <Controller
-            name="contact.portfolio"
-            control={control}
-            render={({ field }) => (
-              <TextField className="w-full">
-                <Label>Portfolio Website</Label>
+                <Label>Portfolio / Website</Label>
                 <Input {...field} placeholder="yourwebsite.com" />
                 <Description>Optional</Description>
               </TextField>
