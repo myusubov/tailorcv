@@ -6,7 +6,7 @@ import { AppError } from './utils/AppError';
 import type { OnboardingGenerateBaseBody } from './schemas/onboarding-generate.schema';
 import {
   generateOnboarding,
-  // generateFromAboutMe,
+  generateFromAboutMe,
 } from './services/onboarding.service';
 import { logger } from './lib/logger';
 import { Prisma } from '../prisma/generated/client/client.js';
@@ -52,6 +52,8 @@ export const tasks: TaskList = {
 
     const jobId = payloadObj.jobId;
     const startedAt = Date.now();
+
+    logger.info({ jobId }, 'worker onboarding.generate task picked up');
 
     const job = await prisma.onboardingJob.findUnique({
       where: { id: jobId },
@@ -102,10 +104,10 @@ export const tasks: TaskList = {
       logger.info({ jobId: job.id, type: payload._type }, 'worker onboarding.generate routing');
       
       if (payload._type === 'about-me') {
-        // result = await generateFromAboutMe({
-        //   clerkUserId: job.userId,
-        //   text: payload.text,
-        // });
+        result = await generateFromAboutMe({
+          clerkUserId: job.userId,
+          text: payload.text,
+        });
       } else {
         result = await generateOnboarding({
           clerkUserId: job.userId,

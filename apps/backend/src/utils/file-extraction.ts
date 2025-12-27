@@ -1,16 +1,15 @@
-import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
+import { getDocumentProxy, extractText } from 'unpdf';
 import { AppError } from './AppError';
 import { ErrorCode } from 'shared';
 
 export async function extractTextFromFile(buffer: Buffer, mimetype: string): Promise<string> {
   try {
     if (mimetype === 'application/pdf') {
-      // @types/pdf-parse is sometimes incorrectly typed for ESM/interop.
-      // We use a specific function type assertion instead of 'any'.
-      const parsePdf = pdf as unknown as (buffer: Buffer) => Promise<{ text: string }>;
-      const data = await parsePdf(buffer);
-      return data.text;
+      const pdf = await getDocumentProxy(new Uint8Array(buffer));
+      const { text } = await extractText(pdf);
+      
+      return text.join('\n');
     } 
     
     if (

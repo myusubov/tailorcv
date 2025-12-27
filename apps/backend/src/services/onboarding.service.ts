@@ -1,5 +1,6 @@
 import { logger, prisma } from '../lib';
 import { baseResumeDataSchema, ErrorCode, type BaseResumeData, openAiResumeSchema } from 'shared';
+import { z } from 'zod';
 import type {
   GetOnboardingStatusInput,
   OnboardingStatus,
@@ -11,6 +12,7 @@ import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { openai } from '../lib/openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
+import { aiExtractionResponseSchema } from '../schemas/ai-extraction.schema';
 
 
 export async function getOnboardingStatus(
@@ -25,6 +27,73 @@ export async function getOnboardingStatus(
   return {
     hasBaseResume: Boolean(latestBaseResume),
     latestBaseResumeId: latestBaseResume?.id ?? null,
+  };
+}
+
+export async function generateFromAboutMe(
+  input: GenerateOnboardingAboutMeInput,
+): Promise<GenerateOnboardingOutput> {
+  const { clerkUserId, text: rawText } = input;
+
+  const model = 'gpt-4o-mini';
+  const system = env.OPENAI_ONBOARDING_SYSTEM_PROMPT;
+
+  logger.info({ 
+    clerkUserId, 
+    textLength: rawText.length 
+  }, 'AI generation attempt for user (About Me)');
+
+  const truncatedText = rawText.slice(0, 30000); // Token safety
+  const prompt = `SOURCE MATERIAL (Raw Text from CV/Profile):\n---\n${truncatedText}\n---\n\nCRITICAL INSTRUCTION:\n1. PARSE EVERYTHING: Extract as much detail as possible from the text above into the resume schema.\n2. DATA SUFFICIENCY: Set "_isDataSufficient" to false if the source text is too sparse to create a meaningful resume (e.g. missing both experiences AND projects, or missing basic career context). Provide a brief reasoning in "_insufficientReason".\n3. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01".\n4. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.`;
+
+  const response = await openai.chat.completions.parse({
+    model,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: prompt }
+    ],
+    response_format: zodResponseFormat(aiExtractionResponseSchema, 'resume_extraction'),
+    temperature: 0,
+  });
+
+  const parsedResponse = response.choices[0].message.parsed;
+
+  if (!parsedResponse) {
+    throw new AppError(
+      'AI failed to provide a valid response format',
+      ErrorCode.AI_GENERATION_ERROR,
+      500,
+    );
+  }
+
+  if (parsedResponse._isDataSufficient === false) {
+    const reason = parsedResponse._insufficientReason || 'Insufficient data';
+    logger.warn({ clerkUserId, reason }, 'AI determined source material is insufficient');
+    throw new AppError(
+      reason,
+      ErrorCode.INSUFFICIENT_DATA,
+      400,
+    );
+  }
+
+  logger.info({ 
+    clerkUserId, 
+    finishReason: response.choices[0].finish_reason 
+  }, 'Successfully extracted resume data from raw text');
+
+  const baseResume = await prisma.baseResume.create({
+    data: {
+      userId: clerkUserId,
+      name: 'My First Resume',
+      data: parsedResponse.data,
+    },
+  });
+
+  return {
+    baseResumeId: baseResume.id,
+    data: parsedResponse.data,
+    rawAiResponse: parsedResponse,
+    meta: { model, finishReason: response.choices[0].finish_reason },
   };
 }
 
@@ -104,115 +173,5 @@ export async function generateOnboarding(
     },
   };
 }
-
-// export async function generateFromAboutMe(
-//   input: GenerateOnboardingAboutMeInput,
-// ): Promise<GenerateOnboardingOutput> {
-//   const { clerkUserId, text: rawText } = input;
-
-//   const model = 'gemini-2.0-flash-exp';
-//   const system = env.GEMINI_ONBOARDING_SYSTEM_PROMPT;
-
-//   let attempts = 0;
-//   const maxAttempts = 3;
-//   let lastError: unknown;
-
-//   while (attempts < maxAttempts) {
-//     attempts++;
-//     logger.info(
-//       `AI generation attempt ${attempts}/${maxAttempts} for user ${clerkUserId} (About Me)`,
-//     );
-
-//     try {
-//       // For raw text, we don't use the onboarding compressor. 
-//       // We just ensure we don't exceed token limits if the text is massive.
-//       const truncatedText = rawText.slice(0, 50000); // 50k chars is plenty for a CV
-
-//       const prompt = [
-//         'SOURCE MATERIAL (Raw Text from CV/Profile):',
-//         '---',
-//         truncatedText,
-//         '---',
-//         '',
-//         'CRITICAL INSTRUCTION:',
-//         '1. PARSE EVERYTHING: Extract as much detail as possible from the text above.',
-//         '2. GENERATE IDs: Since this is raw text, you MUST generate stable, unique IDs for all items (experiences, projects, skills, education, bullets).',
-//         '3. MISSING INFO: If some sections are missing, return an empty array for that section.',
-//         '4. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01".',
-//         '5. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.',
-//         '6. SUFFICIENCY CHECK: Add a top-level field "_isDataSufficient" (boolean). Set to false if the source text is too sparse to create a meaningful resume (e.g. missing both experiences and projects, or missing contact info).',
-//       ].join('\n');
-
-//       const { text: aiResponse, finishReason } = await geminiGenerateText({
-//         model,
-//         system,
-//         prompt,
-//         temperature: 0,
-//         maxOutputTokens: 32000,
-//         responseMimeType: 'application/json',
-//       });
-
-//       if (finishReason === 'MAX_TOKENS') {
-//         throw new AppError(
-//           'The provided text is too detailed for the AI to process. Please try a shorter version.',
-//           ErrorCode.AI_GENERATION_ERROR,
-//           400,
-//         );
-//       }
-
-//       const parsed = JSON.parse(aiResponse);
-
-//       // Check for sufficiency before scrubbing non-schema fields
-//       const rawParsed = parsed as Record<string, unknown>;
-//       if (rawParsed._isDataSufficient === false) {
-//         throw new AppError(
-//           'The provided text does not contain enough information to generate a resume. Please provide more detail about your experience and skills.',
-//           ErrorCode.INSUFFICIENT_DATA,
-//           400,
-//         );
-//       }
-
-//       logger.info({ aiResponse }, 'Raw AI Response');
-
-//       const result = baseResumeDataSchema.safeParse(parsed);
-//       if (!result.success) {
-//         throw new AppError(
-//           'AI-generated data validation failed',
-//           ErrorCode.AI_GENERATION_ERROR,
-//           500,
-//           {
-//             validationErrors: result.error.issues,
-//             rawAiResponse: parsed
-//           },
-//         );
-//       }
-
-//       const baseResume = await prisma.baseResume.create({
-//         data: {
-//           userId: clerkUserId,
-//           name: 'My First Resume',
-//           data: result.data,
-//         },
-//       });
-
-//       return {
-//         baseResumeId: baseResume.id,
-//         data: result.data,
-//         rawAiResponse: parsed,
-//         meta: { model, finishReason: String(finishReason) },
-//       };
-//     } catch (err: unknown) {
-//       lastError = err;
-//       if (err instanceof AppError && err.errorCode === ErrorCode.VALIDATION_ERROR) throw err;
-//       const message = err instanceof Error ? err.message : 'Unknown error';
-//       logger.error(`[Attempt ${attempts}] Critical system error: ${message}`);
-//       if (attempts < maxAttempts) {
-//         await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
-//       }
-//     }
-//   }
-
-//   throw lastError;
-// }
 
 

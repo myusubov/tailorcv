@@ -88,14 +88,19 @@ export async function backendRequest<T>(
 
     const requestHeaders = new Headers(headers);
     requestHeaders.set('Accept', 'application/json');
-    if (body !== undefined)
+
+    const isFormData = body instanceof FormData;
+
+    if (body !== undefined && !isFormData) {
       requestHeaders.set('Content-Type', 'application/json');
+    }
+
     if (token) requestHeaders.set('Authorization', `Bearer ${token}`);
 
     const response = await fetch(url, {
       ...init,
       headers: requestHeaders,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
       next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
     });
 
