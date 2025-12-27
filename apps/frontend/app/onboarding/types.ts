@@ -13,6 +13,8 @@ export interface ManualStepConfig {
   label: string;
 }
 
+export type OnboardingMethod = 'github' | 'upload' | 'manual';
+
 export const MANUAL_STEPS: ManualStepConfig[] = [
   {
     key: 'contact',

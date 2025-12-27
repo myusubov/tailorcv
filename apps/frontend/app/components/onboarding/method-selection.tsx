@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Icon } from '@iconify/react';
 import { Button, Card, Chip } from '@heroui/react';
-import type { OnboardingMethod } from '../../onboarding/types';
+import { OnboardingMethod } from '../../onboarding/types';
 
 interface MethodSelectionProps {
   onSelectMethod: (method: OnboardingMethod) => void;
