@@ -32,7 +32,7 @@ interface ManualEntryFormProps {
 export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const { beginJob } = useOnboardingJob();
+  const { beginJob, isActive } = useOnboardingJob();
 
   const form = useForm<OnboardingFormInput>({
     resolver: zodResolver(onboardingSchema),
@@ -111,11 +111,13 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   };
 
   const handleNext = async () => {
+    if (isPending || isActive) return;
     const ok = await form.trigger(stepFields, { shouldFocus: true });
     if (ok) goToNextStep();
   };
 
   const handleFinish = async () => {
+    if (isPending || isActive) return;
     const ok = await form.trigger(undefined, { shouldFocus: true });
     if (!ok) return;
     const data = onboardingSchema.parse(form.getValues());
@@ -152,7 +154,7 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           <EducationStep
             onFinish={handleFinish}
             onBack={goToPreviousStep}
-            isLoading={isPending}
+            isLoading={isPending || isActive}
           />
         );
       default:
@@ -162,7 +164,12 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
 
   return (
     <FormProvider {...form}>
-      <Form className="flex min-h-[calc(100vh-100px)] flex-col">
+      <Form
+        className="flex min-h-[calc(100vh-100px)] flex-col"
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+      >
         {/* Header with back button and progress */}
         <motion.div
           className="mb-8"

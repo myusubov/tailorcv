@@ -9,7 +9,7 @@ import {
   // generateFromAboutMe,
 } from './services/onboarding.service';
 import { logger } from './lib/logger';
-import { Prisma } from 'prisma/generated/client/client';
+import { Prisma } from '../prisma/generated/client/client.js';
 
 function toJobError(err: unknown) {
   if (err instanceof AppError) {

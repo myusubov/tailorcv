@@ -152,50 +152,148 @@ export type BaseResumeData = z.infer<typeof baseResumeDataSchema>;
  */
 export const onboardingSchema = z.object({
   contact: z.object({
-    firstName: z.string().trim().min(1, 'First name is required'),
-    lastName: z.string().trim().min(1, 'Last name is required'),
-    email: z.string().trim().email('Invalid email address'),
-    phone: z.string().trim().optional().default(''),
-    location: z.string().trim().min(1, 'Location is required'),
-    githubUrl: z.string().trim().optional().default(''),
-    linkedinUrl: z.string().trim().optional().default(''),
-    websiteUrl: z.string().trim().optional().default(''),
+    firstName: z.string().trim().min(1, 'First name is required').max(50),
+    lastName: z.string().trim().min(1, 'Last name is required').max(50),
+    email: z.string().trim().email('Invalid email address').max(100),
+    phone: z.string().trim().max(30).optional().default(''),
+    location: z.string().trim().min(2, 'Location is required').max(100),
+    githubUrl: z.string().trim().max(200).optional().default(''),
+    linkedinUrl: z.string().trim().max(200).optional().default(''),
+    websiteUrl: z.string().trim().max(200).optional().default(''),
   }),
-  summary: z.string().trim().optional().default(''),
-  experiences: z.array(z.object({
-    id: z.string().min(1),
-    title: z.string().trim().min(1, 'Title is required'),
-    company: z.string().trim().min(1, 'Company is required'),
-    startMonth: monthSchema,
-    startYear: yearSchema,
-    endMonth: z.string().trim().optional().default(''),
-    endYear: z.string().trim().optional().default(''),
-    isCurrent: z.boolean().default(false),
-    description: z.string().trim().min(1, 'Description is required'),
-  })).default([]),
-  projects: z.array(z.object({
-    id: z.string().min(1),
-    name: z.string().trim().min(1, 'Name is required'),
-    description: z.string().trim().min(10, 'Description too short'),
-    tech: z.string().trim().min(1, 'Tech stack is required'),
-    startMonth: z.string().trim().optional().default(''),
-    startYear: z.string().trim().optional().default(''),
-    endMonth: z.string().trim().optional().default(''),
-    endYear: z.string().trim().optional().default(''),
-    isCurrent: z.boolean().default(false),
-    url: z.string().trim().optional().default(''),
-    repoUrl: z.string().trim().optional().default(''),
-  })).min(1, 'At least one project is required').default([]),
-  skills: z.array(z.string().trim().min(1)).min(3, 'At least 3 skills required').default([]),
-  education: z.object({
-    school: z.string().trim().optional().default(''),
-    degree: z.string().trim().optional().default(''),
-    startMonth: z.string().trim().optional().default(''),
-    startYear: z.string().trim().optional().default(''),
-    endMonth: z.string().trim().optional().default(''),
-    endYear: z.string().trim().optional().default(''),
-    isSelfTaught: z.boolean().default(false),
-  }),
+  summary: z.string().trim().max(1000, 'Summary is too long').optional().default(''),
+  experiences: z
+    .array(
+      z
+        .object({
+          id: z.string().min(1),
+          title: z.string().trim().min(2, 'Title is required').max(100),
+          company: z.string().trim().min(2, 'Company is required').max(100),
+          startMonth: monthSchema,
+          startYear: yearSchema,
+          endMonth: z.string().trim().optional().default(''),
+          endYear: z.string().trim().optional().default(''),
+          isCurrent: z.boolean().default(false),
+          description: z
+            .string()
+            .trim()
+            .min(50, 'Provide more detail (min 50 chars) for better AI results')
+            .max(2000),
+        })
+        .superRefine((data, ctx) => {
+          if (!data.isCurrent) {
+            if (!data.endMonth || !MonthRegex.test(data.endMonth)) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'End month is required',
+                path: ['endMonth'],
+              });
+            }
+            if (!data.endYear || !YearRegex.test(data.endYear)) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'End year is required',
+                path: ['endYear'],
+              });
+            }
+          }
+        }),
+    )
+    .default([]),
+  projects: z
+    .array(
+      z
+        .object({
+          id: z.string().min(1),
+          name: z.string().trim().min(2, 'Name is required').max(100),
+          description: z
+            .string()
+            .trim()
+            .min(30, 'Provide more detail (min 30 chars) for better AI results')
+            .max(2000),
+          tech: z.string().trim().min(1, 'Tech stack is required').max(500),
+          startMonth: monthSchema,
+          startYear: yearSchema,
+          endMonth: z.string().trim().optional().default(''),
+          endYear: z.string().trim().optional().default(''),
+          isCurrent: z.boolean().default(false),
+          url: z.string().trim().max(200).optional().default(''),
+          repoUrl: z.string().trim().max(200).optional().default(''),
+        })
+        .superRefine((data, ctx) => {
+          if (!data.isCurrent) {
+            if (!data.endMonth || !MonthRegex.test(data.endMonth)) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'End month is required',
+                path: ['endMonth'],
+              });
+            }
+            if (!data.endYear || !YearRegex.test(data.endYear)) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'End year is required',
+                path: ['endYear'],
+              });
+            }
+          }
+        }),
+    )
+    .min(1, 'At least one project is required')
+    .default([]),
+  skills: z
+    .array(z.string().trim().min(1))
+    .min(5, 'At least 5 skills required for an optimal resume')
+    .default([]),
+  education: z
+    .object({
+      school: z.string().trim().max(100).optional().default(''),
+      degree: z.string().trim().max(100).optional().default(''),
+      startMonth: z.string().trim().optional().default(''),
+      startYear: z.string().trim().optional().default(''),
+      endMonth: z.string().trim().optional().default(''),
+      endYear: z.string().trim().optional().default(''),
+      isSelfTaught: z.boolean().default(false),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.isSelfTaught) {
+        if (!data.school || data.school.length < 1) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'School is required',
+            path: ['school'],
+          });
+        }
+        if (!data.startMonth || !MonthRegex.test(data.startMonth)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Start month is required',
+            path: ['startMonth'],
+          });
+        }
+        if (!data.startYear || !YearRegex.test(data.startYear)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Start year is required',
+            path: ['startYear'],
+          });
+        }
+        if (!data.endMonth || !MonthRegex.test(data.endMonth)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Graduation month is required',
+            path: ['endMonth'],
+          });
+        }
+        if (!data.endYear || !YearRegex.test(data.endYear)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Graduation year is required',
+            path: ['endYear'],
+          });
+        }
+      }
+    }),
 });
 
 export type OnboardingFormInput = z.input<typeof onboardingSchema>;
