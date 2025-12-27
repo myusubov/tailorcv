@@ -38,22 +38,26 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       contact: {
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         phone: '',
         location: '',
-        github: '',
-        linkedin: '',
-        portfolio: '',
+        githubUrl: '',
+        linkedinUrl: '',
+        websiteUrl: '',
       },
       summary: '',
       experiences: [],
       projects: [],
       skills: [],
       education: {
-        degree: '',
         school: '',
-        graduationYear: '',
+        degree: '',
+        startMonth: '',
+        startYear: '',
+        endMonth: '',
+        endYear: '',
         isSelfTaught: false,
       },
     },
@@ -188,14 +192,16 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           </AnimatePresence>
         </div>
       </Form>
-      {config.isDev && <Button
-        onClick={() => {
-          form.reset(fillValues());
-        }}
-        className="fixed right-4 bottom-4"
-      >
-        Fill Values
-      </Button>}
+      {config.isDev && (
+        <Button
+          onClick={() => {
+            form.reset(fillValues());
+          }}
+          className="fixed right-4 bottom-4"
+        >
+          Fill Values
+        </Button>
+      )}
     </FormProvider>
   );
 }

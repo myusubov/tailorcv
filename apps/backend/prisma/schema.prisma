@@ -63,6 +63,7 @@ model OnboardingJob {
   progressPct        Int                 @default(0)
   payload            Json
   result             Json?
+  rawAiResponse      Json?
   resultBaseResumeId String?
   error              Json?
   createdAt          DateTime            @default(now())

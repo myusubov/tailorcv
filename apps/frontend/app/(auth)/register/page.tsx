@@ -28,7 +28,7 @@ import { motion } from 'framer-motion';
 import { AnimatedError } from '@/app/components/ui';
 
 import { registerSchema, RegisterFormValues } from '@/lib/schemas/auth';
-import { getClerkErrorMessage } from '@/lib/utils';
+import { getClerkErrorMessage } from '@/lib/utils/utils';
 import { config, LOGOS } from '@/lib/config';
 import Image from 'next/image';
 import { z } from 'zod';
@@ -220,7 +220,7 @@ export default function RegisterPage() {
                       isIconOnly
                       className="text-muted hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
                       onClick={handleGoBack}
-                      // TODO: wire this to go back and change email
+                    // TODO: wire this to go back and change email
                     >
                       <Icon icon="lucide:undo-2" className="h-3 w-3" />
                     </Button>

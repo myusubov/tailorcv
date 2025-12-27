@@ -22,6 +22,7 @@ export type GetOnboardingJobOutput = {
   updatedAt: string;
   resultBaseResumeId?: string;
   error?: OnboardingJobError;
+  rawAiResponse?: unknown;
 };
 
 export async function startOnboardingJob(input: {
@@ -91,6 +92,7 @@ export async function getOnboardingJob(input: {
       updatedAt: true,
       resultBaseResumeId: true,
       error: true,
+      rawAiResponse: true,
     },
   });
 
@@ -105,5 +107,6 @@ export async function getOnboardingJob(input: {
     updatedAt: job.updatedAt.toISOString(),
     resultBaseResumeId: job.resultBaseResumeId ?? undefined,
     error: (job.error as OnboardingJobError) ?? undefined,
+    rawAiResponse: job.rawAiResponse ?? undefined,
   };
 }

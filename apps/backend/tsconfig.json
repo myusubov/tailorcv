@@ -8,7 +8,11 @@
     "outDir": "./dist",
     "noEmit": false,
     "esModuleInterop": true,
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "shared": ["../../packages/shared/src"]
+    }
   },
   "include": ["src/**/*", "types/**/*", "prisma/generated/**/*"],
   "exclude": ["node_modules", "dist"]

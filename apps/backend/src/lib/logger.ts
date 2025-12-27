@@ -20,9 +20,7 @@ export const logger = pino(
 
 export const requestLogger = pinoHttp({
   logger,
-  autoLogging: {
-    ignore: (req) => req.url === '/health',
-  },
+  autoLogging: false,
   redact: ['req.headers.authorization', 'req.headers.cookie'],
   serializers: {
     req(req) {

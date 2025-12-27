@@ -2,14 +2,14 @@ import type { TaskList } from 'graphile-worker';
 import { ErrorCode } from 'shared';
 import type { OnboardingJobPayload } from './types/onboarding-job';
 import { prisma } from './lib';
-import { Prisma } from '../prisma/generated/client/client.js';
 import { AppError } from './utils/AppError';
 import type { OnboardingGenerateBaseBody } from './schemas/onboarding-generate.schema';
 import {
   generateOnboarding,
-  generateFromAboutMe,
+  // generateFromAboutMe,
 } from './services/onboarding.service';
 import { logger } from './lib/logger';
+import { Prisma } from 'prisma/generated/client/client';
 
 function toJobError(err: unknown) {
   if (err instanceof AppError) {
@@ -52,14 +52,16 @@ export const tasks: TaskList = {
 
     const jobId = payloadObj.jobId;
     const startedAt = Date.now();
-    logger.info({ jobId }, 'worker onboarding.generate start');
 
     const job = await prisma.onboardingJob.findUnique({
       where: { id: jobId },
       select: { id: true, userId: true, payload: true },
     });
 
-    if (!job) throw new AppError('Job not found', ErrorCode.NOT_FOUND, 404);
+    if (!job) {
+      logger.warn({ jobId }, 'worker onboarding.generate job not found');
+      return;
+    }
 
     await prisma.onboardingJob.update({
       where: { id: job.id },
@@ -97,11 +99,13 @@ export const tasks: TaskList = {
       const payload = job.payload as unknown as OnboardingJobPayload;
 
       let result;
+      logger.info({ jobId: job.id, type: payload._type }, 'worker onboarding.generate routing');
+      
       if (payload._type === 'about-me') {
-        result = await generateFromAboutMe({
-          clerkUserId: job.userId,
-          text: payload.text,
-        });
+        // result = await generateFromAboutMe({
+        //   clerkUserId: job.userId,
+        //   text: payload.text,
+        // });
       } else {
         result = await generateOnboarding({
           clerkUserId: job.userId,
@@ -129,7 +133,8 @@ export const tasks: TaskList = {
           stage: 'DONE',
           progressPct: 100,
           result,
-          resultBaseResumeId: result.baseResumeId,
+          rawAiResponse: result?.rawAiResponse || Prisma.JsonNull,
+          resultBaseResumeId: result?.baseResumeId,
           error: Prisma.JsonNull,
         },
       });
@@ -137,7 +142,7 @@ export const tasks: TaskList = {
         {
           jobId: job.id,
           userId: job.userId,
-          baseResumeId: result.baseResumeId,
+          baseResumeId: result?.baseResumeId,
           elapsedMs: Date.now() - startedAt,
         },
         'worker onboarding.generate success',
@@ -145,23 +150,27 @@ export const tasks: TaskList = {
     } catch (err) {
       logger.error(
         {
+          err,
           jobId: job.id,
           userId: job.userId,
           elapsedMs: Date.now() - startedAt,
-          message:
-            err && typeof err === 'object' && 'message' in err
-              ? String((err as { message?: unknown }).message)
-              : undefined,
         },
         'worker onboarding.generate failed',
       );
+
+      const jobError = toJobError(err);
+      const rawAiResponse = (err instanceof AppError && err.details?.rawAiResponse) 
+        ? err.details.rawAiResponse 
+        : Prisma.JsonNull;
+
       await prisma.onboardingJob.update({
         where: { id: job.id },
         data: {
           status: 'FAILED',
           stage: 'FAILED',
           progressPct: 100,
-          error: toJobError(err),
+          error: jobError,
+          rawAiResponse
         },
       });
     }

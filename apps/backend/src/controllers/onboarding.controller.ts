@@ -64,22 +64,7 @@ export const getOnboardingJobController = async (
 ) => {
   try {
     const { clerkUserId } = res.locals;
-    logger.debug(
-      { clerkUserId, jobId: req.params.id },
-      'onboarding job status request',
-    );
     const job = await getOnboardingJob({ clerkUserId, jobId: req.params.id });
-    logger.info(
-      {
-        clerkUserId,
-        jobId: job.id,
-        status: job.status,
-        stage: job.stage,
-        progressPct: job.progressPct,
-        resultBaseResumeId: job.resultBaseResumeId ?? null,
-      },
-      'onboarding job status',
-    );
     return successResponse(res, job, 200);
   } catch (err) {
     next(err);

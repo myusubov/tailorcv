@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
 import { loginSchema, LoginFormValues } from '@/lib/schemas/auth';
-import { getClerkErrorMessage } from '@/lib/utils';
+import { getClerkErrorMessage } from '@/lib/utils/utils';
 import { config } from '@/lib/config';
 import {
   LoginBranding,

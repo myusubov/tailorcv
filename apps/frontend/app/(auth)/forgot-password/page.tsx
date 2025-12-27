@@ -8,7 +8,7 @@ import {
   EmailEntryView,
   ResetPasswordView,
 } from '@/app/components/auth/forgot-password';
-import { getClerkErrorMessage } from '@/lib/utils';
+import { getClerkErrorMessage } from '@/lib/utils/utils';
 import { config } from '@/lib/config';
 
 export default function ForgotPasswordPage() {
