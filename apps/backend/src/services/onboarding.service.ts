@@ -5,10 +5,12 @@ import type {
   OnboardingStatus,
   GenerateOnboardingInput,
   GenerateOnboardingOutput,
+  GenerateOnboardingAboutMeInput,
 } from '../types/onboarding';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { compressOnboardingBody } from '../utils/onboardingCompression';
+import { fixAiDateLaziness } from '../utils/ai-fixes';
 
 function extractJsonObject(text: string) {
   const start = text.indexOf('{');
@@ -117,30 +119,7 @@ export async function generateOnboarding(
         }
       }
 
-      // Pre-validation "fix-up" for common AI laziness (like YYYY instead of YYYY-MM)
-      const fixDates = (obj: any): any => {
-        if (!obj || typeof obj !== 'object') return obj;
-        if (Array.isArray(obj)) return obj.map(fixDates);
-
-        const newObj = { ...obj };
-        for (const key in newObj) {
-          const val = newObj[key];
-          // Look for potential date strings that are just 4 digits (YYYY)
-          if (
-            typeof val === 'string' &&
-            /^\d{4}$/.test(val) &&
-            (key.toLowerCase().includes('date') ||
-              key.toLowerCase().includes('year'))
-          ) {
-            newObj[key] = `${val}-01`;
-          } else if (val && typeof val === 'object') {
-            newObj[key] = fixDates(val);
-          }
-        }
-        return newObj;
-      };
-
-      const result = baseResumeDataSchema.safeParse(fixDates(parsed));
+      const result = baseResumeDataSchema.safeParse(fixAiDateLaziness(parsed));
       if (!result.success) {
         throw new AppError(
           'AI-generated data validation failed',
@@ -163,7 +142,7 @@ export async function generateOnboarding(
         data: result.data,
         meta: { model, finishReason },
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       lastError = err;
 
       if (
@@ -173,9 +152,10 @@ export async function generateOnboarding(
         throw err;
       }
 
+      const message = err instanceof Error ? err.message : 'Unknown error';
       console.error(
         `[Attempt ${attempts}] Critical system error:`,
-        err.message,
+        message,
       );
       if (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
@@ -185,3 +165,124 @@ export async function generateOnboarding(
 
   throw lastError;
 }
+
+export async function generateFromAboutMe(
+  input: GenerateOnboardingAboutMeInput,
+): Promise<GenerateOnboardingOutput> {
+  const { clerkUserId, text: rawText } = input;
+
+  const model = 'gemini-3-flash-preview';
+  const system = env.GEMINI_ONBOARDING_SYSTEM_PROMPT;
+
+  let attempts = 0;
+  const maxAttempts = 3;
+  let lastError: unknown;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    console.info(
+      `AI generation attempt ${attempts}/${maxAttempts} for user ${clerkUserId} (About Me)`,
+    );
+
+    try {
+      // For raw text, we don't use the onboarding compressor. 
+      // We just ensure we don't exceed token limits if the text is massive.
+      const truncatedText = rawText.slice(0, 50000); // 50k chars is plenty for a CV
+
+      const prompt = [
+        'SOURCE MATERIAL (Raw Text from CV/Profile):',
+        '---',
+        truncatedText,
+        '---',
+        '',
+        'CRITICAL INSTRUCTION:',
+        '1. PARSE EVERYTHING: Extract as much detail as possible from the text above.',
+        '2. GENERATE IDs: Since this is raw text, you MUST generate stable, unique IDs for all items (experiences, projects, skills, education, bullets).',
+        '3. MISSING INFO: If some sections are missing, return an empty array for that section.',
+        '4. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01".',
+        '5. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.',
+        '6. SUFFICIENCY CHECK: Add a top-level field "_isDataSufficient" (boolean). Set to false if the source text is too sparse to create a meaningful resume (e.g. missing both experience and projects, or missing contact info).',
+      ].join('\n');
+
+      const { text: aiResponse, finishReason } = await geminiGenerateText({
+        model,
+        system,
+        prompt,
+        temperature: 0,
+        maxOutputTokens: 32000,
+        responseMimeType: 'application/json',
+      });
+
+      if (finishReason === 'MAX_TOKENS') {
+        throw new AppError(
+          'The provided text is too detailed for the AI to process. Please try a shorter version.',
+          ErrorCode.AI_GENERATION_ERROR,
+          400,
+        );
+      }
+
+      // 2. Parse Logic
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(aiResponse);
+      } catch (err) {
+        try {
+          parsed = JSON.parse(extractJsonObject(aiResponse));
+        } catch (innerErr) {
+          if (attempts < maxAttempts) continue;
+          throw new AppError(
+            'AI returned unparseable JSON.',
+            ErrorCode.AI_PARSE_ERROR,
+            500,
+            { rawText: aiResponse },
+          );
+        }
+      }
+
+      // Check for sufficiency before scrubbing non-schema fields
+      const rawParsed = parsed as Record<string, unknown>;
+      if (rawParsed._isDataSufficient === false) {
+        throw new AppError(
+          'The provided text does not contain enough information to generate a resume. Please provide more detail about your experience and skills.',
+          ErrorCode.INSUFFICIENT_DATA,
+          400,
+        );
+      }
+
+      const result = baseResumeDataSchema.safeParse(fixAiDateLaziness(parsed));
+      if (!result.success) {
+        throw new AppError(
+          'AI-generated data validation failed',
+          ErrorCode.AI_GENERATION_ERROR,
+          500,
+          result.error.issues,
+        );
+      }
+
+      const baseResume = await prisma.baseResume.create({
+        data: {
+          userId: clerkUserId,
+          name: 'My First Resume',
+          data: result.data,
+        },
+      });
+
+      return {
+        baseResumeId: baseResume.id,
+        data: result.data,
+        meta: { model, finishReason },
+      };
+    } catch (err: unknown) {
+      lastError = err;
+      if (err instanceof AppError && err.errorCode === ErrorCode.VALIDATION_ERROR) throw err;
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error(`[Attempt ${attempts}] Critical system error:`, message);
+      if (attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
+      }
+    }
+  }
+
+  throw lastError;
+}
+

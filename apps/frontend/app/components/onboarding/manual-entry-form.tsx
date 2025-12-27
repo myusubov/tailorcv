@@ -23,6 +23,7 @@ import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 import { startOnboardingJobAction } from '@/lib/actions/onboarding.actions';
 import { fillValues } from '@/lib/data/mock-onboarding';
 import { useOnboardingJob } from './onboarding-job-context';
+import { config } from '@/lib/config';
 
 interface ManualEntryFormProps {
   onBack: () => void;
@@ -187,14 +188,14 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           </AnimatePresence>
         </div>
       </Form>
-      <Button
+      {config.isDev && <Button
         onClick={() => {
           form.reset(fillValues());
         }}
         className="fixed right-4 bottom-4"
       >
         Fill Values
-      </Button>
+      </Button>}
     </FormProvider>
   );
 }

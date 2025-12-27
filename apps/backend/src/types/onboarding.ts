@@ -15,6 +15,10 @@ export type GenerateOnboardingInput = {
   body: OnboardingGenerateBaseBody;
 } & ClerkLocals;
 
+export type GenerateOnboardingAboutMeInput = {
+  text: string;
+} & ClerkLocals;
+
 export type GenerateOnboardingOutput = {
   baseResumeId: string;
   data: BaseResumeData;

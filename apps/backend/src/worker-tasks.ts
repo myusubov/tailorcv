@@ -1,11 +1,14 @@
 import type { TaskList } from 'graphile-worker';
 import { ErrorCode } from 'shared';
-
+import type { OnboardingJobPayload } from './types/onboarding-job';
 import { prisma } from './lib';
 import { Prisma } from '../prisma/generated/client/client.js';
 import { AppError } from './utils/AppError';
 import type { OnboardingGenerateBaseBody } from './schemas/onboarding-generate.schema';
-import { generateOnboarding } from './services/onboarding.service';
+import {
+  generateOnboarding,
+  generateFromAboutMe,
+} from './services/onboarding.service';
 import { logger } from './lib/logger';
 
 function toJobError(err: unknown) {
@@ -91,10 +94,20 @@ export const tasks: TaskList = {
         'worker onboarding.generate stage',
       );
 
-      const result = await generateOnboarding({
-        clerkUserId: job.userId,
-        body: job.payload as OnboardingGenerateBaseBody,
-      });
+      const payload = job.payload as unknown as OnboardingJobPayload;
+
+      let result;
+      if (payload._type === 'about-me') {
+        result = await generateFromAboutMe({
+          clerkUserId: job.userId,
+          text: payload.text,
+        });
+      } else {
+        result = await generateOnboarding({
+          clerkUserId: job.userId,
+          body: payload,
+        });
+      }
 
       await prisma.onboardingJob.update({
         where: { id: job.id },

@@ -5,7 +5,9 @@ import { getOnboardingStatus } from '../services/onboarding.service';
 import {
   getOnboardingJob,
   startOnboardingJob,
+  startOnboardingAboutMeJob,
 } from '../services/onboarding-jobs.service';
+import { extractTextFromFile } from '../utils/file-extraction';
 import { logger } from '../lib/logger';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
@@ -79,6 +81,39 @@ export const getOnboardingJobController = async (
       'onboarding job status',
     );
     return successResponse(res, job, 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const generateFromAboutMeController = async (
+  req: Request,
+  res: Response<any, ClerkLocals>,
+  next: NextFunction,
+) => {
+  try {
+    const { clerkUserId } = res.locals;
+    const file = req.file;
+
+    if (!file) {
+      throw new AppError('No file uploaded', ErrorCode.BAD_REQUEST, 400);
+    }
+
+    logger.info({ clerkUserId, filename: file.originalname }, 'extracting text from about-me file');
+    const text = await extractTextFromFile(file.buffer, file.mimetype);
+    
+    if (!text || text.trim().length < 50) {
+      throw new AppError(
+        'The uploaded file is too short or empty. Please provide a more detailed document.',
+        ErrorCode.INSUFFICIENT_DATA,
+        400
+      );
+    }
+
+    logger.info({ clerkUserId }, 'onboarding about-me enqueue start');
+    const result = await startOnboardingAboutMeJob({ clerkUserId, text });
+    
+    return successResponse(res, result, 202);
   } catch (err) {
     next(err);
   }

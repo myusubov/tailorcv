@@ -1,3 +1,5 @@
+import type { OnboardingGenerateBaseBody } from '../schemas/onboarding-generate.schema';
+
 export const onboardingJobStatuses = [
   'QUEUED',
   'RUNNING',
@@ -24,3 +26,7 @@ export type OnboardingJobError = {
   code: string;
   details?: unknown;
 };
+
+export type OnboardingJobPayload = 
+  | (OnboardingGenerateBaseBody & { _type: 'form' })
+  | { _type: 'about-me'; text: string };
