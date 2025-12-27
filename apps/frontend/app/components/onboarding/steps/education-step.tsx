@@ -12,7 +12,7 @@ import {
   cn,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
@@ -46,8 +46,11 @@ export function EducationStep({
   onBack,
   isLoading,
 }: EducationStepProps) {
-  const { control, watch } = useFormContext<OnboardingFormInput>();
-  const isSelfTaught = !!watch('education.isSelfTaught');
+  const { control } = useFormContext<OnboardingFormInput>();
+  const isSelfTaught = !!useWatch({
+    control,
+    name: 'education.isSelfTaught',
+  });
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -266,6 +269,7 @@ export function EducationStep({
         <Button
           variant="ghost"
           onPress={onBack}
+          isDisabled={isLoading}
           className="text-muted hover:text-foreground"
         >
           <Icon icon="lucide:arrow-left" className="size-4" />
