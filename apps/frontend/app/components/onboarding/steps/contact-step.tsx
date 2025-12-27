@@ -175,7 +175,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           Next: Professional Summary
           <Icon
             icon="lucide:arrow-right"
-            className="ml-2 size-4 transition-transform group-hover:translate-x-1"
+            className="size-4 transition-transform group-hover:translate-x-1"
           />
         </Button>
       </motion.div>

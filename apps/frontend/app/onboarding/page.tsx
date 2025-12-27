@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Icon } from '@iconify/react';
-import { MethodSelection, ManualEntryForm } from '../components/onboarding';
+import { 
+  MethodSelection, 
+  ManualEntryForm, 
+  GitHubStep, 
+  UploadStep 
+} from '../components/onboarding';
 import type { OnboardingMethod } from './types';
-import { Button } from '@heroui/react';
 import { OnboardingJobProvider } from '../components/onboarding/onboarding-job-context';
 import { OnboardingJobUI } from '../components/onboarding/onboarding-job-ui';
 
-export default function OnboardingPage() {
-  const [selectedMethod, setSelectedMethod] = useState<OnboardingMethod>(null);
+import { useQueryState, parseAsStringLiteral } from 'nuqs';
+
+const methodParser = parseAsStringLiteral(['github', 'upload', 'manual'] as const);
+
+function OnboardingContent() {
+  const [selectedMethod, setSelectedMethod] = useQueryState('method', methodParser);
   const isMethodSelected = selectedMethod !== null;
 
   const handleSelectMethod = (method: OnboardingMethod) => {
-    setSelectedMethod(method);
+    setSelectedMethod(method as unknown as OnboardingMethod);
   };
 
   const handleBackToMethods = () => {
@@ -28,52 +34,10 @@ export default function OnboardingPage() {
 
     switch (selectedMethod) {
       case 'github':
-        return (
-          <div className="flex min-h-[60vh] flex-col items-center justify-center">
-            <motion.div
-              className="text-center"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <div className="bg-surface-secondary mx-auto mb-6 flex size-20 items-center justify-center rounded-3xl">
-                <Icon icon="mdi:github" className="size-10" />
-              </div>
-              <h2 className="text-foreground text-2xl font-bold">
-                Connect GitHub
-              </h2>
-              <p className="text-muted mt-2">
-                GitHub integration coming soon...
-              </p>
-              <Button onClick={handleBackToMethods} className="mt-6">
-                <Icon icon="lucide:arrow-left" />
-                Back to methods
-              </Button>
-            </motion.div>
-          </div>
-        );
+        return <GitHubStep onBack={handleBackToMethods} />;
 
       case 'upload':
-        return (
-          <div className="flex min-h-[60vh] flex-col items-center justify-center">
-            <motion.div
-              className="text-center"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <div className="bg-surface-secondary mx-auto mb-6 flex size-20 items-center justify-center rounded-3xl">
-                <Icon icon="lucide:upload" className="size-10" />
-              </div>
-              <h2 className="text-foreground text-2xl font-bold">
-                Upload About Me
-              </h2>
-              <p className="text-muted mt-2">File upload coming soon...</p>
-              <Button onClick={handleBackToMethods} className="mt-6">
-                <Icon icon="lucide:arrow-left" />
-                Back to methods
-              </Button>
-            </motion.div>
-          </div>
-        );
+        return <UploadStep onBack={handleBackToMethods} />;
 
       case 'manual':
         return <ManualEntryForm onBack={handleBackToMethods} />;
@@ -84,65 +48,30 @@ export default function OnboardingPage() {
   };
 
   return (
-    <OnboardingJobProvider>
-      <div className="bg-background min-h-screen">
-        {/* Header */}
-        {/* <motion.header
-        className="border-divider border-b"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <NextLink
-            href="/"
-            className="text-foreground flex items-center gap-2.5 text-xl font-bold transition-opacity hover:opacity-80"
+    <div className="bg-background min-h-screen">
+      {/* Main Content */}
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={isMethodSelected ? selectedMethod : 'selection'}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 shadow-inner ring-1 ring-white/20 backdrop-blur-md">
-              <Image
-                src={LOGOS.TAILORCV}
-                alt="TailorCV Logo"
-                width={36}
-                height={36}
-                priority
-                quality={100}
-              />
-            </div>
-            TailorCV
-          </NextLink>
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <OnboardingJobUI />
+    </div>
+  );
+}
 
-          {!isMethodSelected && (
-            <motion.button
-              type="button"
-              className="text-muted hover:text-foreground flex items-center gap-1 text-sm transition-colors"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              onClick={() => handleSelectMethod(null)}
-            >
-              Skip for now
-              <Icon icon="lucide:arrow-right" className="size-4" />
-            </motion.button>
-          )}
-        </div>
-      </motion.header> */}
-
-        {/* Main Content */}
-        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={isMethodSelected ? selectedMethod : 'selection'}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-        <OnboardingJobUI />
-      </div>
+export default function OnboardingPage() {
+  return (
+    <OnboardingJobProvider>
+      <OnboardingContent />
     </OnboardingJobProvider>
   );
 }

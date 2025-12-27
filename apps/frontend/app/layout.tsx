@@ -7,6 +7,8 @@ import { ThemeProvider } from './providers/theme-provider';
 import { QueryProvider } from './providers/query-provider';
 import { ThemeToggle } from './components/theme-toggle';
 import { Toaster } from 'sonner';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+
 
 const inter = Inter({
   variable: '--font-inter',
@@ -31,21 +33,23 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} antialiased`}>
-          <ThemeProvider>
-            <QueryProvider>
-              <Suspense
-                fallback={
-                  <div className="flex min-h-screen items-center justify-center">
-                    Loading...
-                  </div>
-                }
-              >
-                {children}
-              </Suspense>
-              <ThemeToggle />
-              <Toaster richColors closeButton position="bottom-right" />
-            </QueryProvider>
-          </ThemeProvider>
+          <NuqsAdapter>
+            <ThemeProvider>
+              <QueryProvider>
+                <Suspense
+                  fallback={
+                    <div className="flex min-h-screen items-center justify-center">
+                      Loading...
+                    </div>
+                  }
+                >
+                  {children}
+                </Suspense>
+                <ThemeToggle />
+                <Toaster richColors closeButton position="bottom-right" />
+              </QueryProvider>
+            </ThemeProvider>
+          </NuqsAdapter>
         </body>
       </html>
     </ClerkProvider>

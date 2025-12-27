@@ -10,3 +10,5 @@ export {
   useOnboardingJob,
 } from './onboarding-job-context';
 export { OnboardingJobUI } from './onboarding-job-ui';
+export { GitHubStep } from './github/github-step';
+export { UploadStep } from './upload/upload-step';

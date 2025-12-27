@@ -148,22 +148,6 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
           </motion.div>
         ))}
       </motion.div>
-
-      {/* <motion.div
-        className="mt-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-      >
-        <Button
-          variant="ghost"
-          className="text-muted hover:text-foreground"
-          onPress={() => onSelectMethod(null)}
-        >
-          Skip for now
-          <Icon icon="lucide:arrow-right" className="ml-1 size-4" />
-        </Button>
-      </motion.div> */}
     </div>
   );
 }
