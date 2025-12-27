@@ -4,9 +4,7 @@ import { defineAction } from './_action';
 import type {
   GenerateOnboardingInput,
   StartOnboardingJobOutput,
-  GetOnboardingJobOutput,
 } from '@/lib/types/onboarding';
-import { backendRequest } from '@/lib/api';
 
 const _startOnboardingJobImpl = defineAction<
   GenerateOnboardingInput,
@@ -24,10 +22,19 @@ export async function startOnboardingJobAction(input: GenerateOnboardingInput) {
   return _startOnboardingJobImpl(input);
 }
 
-export async function getOnboardingJobAction(jobId: string) {
-  return backendRequest<GetOnboardingJobOutput>(`onboarding/jobs/${jobId}`, {
-    method: 'GET',
-    auth: 'required',
-    revalidate: 0,
-  });
+const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>({
+  method: 'POST',
+  path: 'onboarding/about-me',
+  auth: 'required',
+  keyPrefix: 'onboarding',
+  staticParts: ['status'],
+  revalidate: { fromKey: true },
+});
+
+/**
+ * Starts an onboarding job by parsing a resume file (About Me / Resume Upload).
+ * @param formData - FormData containing the 'file' entry.
+ */
+export async function startOnboardingAboutMeJobAction(formData: FormData) {
+  return _startOnAboutMeJobImpl(formData);
 }

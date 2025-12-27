@@ -1,6 +1,5 @@
 import { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { generateUUID } from '../utils/utils';
-import type { BaseResumeData } from 'shared';
 /**
  * SCENARIO 1: THE "WALL OF TEXT"
  * GUARANTEE: Tests if the AI can extract professional bullets and metrics from messy, unstructured input.

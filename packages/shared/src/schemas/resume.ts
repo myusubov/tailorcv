@@ -16,7 +16,7 @@ const dateSchema = z
   .regex(/^\d{4}(-(0[1-9]|1[0-2]))?$/, 'Expected YYYY or YYYY-MM');
 
 const idSchema = z.string().trim().min(1);
-const urlSchema = z.string().trim().nullable().optional();
+const urlSchema = z.string().trim().nullable();
 
 /**
  * 1. BASE RESUME DATA SCHEMA
@@ -24,36 +24,35 @@ const urlSchema = z.string().trim().nullable().optional();
  */
 export const baseResumeDataSchema = z
   .object({
-    version: z.literal(1).optional().default(1),
+    version: z.literal(1),
     contact: z
       .object({
         firstName: z.string().trim().min(1),
         lastName: z.string().trim().min(1),
-        headline: z.string().trim().min(1).nullable().optional(),
+        headline: z.string().trim().min(1).nullable(),
         email: z.string().trim().min(1),
-        phone: z.string().trim().min(1).nullable().optional(),
-        location: z.string().trim().min(1).nullable().optional(),
+        phone: z.string().trim().min(1).nullable(),
+        location: z.string().trim().min(1).nullable(),
         websiteUrl: urlSchema,
         linkedinUrl: urlSchema,
         githubUrl: urlSchema,
       })
       .strict(),
-    summary: z.string().trim().min(1).nullable().optional(),
+    summary: z.string().trim().min(1).nullable(),
     skills: z
       .array(
         z
           .object({
             id: idSchema,
             name: z.string().trim().min(1),
-            category: z.string().trim().min(1).nullable().optional(),
+            category: z.string().trim().min(1).nullable(),
             level: z
               .enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED'])
-              .nullable()
-              .optional(),
+              .nullable(),
           })
           .strict(),
       )
-      .default([]),
+      ,
     experiences: z
       .array(
         z
@@ -61,11 +60,11 @@ export const baseResumeDataSchema = z
             id: idSchema,
             company: z.string().trim().min(1),
             title: z.string().trim().min(1),
-            location: z.string().trim().min(1).nullable().optional(),
+            location: z.string().trim().min(1).nullable(),
             startDate: dateSchema,
-            endDate: dateSchema.nullable().optional(),
-            isCurrent: z.boolean().nullable().optional(),
-            tech: z.array(z.string().trim().min(1)).nullable().optional(),
+            endDate: dateSchema.nullable(),
+            isCurrent: z.boolean().nullable(),
+            tech: z.array(z.string().trim().min(1)).nullable(),
             bullets: z.array(
               z
                 .object({ id: idSchema, text: z.string().trim().min(1) })
@@ -74,20 +73,20 @@ export const baseResumeDataSchema = z
           })
           .strict(),
       )
-      .default([]),
+      ,
     projects: z
       .array(
         z
           .object({
             id: idSchema,
             name: z.string().trim().min(1),
-            role: z.string().trim().min(1).nullable().optional(),
-            startDate: dateSchema.nullable().optional(),
-            endDate: dateSchema.nullable().optional(),
-            isCurrent: z.boolean().nullable().optional(),
+            role: z.string().trim().min(1).nullable(),
+            startDate: dateSchema.nullable(),
+            endDate: dateSchema.nullable(),
+            isCurrent: z.boolean().nullable(),
             url: urlSchema,
             repoUrl: urlSchema,
-            tech: z.array(z.string().trim().min(1)).nullable().optional(),
+            tech: z.array(z.string().trim().min(1)).nullable(),
             bullets: z.array(
               z
                 .object({ id: idSchema, text: z.string().trim().min(1) })
@@ -96,51 +95,48 @@ export const baseResumeDataSchema = z
           })
           .strict(),
       )
-      .default([]),
+      ,
     education: z
       .array(
         z
           .object({
             id: idSchema,
             school: z.string().trim().min(1),
-            degree: z.string().trim().min(1).nullable().optional(),
-            field: z.string().trim().min(1).nullable().optional(),
-            location: z.string().trim().min(1).nullable().optional(),
-            startDate: dateSchema.nullable().optional(),
-            endDate: dateSchema.nullable().optional(),
-            grade: z.string().trim().min(1).nullable().optional(),
-            notes: z.string().trim().min(1).nullable().optional(),
+            degree: z.string().trim().min(1).nullable(),
+            field: z.string().trim().min(1).nullable(),
+            location: z.string().trim().min(1).nullable(),
+            startDate: dateSchema.nullable(),
+            endDate: dateSchema.nullable(),
+            grade: z.string().trim().min(1).nullable(),
+            notes: z.string().trim().min(1).nullable(),
           })
           .strict(),
       )
-      .nullable()
-      .optional(),
+      .nullable(),
     certifications: z
       .array(
         z
           .object({
             id: idSchema,
             name: z.string().trim().min(1),
-            issuer: z.string().trim().min(1).nullable().optional(),
-            date: dateSchema.nullable().optional(),
+            issuer: z.string().trim().min(1).nullable(),
+            date: dateSchema.nullable(),
             url: urlSchema,
           })
           .strict(),
       )
-      .nullable()
-      .optional(),
+      .nullable(),
     languages: z
       .array(
         z
           .object({
             id: idSchema,
             name: z.string().trim().min(1),
-            level: z.string().trim().min(1).nullable().optional(),
+            level: z.string().trim().min(1).nullable(),
           })
           .strict(),
       )
-      .nullable()
-      .optional(),
+      .nullable(),
   })
   .strict();
 
