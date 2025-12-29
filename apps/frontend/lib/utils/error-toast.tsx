@@ -13,6 +13,7 @@ const FRIENDLY_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
     'The AI took too long to respond. It might be busy.',
   [ErrorCode.NETWORK_ERROR]: 'Connectivity issue. Please check your internet.',
   [ErrorCode.VALIDATION_ERROR]: 'Please fix any errors in the form.',
+  [ErrorCode.INSUFFICIENT_DATA]: 'We need a bit more detail.',
 };
 
 interface ShowErrorToastOptions {
@@ -41,6 +42,9 @@ export function showErrorToast(
       ErrorCode.NETWORK_ERROR,
     ].includes(code) && !!options?.onRetry;
 
+  // For specific errors, we show the raw message as a description
+  const description = code === ErrorCode.INSUFFICIENT_DATA ? error.message : undefined;
+
   toast.error(friendlyMessage, {
     action: needsRetryAction
       ? {
@@ -48,5 +52,6 @@ export function showErrorToast(
           onClick: () => options.onRetry?.(options.data),
         }
       : undefined,
+    description,
   });
 }

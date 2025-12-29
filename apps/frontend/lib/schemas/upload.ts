@@ -14,7 +14,7 @@ export const fileUploadSchema = z.object({
     .refine((file) => file.size <= MAX_FILE_SIZE, 'File size must be less than 5MB')
     .refine(
       (file) => ACCEPTED_FILE_TYPES.includes(file.type),
-      'Only .pdf, .docx, .doc, and .txt formats are supported'
+      'Only .pdf, .docx, and .txt formats are supported'
     ),
 });
 

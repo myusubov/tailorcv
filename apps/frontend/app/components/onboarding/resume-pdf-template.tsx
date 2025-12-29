@@ -177,7 +177,8 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
   if (!data) return null;
 
   const { contact, summary, skills = [], experiences = [], projects = [], education = [] } = data;
-  const safeEducation = education || [];
+  // Filter out self-taught education entries from the PDF
+  const safeEducation = (education || []).filter((edu) => !edu.isSelfTaught);
 
   return (
     <Document

@@ -44,7 +44,7 @@ export async function generateFromAboutMe(
   }, 'AI generation attempt for user (About Me)');
 
   const truncatedText = rawText.slice(0, 30000); // Token safety
-  const prompt = `SOURCE MATERIAL (Raw Text from CV/Profile):\n---\n${truncatedText}\n---\n\nCRITICAL INSTRUCTION:\n1. PARSE EVERYTHING: Extract as much detail as possible from the text above into the resume schema.\n2. DATA SUFFICIENCY: Set "_isDataSufficient" to false if the source text is too sparse to create a meaningful resume (e.g. missing both experiences AND projects, or missing basic career context). Provide a brief reasoning in "_insufficientReason".\n3. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01".\n4. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.`;
+  const prompt = `SOURCE MATERIAL (Raw Text from CV/Profile):\n---\n${truncatedText}\n---\n\nCRITICAL INSTRUCTION:\n1. PARSE EVERYTHING: Extract as much detail as possible from the text above into the resume schema.\n2. DATA SUFFICIENCY: Set "_isDataSufficient" to false if critical info like project/experience START DATES or basic career context is missing. Provide reasoning in "_insufficientReason" (or empty string if sufficient).\n3. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01". Every project/experience MUST have a startDate.\n4. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.`;
 
   const response = await openai.chat.completions.parse({
     model,

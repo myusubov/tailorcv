@@ -8,6 +8,6 @@ export const formatFileSize = (bytes: number) => {
 
 export const getFileIcon = (fileName: string) => {
   if (fileName.endsWith('.pdf')) return 'vscode-icons:file-type-pdf2';
-  if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return 'vscode-icons:file-type-word';
+  if (fileName.endsWith('.docx')) return 'vscode-icons:file-type-word';
   return 'bxs:file-txt';
 };
