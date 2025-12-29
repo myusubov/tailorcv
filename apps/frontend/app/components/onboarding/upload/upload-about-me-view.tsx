@@ -54,7 +54,6 @@ export function UploadAboutMeView({
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'application/msword': ['.doc'],
       'text/plain': ['.txt'],
     },
   });

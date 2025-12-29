@@ -71,7 +71,23 @@ export const baseResumeDataSchema = z
                 .strict(),
             ),
           })
-          .strict(),
+          .strict()
+          .superRefine((data, ctx) => {
+            if (data.isCurrent && !data.startDate) {
+              ctx.addIssue({
+                code: "custom",
+                message: 'Start date is required for current positions',
+                path: ['startDate'],
+              });
+            }
+            if (data.endDate && !data.startDate) {
+              ctx.addIssue({
+                code: "custom",
+                message: 'Start date is required if end date is present',
+                path: ['startDate'],
+              });
+            }
+          }),
       )
       ,
     projects: z
@@ -93,7 +109,23 @@ export const baseResumeDataSchema = z
                 .strict(),
             ),
           })
-          .strict(),
+          .strict()
+          .superRefine((data, ctx) => {
+            if (data.isCurrent && !data.startDate) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Start date is required for active projects',
+                path: ['startDate'],
+              });
+            }
+            if (data.endDate && !data.startDate) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Start date is required if end date is present',
+                path: ['startDate'],
+              });
+            }
+          }),
       )
       ,
     education: z
@@ -109,6 +141,7 @@ export const baseResumeDataSchema = z
             endDate: dateSchema.nullable(),
             grade: z.string().trim().min(1).nullable(),
             notes: z.string().trim().min(1).nullable(),
+            isSelfTaught: z.boolean().nullable(),
           })
           .strict(),
       )

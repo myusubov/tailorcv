@@ -48,4 +48,5 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   logger.info({ port: PORT }, 'Backend server listening');
+  console.log('Force restart for schema update'); 
 });

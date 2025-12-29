@@ -12,12 +12,26 @@ export async function extractTextFromFile(buffer: Buffer, mimetype: string): Pro
       return text.join('\n');
     } 
     
-    if (
-      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      mimetype === 'application/msword'
-    ) {
-      const result = await mammoth.extractRawText({ buffer });
-      return result.value;
+    if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        return result.value;
+      } catch (e) {
+        console.error('Mammoth extraction failed:', e);
+        throw new AppError(
+          'Failed to read .docx file. It might be corrupted or password protected.',
+          ErrorCode.BAD_REQUEST,
+          400
+        );
+      }
+    }
+
+    if (mimetype === 'application/msword') {
+      throw new AppError(
+        'Legacy Word documents (.doc) are not supported. Please save as .docx or PDF and try again.',
+        ErrorCode.BAD_REQUEST,
+        400
+      );
     }
 
     if (mimetype === 'text/plain') {
