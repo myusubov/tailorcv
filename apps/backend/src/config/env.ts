@@ -31,6 +31,7 @@ const envSchema = z.object({
   // GitHub OAuth
   GITHUB_CLIENT_ID: z.string().min(1),
   GITHUB_CLIENT_SECRET: z.string().min(1),
+  GITHUB_REDIRECT_URI: z.url().default('http://localhost:8080/api/v1/auth/github/callback'),
 
   // Frontend URL (for CORS)
   FRONTEND_URL: z.url().default('http://localhost:3000'),
