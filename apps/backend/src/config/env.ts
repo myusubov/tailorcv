@@ -28,6 +28,10 @@ const envSchema = z.object({
   // OpenAI AI
   OPENAI_API_KEY: z.string().min(1),
 
+  // GitHub OAuth
+  GITHUB_CLIENT_ID: z.string().min(1),
+  GITHUB_CLIENT_SECRET: z.string().min(1),
+
   // Frontend URL (for CORS)
   FRONTEND_URL: z.url().default('http://localhost:3000'),
 

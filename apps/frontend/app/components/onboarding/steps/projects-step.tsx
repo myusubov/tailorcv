@@ -123,15 +123,18 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
+    const indexToRemove = deleteIndex;
     setTimeout(() => {
-      remove(deleteIndex);
+      remove(indexToRemove);
+      setDeleteIndex(null);
     }, 300);
-    setDeleteIndex(null);
   };
 
   const handleDeleteModalOpenChange = (isOpen: boolean) => {
     deleteModalState.setOpen(isOpen);
-    if (!isOpen) setDeleteIndex(null);
+    if (!isOpen && deleteIndex !== null) {
+      // Don't clear deleteIndex here - let handleDelete do it after removal
+    }
   };
 
   return (
@@ -338,7 +341,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <Label className="text-foreground mb-2 block text-sm font-medium">
-                          Start Date (Optional)
+                          Start Date
                         </Label>
                         <div className="flex gap-2">
                           <Controller
@@ -401,7 +404,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
 
                       <div>
                         <Label className="text-foreground mb-2 block text-sm font-medium">
-                          End Date (Optional)
+                          End Date
                         </Label>
                         <div className="flex gap-2">
                           <Controller

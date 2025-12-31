@@ -48,7 +48,7 @@ const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
 
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const deleteModalState = useOverlayState();
-  const { control, watch } = useFormContext<OnboardingFormInput>();
+  const { control, watch, setValue } = useFormContext<OnboardingFormInput>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'experiences',
@@ -80,15 +80,22 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
-    setTimeout(() => {
-      remove(deleteIndex);
-    }, 300);
+    remove(deleteIndex);
     setDeleteIndex(null);
   };
 
   const handleDeleteModalOpenChange = (isOpen: boolean) => {
     deleteModalState.setOpen(isOpen);
     if (!isOpen) setDeleteIndex(null);
+  };
+
+  const handleNext = () => {
+    if (fields.length === 0) {
+      // Force clear to ensure no ghost data exists in form state
+      // This fixes the issue where useFieldArray is empty but form state isn't
+      setValue('experiences', []);
+    }
+    onNext();
   };
 
   const handleMoveUp = (idx: number) => {
@@ -196,12 +203,12 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
           <Button
             variant="ghost"
             onPress={onBack}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back
           </Button>
-          <Button onPress={onNext} className="group px-6">
+          <Button onPress={handleNext} className="group px-6">
             {fields.length === 0
               ? 'Skip: Projects & Skills'
               : 'Next: Projects & Skills'}
