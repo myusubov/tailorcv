@@ -15,7 +15,9 @@ export const aiExtractionResponseSchema = z.object({
     ),
   _insufficientReason: z
     .string()
-    .describe('Brief reason why data is insufficient, or empty string if sufficient'),
+    .describe(
+      'Brief reason why data is insufficient, or empty string if sufficient',
+    ),
   data: baseResumeDataSchema,
 });
 

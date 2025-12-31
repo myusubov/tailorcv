@@ -1,13 +1,14 @@
 TailorCV - Elite Engineering PRD (v2.0)
+
 1. Mission & Vision
-The Goal: Establish a high-ticket B2B SaaS and a "Technical Manifesto" that demonstrates elite full-stack competence.
+   The Goal: Establish a high-ticket B2B SaaS and a "Technical Manifesto" that demonstrates elite full-stack competence.
 
 The Target: Remote European/US startups and specialized recruitment agencies.
 
 The Moat: While others build "AI Wrappers," TailorCV builds a Semantic Code Engine.
 
 2. Technical Architecture (The "God-Tier" Stack)
-Frontend: Next.js 15, React 19, TypeScript (Strict), Tailwind CSS.
+   Frontend: Next.js 15, React 19, TypeScript (Strict), Tailwind CSS.
 
 Backend: Node.js/Express (TypeScript), Prisma ORM, PostgreSQL, Redis for caching.
 
@@ -16,7 +17,7 @@ Infrastructure: Local-First architecture using IndexedDB for zero-latency UI and
 AI Engine: Anthropic Claude 3.5 Sonnet for deep semantic code analysis.
 
 3. Core Technical Features (The Proof of Work)
-A. The GitHub Semantic Parser (Hero Feature)
+   A. The GitHub Semantic Parser (Hero Feature)
 
 Input: User’s GitHub OAuth connection.
 
@@ -41,7 +42,7 @@ Technology: @react-pdf/renderer with specialized ATS-optimization.
 Output: Minimalist, high-parse-rate PDFs that pass 100% of legacy Enterprise ATS scans.
 
 4. Updated User Flow (Path to Magic)
-Identity Creation: Sign up via Clerk (Google/GitHub).
+   Identity Creation: Sign up via Clerk (Google/GitHub).
 
 The Extraction: Primarily through the GitHub Engine. Manual and File Uploads are secondary fallbacks.
 
@@ -52,7 +53,7 @@ The Semantic Match: AI doesn't just "reword" text; it maps the user’s actual c
 Export: Instant PDF download and tracking in the "Applications" dashboard.
 
 5. Business Strategy & Stability
-Monetization: Freemium (3 free/month) with a $39 Lifetime and $12/month Pro tier.
+   Monetization: Freemium (3 free/month) with a $39 Lifetime and $12/month Pro tier.
 
 B2B Pivot: Capability for recruitment agencies to create sub-accounts for candidate tracking.
 

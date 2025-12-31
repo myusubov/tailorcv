@@ -101,8 +101,11 @@ export const tasks: TaskList = {
       const payload = job.payload as unknown as OnboardingJobPayload;
 
       let result;
-      logger.info({ jobId: job.id, type: payload._type }, 'worker onboarding.generate routing');
-      
+      logger.info(
+        { jobId: job.id, type: payload._type },
+        'worker onboarding.generate routing',
+      );
+
       if (payload._type === 'about-me') {
         result = await generateFromAboutMe({
           clerkUserId: job.userId,
@@ -161,9 +164,10 @@ export const tasks: TaskList = {
       );
 
       const jobError = toJobError(err);
-      const rawAiResponse = (err instanceof AppError && err.details?.rawAiResponse) 
-        ? err.details.rawAiResponse 
-        : Prisma.JsonNull;
+      const rawAiResponse =
+        err instanceof AppError && err.details?.rawAiResponse
+          ? err.details.rawAiResponse
+          : Prisma.JsonNull;
 
       await prisma.onboardingJob.update({
         where: { id: job.id },
@@ -172,7 +176,7 @@ export const tasks: TaskList = {
           stage: 'FAILED',
           progressPct: 100,
           error: jobError,
-          rawAiResponse
+          rawAiResponse,
         },
       });
     }

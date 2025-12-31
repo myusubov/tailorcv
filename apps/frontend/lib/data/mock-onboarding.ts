@@ -25,15 +25,17 @@ export const mockWallOfText = (): OnboardingFormInput => ({
       startMonth: '06',
       startYear: '2021',
       // Messy text with no bullets or structure
-      description: 'I was basically doing everything here. We used React for the frontend but I also had to fix the SQL database and write some Python scripts for the data pipeline. I improved the load time by 40% which was cool because we had a lot of users complain about it before. I worked in a team of 5 and we did agile stuff. I also helped the design team with Figma sometimes.',
+      description:
+        'I was basically doing everything here. We used React for the frontend but I also had to fix the SQL database and write some Python scripts for the data pipeline. I improved the load time by 40% which was cool because we had a lot of users complain about it before. I worked in a team of 5 and we did agile stuff. I also helped the design team with Figma sometimes.',
       isCurrent: true,
-    }
+    },
   ],
   projects: [
     {
       id: generateUUID(),
       name: 'Personal Portfolio',
-      description: 'A responsive portfolio website to showcase my coding projects.',
+      description:
+        'A responsive portfolio website to showcase my coding projects.',
       tech: 'React, Tailwind CSS',
       url: 'https://sarahchen.dev',
       repoUrl: '',
@@ -42,7 +44,7 @@ export const mockWallOfText = (): OnboardingFormInput => ({
       endMonth: '03',
       endYear: '2023',
       isCurrent: false,
-    }
+    },
   ],
   skills: ['TypeScript', 'React', 'Python', 'SQL', 'Figma', 'Agile'],
   education: {
@@ -72,7 +74,8 @@ export const mockActiveFreelancer = (): OnboardingFormInput => ({
     linkedinUrl: '',
     websiteUrl: '',
   },
-  summary: 'Active freelance developer working on multiple simultaneous client projects.',
+  summary:
+    'Active freelance developer working on multiple simultaneous client projects.',
   experiences: [
     {
       id: generateUUID(),
@@ -80,15 +83,17 @@ export const mockActiveFreelancer = (): OnboardingFormInput => ({
       company: 'Self-Employed',
       startMonth: '01',
       startYear: '2024',
-      description: 'Consulting for various startups on Next.js and Tailwind architecture.',
+      description:
+        'Consulting for various startups on Next.js and Tailwind architecture.',
       isCurrent: true,
-    }
+    },
   ],
   projects: [
     {
       id: generateUUID(),
       name: 'OpenSource Dashboard',
-      description: 'Currently building an open-source analytics dashboard for climate researchers.',
+      description:
+        'Currently building an open-source analytics dashboard for climate researchers.',
       tech: 'Next.js, D3.js, Supabase',
       url: 'https://climate-dash.io',
       repoUrl: 'https://github.com/alex/climate-dash',
@@ -99,14 +104,15 @@ export const mockActiveFreelancer = (): OnboardingFormInput => ({
     {
       id: generateUUID(),
       name: 'E-commerce API',
-      description: 'Ongoing maintenance and feature development for a high-traffic retail API.',
+      description:
+        'Ongoing maintenance and feature development for a high-traffic retail API.',
       tech: 'Node.js, Redis, MongoDB',
       url: '',
       repoUrl: '',
       startMonth: '11',
       startYear: '2023',
       isCurrent: true,
-    }
+    },
   ],
   skills: ['Next.js', 'Tailwind', 'D3.js', 'Redis', 'Node.js'],
   education: {
@@ -136,13 +142,15 @@ export const mockGeneralist = (): OnboardingFormInput => ({
     linkedinUrl: '',
     websiteUrl: '',
   },
-  summary: 'Jack of all trades with a background in design, dev, and management.',
+  summary:
+    'Jack of all trades with a background in design, dev, and management.',
   experiences: [],
   projects: [
     {
       id: generateUUID(),
       name: 'Community Garden App',
-      description: 'A platform for local residents to share tools and coordinate garden maintenance.',
+      description:
+        'A platform for local residents to share tools and coordinate garden maintenance.',
       tech: 'React, Node.js, PostgreSQL',
       url: '',
       repoUrl: 'https://github.com/jordan/garden-app',
@@ -151,13 +159,24 @@ export const mockGeneralist = (): OnboardingFormInput => ({
       endMonth: '06',
       endYear: '2022',
       isCurrent: false,
-    }
+    },
   ],
   // Highly varied skills to test categorization
   skills: [
-    'React', 'Node.js', 'Figma', 'UI/UX Design', 'Project Management', 
-    'Agile', 'Docker', 'AWS', 'Public Speaking', 'Mentoring', 
-    'Go', 'PostgreSQL', 'Adobe Illustrator', 'CRM Management'
+    'React',
+    'Node.js',
+    'Figma',
+    'UI/UX Design',
+    'Project Management',
+    'Agile',
+    'Docker',
+    'AWS',
+    'Public Speaking',
+    'Mentoring',
+    'Go',
+    'PostgreSQL',
+    'Adobe Illustrator',
+    'CRM Management',
   ],
   education: {
     school: 'NYU',
@@ -194,15 +213,17 @@ export const mockSparseProfile = (): OnboardingFormInput => ({
       company: 'Local Shop',
       startMonth: '06',
       startYear: '2023',
-      description: 'I build websites for local businesses using HTML, CSS, and some JavaScript.',
+      description:
+        'I build websites for local businesses using HTML, CSS, and some JavaScript.',
       isCurrent: true,
-    }
+    },
   ],
   projects: [
     {
       id: generateUUID(),
       name: 'Simple Weather App',
-      description: 'A basic weather application that fetches data from a public API.',
+      description:
+        'A basic weather application that fetches data from a public API.',
       tech: 'HTML, CSS, JavaScript',
       url: '',
       repoUrl: '',
@@ -211,7 +232,7 @@ export const mockSparseProfile = (): OnboardingFormInput => ({
       endMonth: '12',
       endYear: '2023',
       isCurrent: false,
-    }
+    },
   ],
   skills: ['HTML', 'CSS', 'JavaScript'],
   education: {
@@ -228,7 +249,7 @@ export const mockSparseProfile = (): OnboardingFormInput => ({
 /**
  * SCENARIO 5: THE "VETERAN"
  * GUARANTEE: Tests UI performance and data handling for high-volume profiles.
- * WHAT IT TESTS: List rendering performance, long text fields, and AI's ability 
+ * WHAT IT TESTS: List rendering performance, long text fields, and AI's ability
  * to parse a large total payload without cutting off data.
  */
 export const mockVeteran = (): OnboardingFormInput => ({
@@ -242,7 +263,7 @@ export const mockVeteran = (): OnboardingFormInput => ({
     linkedinUrl: 'https://linkedin.com/in/maximillian-bartholomew-de-la-sierra',
     websiteUrl: 'https://blog.maximillian-bartholomew-de-la-sierra.me',
   },
-  summary: '', 
+  summary: '',
   experiences: Array.from({ length: 5 }).map((_, i) => ({
     id: generateUUID(),
     title: `Principal Software Systems Architect & Engineering Lead ${i + 1}`,
@@ -251,13 +272,15 @@ export const mockVeteran = (): OnboardingFormInput => ({
     startYear: (2010 + i).toString(),
     endYear: (2012 + i).toString(),
     endMonth: '01',
-    description: 'Spearheaded the complete digital transformation of legacy infrastructure using distributed cloud-native microservices architecture. Managed multiple cross-functional teams of 20+ engineers across 3 continents. Implemented zero-downtime CI/CD pipelines and increased overall system reliability by 99.99%. Negotiated vendor contracts and collaborated with C-level stakeholders to define technology roadmap.',
+    description:
+      'Spearheaded the complete digital transformation of legacy infrastructure using distributed cloud-native microservices architecture. Managed multiple cross-functional teams of 20+ engineers across 3 continents. Implemented zero-downtime CI/CD pipelines and increased overall system reliability by 99.99%. Negotiated vendor contracts and collaborated with C-level stakeholders to define technology roadmap.',
     isCurrent: i === 4,
   })),
   projects: Array.from({ length: 3 }).map((_, i) => ({
     id: generateUUID(),
     name: `Autonomous Supply Chain Optimization Platform ${i + 1}`,
-    description: 'Designed and implemented an AI-driven autonomous supply chain management system that reduced operational costs by $2M annually. Developed custom neural network models for predictive maintenance and demand forecasting. Integrated with multiple third-party SAP/ERP systems and AWS cloud services.',
+    description:
+      'Designed and implemented an AI-driven autonomous supply chain management system that reduced operational costs by $2M annually. Developed custom neural network models for predictive maintenance and demand forecasting. Integrated with multiple third-party SAP/ERP systems and AWS cloud services.',
     tech: 'Kotlin, Spring Boot, TensorFlow, Kubernetes, AWS, Kafka, Redis, PostgreSQL',
     url: '',
     repoUrl: '',
@@ -268,9 +291,18 @@ export const mockVeteran = (): OnboardingFormInput => ({
     isCurrent: false,
   })),
   skills: [
-    'System Architecture', 'Cloud Infrastructure', 'Microservices', 'Kubernetes',
-    'AWS Cloud Practitioner', 'TensorFlow', 'Apache Kafka', 'Distributed Systems',
-    'Agile Leadership', 'Stakeholder Management', 'Cost Optimization', 'CI/CD Pipelines'
+    'System Architecture',
+    'Cloud Infrastructure',
+    'Microservices',
+    'Kubernetes',
+    'AWS Cloud Practitioner',
+    'TensorFlow',
+    'Apache Kafka',
+    'Distributed Systems',
+    'Agile Leadership',
+    'Stakeholder Management',
+    'Cost Optimization',
+    'CI/CD Pipelines',
   ],
   education: {
     school: 'Massachusetts Institute of Technology (MIT)',
@@ -299,9 +331,9 @@ let scenarioIndex = 0;
 
 export const fillValues = (): OnboardingFormInput => {
   const selectedScenario = scenarios[scenarioIndex];
-  
+
   // Increment and wrap around using modulo
   scenarioIndex = (scenarioIndex + 1) % scenarios.length;
-  
+
   return selectedScenario();
 };

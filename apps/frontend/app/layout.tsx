@@ -9,7 +9,6 @@ import { ThemeToggle } from './components/theme-toggle';
 import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
-
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],

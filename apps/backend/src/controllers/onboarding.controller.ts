@@ -84,20 +84,23 @@ export const generateFromAboutMeController = async (
       throw new AppError('No file uploaded', ErrorCode.BAD_REQUEST, 400);
     }
 
-    logger.info({ clerkUserId, filename: file.originalname }, 'extracting text from about-me file');
+    logger.info(
+      { clerkUserId, filename: file.originalname },
+      'extracting text from about-me file',
+    );
     const text = await extractTextFromFile(file.buffer, file.mimetype);
-    
+
     if (!text || text.trim().length < 50) {
       throw new AppError(
         'The uploaded file is too short or empty. Please provide a more detailed document.',
         ErrorCode.INSUFFICIENT_DATA,
-        400
+        400,
       );
     }
 
     logger.info({ clerkUserId }, 'onboarding about-me enqueue start');
     const result = await startOnboardingAboutMeJob({ clerkUserId, text });
-    
+
     return successResponse(res, result, 202);
   } catch (err) {
     next(err);

@@ -20,11 +20,13 @@ export const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new AppError(
-        'Invalid file type. Please upload a PDF, Word document, or text file.',
-        ErrorCode.BAD_REQUEST,
-        400
-      ));
+      cb(
+        new AppError(
+          'Invalid file type. Please upload a PDF, Word document, or text file.',
+          ErrorCode.BAD_REQUEST,
+          400,
+        ),
+      );
     }
   },
 });

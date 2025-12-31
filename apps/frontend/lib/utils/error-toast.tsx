@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { toast } from 'sonner';
 import { ErrorCode } from 'shared';
@@ -43,7 +43,8 @@ export function showErrorToast(
     ].includes(code) && !!options?.onRetry;
 
   // For specific errors, we show the raw message as a description
-  const description = code === ErrorCode.INSUFFICIENT_DATA ? error.message : undefined;
+  const description =
+    code === ErrorCode.INSUFFICIENT_DATA ? error.message : undefined;
 
   toast.error(friendlyMessage, {
     action: needsRetryAction

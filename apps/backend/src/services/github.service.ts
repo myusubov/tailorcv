@@ -1,13 +1,19 @@
 import { prisma } from 'src/lib';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
-import { ErrorCode } from 'shared';
-import { GitHubTokenResponse, GitHubUser, SaveGitHubConnectionInput, GitHubTokenErrorResponse, GitHubRepo } from '../types/github';
-import { GitHubConnection } from 'prisma/generated/client/client';
+import {
+  ErrorCode,
+  GitHubTokenResponse,
+  GitHubUser,
+  SaveGitHubConnectionInput,
+  GitHubTokenErrorResponse,
+  GitHubRepo,
+  GitHubConnection,
+} from 'shared';
 
 /**
  * Generates the GitHub OAuth authorization URL
- * Scopes: 
+ * Scopes:
  * - repo: For deep extraction (commits, PRs, package.json)
  * - read:user: For profile mapping
  */
@@ -28,7 +34,16 @@ export function getGithubAuthUrl(): string {
  * Exchanges the temporary authorization code for a permanent access token.
  * Endpoint: POST https://github.com/login/oauth/access_token
  */
-export async function exchangeCodeForToken(code: string): Promise<GitHubTokenResponse> {
+export async function exchangeCodeForToken(
+  code: string,
+): Promise<GitHubTokenResponse> {
+  // UNCOMMENT THE LINE BELOW TO TEST FRONTEND ERROR TOASTS
+  /*    throw new AppError(
+    `GitHub token exchange failed`,
+    ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
+    502
+  ); */
+
   const tokenUrl = 'https://github.com/login/oauth/access_token';
 
   const params = new URLSearchParams({
@@ -40,7 +55,7 @@ export async function exchangeCodeForToken(code: string): Promise<GitHubTokenRes
   const response = await fetch(tokenUrl, {
     method: 'POST',
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: params.toString(),
@@ -50,17 +65,17 @@ export async function exchangeCodeForToken(code: string): Promise<GitHubTokenRes
     throw new AppError(
       `GitHub token exchange failed: ${response.statusText}`,
       ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
-      502
+      502,
     );
   }
 
-  const data = await response.json() as GitHubTokenErrorResponse;
+  const data = (await response.json()) as GitHubTokenErrorResponse;
 
   if (data.error) {
     throw new AppError(
       data.error_description || data.error,
       ErrorCode.GITHUB_OAUTH_ERROR,
-      400
+      400,
     );
   }
 
@@ -76,10 +91,15 @@ export async function exchangeCodeForToken(code: string): Promise<GitHubTokenRes
  * Endpoint: GET https://api.github.com/user
  */
 export async function getGitHubUser(accessToken: string): Promise<GitHubUser> {
+  /*   throw new AppError(
+    `Failed to fetch GitHub user`,
+    ErrorCode.GITHUB_USER_FETCH_FAILED,
+    502
+  ); */
   const response = await fetch('https://api.github.com/user', {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/vnd.github+json',
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
   });
@@ -88,7 +108,7 @@ export async function getGitHubUser(accessToken: string): Promise<GitHubUser> {
     throw new AppError(
       `Failed to fetch GitHub user: ${response.statusText}`,
       ErrorCode.GITHUB_USER_FETCH_FAILED,
-      502
+      502,
     );
   }
 
@@ -96,7 +116,19 @@ export async function getGitHubUser(accessToken: string): Promise<GitHubUser> {
 }
 
 export async function saveGitHubConnection(input: SaveGitHubConnectionInput) {
-  const { userId, accessToken, githubUserId, githubUsername, githubAvatarUrl, scope } = input;
+  /*   throw new AppError(
+    `Failed to save GitHub connection`,
+    ErrorCode.GITHUB_CONNECTION_SAVE_FAILED,
+    502
+  ); */
+  const {
+    userId,
+    accessToken,
+    githubUserId,
+    githubUsername,
+    githubAvatarUrl,
+    scope,
+  } = input;
 
   return await prisma.gitHubConnection.upsert({
     where: { userId },
@@ -118,27 +150,39 @@ export async function saveGitHubConnection(input: SaveGitHubConnectionInput) {
   });
 }
 
-export async function fetchGithubRepos(accessToken: string): Promise<GitHubRepo[]> {
-  const response = await fetch('https://api.github.com/user/repos?sort=updated&visibility=all', {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
+export async function fetchGithubRepos(
+  accessToken: string,
+): Promise<GitHubRepo[]> {
+  const response = await fetch(
+    'https://api.github.com/user/repos?sort=updated&visibility=all',
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new AppError(
       `Failed to fetch GitHub repos: ${response.statusText}`,
       ErrorCode.GITHUB_REPOS_FETCH_FAILED,
-      502
+      502,
     );
   }
 
   return response.json() as Promise<GitHubRepo[]>;
 }
 
-export async function getGithubConnection(userId: string): Promise<GitHubConnection | null> {
+export async function getGithubConnection(
+  userId: string,
+): Promise<GitHubConnection | null> {
+  /*   throw new AppError(
+    `Failed to fetch GitHub connection`,
+    ErrorCode.GITHUB_CONNECTION_FETCH_FAILED,
+    502
+  ); */
   const githubConnection = await prisma.gitHubConnection.findUnique({
     where: { userId },
   });
@@ -146,7 +190,7 @@ export async function getGithubConnection(userId: string): Promise<GitHubConnect
     throw new AppError(
       `Failed to fetch GitHub connection`,
       ErrorCode.GITHUB_CONNECTION_FETCH_FAILED,
-      502
+      502,
     );
   }
   return githubConnection;

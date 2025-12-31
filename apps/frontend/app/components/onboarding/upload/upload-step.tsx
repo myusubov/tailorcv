@@ -10,13 +10,16 @@ interface UploadStepProps {
 }
 
 export function UploadStep({ onBack }: UploadStepProps) {
-  const { beginJob } = useOnboardingJob()
-  const { mutateAsync, isPending } = useActionMutation(startOnboardingAboutMeJobAction, {
-    successMessage: 'Resume uploaded successfully!',
-    onSuccess: ({ jobId }) => {
-      beginJob(jobId)
+  const { beginJob } = useOnboardingJob();
+  const { mutateAsync, isPending } = useActionMutation(
+    startOnboardingAboutMeJobAction,
+    {
+      successMessage: 'Resume uploaded successfully!',
+      onSuccess: ({ jobId }) => {
+        beginJob(jobId);
+      },
     },
-  });
+  );
 
   const handleUploadFile = async (file: File) => {
     if (isPending) return;

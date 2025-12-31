@@ -39,95 +39,83 @@ export const baseResumeDataSchema = z
       })
       .strict(),
     summary: z.string().trim().min(1).nullable(),
-    skills: z
-      .array(
-        z
-          .object({
-            id: idSchema,
-            name: z.string().trim().min(1),
-            category: z.string().trim().min(1).nullable(),
-            level: z
-              .enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED'])
-              .nullable(),
-          })
-          .strict(),
-      )
-      ,
-    experiences: z
-      .array(
-        z
-          .object({
-            id: idSchema,
-            company: z.string().trim().min(1),
-            title: z.string().trim().min(1),
-            location: z.string().trim().min(1).nullable(),
-            startDate: dateSchema,
-            endDate: dateSchema.nullable(),
-            isCurrent: z.boolean().nullable(),
-            tech: z.array(z.string().trim().min(1)).nullable(),
-            bullets: z.array(
-              z
-                .object({ id: idSchema, text: z.string().trim().min(1) })
-                .strict(),
-            ),
-          })
-          .strict()
-          .superRefine((data, ctx) => {
-            if (data.isCurrent && !data.startDate) {
-              ctx.addIssue({
-                code: "custom",
-                message: 'Start date is required for current positions',
-                path: ['startDate'],
-              });
-            }
-            if (data.endDate && !data.startDate) {
-              ctx.addIssue({
-                code: "custom",
-                message: 'Start date is required if end date is present',
-                path: ['startDate'],
-              });
-            }
-          }),
-      )
-      ,
-    projects: z
-      .array(
-        z
-          .object({
-            id: idSchema,
-            name: z.string().trim().min(1),
-            role: z.string().trim().min(1).nullable(),
-            startDate: dateSchema.nullable(),
-            endDate: dateSchema.nullable(),
-            isCurrent: z.boolean().nullable(),
-            url: urlSchema,
-            repoUrl: urlSchema,
-            tech: z.array(z.string().trim().min(1)).nullable(),
-            bullets: z.array(
-              z
-                .object({ id: idSchema, text: z.string().trim().min(1) })
-                .strict(),
-            ),
-          })
-          .strict()
-          .superRefine((data, ctx) => {
-            if (data.isCurrent && !data.startDate) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Start date is required for active projects',
-                path: ['startDate'],
-              });
-            }
-            if (data.endDate && !data.startDate) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Start date is required if end date is present',
-                path: ['startDate'],
-              });
-            }
-          }),
-      )
-      ,
+    skills: z.array(
+      z
+        .object({
+          id: idSchema,
+          name: z.string().trim().min(1),
+          category: z.string().trim().min(1).nullable(),
+          level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).nullable(),
+        })
+        .strict(),
+    ),
+    experiences: z.array(
+      z
+        .object({
+          id: idSchema,
+          company: z.string().trim().min(1),
+          title: z.string().trim().min(1),
+          location: z.string().trim().min(1).nullable(),
+          startDate: dateSchema,
+          endDate: dateSchema.nullable(),
+          isCurrent: z.boolean().nullable(),
+          tech: z.array(z.string().trim().min(1)).nullable(),
+          bullets: z.array(
+            z.object({ id: idSchema, text: z.string().trim().min(1) }).strict(),
+          ),
+        })
+        .strict()
+        .superRefine((data, ctx) => {
+          if (data.isCurrent && !data.startDate) {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'Start date is required for current positions',
+              path: ['startDate'],
+            });
+          }
+          if (data.endDate && !data.startDate) {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'Start date is required if end date is present',
+              path: ['startDate'],
+            });
+          }
+        }),
+    ),
+    projects: z.array(
+      z
+        .object({
+          id: idSchema,
+          name: z.string().trim().min(1),
+          role: z.string().trim().min(1).nullable(),
+          startDate: dateSchema.nullable(),
+          endDate: dateSchema.nullable(),
+          isCurrent: z.boolean().nullable(),
+          url: urlSchema,
+          repoUrl: urlSchema,
+          tech: z.array(z.string().trim().min(1)).nullable(),
+          bullets: z.array(
+            z.object({ id: idSchema, text: z.string().trim().min(1) }).strict(),
+          ),
+        })
+        .strict()
+        .superRefine((data, ctx) => {
+          if (data.isCurrent && !data.startDate) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Start date is required for active projects',
+              path: ['startDate'],
+            });
+          }
+          if (data.endDate && !data.startDate) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Start date is required if end date is present',
+              path: ['startDate'],
+            });
+          }
+        }),
+    ),
     education: z
       .array(
         z
@@ -190,7 +178,12 @@ export const onboardingSchema = z.object({
     linkedinUrl: z.string().trim().max(200).optional().default(''),
     websiteUrl: z.string().trim().max(200).optional().default(''),
   }),
-  summary: z.string().trim().max(1000, 'Summary is too long').optional().default(''),
+  summary: z
+    .string()
+    .trim()
+    .max(1000, 'Summary is too long')
+    .optional()
+    .default(''),
   experiences: z
     .array(
       z

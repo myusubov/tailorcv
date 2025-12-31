@@ -15,7 +15,12 @@ import {
   useOverlayState,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
@@ -59,8 +64,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
   const company =
     deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
-  const title =
-    deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
+  const title = deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
   const labelParts = [title, company].filter(Boolean);
   const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
 
@@ -281,12 +285,7 @@ function ExperienceItemContent({
             </Button>
           </div>
 
-          <Button
-            isIconOnly
-            variant="danger-soft"
-            size="sm"
-            onPress={onDelete}
-          >
+          <Button isIconOnly variant="danger-soft" size="sm" onPress={onDelete}>
             <Icon icon="lucide:trash-2" />
           </Button>
         </div>

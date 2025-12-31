@@ -1,9 +1,17 @@
 import type { Request, Response, NextFunction } from 'express';
-import { exchangeCodeForToken, fetchGithubRepos, getGithubAuthUrl, getGithubConnection, getGitHubUser, saveGitHubConnection } from '../services/github.service';
+import {
+  exchangeCodeForToken,
+  fetchGithubRepos,
+  getGithubAuthUrl,
+  getGithubConnection,
+  getGitHubUser,
+  saveGitHubConnection,
+} from '../services/github.service';
 import { ClerkLocals } from 'src/types/locals';
 import { env } from 'src/config/env';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
+import { successResponse } from 'src/utils/response';
 
 /**
  * Initiates the GitHub OAuth flow by redirecting to GitHub
@@ -35,7 +43,11 @@ export async function handleGithubCallback(
     const { clerkUserId } = res.locals;
 
     if (!code) {
-      throw new AppError('Missing authorization code', ErrorCode.BAD_REQUEST, 400);
+      throw new AppError(
+        'Missing authorization code',
+        ErrorCode.BAD_REQUEST,
+        400,
+      );
     }
 
     const tokenResponse = await exchangeCodeForToken(code as string);
@@ -49,12 +61,16 @@ export async function handleGithubCallback(
       scope: tokenResponse.scope,
     });
 
-    res.redirect(`${env.FRONTEND_URL}/onboarding?method=github&status=connected`);
-  } catch (error) {
-    next(error);
+    res.redirect(
+      `${env.FRONTEND_URL}/onboarding?method=github&status=connected`,
+    );
+  } catch (error: any) {
+    const errorMessage = error.message || 'connection_failed';
+    res.redirect(
+      `${env.FRONTEND_URL}/onboarding?method=github&status=error&message=${encodeURIComponent(errorMessage)}`,
+    );
   }
 }
-
 
 export async function getGithubRepos(
   req: Request,
@@ -65,7 +81,21 @@ export async function getGithubRepos(
     const { clerkUserId } = res.locals;
     const githubConnection = await getGithubConnection(clerkUserId);
     const repos = await fetchGithubRepos(githubConnection!.accessToken);
-    res.json(repos);
+    return successResponse(res, repos, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function fetchGithubConnection(
+  req: Request,
+  res: Response<any, ClerkLocals>,
+  next: NextFunction,
+) {
+  try {
+    const { clerkUserId } = res.locals;
+    const githubConnection = await getGithubConnection(clerkUserId);
+    return successResponse(res, githubConnection, 200);
   } catch (error) {
     next(error);
   }

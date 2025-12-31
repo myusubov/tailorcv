@@ -100,7 +100,12 @@ export async function backendRequest<T>(
     const response = await fetch(url, {
       ...init,
       headers: requestHeaders,
-      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? body
+            : JSON.stringify(body),
       next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
     });
 

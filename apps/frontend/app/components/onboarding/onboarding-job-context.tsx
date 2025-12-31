@@ -67,6 +67,11 @@ export function OnboardingJobProvider({
     },
   );
 
+  const clearJob = () => {
+    setJobId(null);
+    clearStoredJobId();
+  };
+
   useEffect(() => {
     if (jobError?.status === 404) {
       clearJob();
@@ -79,11 +84,6 @@ export function OnboardingJobProvider({
     { enabled: !!resumeId },
   );
 
-  const clearJob = () => {
-    setJobId(null);
-    clearStoredJobId();
-  };
-
   const beginJob = (nextJobId: string) => {
     setGeneratedData(null);
     setShowSuccessModal(false);
@@ -93,7 +93,7 @@ export function OnboardingJobProvider({
 
   useEffect(() => {
     if (jobData?.status === 'FAILED') {
-      showErrorToast(jobData.error)
+      showErrorToast(jobData.error);
       clearJob();
     }
   }, [jobData?.status, jobData?.error]);

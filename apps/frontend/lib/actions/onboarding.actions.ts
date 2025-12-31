@@ -22,14 +22,16 @@ export async function startOnboardingJobAction(input: GenerateOnboardingInput) {
   return _startOnboardingJobImpl(input);
 }
 
-const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>({
-  method: 'POST',
-  path: 'onboarding/about-me',
-  auth: 'required',
-  keyPrefix: 'onboarding',
-  staticParts: ['status'],
-  revalidate: { fromKey: true },
-});
+const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>(
+  {
+    method: 'POST',
+    path: 'onboarding/about-me',
+    auth: 'required',
+    keyPrefix: 'onboarding',
+    staticParts: ['status'],
+    revalidate: { fromKey: true },
+  },
+);
 
 /**
  * Starts an onboarding job by parsing a resume file (About Me / Resume Upload).

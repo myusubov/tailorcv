@@ -36,7 +36,7 @@ export async function startOnboardingJob(input: {
       status: 'QUEUED',
       stage: 'QUEUED',
       progressPct: 0,
-      payload
+      payload,
     },
     select: { id: true },
   });
@@ -62,7 +62,7 @@ export async function startOnboardingAboutMeJob(input: {
       status: 'QUEUED',
       stage: 'QUEUED',
       progressPct: 0,
-      payload
+      payload,
     },
     select: { id: true },
   });
