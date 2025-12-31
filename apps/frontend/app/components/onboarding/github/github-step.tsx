@@ -2,6 +2,7 @@
 
 import { Button } from '@heroui/react';
 import { Icon } from '@iconify/react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface GitHubStepProps {
@@ -9,6 +10,8 @@ interface GitHubStepProps {
 }
 
 export function GitHubStep({ onBack }: GitHubStepProps) {
+  const [isConnecting, setIsConnecting] = useState(false);
+
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <motion.div
@@ -108,11 +111,15 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
         >
           <Button
             size="lg"
-            onPress={() => {}} // TODO: Add GitHub OAuth Handler
+            isDisabled={isConnecting}
+            onPress={() => {
+              setIsConnecting(true);
+              window.location.href = 'http://localhost:8080/api/v1/auth/github';
+            }}
             className="bg-foreground text-background hover:bg-foreground/90 w-full max-w-sm px-8 py-6 text-base font-semibold shadow-xl transition-all hover:scale-[1.02]"
           >
-            <Icon icon="mdi:github" className="mr-2 size-5" />
-            Connect GitHub Account
+            <Icon icon={isConnecting ? "line-md:loading-twotone-loop" : "mdi:github"} className="mr-2 size-5" />
+            {isConnecting ? 'Connecting...' : 'Connect GitHub Account'}
           </Button>
 
           <p className="text-muted flex items-center gap-2 text-xs">
