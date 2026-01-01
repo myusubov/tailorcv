@@ -35,6 +35,9 @@ const envSchema = z.object({
     .url()
     .default('http://localhost:8080/api/v1/auth/github/callback'),
 
+  // JWT Secret (for OAuth state signing)
+  JWT_SECRET: z.string().min(32),
+
   // Frontend URL (for CORS)
   FRONTEND_URL: z.url().default('http://localhost:3000'),
 

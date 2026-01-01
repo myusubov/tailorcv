@@ -1,6 +1,7 @@
 import { prisma } from 'src/lib';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
+import jwt from 'jsonwebtoken';
 import {
   ErrorCode,
   GitHubTokenResponse,
@@ -17,17 +18,80 @@ import {
  * - repo: For deep extraction (commits, PRs, package.json)
  * - read:user: For profile mapping
  */
-export function getGithubAuthUrl(): string {
+export function getGithubAuthUrl(userId: string): string {
+  // Generate a signed JWT as the state parameter for CSRF protection
+  const state = jwt.sign(
+    {
+      userId,
+      timestamp: Date.now(),
+      purpose: 'github_oauth',
+    },
+    env.JWT_SECRET,
+    { expiresIn: '10m' } // State expires in 10 minutes
+  );
+
   const rootUrl = 'https://github.com/login/oauth/authorize';
   const options = {
     client_id: env.GITHUB_CLIENT_ID,
     redirect_uri: env.GITHUB_REDIRECT_URI,
     scope: 'repo read:user',
-    state: 'github_initial_connection', // In production, this should be a generated nonce
+    state,
   };
 
   const queryString = new URLSearchParams(options).toString();
-  return `${rootUrl}?${queryString}`;
+  const fullUrl = `${rootUrl}?${queryString}`;
+  
+  return fullUrl;
+}
+
+/**
+ * Verifies the OAuth state parameter to prevent CSRF attacks
+ * @param state - The state JWT from GitHub callback
+ * @param expectedUserId - The user ID that should match the state
+ * @throws AppError if state is invalid or expired
+ */
+export function verifyOAuthState(state: string, expectedUserId: string): void {
+  try {
+    const decoded = jwt.verify(state, env.JWT_SECRET) as {
+      userId: string;
+      timestamp: number;
+      purpose: string;
+    };
+
+    // Verify the purpose matches
+    if (decoded.purpose !== 'github_oauth') {
+      throw new AppError(
+        'Invalid state purpose',
+        ErrorCode.UNAUTHORIZED,
+        401
+      );
+    }
+
+    // Verify the userId matches the authenticated user
+    if (decoded.userId !== expectedUserId) {
+      throw new AppError(
+        'State userId mismatch - possible CSRF attack',
+        ErrorCode.UNAUTHORIZED,
+        401
+      );
+    }
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new AppError(
+        'OAuth state expired - please try again',
+        ErrorCode.UNAUTHORIZED,
+        401
+      );
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new AppError(
+        'Invalid OAuth state - possible CSRF attack',
+        ErrorCode.UNAUTHORIZED,
+        401
+      );
+    }
+    throw error;
+  }
 }
 
 /**

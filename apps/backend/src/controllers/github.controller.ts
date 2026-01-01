@@ -6,6 +6,7 @@ import {
   getGithubConnection,
   getGitHubUser,
   saveGitHubConnection,
+  verifyOAuthState,
 } from '../services/github.service';
 import { ClerkLocals } from 'src/types/locals';
 import { env } from 'src/config/env';
@@ -18,11 +19,12 @@ import { successResponse } from 'src/utils/response';
  */
 export async function initiateGithubAuth(
   req: Request,
-  res: Response,
+  res: Response<any, ClerkLocals>,
   next: NextFunction,
 ) {
   try {
-    const authUrl = getGithubAuthUrl();
+    const { clerkUserId } = res.locals;
+    const authUrl = getGithubAuthUrl(clerkUserId);
     res.redirect(authUrl);
   } catch (error) {
     next(error);
@@ -38,17 +40,19 @@ export async function handleGithubCallback(
   next: NextFunction,
 ) {
   try {
-    // TODO: Verify state
     const { code, state } = req.query;
     const { clerkUserId } = res.locals;
 
-    if (!code) {
+    if (!code || !state) {
       throw new AppError(
-        'Missing authorization code',
+        'Missing authorization code or state',
         ErrorCode.BAD_REQUEST,
         400,
       );
     }
+
+    // Verify the OAuth state to prevent CSRF attacks
+    verifyOAuthState(state as string, clerkUserId);
 
     const tokenResponse = await exchangeCodeForToken(code as string);
     const githubUser = await getGitHubUser(tokenResponse.access_token);

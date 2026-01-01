@@ -256,7 +256,7 @@ export function GitHubRepoSelectionView({
 
         {/* Actions */}
         <motion.div
-          className="flex items-center justify-center gap-4"
+          className="flex items-center justify-between gap-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
@@ -270,12 +270,10 @@ export function GitHubRepoSelectionView({
             Back
           </Button>
           <Button
-            size="lg"
             isDisabled={selectedRepos.size === 0}
             onPress={handleAnalyze}
-            className="bg-foreground text-background hover:bg-foreground/90 w-full max-w-sm px-8 py-6 text-base font-semibold shadow-xl transition-all hover:scale-[1.02]"
           >
-            <Icon icon="lucide:sparkles" className="mr-2 size-5" />
+            <Icon icon="lucide:sparkles" className="size-5" />
             Analyze {selectedRepos.size}{' '}
             {selectedRepos.size === 1 ? 'Repository' : 'Repositories'}
           </Button>
