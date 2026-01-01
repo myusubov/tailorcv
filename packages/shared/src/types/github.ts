@@ -30,6 +30,13 @@ export interface SaveGitHubConnectionInput {
 }
 
 export interface GitHubRepo {
+  owner: {
+    login: string;
+    id: number;
+    avatar_url: string;
+    url: string;
+    type: string;
+  };
   id: number;
   name: string;
   full_name: string;

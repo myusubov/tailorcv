@@ -73,6 +73,8 @@ export function GitHubRepoSelectionView({
               alt={connection.githubUsername}
               width={48}
               height={48}
+              quality={100}
+              priority
               className="ring-primary/20 size-12 rounded-full ring-2"
             />
             <div className="text-left">

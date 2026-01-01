@@ -25,6 +25,12 @@ export type GetOnboardingJobOutput = {
   rawAiResponse?: unknown;
 };
 
+/**
+ * Starts a new onboarding job from form data
+ * Creates a database record and queues the job for background processing
+ * @param input - User ID and onboarding form body
+ * @returns Job ID for tracking progress
+ */
 export async function startOnboardingJob(input: {
   clerkUserId: string;
   body: OnboardingGenerateBaseBody;
@@ -51,6 +57,12 @@ export async function startOnboardingJob(input: {
   return { jobId: job.id };
 }
 
+/**
+ * Starts a new onboarding job from "About Me" text
+ * Extracts resume data from raw text using AI
+ * @param input - User ID and raw text content
+ * @returns Job ID for tracking progress
+ */
 export async function startOnboardingAboutMeJob(input: {
   clerkUserId: string;
   text: string;
@@ -77,6 +89,13 @@ export async function startOnboardingAboutMeJob(input: {
   return { jobId: job.id };
 }
 
+/**
+ * Retrieves the status and details of an onboarding job
+ * Used for polling job progress from the frontend
+ * @param input - User ID and job ID
+ * @returns Job status, progress, and results (if completed)
+ * @throws AppError if job not found or doesn't belong to user
+ */
 export async function getOnboardingJob(input: {
   clerkUserId: string;
   jobId: string;

@@ -19,6 +19,11 @@ import { openai } from '../lib/openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { aiExtractionResponseSchema } from '../schemas/ai-extraction.schema';
 
+/**
+ * Checks if user has completed onboarding (has a base resume)
+ * @param input - User's Clerk ID
+ * @returns Onboarding status with latest resume ID if exists
+ */
 export async function getOnboardingStatus(
   input: GetOnboardingStatusInput,
 ): Promise<OnboardingStatus> {
@@ -34,6 +39,13 @@ export async function getOnboardingStatus(
   };
 }
 
+/**
+ * Generates a base resume from raw "About Me" text using AI extraction
+ * Uses GPT-4o-mini to parse unstructured text into structured resume data
+ * @param input - User ID and raw text content
+ * @returns Generated resume data and metadata
+ * @throws AppError if AI determines data is insufficient or parsing fails
+ */
 export async function generateFromAboutMe(
   input: GenerateOnboardingAboutMeInput,
 ): Promise<GenerateOnboardingOutput> {
@@ -109,6 +121,13 @@ export async function generateFromAboutMe(
   };
 }
 
+/**
+ * Generates a base resume from structured onboarding form data
+ * Uses GPT-4o-mini with strict schema validation
+ * @param input - User ID and onboarding form body
+ * @returns Generated resume data and metadata
+ * @throws AppError if AI generation or validation fails
+ */
 export async function generateOnboarding(
   input: GenerateOnboardingInput,
 ): Promise<GenerateOnboardingOutput> {
