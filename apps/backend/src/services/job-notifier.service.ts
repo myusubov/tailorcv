@@ -1,66 +1,45 @@
-import { Client } from 'pg';
 import { logger } from '../lib';
-import { env } from '../config/env';
+import { redisSubscriber } from '../lib/redis';
 
 /**
  * MODULE-BASED JOB NOTIFIER SERVICE
  * Manages Server-Sent Events (SSE) connections and broadcasts 
- * database notifications from Postgres LISTEN/NOTIFY.
+ * job updates from Redis Pub/Sub.
  */
 
 // Private module-level state
-let listenerClient: Client | null = null;
 const connections: Map<string, Set<(data: any) => void>> = new Map();
 
 /**
- * Initializes (or re-initializes) the persistent Postgres listener.
+ * Initializes the Redis subscriber to listen for job updates
  */
 async function initListener() {
-  const connectionString = env.DATABASE_URL;
-  
-  listenerClient = new Client({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-  });
-
   try {
-    await listenerClient.connect();
+    // Subscribe to Redis channels for job updates
+    await redisSubscriber.subscribe('job_updates', 'analysis_job_updates');
     
-    // Subscribe to database-level notification channels.
-    await listenerClient.query('LISTEN job_updates; LISTEN analysis_job_updates;');
-    
-    listenerClient.on('notification', (msg) => {
-      if (!msg.payload) return;
-      
+    redisSubscriber.on('message', (channel, message) => {
       try {
-        const data = JSON.parse(msg.payload);
+        const data = JSON.parse(message);
         const jobId = data.id;
         
-        logger.info({ jobId, channel: msg.channel }, 'Received DB notification');
+        logger.info({ jobId, channel }, 'Received Redis notification');
         
         broadcast(jobId, data);
       } catch (err) {
-        logger.error({ err, payload: msg.payload }, 'Failed to parse notification payload');
+        logger.error({ err, message }, 'Failed to parse Redis message');
       }
     });
 
-    listenerClient.on('error', (err) => {
-      logger.error({ err }, 'Postgres listener error');
-      reconnect();
+    redisSubscriber.on('error', (err) => {
+      logger.error({ err }, 'Redis subscriber error');
     });
 
-    logger.info('Postgres Notification Listener initialized');
+    logger.info('Redis Pub/Sub Listener initialized');
   } catch (err) {
-    logger.error({ err }, 'Failed to connect Postgres Listener');
-    reconnect();
+    logger.error({ err }, 'Failed to initialize Redis subscriber');
+    throw err;
   }
-}
-
-/**
- * Self-healing: try to reconnect after a failure.
- */
-function reconnect() {
-  setTimeout(() => initListener(), 5000);
 }
 
 /**
@@ -102,6 +81,21 @@ export function addConnection(jobId: string, callback: (data: any) => void) {
     removeConnection(jobId, callback);
     logger.debug({ jobId }, 'SSE Connection removed');
   };
+}
+
+/**
+ * PUBLIC API: Publishes a job update to Redis
+ * Called by workers and services when job status changes
+ */
+export async function publishJobUpdate(channel: 'job_updates' | 'analysis_job_updates', data: any) {
+  const { redisPublisher } = await import('../lib/redis');
+  
+  try {
+    await redisPublisher.publish(channel, JSON.stringify(data));
+    logger.debug({ channel, jobId: data.id }, 'Published job update to Redis');
+  } catch (err) {
+    logger.error({ err, channel, jobId: data.id }, 'Failed to publish job update to Redis');
+  }
 }
 
 // Automatically start the listener on first import/module load

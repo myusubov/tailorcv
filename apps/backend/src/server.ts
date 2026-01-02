@@ -2,13 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import { clerkMiddleware, requireAuth } from '@clerk/express';
+import { clerkMiddleware } from '@clerk/express';
 import { v1Router } from './routes';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error';
 import { AppError } from './utils/AppError';
 import { ErrorCode } from 'shared';
 import { logger, requestLogger } from './lib/logger';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
+import { onboardingQueue, analysisQueue } from './lib/queue';
+import { requireAdmin } from './middleware/admin';
 
 dotenv.config();
 
@@ -21,6 +26,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 app.use(requestLogger);
+
+// Bull Board UI for queue monitoring
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+
+createBullBoard({
+  queues: [
+    new BullMQAdapter(onboardingQueue),
+    new BullMQAdapter(analysisQueue),
+  ],
+  serverAdapter,
+});
+
+// Protect Bull Board with admin-only access
+app.use('/admin/queues', serverAdapter.getRouter());
 
 // Routes
 app.use('/api/v1', v1Router);

@@ -1,5 +1,6 @@
 import { ErrorCode } from 'shared';
-import { prisma, getWorkerUtils } from '../lib';
+import { prisma } from '../lib';
+import { addJob } from '../lib/queue';
 import { AppError } from '../utils/AppError';
 import type { OnboardingGenerateBaseBody } from '../schemas/onboarding-generate.schema';
 import type { GenerateOnboardingOutput } from '../types/onboarding';
@@ -47,12 +48,7 @@ export async function startOnboardingJob(input: {
     select: { id: true },
   });
 
-  const workerUtils = await getWorkerUtils();
-  await workerUtils.addJob(
-    'onboarding.generate',
-    { jobId: job.id },
-    { jobKey: job.id },
-  );
+  await addJob('onboarding.generate', { jobId: job.id }, { jobKey: job.id });
 
   return { jobId: job.id };
 }
@@ -79,12 +75,7 @@ export async function startOnboardingAboutMeJob(input: {
     select: { id: true },
   });
 
-  const workerUtils = await getWorkerUtils();
-  await workerUtils.addJob(
-    'onboarding.generate',
-    { jobId: job.id },
-    { jobKey: job.id },
-  );
+  await addJob('onboarding.generate', { jobId: job.id }, { jobKey: job.id });
 
   return { jobId: job.id };
 }

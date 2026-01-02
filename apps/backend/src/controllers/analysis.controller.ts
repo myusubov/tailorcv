@@ -8,7 +8,7 @@ import { ClerkLocals } from '../types/locals';
 import { successResponse } from '../utils/response';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
-import { getWorkerUtils } from '../lib/worker';
+import { addJob } from '../lib/queue';
 
 /**
  * POST /api/v1/analysis/start
@@ -45,8 +45,7 @@ export async function startAnalysis(
     });
 
     // Queue the background worker to process the analysis
-    const workerUtils = await getWorkerUtils();
-    await workerUtils.addJob('analysis.process', { jobId: job.id });
+    await addJob('analysis.process', { jobId: job.id });
 
     return successResponse(res, { jobId: job.id, status: job.status }, 201);
   } catch (error) {

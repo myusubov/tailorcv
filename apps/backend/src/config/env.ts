@@ -16,6 +16,9 @@ const envSchema = z.object({
   DATABASE_URL: z.url(),
   SHADOW_DATABASE_URL: z.url(),
 
+  // Redis
+  REDIS_URL: z.string().url(),
+
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -43,6 +46,9 @@ const envSchema = z.object({
 
   // Optional: Additional configs
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // Admin user IDs (comma-separated Clerk user IDs)
+  ADMIN_USER_IDS: z.string().optional(),
 
   // Dev-only auth bypass (for local testing without Clerk tokens)
   DEV_AUTH_BYPASS: z

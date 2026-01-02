@@ -76,7 +76,7 @@ export async function updateJobStatus(
 ): Promise<void> {
     const { jobId, status, errorMessage } = input;
 
-    await prisma.analysisJob.update({
+    const updatedJob = await prisma.analysisJob.update({
         where: { id: jobId },
         data: {
             status,
@@ -84,6 +84,10 @@ export async function updateJobStatus(
             completedAt: status === 'COMPLETED' || status === 'FAILED' ? new Date() : undefined,
         },
     });
+
+    // Publish to Redis for real-time updates
+    const { publishJobUpdate } = await import('./job-notifier.service');
+    await publishJobUpdate('analysis_job_updates', updatedJob);
 }
 
 /**
