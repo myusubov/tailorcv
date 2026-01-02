@@ -19,6 +19,10 @@ export type GenerateOnboardingAboutMeInput = {
   text: string;
 } & ClerkLocals;
 
+export type GenerateOnboardingGithubInput = {
+  repositoryIds: string[];
+} & ClerkLocals;
+
 export type GenerateOnboardingOutput = {
   baseResumeId: string;
   data: BaseResumeData;

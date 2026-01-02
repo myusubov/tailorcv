@@ -81,6 +81,36 @@ export async function startOnboardingAboutMeJob(input: {
 }
 
 /**
+ * Starts a new onboarding job from GitHub repositories
+ * Fetches commits/PRs and extracts resume data using AI
+ * @param input - User ID and repository IDs
+ * @returns Job ID for tracking progress
+ */
+export async function startOnboardingGithubJob(input: {
+  clerkUserId: string;
+  repositoryIds: string[];
+}): Promise<StartOnboardingJobOutput> {
+  const payload: OnboardingJobPayload = {
+    repositoryIds: input.repositoryIds,
+    _type: 'github',
+  };
+  const job = await prisma.onboardingJob.create({
+    data: {
+      userId: input.clerkUserId,
+      status: 'QUEUED',
+      stage: 'QUEUED',
+      progressPct: 0,
+      payload,
+    },
+    select: { id: true },
+  });
+
+  await addJob('onboarding.generate', { jobId: job.id }, { jobKey: job.id });
+
+  return { jobId: job.id };
+}
+
+/**
  * Retrieves the status and details of an onboarding job
  * Used for polling job progress from the frontend
  * @param input - User ID and job ID

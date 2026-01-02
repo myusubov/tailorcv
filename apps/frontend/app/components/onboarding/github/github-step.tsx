@@ -9,7 +9,11 @@ import {
 import { GitHubConnectView } from './github-connect-view';
 import { GitHubLoadingView } from './github-loading-view';
 import { GitHubRepoSelectionView } from './github-repo-selection-view';
+import { useOnboardingJob } from '../onboarding-job-context';
+import { useActionMutation } from '@/lib/hooks/use-action-mutation';
+import { startOnboardingGithubJobAction } from '@/lib/actions/onboarding.actions';
 import { env } from '@/lib/config';
+import { useQueryStates, parseAsString } from 'nuqs';
 
 interface GitHubStepProps {
   onBack: () => void;
@@ -17,6 +21,28 @@ interface GitHubStepProps {
 
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const [isConnecting, setIsConnecting] = useState(false);
+  const { beginJob } = useOnboardingJob();
+
+  // Handle OAuth search params using nuqs
+  const [oauthParams, setOauthParams] = useQueryStates(
+    {
+      status: parseAsString,
+      message: parseAsString,
+    },
+    {
+      history: 'replace',
+      shallow: true,
+    },
+  );
+
+  const { mutate: analyze, isPending: isAnalyzing } = useActionMutation(
+    startOnboardingGithubJobAction,
+    {
+      onSuccess: (res) => {
+        beginJob(res.jobId);
+      },
+    },
+  );
 
   const {
     data: githubConnection,
@@ -27,26 +53,19 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   const { data: githubRepos, isLoading: isLoadingRepos } =
     useGithubReposQuery();
 
-  // Handle URL status parameters from OAuth callback
+  // Show toasts and clear params immediately after mount
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const status = url.searchParams.get('status');
-    const message = url.searchParams.get('message');
+    if (oauthParams.status) {
+      if (oauthParams.status === 'connected') {
+        toast.success('GitHub connected successfully');
+      } else if (oauthParams.status === 'error') {
+        toast.error(oauthParams.message || 'Failed to connect to GitHub');
+      }
 
-    if (status === 'connected') {
-      toast.success('GitHub connected successfully');
-    } else if (status === 'error') {
-      toast.error(message || 'Failed to connect to GitHub');
+      // Atomic cleanup using nuqs
+      setOauthParams({ status: null, message: null });
     }
-
-    // Clean up ONLY status and message parameters after handling
-    if (status) {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('status');
-      newUrl.searchParams.delete('message');
-      window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
-    }
-  }, []);
+  }, [oauthParams, setOauthParams]);
 
   const handleConnect = () => {
     setIsConnecting(true);
@@ -54,11 +73,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    // TODO: Implement the analyze action
-    console.log('Analyzing repos:', selectedRepoIds);
-    toast.info(
-      `Starting analysis of ${selectedRepoIds.length} repositories...`,
-    );
+    analyze({ repositoryIds: selectedRepoIds.map(String) });
   };
 
   // Show loading state while checking connection status
@@ -79,6 +94,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
         connection={githubConnection}
         onBack={onBack}
         onAnalyze={handleAnalyze}
+        isLoading={isAnalyzing}
       />
     );
   }

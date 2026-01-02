@@ -6,6 +6,7 @@ import {
   getOnboardingJob,
   startOnboardingJob,
   startOnboardingAboutMeJob,
+  startOnboardingGithubJob,
 } from '../services/onboarding-jobs.service';
 import { extractTextFromFile } from '../utils/file-extraction';
 import { logger } from '../lib/logger';
@@ -15,7 +16,7 @@ import { ErrorCode } from 'shared';
 
 export const getOnboardingStatusController = async (
   _req: Request,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -31,7 +32,7 @@ export const getOnboardingStatusController = async (
 
 export const generateOnboardingController = async (
   _req: Request,
-  res: Response<any, GenerateOnboardingLocals>,
+  res: Response<unknown, GenerateOnboardingLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -60,7 +61,7 @@ export const generateOnboardingController = async (
 
 export const getOnboardingJobController = async (
   req: Request<{ id: string }>,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -74,7 +75,7 @@ export const getOnboardingJobController = async (
 
 export const generateFromAboutMeController = async (
   req: Request,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -108,9 +109,30 @@ export const generateFromAboutMeController = async (
   }
 };
 
+export const generateFromGithubController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { clerkUserId } = res.locals as ClerkLocals;
+    const { repositoryIds } = req.body as { repositoryIds: string[] };
+
+    logger.info(
+      { clerkUserId, repositoryCount: repositoryIds.length },
+      'onboarding github enqueue start',
+    );
+    const result = await startOnboardingGithubJob({ clerkUserId, repositoryIds });
+
+    return successResponse(res, result, 202);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const streamOnboardingJobController = async (
   req: Request<{ id: string }>,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   _next: NextFunction,
 ) => {
   const jobId = req.params.id;

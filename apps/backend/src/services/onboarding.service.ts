@@ -2,16 +2,17 @@ import { logger, prisma } from '../lib';
 import {
   baseResumeDataSchema,
   ErrorCode,
-  type BaseResumeData,
   openAiResumeSchema,
+  type GitHubRepo,
 } from 'shared';
-import { z } from 'zod';
+import type { GitHubCommit, GitHubPullRequest } from '../types/github';
 import type {
   GetOnboardingStatusInput,
   OnboardingStatus,
   GenerateOnboardingInput,
   GenerateOnboardingOutput,
   GenerateOnboardingAboutMeInput,
+  GenerateOnboardingGithubInput,
 } from '../types/onboarding';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
@@ -206,5 +207,189 @@ export async function generateOnboarding(
       model,
       finishReason: response.choices[0].finish_reason,
     },
+  };
+}
+
+/**
+ * Generates a base resume from GitHub repository data
+ * Fetches commits, PRs, and tech stack from selected repositories
+ * Uses GPT-4o-mini to convert GitHub activity into resume format
+ * @param input - User ID and repository IDs
+ * @returns Generated resume data and metadata
+ * @throws AppError if GitHub data fetch or AI generation fails
+ */
+export async function generateFromGithub(
+  input: GenerateOnboardingGithubInput,
+): Promise<GenerateOnboardingOutput> {
+  const { clerkUserId, repositoryIds } = input;
+
+  const model = 'gpt-4o-mini';
+  const system = env.OPENAI_ONBOARDING_SYSTEM_PROMPT;
+
+  logger.info(
+    {
+      clerkUserId,
+      repositoryCount: repositoryIds.length,
+    },
+    'AI generation attempt for user (GitHub)',
+  );
+
+  // Import GitHub service functions
+  const {
+    getGithubConnection,
+    fetchGithubRepos,
+    fetchRepoCommits,
+    fetchRepoPullRequests,
+    detectRepoTechStack,
+  } = await import('./github.service');
+
+  // Get user's GitHub access token
+  const githubConnection = await getGithubConnection(clerkUserId);
+  if (!githubConnection) {
+    throw new AppError('GitHub connection not found', ErrorCode.NOT_FOUND, 404);
+  }
+
+  const accessToken = githubConnection.accessToken;
+
+  // Since we don't have a Repository table, we'll fetch metadata from GitHub
+  // or use the repositoryIds to fetch specific repo details.
+  // For now, we'll fetch all user repos and filter to match the requested IDs.
+  const allUserRepos = await fetchGithubRepos(accessToken);
+  const repositories = allUserRepos.filter((repo: GitHubRepo) => 
+    repositoryIds.includes(String(repo.id))
+  );
+
+  if (repositories.length === 0) {
+    throw new AppError('No repositories found', ErrorCode.NOT_FOUND, 404);
+  }
+
+  // Fetch GitHub data for each repository
+  const githubData = await Promise.all(
+    repositories.map(async (repo: GitHubRepo) => {
+      const owner = repo.owner.login;
+      const repoName = repo.name;
+      
+      const [commits, prs, techStack] = await Promise.all([
+        fetchRepoCommits({
+          accessToken,
+          owner,
+          repo: repoName,
+          limit: 50, // Limit to recent commits
+        }),
+        fetchRepoPullRequests({
+          accessToken,
+          owner,
+          repo: repoName,
+          limit: 20, // Limit to recent PRs
+        }),
+        detectRepoTechStack({
+          accessToken,
+          owner,
+          repo: repoName,
+        }),
+      ]);
+
+      return {
+        repository: repo,
+        commits,
+        pullRequests: prs,
+        techStack,
+      };
+    }),
+  );
+
+  // Aggregate all data
+  const allCommits = githubData.flatMap((d) => d.commits);
+  const allPRs = githubData.flatMap((d) => d.pullRequests);
+  const allTechStack = [
+    ...new Set(githubData.flatMap((d) => d.techStack)),
+  ] as string[];
+
+  logger.info(
+    {
+      clerkUserId,
+      totalCommits: allCommits.length,
+      totalPRs: allPRs.length,
+      techStack: allTechStack,
+    },
+    'GitHub data fetched successfully',
+  );
+
+  // Create prompt from GitHub data
+  const prompt = `SOURCE MATERIAL (GitHub Activity):
+
+REPOSITORIES:
+${githubData.map((d) => `- ${d.repository.full_name}: ${d.repository.description || 'No description'}`).join('\n')}
+
+TECH STACK:
+${allTechStack.join(', ')}
+
+RECENT COMMITS (${allCommits.length} total):
+${allCommits.slice(0, 30).map((c: GitHubCommit) => `- ${c.commit.message} (${c.commit.author.date})`).join('\n')}
+
+PULL REQUESTS (${allPRs.length} total):
+${allPRs.slice(0, 15).map((pr: GitHubPullRequest) => `- ${pr.title}: ${pr.body || 'No description'}`).join('\n')}
+
+CRITICAL INSTRUCTION:
+1. CONVERT TO RESUME: Transform the GitHub activity above into professional resume format
+2. PROJECTS: Create project entries from the repositories, highlighting key contributions
+3. SKILLS: Extract technical skills from the tech stack and commit messages
+4. EXPERIENCE: If commits show professional patterns, create experience entries
+5. DATES: Use commit dates to infer project timelines (format: "YYYY-MM")
+6. IMPACT: Highlight meaningful contributions, not just "fixed bugs"`;
+
+  const response = await openai.chat.completions.parse({
+    model,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: prompt },
+    ],
+    response_format: zodResponseFormat(
+      aiExtractionResponseSchema,
+      'resume_extraction',
+    ),
+    temperature: 0.3, // Slightly higher for creative resume writing
+  });
+
+  const parsedResponse = response.choices[0].message.parsed;
+
+  if (!parsedResponse) {
+    throw new AppError(
+      'AI failed to provide a valid response format',
+      ErrorCode.AI_GENERATION_ERROR,
+      500,
+    );
+  }
+
+  if (parsedResponse._isDataSufficient === false) {
+    const reason = parsedResponse._insufficientReason || 'Insufficient GitHub data';
+    logger.warn(
+      { clerkUserId, reason },
+      'AI determined GitHub data is insufficient',
+    );
+    throw new AppError(reason, ErrorCode.INSUFFICIENT_DATA, 400);
+  }
+
+  logger.info(
+    {
+      clerkUserId,
+      finishReason: response.choices[0].finish_reason,
+    },
+    'Successfully generated resume from GitHub data',
+  );
+
+  const baseResume = await prisma.baseResume.create({
+    data: {
+      userId: clerkUserId,
+      name: 'GitHub Resume',
+      data: parsedResponse.data,
+    },
+  });
+
+  return {
+    baseResumeId: baseResume.id,
+    data: parsedResponse.data,
+    rawAiResponse: parsedResponse,
+    meta: { model, finishReason: response.choices[0].finish_reason },
   };
 }

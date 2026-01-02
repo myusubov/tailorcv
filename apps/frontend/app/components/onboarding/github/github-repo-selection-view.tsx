@@ -14,6 +14,7 @@ interface GitHubRepoSelectionViewProps {
   connection: GitHubConnection;
   onBack: () => void;
   onAnalyze: (selectedRepoIds: number[]) => void;
+  isLoading?: boolean;
 }
 
 export function GitHubRepoSelectionView({
@@ -21,6 +22,7 @@ export function GitHubRepoSelectionView({
   connection,
   onBack,
   onAnalyze,
+  isLoading,
 }: GitHubRepoSelectionViewProps) {
   const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -274,6 +276,7 @@ export function GitHubRepoSelectionView({
           <Button
             isDisabled={selectedRepos.size === 0}
             onPress={handleAnalyze}
+            isPending={isLoading}
           >
             <Icon icon="lucide:sparkles" className="size-5" />
             Analyze {selectedRepos.size}{' '}

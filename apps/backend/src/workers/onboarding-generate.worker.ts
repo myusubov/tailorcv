@@ -5,7 +5,11 @@ import { logger } from '../lib/logger';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import type { OnboardingJobPayload } from '../types/onboarding-job';
-import { generateOnboarding, generateFromAboutMe } from '../services/onboarding.service';
+import {
+  generateOnboarding,
+  generateFromAboutMe,
+  generateFromGithub,
+} from '../services/onboarding.service';
 import { Prisma } from '../../prisma/generated/client/client.js';
 import { publishJobUpdate } from '../services/job-notifier.service';
 
@@ -98,6 +102,11 @@ export default async function (job: Job<{ jobId: string }>) {
       result = await generateOnboarding({
         clerkUserId: dbJob.userId,
         body: payload,
+      });
+    } else if (payload._type === 'github') {
+      result = await generateFromGithub({
+        clerkUserId: dbJob.userId,
+        repositoryIds: payload.repositoryIds,
       });
     }
 
