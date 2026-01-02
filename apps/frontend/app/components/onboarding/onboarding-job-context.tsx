@@ -1,10 +1,10 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 
-import type { GenerateOnboardingOutput } from '@/lib/types/onboarding';
-import { useOnboardingJobQuery } from '@/lib/http/onboarding-client';
+import type { GetOnboardingJobOutput, GenerateOnboardingOutput } from '@/lib/types/onboarding';
+import { getOnboardingJobStream, useOnboardingJobQuery } from '@/lib/http/onboarding-client';
+import { useStream } from '@/lib/hooks/use-stream';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { showErrorToast } from '@/lib/utils/error-toast';
 
@@ -45,27 +45,46 @@ export function OnboardingJobProvider({
   children: React.ReactNode;
 }) {
   const [jobId, setJobId] = useState<string | null>(() => readStoredJobId());
+  const [liveJobData, setLiveJobData] = useState<GetOnboardingJobOutput | null>(null);
   const [generatedData, setGeneratedData] =
     useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const { data: jobData, error: jobError } = useOnboardingJobQuery(
+  // Hybrid Polling/Streaming: We use TanStack Query as an initial fetch and safety fallback.
+  const { data: initialJobData, error: jobError } = useOnboardingJobQuery(
     { id: jobId! },
     {
-      enabled: !!jobId,
+      // We only poll if we don't have active live data yet.
+      enabled: !!jobId && !liveJobData, 
       refetchInterval: (query) => {
-        const data = query.state.data as typeof jobData;
-        if (data?.status === 'SUCCEEDED' || data?.status === 'FAILED') {
+        const job = query.state.data as GetOnboardingJobOutput | undefined;
+        if (job?.status === 'SUCCEEDED' || job?.status === 'FAILED' || liveJobData) {
           return false;
         }
-        return 1500;
-      },
-      retry: (failureCount, error) => {
-        if (error.status === 404) return false;
-        return failureCount < 3;
+        return 3000;
       },
     },
   );
+
+  // Computed job data (Live stream takes priority over initial query data)
+  const jobData = liveJobData || initialJobData;
+
+  // Memoize params to prevent the stream from reconnecting on every render
+  const streamParams = useMemo(() => ({ id: jobId! }), [jobId]);
+
+  // Centralized SSE Stream: Replaces manual fetch/parsing logic
+  useStream(getOnboardingJobStream, streamParams, {
+    enabled: !!jobId && jobData?.status !== 'SUCCEEDED' && jobData?.status !== 'FAILED',
+    onData: setLiveJobData,
+  });
+
+  // Early persistence cleanup: Clear localStorage as soon as the job is terminal.
+  // We keep the state 'jobId' alive to finish our current UI/Data flow.
+  useEffect(() => {
+    if (jobData?.status === 'SUCCEEDED' || jobData?.status === 'FAILED') {
+      clearStoredJobId();
+    }
+  }, [jobData?.status]);
 
   const clearJob = () => {
     setJobId(null);
@@ -74,7 +93,7 @@ export function OnboardingJobProvider({
 
   useEffect(() => {
     if (jobError?.status === 404) {
-      clearJob();
+      setTimeout(() => clearJob(), 0);
     }
   }, [jobError]);
 
@@ -94,19 +113,27 @@ export function OnboardingJobProvider({
   useEffect(() => {
     if (jobData?.status === 'FAILED') {
       showErrorToast(jobData.error);
-      clearJob();
+      setTimeout(() => {
+        clearJob();
+        setLiveJobData(null);
+      }, 0);
     }
   }, [jobData?.status, jobData?.error]);
 
   useEffect(() => {
     if (resumeData && jobData?.status === 'SUCCEEDED') {
-      setGeneratedData({
-        baseResumeId: resumeData.id,
-        data: resumeData.data,
-        meta: { model: 'worker', finishReason: 'STOP' },
-      });
-      setShowSuccessModal(true);
-      clearJob();
+      // Deferring these updates to the next tick to avoid "cascading renders" ESlint warning.
+      // This ensures we don't update state synchronously during a render phase.
+      setTimeout(() => {
+        setGeneratedData({
+          baseResumeId: resumeData.id,
+          data: resumeData.data,
+          meta: { model: 'worker', finishReason: 'STOP' },
+        });
+        setShowSuccessModal(true);
+        setLiveJobData(null);
+        clearJob();
+      }, 0);
     }
   }, [resumeData, jobData?.status]);
 

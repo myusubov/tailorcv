@@ -1,4 +1,4 @@
-import { prisma } from 'src/lib';
+import { prisma } from '../lib';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import jwt from 'jsonwebtoken';
@@ -11,7 +11,7 @@ import {
   GitHubRepo,
   GitHubConnection,
 } from 'shared';
-import { FetchGithubCommitsInput, FetchGithubPullRequestsInput, FetchRepoFileInput, GitHubCommit, GitHubPullRequest, DetectRepoTechStackInput } from 'src/types/github';
+import { FetchGithubCommitsInput, FetchGithubPullRequestsInput, FetchRepoFileInput, GitHubCommit, GitHubPullRequest, DetectRepoTechStackInput } from '../types/github';
 
 /**
  * Generates the GitHub OAuth authorization URL

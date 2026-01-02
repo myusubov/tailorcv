@@ -5,7 +5,7 @@ import {
   getAnalysisResults,
   listAnalysisJobs,
 } from '../controllers/analysis.controller';
-import { requireClerkAuth } from 'src/middleware/auth';
+import { requireClerkAuth } from '../middleware/auth';
 
 export const analysisRouter = Router();
 

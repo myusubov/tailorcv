@@ -113,7 +113,7 @@ export const tasks: TaskList = {
           clerkUserId: job.userId,
           text: payload.text,
         });
-      } else {
+      } else if (payload._type === 'form') {
         result = await generateOnboarding({
           clerkUserId: job.userId,
           body: payload,

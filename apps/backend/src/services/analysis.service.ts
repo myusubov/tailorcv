@@ -1,4 +1,4 @@
-import { prisma } from 'src/lib';
+import { prisma } from '../lib';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import {
@@ -6,7 +6,7 @@ import {
     UpdateJobStatusInput,
     SaveAnalysisResultsInput,
     AnalysisJobWithRelations,
-} from 'src/types/analysis';
+} from '../types/analysis';
 import { AnalysisJob } from 'prisma/generated/client/client';
 import { fetchGithubRepos } from './github.service';
 

@@ -4,8 +4,8 @@ import {
   getAnalysisJob,
   getUserAnalysisJobs,
 } from '../services/analysis.service';
-import { ClerkLocals } from 'src/types/locals';
-import { successResponse } from 'src/utils/response';
+import { ClerkLocals } from '../types/locals';
+import { successResponse } from '../utils/response';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import { getWorkerUtils } from '../lib/worker';

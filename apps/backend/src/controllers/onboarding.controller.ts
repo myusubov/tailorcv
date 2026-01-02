@@ -9,6 +9,7 @@ import {
 } from '../services/onboarding-jobs.service';
 import { extractTextFromFile } from '../utils/file-extraction';
 import { logger } from '../lib/logger';
+import { addConnection as addJobConnection } from '../services/job-notifier.service';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 
@@ -105,4 +106,41 @@ export const generateFromAboutMeController = async (
   } catch (err) {
     next(err);
   }
+};
+
+export const streamOnboardingJobController = async (
+  req: Request<{ id: string }>,
+  res: Response<any, ClerkLocals>,
+  _next: NextFunction,
+) => {
+  const jobId = req.params.id;
+  const { clerkUserId } = res.locals;
+
+  // Set SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+
+  // Keep connection alive with retry instruction
+  res.write('retry: 10000\n\n');
+
+  // Immediately send the current status if possible
+  try {
+    const job = await getOnboardingJob({ jobId, clerkUserId });
+    res.write(`data: ${JSON.stringify(job)}\n\n`);
+  } catch (err) {
+    logger.warn({ jobId, clerkUserId, err }, 'Failed to fetch initial job state for stream');
+  }
+
+  // Subscribe to updates
+  const unsubscribe = addJobConnection(jobId, (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  });
+
+  // Cleanup on close
+  req.on('close', () => {
+    unsubscribe();
+  });
 };

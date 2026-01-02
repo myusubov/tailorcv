@@ -1,5 +1,7 @@
 import type { GetOnboardingJobOutput } from '@/lib/types/onboarding';
 import { defineClientGet } from '@/lib/http/define-client-get';
+import { defineStream } from '@/lib/http/define-stream';
+import { defineQuery } from '@/lib/http/define-query';
 
 export const getOnboardingJobClient = defineClientGet<
   { id: string },
@@ -11,5 +13,12 @@ export const getOnboardingJobClient = defineClientGet<
   defaults: { cache: 'no-store' },
 });
 
-import { defineQuery } from '@/lib/http/define-query';
 export const useOnboardingJobQuery = defineQuery(getOnboardingJobClient);
+
+export const getOnboardingJobStream = defineStream<
+  { id: string },
+  GetOnboardingJobOutput
+>({
+  path: ({ id }) => `/api/onboarding/jobs/${id}/stream`,
+  streamKey: 'onboarding-jobs-stream',
+});

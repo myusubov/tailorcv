@@ -9,7 +9,7 @@
   "scripts": {
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
     "start:frontend": "npm run start --workspace=frontend",
-    "start:backend": "npm run start --workspace=backend",
+    "start:backend": "concurrently \"npm run start --workspace=backend\" \"npm run start:worker --workspace=backend\"",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "concurrently \"npm run dev --workspace=shared\" \"npm run dev --workspace=backend\" \"npm run dev:worker --workspace=backend\"",
@@ -32,6 +32,7 @@
   "devDependencies": {
     "@types/node": "^20",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "next": "16.0.10",
     "prettier": "^3.7.4",

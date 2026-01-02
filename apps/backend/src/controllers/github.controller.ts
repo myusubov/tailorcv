@@ -8,11 +8,11 @@ import {
   saveGitHubConnection,
   verifyOAuthState,
 } from '../services/github.service';
-import { ClerkLocals } from 'src/types/locals';
-import { env } from 'src/config/env';
+import { ClerkLocals } from '../types/locals';
+import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
-import { successResponse } from 'src/utils/response';
+import { successResponse } from '../utils/response';
 
 /**
  * Initiates the GitHub OAuth flow by redirecting to GitHub

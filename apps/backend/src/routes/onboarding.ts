@@ -5,6 +5,7 @@ import {
   generateOnboardingController,
   getOnboardingJobController,
   generateFromAboutMeController,
+  streamOnboardingJobController,
 } from '../controllers/onboarding.controller';
 import { upload } from '../middleware/upload';
 import { validateBody } from '../middleware/validate';
@@ -33,3 +34,9 @@ onboardingRouter.post(
 );
 
 onboardingRouter.get('/jobs/:id', requireClerkAuth, getOnboardingJobController);
+onboardingRouter.get(
+  '/jobs/:id/stream',
+  requireClerkAuth,
+  streamOnboardingJobController,
+);
+

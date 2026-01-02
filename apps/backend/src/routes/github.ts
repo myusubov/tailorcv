@@ -5,7 +5,7 @@ import {
   getGithubRepos,
   fetchGithubConnection,
 } from '../controllers/github.controller';
-import { requireClerkAuth } from 'src/middleware/auth';
+import { requireClerkAuth } from '../middleware/auth';
 
 export const githubRouter = Router();
 

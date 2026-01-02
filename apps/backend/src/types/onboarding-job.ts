@@ -29,4 +29,5 @@ export type OnboardingJobError = {
 
 export type OnboardingJobPayload =
   | (OnboardingGenerateBaseBody & { _type: 'form' })
-  | { _type: 'about-me'; text: string };
+  | { _type: 'about-me'; text: string }
+  | { _type: 'github'; analysisJobId: string };

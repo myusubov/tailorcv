@@ -82,7 +82,26 @@ A specialized version of `useMutation` for **Server Actions** or **POST/PUT** re
 
 ---
 
-## 6. Summary of Patterns
+## 6. Real-time Streams: `defineStream` + `useStream`
+
+**Location:** `@/lib/http/define-stream.ts` & `@/lib/hooks/use-stream.ts`
+
+Used for **Server-Sent Events (SSE)** to provide real-time updates (e.g., job progress).
+
+**The Workflow:**
+
+1.  **Definition:** `defineStream` sets up the stream URL and parameters.
+2.  **Consumption:** `useStream` hook manages the connection life cycle.
+
+**Key Features:**
+
+- **Engine:** Built on `@microsoft/fetch-event-source` for robust handling of custom headers and auto-reconnection.
+- **State Management:** Provides `data`, `error`, and `isLoading` states directly to the component.
+- **Automatic Lifecycle:** Handles connection opening and cleanup (Aborting) automatically when dependencies change or components unmount.
+
+---
+
+## 7. Summary of Patterns
 
 ### For Server Components (Pages/Layouts)
 
@@ -104,16 +123,20 @@ export const myAction = defineAction({ ... });
 const { mutate } = useActionMutation(myAction);
 ```
 
-### For API Routes
-
-Use the same **`defineGet`** objects used by Server Components.
-
-### For Client Components
+### For Client Components (Fetching)
 
 Use **`defineQuery`** inside `@/lib/http/...`.
 
 ```typescript
 const { data } = useGithubConnectionQuery();
+```
+
+### For Client Components (Streaming)
+
+Use **`useStream`** with a fetcher from `@/lib/http/...`.
+
+```typescript
+const { data: job } = useStream(getJobStream, { id });
 ```
 
 ---
@@ -122,8 +145,8 @@ const { data } = useGithubConnectionQuery();
 
 `UI Component` (User)
 ⬇
-`defineQuery` (React Hook) or `defineGet` (Server Call)
+`defineQuery` (Polling) | `useStream` (Real-time) | `useActionMutation` (Write)
 ⬇
-`backendRequest` (Handshake, Auth, Fetch)
+`backendRequest` (Handshake, Auth, Fetch) or `fetchEventSource` (SSE)
 ⬇
 `Backend Express API`
