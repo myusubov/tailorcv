@@ -16,7 +16,7 @@ function makeQueryClient() {
         staleTime: 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
-        retry: 0
+        retry: 0,
       },
     },
   });

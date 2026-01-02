@@ -1,9 +1,22 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from 'react';
 
-import type { GetOnboardingJobOutput, GenerateOnboardingOutput } from '@/lib/types/onboarding';
-import { getOnboardingJobStream, useOnboardingJobQuery } from '@/lib/http/onboarding-client';
+import type {
+  GetOnboardingJobOutput,
+  GenerateOnboardingOutput,
+} from '@/lib/types/onboarding';
+import {
+  getOnboardingJobStream,
+  useOnboardingJobQuery,
+} from '@/lib/http/onboarding-client';
 import { useStream } from '@/lib/hooks/use-stream';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { showErrorToast } from '@/lib/utils/error-toast';
@@ -45,7 +58,9 @@ export function OnboardingJobProvider({
   children: React.ReactNode;
 }) {
   const [jobId, setJobId] = useState<string | null>(() => readStoredJobId());
-  const [liveJobData, setLiveJobData] = useState<GetOnboardingJobOutput | null>(null);
+  const [liveJobData, setLiveJobData] = useState<GetOnboardingJobOutput | null>(
+    null,
+  );
   const [generatedData, setGeneratedData] =
     useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -55,10 +70,14 @@ export function OnboardingJobProvider({
     { id: jobId! },
     {
       // We only poll if we don't have active live data yet.
-      enabled: !!jobId && !liveJobData, 
+      enabled: !!jobId && !liveJobData,
       refetchInterval: (query) => {
         const job = query.state.data as GetOnboardingJobOutput | undefined;
-        if (job?.status === 'SUCCEEDED' || job?.status === 'FAILED' || liveJobData) {
+        if (
+          job?.status === 'SUCCEEDED' ||
+          job?.status === 'FAILED' ||
+          liveJobData
+        ) {
           return false;
         }
         return 3000;
@@ -74,7 +93,10 @@ export function OnboardingJobProvider({
 
   // Centralized SSE Stream: Replaces manual fetch/parsing logic
   useStream(getOnboardingJobStream, streamParams, {
-    enabled: !!jobId && jobData?.status !== 'SUCCEEDED' && jobData?.status !== 'FAILED',
+    enabled:
+      !!jobId &&
+      jobData?.status !== 'SUCCEEDED' &&
+      jobData?.status !== 'FAILED',
     onData: setLiveJobData,
   });
 

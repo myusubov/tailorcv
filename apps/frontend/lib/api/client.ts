@@ -96,11 +96,7 @@ async function backendFetch(
     ...init,
     headers: requestHeaders,
     body:
-      body === undefined
-        ? undefined
-        : isFormData
-          ? body
-          : JSON.stringify(body),
+      body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
     next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
   });
 }
@@ -170,7 +166,7 @@ export async function backendRequest<T>(
 }
 
 /**
- * Specialized handler for Server-Sent Events (SSE). 
+ * Specialized handler for Server-Sent Events (SSE).
  * Reuses authentication and URL logic but returns a raw Response.
  */
 export async function backendStream(

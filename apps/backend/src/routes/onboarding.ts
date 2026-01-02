@@ -10,9 +10,9 @@ import {
 } from '../controllers/onboarding.controller';
 import { upload } from '../middleware/upload';
 import { validateBody } from '../middleware/validate';
-import { 
-  onboardingGenerateBaseBodySchema, 
-  onboardingGithubBodySchema 
+import {
+  onboardingGenerateBaseBodySchema,
+  onboardingGithubBodySchema,
 } from '../schemas/onboarding-generate.schema';
 
 export const onboardingRouter = Router();
@@ -50,4 +50,3 @@ onboardingRouter.get(
   requireClerkAuth,
   streamOnboardingJobController,
 );
-

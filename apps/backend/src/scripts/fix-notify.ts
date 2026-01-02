@@ -44,7 +44,6 @@ async function fixNotificationFunction() {
     console.log('Replacing function notify_job_update...');
     await client.query(query);
     console.log('Successfully updated notification function.');
-
   } catch (err) {
     console.error('Failed to update function:', err);
   } finally {

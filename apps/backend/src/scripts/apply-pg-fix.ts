@@ -7,7 +7,7 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 async function applyFix() {
   const connectionString = process.env.DATABASE_URL;
-  
+
   if (!connectionString) {
     console.error('❌ DATABASE_URL not found in environment');
     process.exit(1);

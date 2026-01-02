@@ -14,14 +14,16 @@ export async function GET(
     });
 
     if (!response.ok || !response.body) {
-      return new Response('Failed to connect to stream', { status: response.status });
+      return new Response('Failed to connect to stream', {
+        status: response.status,
+      });
     }
 
     return new Response(response.body, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     });
   } catch (err) {

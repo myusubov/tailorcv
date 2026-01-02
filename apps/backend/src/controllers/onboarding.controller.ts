@@ -122,7 +122,10 @@ export const generateFromGithubController = async (
       { clerkUserId, repositoryCount: repositoryIds.length },
       'onboarding github enqueue start',
     );
-    const result = await startOnboardingGithubJob({ clerkUserId, repositoryIds });
+    const result = await startOnboardingGithubJob({
+      clerkUserId,
+      repositoryIds,
+    });
 
     return successResponse(res, result, 202);
   } catch (err) {
@@ -142,7 +145,7 @@ export const streamOnboardingJobController = async (
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
+    Connection: 'keep-alive',
   });
 
   // Keep connection alive with retry instruction
@@ -153,7 +156,10 @@ export const streamOnboardingJobController = async (
     const job = await getOnboardingJob({ jobId, clerkUserId });
     res.write(`data: ${JSON.stringify(job)}\n\n`);
   } catch (err) {
-    logger.warn({ jobId, clerkUserId, err }, 'Failed to fetch initial job state for stream');
+    logger.warn(
+      { jobId, clerkUserId, err },
+      'Failed to fetch initial job state for stream',
+    );
   }
 
   // Subscribe to updates

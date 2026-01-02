@@ -17,9 +17,7 @@ export function defineStream<TParams = void, TResponse = any>(
 ): StreamFn<TParams, TResponse> {
   const fn = (params: TParams) => {
     const path =
-      typeof config.path === 'function'
-        ? config.path(params)
-        : config.path;
+      typeof config.path === 'function' ? config.path(params) : config.path;
     return path;
   };
 

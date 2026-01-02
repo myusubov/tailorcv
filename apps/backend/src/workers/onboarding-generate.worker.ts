@@ -174,7 +174,7 @@ export default async function (job: Job<{ jobId: string }>) {
       },
     });
     await publishJobUpdate('job_updates', failedJob);
-    
+
     throw err; // Re-throw so BullMQ knows the job failed
   }
 }

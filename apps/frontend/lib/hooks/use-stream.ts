@@ -21,7 +21,7 @@ export function useStream<TParams, TResponse>(
 
   // Use a ref to stable-ize options to avoid effect re-runs
   const optionsRef = useRef(options);
-  
+
   useEffect(() => {
     optionsRef.current = options;
   });
@@ -39,7 +39,7 @@ export function useStream<TParams, TResponse>(
         await fetchEventSource(path, {
           method: 'GET',
           headers: {
-            'Accept': 'text/event-stream',
+            Accept: 'text/event-stream',
           },
           signal: abortController.signal,
           onmessage(ev) {

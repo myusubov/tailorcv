@@ -3,7 +3,7 @@ import { redisSubscriber } from '../lib/redis';
 
 /**
  * MODULE-BASED JOB NOTIFIER SERVICE
- * Manages Server-Sent Events (SSE) connections and broadcasts 
+ * Manages Server-Sent Events (SSE) connections and broadcasts
  * job updates from Redis Pub/Sub.
  */
 
@@ -17,14 +17,14 @@ async function initListener() {
   try {
     // Subscribe to Redis channels for job updates
     await redisSubscriber.subscribe('job_updates', 'analysis_job_updates');
-    
+
     redisSubscriber.on('message', (channel, message) => {
       try {
         const data = JSON.parse(message);
         const jobId = data.id;
-        
+
         logger.info({ jobId, channel }, 'Received Redis notification');
-        
+
         broadcast(jobId, data);
       } catch (err) {
         logger.error({ err, message }, 'Failed to parse Redis message');
@@ -74,9 +74,9 @@ export function addConnection(jobId: string, callback: (data: any) => void) {
     connections.set(jobId, new Set());
   }
   connections.get(jobId)!.add(callback);
-  
+
   logger.debug({ jobId }, 'SSE Connection added');
-  
+
   return () => {
     removeConnection(jobId, callback);
     logger.debug({ jobId }, 'SSE Connection removed');
@@ -87,14 +87,20 @@ export function addConnection(jobId: string, callback: (data: any) => void) {
  * PUBLIC API: Publishes a job update to Redis
  * Called by workers and services when job status changes
  */
-export async function publishJobUpdate(channel: 'job_updates' | 'analysis_job_updates', data: any) {
+export async function publishJobUpdate(
+  channel: 'job_updates' | 'analysis_job_updates',
+  data: any,
+) {
   const { redisPublisher } = await import('../lib/redis');
-  
+
   try {
     await redisPublisher.publish(channel, JSON.stringify(data));
     logger.debug({ channel, jobId: data.id }, 'Published job update to Redis');
   } catch (err) {
-    logger.error({ err, channel, jobId: data.id }, 'Failed to publish job update to Redis');
+    logger.error(
+      { err, channel, jobId: data.id },
+      'Failed to publish job update to Redis',
+    );
   }
 }
 

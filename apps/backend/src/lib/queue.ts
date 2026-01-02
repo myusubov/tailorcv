@@ -34,7 +34,10 @@ const defaultQueueOptions: QueueOptions = {
 /**
  * Queue for onboarding job processing
  */
-export const onboardingQueue = new Queue('onboarding.generate', defaultQueueOptions);
+export const onboardingQueue = new Queue(
+  'onboarding.generate',
+  defaultQueueOptions,
+);
 
 /**
  * Queue for GitHub analysis job processing
@@ -48,18 +51,19 @@ export const analysisQueue = new Queue('analysis.process', defaultQueueOptions);
 export async function addJob(
   queueName: 'onboarding.generate' | 'analysis.process',
   data: any,
-  options?: { jobKey?: string }
+  options?: { jobKey?: string },
 ) {
-  const queue = queueName === 'onboarding.generate' ? onboardingQueue : analysisQueue;
-  
+  const queue =
+    queueName === 'onboarding.generate' ? onboardingQueue : analysisQueue;
+
   const jobOptions = options?.jobKey
     ? { jobId: options.jobKey } // Use jobKey as jobId for deduplication
     : {};
 
   const job = await queue.add(queueName, data, jobOptions);
-  
+
   logger.info({ queueName, jobId: job.id }, 'Job added to BullMQ queue');
-  
+
   return job;
 }
 

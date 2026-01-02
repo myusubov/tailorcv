@@ -255,8 +255,8 @@ export async function generateFromGithub(
   // or use the repositoryIds to fetch specific repo details.
   // For now, we'll fetch all user repos and filter to match the requested IDs.
   const allUserRepos = await fetchGithubRepos(accessToken);
-  const repositories = allUserRepos.filter((repo: GitHubRepo) => 
-    repositoryIds.includes(String(repo.id))
+  const repositories = allUserRepos.filter((repo: GitHubRepo) =>
+    repositoryIds.includes(String(repo.id)),
   );
 
   if (repositories.length === 0) {
@@ -268,7 +268,7 @@ export async function generateFromGithub(
     repositories.map(async (repo: GitHubRepo) => {
       const owner = repo.owner.login;
       const repoName = repo.name;
-      
+
       const [commits, prs, techStack] = await Promise.all([
         fetchRepoCommits({
           accessToken,
@@ -325,10 +325,18 @@ TECH STACK:
 ${allTechStack.join(', ')}
 
 RECENT COMMITS (${allCommits.length} total):
-${allCommits.slice(0, 30).map((c: GitHubCommit) => `- ${c.commit.message} (${c.commit.author.date})`).join('\n')}
+${allCommits
+  .slice(0, 30)
+  .map((c: GitHubCommit) => `- ${c.commit.message} (${c.commit.author.date})`)
+  .join('\n')}
 
 PULL REQUESTS (${allPRs.length} total):
-${allPRs.slice(0, 15).map((pr: GitHubPullRequest) => `- ${pr.title}: ${pr.body || 'No description'}`).join('\n')}
+${allPRs
+  .slice(0, 15)
+  .map(
+    (pr: GitHubPullRequest) => `- ${pr.title}: ${pr.body || 'No description'}`,
+  )
+  .join('\n')}
 
 CRITICAL INSTRUCTION:
 1. CONVERT TO RESUME: Transform the GitHub activity above into professional resume format
@@ -362,7 +370,8 @@ CRITICAL INSTRUCTION:
   }
 
   if (parsedResponse._isDataSufficient === false) {
-    const reason = parsedResponse._insufficientReason || 'Insufficient GitHub data';
+    const reason =
+      parsedResponse._insufficientReason || 'Insufficient GitHub data';
     logger.warn(
       { clerkUserId, reason },
       'AI determined GitHub data is insufficient',
