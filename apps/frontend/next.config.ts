@@ -3,8 +3,6 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ['shared'],
-  cacheComponents: true,
-  reactStrictMode: false,
   experimental: {
     turbopackFileSystemCacheForDev: true,
     typedEnv: true,

@@ -91,32 +91,49 @@ export async function generateFromAboutMe(
 
   if (parsedResponse._isDataSufficient === false) {
     const reason = parsedResponse._insufficientReason || 'Insufficient data';
-    logger.warn(
+    logger.info(
       { clerkUserId, reason },
-      'AI determined source material is insufficient',
+      'AI noted source material is weak, proceeding with draft creation anyway',
     );
-    throw new AppError(reason, ErrorCode.INSUFFICIENT_DATA, 400);
   }
+
+  // Fetch the user's "ground truth" identity from the DB
+  const user = await prisma.user.findUnique({
+    where: { clerkUserId },
+    select: { firstName: true, lastName: true, email: true },
+  });
+
+  // Enrich the AI data with the actual user profile
+  const enrichedData = {
+    ...parsedResponse.data,
+    contact: {
+      ...parsedResponse.data.contact,
+      firstName: user?.firstName || parsedResponse.data.contact?.firstName || '',
+      lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
+      email: user?.email || parsedResponse.data.contact?.email || '',
+    },
+  };
 
   logger.info(
     {
       clerkUserId,
       finishReason: response.choices[0].finish_reason,
     },
-    'Successfully extracted resume data from raw text',
+    'Successfully extracted resume data draft from raw text',
   );
 
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
-      name: 'My First Resume',
-      data: parsedResponse.data,
+      name: 'Initial Resume (Draft)',
+      data: enrichedData,
+      status: 'DRAFT',
     },
   });
 
   return {
     baseResumeId: baseResume.id,
-    data: parsedResponse.data,
+    data: enrichedData,
     rawAiResponse: parsedResponse,
     meta: { model, finishReason: response.choices[0].finish_reason },
   };
@@ -191,17 +208,35 @@ export async function generateOnboarding(
     );
   }
 
+  // Fetch the user's "ground truth" identity from the DB
+  const user = await prisma.user.findUnique({
+    where: { clerkUserId },
+    select: { firstName: true, lastName: true, email: true },
+  });
+
+  // Enrich the AI data with the actual user profile
+  const enrichedData = {
+    ...validation.data,
+    contact: {
+      ...validation.data.contact,
+      firstName: user?.firstName || validation.data.contact?.firstName || '',
+      lastName: user?.lastName || validation.data.contact?.lastName || '',
+      email: user?.email || validation.data.contact?.email || '',
+    },
+  };
+
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
-      name: 'My First Resume',
-      data: validation.data,
+      name: 'Initial Resume (Draft)',
+      data: enrichedData,
+      status: 'DRAFT',
     },
   });
 
   return {
     baseResumeId: baseResume.id,
-    data: validation.data,
+    data: enrichedData,
     rawAiResponse: rawData,
     meta: {
       model,
@@ -372,32 +407,49 @@ CRITICAL INSTRUCTION:
   if (parsedResponse._isDataSufficient === false) {
     const reason =
       parsedResponse._insufficientReason || 'Insufficient GitHub data';
-    logger.warn(
+    logger.info(
       { clerkUserId, reason },
-      'AI determined GitHub data is insufficient',
+      'AI noted GitHub data is sparse, proceeding with draft anyway',
     );
-    throw new AppError(reason, ErrorCode.INSUFFICIENT_DATA, 400);
   }
+
+  // Fetch the user's "ground truth" identity from the DB
+  const user = await prisma.user.findUnique({
+    where: { clerkUserId },
+    select: { firstName: true, lastName: true, email: true },
+  });
+
+  // Enrich the AI data with the actual user profile
+  const enrichedData = {
+    ...parsedResponse.data,
+    contact: {
+      ...parsedResponse.data.contact,
+      firstName: user?.firstName || parsedResponse.data.contact?.firstName || '',
+      lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
+      email: user?.email || parsedResponse.data.contact?.email || '',
+    },
+  };
 
   logger.info(
     {
       clerkUserId,
       finishReason: response.choices[0].finish_reason,
     },
-    'Successfully generated resume from GitHub data',
+    'Successfully generated resume draft from GitHub data',
   );
 
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
-      name: 'GitHub Resume',
-      data: parsedResponse.data,
+      name: 'GitHub Resume (Draft)',
+      data: enrichedData,
+      status: 'DRAFT',
     },
   });
 
   return {
     baseResumeId: baseResume.id,
-    data: parsedResponse.data,
+    data: enrichedData,
     rawAiResponse: parsedResponse,
     meta: { model, finishReason: response.choices[0].finish_reason },
   };

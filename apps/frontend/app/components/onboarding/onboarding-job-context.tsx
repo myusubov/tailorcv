@@ -20,6 +20,7 @@ import {
 import { useStream } from '@/lib/hooks/use-stream';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { showErrorToast } from '@/lib/utils/error-toast';
+import { useRouter } from 'next/navigation';
 
 const STORAGE_KEY = 'onboardingJobId';
 
@@ -64,6 +65,7 @@ export function OnboardingJobProvider({
   const [generatedData, setGeneratedData] =
     useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const router = useRouter();
 
   // Hybrid Polling/Streaming: We use TanStack Query as an initial fetch and safety fallback.
   const { data: initialJobData, error: jobError } = useOnboardingJobQuery(
@@ -121,7 +123,7 @@ export function OnboardingJobProvider({
 
   const resumeId = jobData?.resultBaseResumeId;
   const { data: resumeData } = useBaseResumeQuery(
-    { id: resumeId ?? '' },
+    { id: resumeId! },
     { enabled: !!resumeId },
   );
 
@@ -142,6 +144,14 @@ export function OnboardingJobProvider({
     }
   }, [jobData?.status, jobData?.error]);
 
+  // Prefetch resume review page
+
+/*   useEffect(() => {
+    if (resumeId) {
+      router.prefetch(`/resumes/${resumeId}/review`);
+    }
+  }, [resumeId, router]); */
+
   useEffect(() => {
     if (resumeData && jobData?.status === 'SUCCEEDED') {
       // Deferring these updates to the next tick to avoid "cascading renders" ESlint warning.
@@ -152,12 +162,13 @@ export function OnboardingJobProvider({
           data: resumeData.data,
           meta: { model: 'worker', finishReason: 'STOP' },
         });
-        setShowSuccessModal(true);
+        /* setShowSuccessModal(true); */
+        router.push(`/resumes/${resumeData.id}/review`);
         setLiveJobData(null);
         clearJob();
       }, 0);
     }
-  }, [resumeData, jobData?.status]);
+  }, [resumeData, jobData?.status, router]);
 
   const value = useMemo<OnboardingJobContextValue>(
     () => ({
