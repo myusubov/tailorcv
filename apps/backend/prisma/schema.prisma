@@ -23,7 +23,6 @@ model User {
   customizedResumes CustomizedResume[]
   onboardingJobs    OnboardingJob[]
   githubConnection  GitHubConnection?
-  analysisJobs      AnalysisJob[]
 
   @@map("users")
 }
@@ -35,10 +34,10 @@ model GitHubConnection {
   githubUserId    Int
   githubUsername  String
   githubAvatarUrl String?
-  scopes          String   // Space-separated scopes (e.g., "repo read:user")
+  scopes          String // Space-separated scopes (e.g., "repo read:user")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
 
   @@map("github_connections")
@@ -53,6 +52,7 @@ model BaseResume {
   updatedAt         DateTime           @updatedAt
   user              User               @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
   customizedResumes CustomizedResume[]
+  status            BaseResumeStatus   @default(DRAFT)
 
   @@map("base_resumes")
 }
@@ -93,53 +93,6 @@ model OnboardingJob {
   @@map("onboarding_jobs")
 }
 
-model AnalysisJob {
-  id            String              @id @default(cuid())
-  userId        String
-  user          User                @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
-  status        AnalysisJobStatus   @default(PENDING)
-  repositories  AnalysisRepository[]
-  results       AnalysisResult?
-  errorMessage  String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  completedAt   DateTime?
-  @@index([userId, status])
-
-  @@map("analysis_jobs")
-}
-model AnalysisRepository {
-  id          String       @id @default(cuid())
-  jobId       String
-  job         AnalysisJob  @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  githubRepoId Int
-  repoName    String
-  repoOwner   String
-  repoUrl     String
-  commits     Json?        // Analyzed commit data
-  pullRequests Json?       // Analyzed PR data
-  techStack   String[]     // Detected technologies
-  status      RepoAnalysisStatus @default(PENDING)
-  errorMessage String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  @@index([jobId])
-
-  @@map("analysis_repositories")
-}
-model AnalysisResult {
-  id          String       @id @default(cuid())
-  jobId       String       @unique
-  job         AnalysisJob  @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  bullets     Json         // Array of { text, impact, repo, approved }
-  summary     String?      // Overall contribution summary
-  topSkills   String[]     // Top skills identified
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  @@map("analysis_results")
-}
-
 enum Plan {
   FREE
   PRO_MONTHLY
@@ -163,16 +116,8 @@ enum OnboardingJobStage {
   FAILED
 }
 
-enum AnalysisJobStatus {
-  PENDING
-  PROCESSING
+enum BaseResumeStatus {
+  DRAFT
   COMPLETED
-  FAILED
-}
-enum RepoAnalysisStatus {
-  PENDING
-  FETCHING
-  ANALYZING
-  COMPLETED
-  FAILED
+  PUBLISHED
 }

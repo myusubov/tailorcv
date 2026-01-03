@@ -11,6 +11,7 @@
     "start:worker": "cross-env TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/src/worker-runner.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:create": "prisma migrate dev --create-only",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:reset": "prisma migrate reset",
     "prisma:db:push": "prisma db push",

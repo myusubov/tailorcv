@@ -19,6 +19,7 @@
     "format:check": "prettier --check .",
     "prisma:generate": "npm run prisma:generate -w backend",
     "prisma:migrate": "npm run prisma:migrate -w backend",
+    "prisma:migrate:create": "npm run prisma:migrate:create -w backend",
     "prisma:migrate:deploy": "npm run prisma:migrate:deploy -w backend",
     "prisma:migrate:reset": "npm run prisma:migrate:reset -w backend",
     "prisma:db:push": "npm run prisma:db:push -w backend",
