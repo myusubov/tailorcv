@@ -108,7 +108,8 @@ export async function generateFromAboutMe(
     ...parsedResponse.data,
     contact: {
       ...parsedResponse.data.contact,
-      firstName: user?.firstName || parsedResponse.data.contact?.firstName || '',
+      firstName:
+        user?.firstName || parsedResponse.data.contact?.firstName || '',
       lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
       email: user?.email || parsedResponse.data.contact?.email || '',
     },
@@ -424,7 +425,8 @@ CRITICAL INSTRUCTION:
     ...parsedResponse.data,
     contact: {
       ...parsedResponse.data.contact,
-      firstName: user?.firstName || parsedResponse.data.contact?.firstName || '',
+      firstName:
+        user?.firstName || parsedResponse.data.contact?.firstName || '',
       lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
       email: user?.email || parsedResponse.data.contact?.email || '',
     },

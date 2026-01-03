@@ -146,7 +146,7 @@ export function OnboardingJobProvider({
 
   // Prefetch resume review page
 
-/*   useEffect(() => {
+  /*   useEffect(() => {
     if (resumeId) {
       router.prefetch(`/resumes/${resumeId}/review`);
     }

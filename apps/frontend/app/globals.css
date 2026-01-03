@@ -1,178 +1,242 @@
 @import 'tailwindcss';
 @import '@heroui/styles';
 
+/**
+ * TailorCV Color Theme
+ * 
+ * A refined Emerald/Teal palette designed for HeroUI v3.
+ * Uses the oklch color space naming conventions internally,
+ * but exposes hex/rgba for maximum compatibility.
+ * 
+ * Color Philosophy:
+ * - Primary (Emerald): Main actions, CTAs, brand identity
+ * - Accent (Teal/Cyan): Complementary highlights, gradients
+ * - Surface layers: Proper elevation hierarchy
+ * - High contrast: WCAG AA compliant text/background ratios
+ */
+
 :root {
-  /* Base backgrounds */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * BASE COLORS - Page-level backgrounds and text
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --background: #fafafa; /* Warm white, easier on eyes than pure white */
+  --foreground: #18181b; /* Zinc 900 - rich black for text */
 
-  /* Field/Input colors (HeroUI) */
-  --field-background: #ffffff;
-  --field-foreground: #0f172a;
-  --field-placeholder: #94a3b8;
-  --field-border: #e2e8f0;
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * SURFACE COLORS - Cards, modals, elevated elements (HeroUI Content levels)
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --surface: #ffffff; /* Base card background */
+  --surface-secondary: #f4f4f5; /* Zinc 100 - subtle elevation */
+  --surface-elevated: #ffffff; /* Popovers, dropdowns */
 
-  /* Surface colors - for cards, sections */
-  --surface: #ffffff;
-  --surface-secondary: #f1f5f9;
-  --surface-elevated: #ffffff;
-
-  /* Muted colors (used for text-muted) */
-  --muted: #64748b;
-  --muted-foreground: #64748b;
-
-  /* Border colors */
-  --border: #e2e8f0;
-  --border-muted: #f1f5f9;
-
-  /* Card */
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-
-  /* Primary brand colors */
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
-
-  /* Secondary */
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-
-  /* Accent colors for gradients and highlights */
-  --accent: #818cf8;
-  --accent-foreground: #ffffff;
-  --accent-secondary: #a78bfa;
-  --accent-tertiary: #f472b6;
-
-  /* Landing page specific */
-  --landing-bg: #f8fafc;
-  --landing-bg-secondary: #f1f5f9;
-  --landing-bg-tertiary: #e2e8f0;
-  --landing-text: #0f172a;
-  --landing-text-secondary: #475569;
-  --landing-text-muted: #64748b;
-  --landing-border: #e2e8f0;
-  --landing-border-muted: #f1f5f9;
-
-  /* Code/terminal backgrounds */
-  --code-bg: #f1f5f9;
-  --code-border: #e2e8f0;
-
-  /* Card gradients for feature cards */
-  --card-gradient-from: #ffffff;
-  --card-gradient-to: #f8fafc;
-  --card-gradient-dark-from: #f1f5f9;
-  --card-gradient-dark-to: #e2e8f0;
-
-  /* Gradient orb colors (more subtle in light mode) */
-  --orb-indigo: rgba(99, 102, 241, 0.15);
-  --orb-purple: rgba(139, 92, 246, 0.15);
-  --orb-pink: rgba(236, 72, 153, 0.12);
-  --orb-violet: rgba(139, 92, 246, 0.15);
-  --orb-emerald: rgba(16, 185, 129, 0.12);
-  --orb-cyan: rgba(6, 182, 212, 0.12);
-
-  /* Status colors */
-  --success: #10b981;
-  --success-foreground: #ffffff;
-  --warning: #f59e0b;
-  --warning-foreground: #ffffff;
-  --danger: #ef4444;
-  --danger-foreground: #ffffff;
-
-  /* Ring/focus */
-  --ring: #6366f1;
-
-  /* Content colors */
+  /* Content layers (HeroUI uses content1-4 for nested surfaces) */
   --content1: #ffffff;
-  --content1-foreground: #0f172a;
+  --content1-foreground: #18181b;
+  --content2: #f4f4f5; /* Zinc 100 */
+  --content2-foreground: #27272a; /* Zinc 800 */
+  --content3: #e4e4e7; /* Zinc 200 */
+  --content3-foreground: #3f3f46; /* Zinc 700 */
+  --content4: #d4d4d8; /* Zinc 300 */
+  --content4-foreground: #52525b; /* Zinc 600 */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * MUTED - Subdued text, placeholders, disabled states
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --muted: #71717a; /* Zinc 500 */
+  --muted-foreground: #71717a;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * BORDERS - Dividers, input borders, separators
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --border: #e4e4e7; /* Zinc 200 - visible but subtle */
+  --border-muted: #f4f4f5; /* Zinc 100 - very subtle dividers */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * FIELD/INPUT - Form elements (HeroUI Input, Select, etc.)
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --field-background: #ffffff;
+  --field-foreground: #18181b;
+  --field-placeholder: #a1a1aa; /* Zinc 400 */
+  --field-border: #d4d4d8; /* Zinc 300 */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * CARD - Explicit card styling (some HeroUI components use this)
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --card: #ffffff;
+  --card-foreground: #18181b;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * PRIMARY - Main brand color (Emerald)
+   * Used for: Buttons, links, active states, focus rings
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --primary: #059669; /* Emerald 600 - rich, professional green */
+  --primary-foreground: #ffffff; /* White text on primary */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * SECONDARY - Supporting actions, less prominent
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --secondary: #f4f4f5; /* Zinc 100 background */
+  --secondary-foreground: #18181b; /* Dark text */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * DEFAULT - Neutral actions (HeroUI default variant)
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --default: #e4e4e7; /* Zinc 200 */
+  --default-foreground: #27272a; /* Zinc 800 */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * ACCENT - Complementary highlights, gradients, decorative elements
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --accent: #0d9488; /* Teal 600 - complements Emerald */
+  --accent-foreground: #ffffff;
+  --accent-secondary: #14b8a6; /* Teal 500 */
+  --accent-tertiary: #5eead4; /* Teal 300 - lighter for gradients */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * STATUS COLORS - Semantic feedback (HeroUI uses these directly)
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --success: #22c55e; /* Green 500 */
+  --success-foreground: #ffffff;
+  --warning: #f59e0b; /* Amber 500 */
+  --warning-foreground: #18181b; /* Dark text for readability */
+  --danger: #ef4444; /* Red 500 */
+  --danger-foreground: #ffffff;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * FOCUS/RING - Focus indicators for accessibility
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --ring: #059669; /* Matches primary */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * OVERLAY - Modals, drawers, backdrop
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --overlay: rgba(0, 0, 0, 0.5);
+  --overlay-foreground: #ffffff;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * DECORATIVE - Background orbs, gradients (your custom glassmorphism)
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --orb-primary: rgba(5, 150, 105, 0.08); /* Emerald glow */
+  --orb-accent: rgba(13, 148, 136, 0.06); /* Teal glow */
+  --orb-highlight: rgba(94, 234, 212, 0.05); /* Light teal */
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * LANDING PAGE - Specific overrides for marketing pages
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --landing-bg: #fafafa;
+  --landing-bg-secondary: #f4f4f5;
+  --landing-bg-tertiary: #e4e4e7;
+  --landing-text: #18181b;
+  --landing-text-secondary: #3f3f46;
+  --landing-text-muted: #71717a;
+  --landing-border: #e4e4e7;
+  --landing-border-muted: #f4f4f5;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * CODE BLOCKS - Terminal/code styling
+   * ═══════════════════════════════════════════════════════════════════════════ */
+  --code-bg: #f4f4f5;
+  --code-border: #e4e4e7;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * DARK THEME
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 .dark {
-  /* Base backgrounds */
-  --background: #020617;
-  --foreground: #f8fafc;
+  /* Base */
+  --background: #09090b; /* Zinc 950 - deep black */
+  --foreground: #fafafa; /* Zinc 50 - crisp white text */
 
-  /* Field/Input colors (HeroUI) */
-  --field-background: #1e293b;
-  --field-foreground: #f8fafc;
-  --field-placeholder: #94a3b8;
-  --field-border: #334155;
+  /* Surface layers */
+  --surface: #18181b; /* Zinc 900 */
+  --surface-secondary: #27272a; /* Zinc 800 */
+  --surface-elevated: #27272a;
 
-  /* Surface colors - for cards, sections */
-  --surface: #0f172a;
-  --surface-secondary: #1e293b;
-  --surface-elevated: #1e293b;
+  /* Content hierarchy */
+  --content1: #18181b; /* Zinc 900 */
+  --content1-foreground: #fafafa;
+  --content2: #27272a; /* Zinc 800 */
+  --content2-foreground: #e4e4e7;
+  --content3: #3f3f46; /* Zinc 700 */
+  --content3-foreground: #d4d4d8;
+  --content4: #52525b; /* Zinc 600 */
+  --content4-foreground: #a1a1aa;
 
-  /* Muted colors (used for text-muted) */
-  --muted: #94a3b8;
-  --muted-foreground: #94a3b8;
+  /* Muted */
+  --muted: #71717a;
+  --muted-foreground: #a1a1aa;
 
-  /* Border colors */
-  --border: #1e293b;
-  --border-muted: #334155;
+  /* Borders */
+  --border: #27272a; /* Zinc 800 */
+  --border-muted: #3f3f46; /* Zinc 700 */
+
+  /* Fields */
+  --field-background: #27272a;
+  --field-foreground: #fafafa;
+  --field-placeholder: #71717a;
+  --field-border: #3f3f46;
 
   /* Card */
-  --card: #0f172a;
-  --card-foreground: #f8fafc;
+  --card: #18181b;
+  --card-foreground: #fafafa;
 
-  /* Primary brand colors */
-  --primary: #818cf8;
-  --primary-foreground: #0f172a;
+  /* Primary - slightly brighter in dark mode for visibility */
+  --primary: #10b981; /* Emerald 500 */
+  --primary-foreground: #09090b; /* Dark text on bright green */
 
   /* Secondary */
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
 
-  /* Accent colors for gradients and highlights */
-  --accent: #818cf8;
-  --accent-foreground: #0f172a;
-  --accent-secondary: #a78bfa;
-  --accent-tertiary: #f472b6;
+  /* Default */
+  --default: #3f3f46; /* Zinc 700 */
+  --default-foreground: #e4e4e7;
 
-  /* Landing page specific */
-  --landing-bg: #0a0a0f;
-  --landing-bg-secondary: #0f172a;
-  --landing-bg-tertiary: #1e293b;
-  --landing-text: #f8fafc;
-  --landing-text-secondary: #cbd5e1;
-  --landing-text-muted: #94a3b8;
-  --landing-border: #1e293b;
-  --landing-border-muted: #334155;
+  /* Accent - brighter teal for dark backgrounds */
+  --accent: #14b8a6; /* Teal 500 */
+  --accent-foreground: #09090b;
+  --accent-secondary: #2dd4bf; /* Teal 400 */
+  --accent-tertiary: #5eead4; /* Teal 300 */
 
-  /* Code/terminal backgrounds */
-  --code-bg: #0d0d12;
-  --code-border: #1e293b;
-
-  /* Card gradients for feature cards */
-  --card-gradient-from: #18181b;
-  --card-gradient-to: #09090b;
-  --card-gradient-dark-from: #27272a;
-  --card-gradient-dark-to: #18181b;
-
-  /* Gradient orb colors (more visible in dark mode) */
-  --orb-indigo: rgba(99, 102, 241, 0.25);
-  --orb-purple: rgba(139, 92, 246, 0.2);
-  --orb-pink: rgba(236, 72, 153, 0.2);
-  --orb-violet: rgba(139, 92, 246, 0.2);
-  --orb-emerald: rgba(16, 185, 129, 0.15);
-  --orb-cyan: rgba(6, 182, 212, 0.15);
-
-  /* Status colors */
-  --success: #10b981;
-  --success-foreground: #0f172a;
+  /* Status */
+  --success: #22c55e;
+  --success-foreground: #09090b;
   --warning: #f59e0b;
-  --warning-foreground: #0f172a;
+  --warning-foreground: #09090b;
   --danger: #ef4444;
   --danger-foreground: #ffffff;
 
-  /* Ring/focus */
-  --ring: #818cf8;
+  /* Focus */
+  --ring: #10b981;
 
-  /* Content colors */
-  --content1: #18181b;
-  --content1-foreground: #ffffff;
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.7);
+  --overlay-foreground: #ffffff;
+
+  /* Decorative orbs - more visible in dark mode */
+  --orb-primary: rgba(16, 185, 129, 0.12);
+  --orb-accent: rgba(20, 184, 166, 0.1);
+  --orb-highlight: rgba(45, 212, 191, 0.08);
+
+  /* Landing */
+  --landing-bg: #09090b;
+  --landing-bg-secondary: #18181b;
+  --landing-bg-tertiary: #27272a;
+  --landing-text: #fafafa;
+  --landing-text-secondary: #d4d4d8;
+  --landing-text-muted: #a1a1aa;
+  --landing-border: #27272a;
+  --landing-border-muted: #3f3f46;
+
+  /* Code */
+  --code-bg: #18181b;
+  --code-border: #27272a;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TAILWIND THEME MAPPING
+ * Maps CSS variables to Tailwind utility classes
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 @theme inline {
   /* Base */
   --color-background: var(--background);
@@ -182,6 +246,16 @@
   --color-surface: var(--surface);
   --color-surface-secondary: var(--surface-secondary);
   --color-surface-elevated: var(--surface-elevated);
+
+  /* Content */
+  --color-content1: var(--content1);
+  --color-content1-foreground: var(--content1-foreground);
+  --color-content2: var(--content2);
+  --color-content2-foreground: var(--content2-foreground);
+  --color-content3: var(--content3);
+  --color-content3-foreground: var(--content3-foreground);
+  --color-content4: var(--content4);
+  --color-content4-foreground: var(--content4-foreground);
 
   /* Muted */
   --color-muted: var(--muted);
@@ -203,11 +277,35 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
 
+  /* Default */
+  --color-default: var(--default);
+  --color-default-foreground: var(--default-foreground);
+
   /* Accent */
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-secondary: var(--accent-secondary);
   --color-accent-tertiary: var(--accent-tertiary);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+
+  /* Ring */
+  --color-ring: var(--ring);
+
+  /* Overlay */
+  --color-overlay: var(--overlay);
+  --color-overlay-foreground: var(--overlay-foreground);
+
+  /* Orbs */
+  --color-orb-primary: var(--orb-primary);
+  --color-orb-accent: var(--orb-accent);
+  --color-orb-highlight: var(--orb-highlight);
 
   /* Landing */
   --color-landing-bg: var(--landing-bg);
@@ -223,53 +321,25 @@
   --color-code-bg: var(--code-bg);
   --color-code-border: var(--code-border);
 
-  /* Card gradients */
-  --color-card-gradient-from: var(--card-gradient-from);
-  --color-card-gradient-to: var(--card-gradient-to);
-  --color-card-gradient-dark-from: var(--card-gradient-dark-from);
-  --color-card-gradient-dark-to: var(--card-gradient-dark-to);
-
-  /* Orbs */
-  --color-orb-indigo: var(--orb-indigo);
-  --color-orb-purple: var(--orb-purple);
-  --color-orb-pink: var(--orb-pink);
-  --color-orb-violet: var(--orb-violet);
-  --color-orb-emerald: var(--orb-emerald);
-  --color-orb-cyan: var(--orb-cyan);
-
-  /* Status */
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-danger: var(--danger);
-  --color-danger-foreground: var(--danger-foreground);
-
-  /* Ring */
-  --color-ring: var(--ring);
-
-  /* Content */
-  --color-content1: var(--content1);
-  --color-content1-foreground: var(--content1-foreground);
-
   /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-inter: var(--font-inter);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * GLOBAL STYLES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter);
   transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
-/* Smooth transitions for theme changes */
-
-/* Disable transitions on page load to prevent flash */
+/* Prevent flash of wrong theme on page load */
 .no-transitions * {
   transition: none !important;
 }

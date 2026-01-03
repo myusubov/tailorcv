@@ -12,7 +12,7 @@ export type OnboardingGenerateBaseBody = z.infer<
 >;
 
 export const onboardingGithubBodySchema = z.object({
-  repositoryIds: z.array(z.string().min(1)).min(1),
+  repositoryIds: z.array(z.string().min(1)).min(1).max(5),
 });
 
 export type OnboardingGithubBody = z.infer<typeof onboardingGithubBodySchema>;

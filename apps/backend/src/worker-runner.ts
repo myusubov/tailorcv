@@ -27,6 +27,8 @@ const onboardingWorker = new Worker(
   {
     connection,
     concurrency: 2,
+    lockDuration: 60000, 
+    stalledInterval: 300000, // Check for stalled jobs every 5 minutes
     limiter: {
       max: 10,
       duration: 1000,

@@ -9,6 +9,8 @@ import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { LANGUAGE_COLORS } from '@/lib/constants/github';
 
+const MAX_REPOS = 5;
+
 interface GitHubRepoSelectionViewProps {
   repos: GitHubRepo[];
   connection: GitHubConnection;
@@ -43,7 +45,7 @@ export function GitHubRepoSelectionView({
       const next = new Set(prev);
       if (next.has(repoId)) {
         next.delete(repoId);
-      } else if (next.size < 3) {
+      } else if (next.size < MAX_REPOS) {
         next.add(repoId);
       }
       return next;
@@ -103,8 +105,9 @@ export function GitHubRepoSelectionView({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            Choose up to 3 repositories that showcase your best work. We&apos;ll
-            analyze commits and PRs to generate powerful impact statements.
+            Choose up to {MAX_REPOS} repositories that showcase your best work.
+            We&apos;ll analyze commits and PRs to generate powerful impact
+            statements.
           </motion.p>
         </div>
 
@@ -130,12 +133,12 @@ export function GitHubRepoSelectionView({
           <div className="flex items-center gap-2">
             <span
               className={`text-sm font-medium ${
-                selectedRepos.size === 3 ? 'text-warning' : 'text-muted'
+                selectedRepos.size === MAX_REPOS ? 'text-warning' : 'text-muted'
               }`}
             >
-              {selectedRepos.size}/3 selected
+              {selectedRepos.size}/{MAX_REPOS} selected
             </span>
-            {selectedRepos.size === 3 && (
+            {selectedRepos.size === MAX_REPOS && (
               <span className="bg-warning/10 text-warning rounded-full px-2 py-0.5 text-xs">
                 Max reached
               </span>
@@ -153,7 +156,7 @@ export function GitHubRepoSelectionView({
           <AnimatePresence mode="popLayout">
             {filteredRepos.map((repo, index) => {
               const isSelected = selectedRepos.has(repo.id);
-              const isDisabled = !isSelected && selectedRepos.size >= 3;
+              const isDisabled = !isSelected && selectedRepos.size >= MAX_REPOS;
 
               return (
                 <motion.div
