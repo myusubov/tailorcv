@@ -343,3 +343,14 @@ body {
 .no-transitions * {
   transition: none !important;
 }
+.test-2 { 
+  /* 1. Map attribute to variable with a type (optional but recommended) */
+  --status: attr(data-status);
+
+  /* 2. Chain conditions using semicolons (No "else if" keyword) */
+  background-color: if(
+    style(--status: "pending"): brown; 
+    style(--status: "success"): green; 
+    else: red
+  );
+}
