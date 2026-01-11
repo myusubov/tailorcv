@@ -93,7 +93,7 @@ export function ResumePreview({
       // Scale to fit width perfectly (subtract padding)
       const idealScale = (containerWidth - 16) / A4_WIDTH_PX;
       const clampedScale = Math.max(MIN_SCALE, Math.min(idealScale, MAX_SCALE));
-      
+
       setComputedScale(clampedScale);
     };
 
@@ -129,10 +129,10 @@ export function ResumePreview({
       className={cn('flex w-full justify-center', className)}
     >
       {/* Wrapper sized to scaled dimensions - prevents overflow */}
-      <div 
+      <div
         className="relative shrink-0"
-        style={{ 
-          width: `${scaledWidth}px`, 
+        style={{
+          width: `${scaledWidth}px`,
           height: `${scaledHeight}px`,
         }}
       >
@@ -150,258 +150,262 @@ export function ResumePreview({
             transformOrigin: 'top left',
           }}
         >
-        {/* Header */}
-        <div className="mb-4 text-center">
-          <h1 className="mb-3 text-[28px] leading-tight font-bold tracking-wide uppercase">
-            {contact.firstName} {contact.lastName}
-          </h1>
-          <div className="flex flex-wrap justify-center gap-x-2 text-[12px] text-black">
-            {contact.location && <span>{contact.location}</span>}
-            {contact.phone && (
-              <>
-                {contact.location && <span>•</span>}
-                <span>{contact.phone}</span>
-              </>
-            )}
-            {(contact.location || contact.phone) && <span>•</span>}
-            <a
-              href={`mailto:${contact.email}`}
-              className="text-black no-underline hover:underline"
-            >
-              {contact.email}
-            </a>
-            {contact.websiteUrl && (
-              <>
-                <span>•</span>
-                <a
-                  href={contact.websiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-black no-underline hover:underline"
-                >
-                  Website
-                </a>
-              </>
-            )}
-            {contact.linkedinUrl && (
-              <>
-                <span>•</span>
-                <a
-                  href={contact.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-black no-underline hover:underline"
-                >
-                  LinkedIn
-                </a>
-              </>
-            )}
-            {contact.githubUrl && (
-              <>
-                <span>•</span>
-                <a
-                  href={contact.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-black no-underline hover:underline"
-                >
-                  GitHub
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Summary */}
-        {summary && (
-          <div className="mb-4">
-            <div className="mt-2 mb-1.5 flex items-center">
-              <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
-                Summary
-              </h2>
-              <div className="h-px flex-1 bg-black" />
+          {/* Header */}
+          <div className="mb-4 text-center">
+            <h1 className="mb-3 text-[28px] leading-tight font-bold tracking-wide uppercase">
+              {contact.firstName} {contact.lastName}
+            </h1>
+            <div className="flex flex-wrap justify-center gap-x-2 text-[12px] text-black">
+              {contact.location && <span>{contact.location}</span>}
+              {contact.phone && (
+                <>
+                  {contact.location && <span>•</span>}
+                  <span>{contact.phone}</span>
+                </>
+              )}
+              {(contact.location || contact.phone) && <span>•</span>}
+              <a
+                href={`mailto:${contact.email}`}
+                className="text-black no-underline hover:underline"
+              >
+                {contact.email}
+              </a>
+              {contact.websiteUrl && (
+                <>
+                  <span>•</span>
+                  <a
+                    href={contact.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-black no-underline hover:underline"
+                  >
+                    Website
+                  </a>
+                </>
+              )}
+              {contact.linkedinUrl && (
+                <>
+                  <span>•</span>
+                  <a
+                    href={contact.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-black no-underline hover:underline"
+                  >
+                    LinkedIn
+                  </a>
+                </>
+              )}
+              {contact.githubUrl && (
+                <>
+                  <span>•</span>
+                  <a
+                    href={contact.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-black no-underline hover:underline"
+                  >
+                    GitHub
+                  </a>
+                </>
+              )}
             </div>
-            <p className="textAlign-justify text-[13px] leading-relaxed">
-              {summary}
-            </p>
           </div>
-        )}
 
-        {/* Education */}
-        {safeEducation.length > 0 && (
-          <div className="mb-4">
-            <div className="mt-2 mb-1.5 flex items-center">
-              <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
-                Education
-              </h2>
-              <div className="h-px flex-1 bg-black" />
-            </div>
-            {safeEducation.map((edu, index) => (
-              <div key={edu.id || index} className="mb-1">
-                <div className="mb-0.5 flex items-baseline justify-between">
-                  <span className="text-[13px] font-bold">{edu.school}</span>
-                  <span className="text-[12px] font-bold">
-                    {renderDateRange(edu.startDate, edu.endDate)}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[13px] italic">
-                    {edu.degree}
-                    {edu.field ? ` in ${edu.field}` : ''}
-                  </span>
-                  {edu.location && (
-                    <span className="text-[13px]">{edu.location}</span>
-                  )}
-                </div>
+          {/* Summary */}
+          {summary && (
+            <div className="mb-4">
+              <div className="mt-2 mb-1.5 flex items-center">
+                <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
+                  Summary
+                </h2>
+                <div className="h-px flex-1 bg-black" />
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Experience */}
-        {experiences.length > 0 && (
-          <div className="mb-4">
-            <div className="mt-2 mb-1.5 flex items-center">
-              <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
-                Experience
-              </h2>
-              <div className="h-px flex-1 bg-black" />
+              <p className="textAlign-justify text-[13px] leading-relaxed">
+                {summary}
+              </p>
             </div>
-            {experiences.map((exp, index) => (
-              <div key={exp.id || index} className="mb-3 break-inside-avoid">
-                <div className="mb-0.5 flex items-baseline justify-between">
-                  <span className="text-[13px] font-bold">{exp.company}</span>
-                  <span className="text-[12px] font-bold">
-                    {renderDateRange(exp.startDate, exp.endDate, exp.isCurrent)}
-                  </span>
-                </div>
-                <div className="mb-1 flex items-baseline justify-between">
-                  <span className="text-[13px] italic">{exp.title}</span>
-                  {exp.location && (
-                    <span className="text-[13px]">{exp.location}</span>
-                  )}
-                </div>
-                <ul className="ml-3 list-none">
-                  {(exp.bullets || []).map((bullet, i) => (
-                    <li
-                      key={bullet.id || i}
-                      className="mb-0.5 flex items-start"
-                    >
-                      <span className="mr-1.5 text-[14px] leading-tight">
-                        •
-                      </span>
-                      <span className="flex-1 text-justify text-[13px] leading-snug">
-                        {bullet.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+          )}
+
+          {/* Education */}
+          {safeEducation.length > 0 && (
+            <div className="mb-4">
+              <div className="mt-2 mb-1.5 flex items-center">
+                <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
+                  Education
+                </h2>
+                <div className="h-px flex-1 bg-black" />
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Projects */}
-        {projects.length > 0 && (
-          <div className="mb-4">
-            <div className="mt-2 mb-1.5 flex items-center">
-              <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
-                Projects
-              </h2>
-              <div className="h-px flex-1 bg-black" />
-            </div>
-            {projects.map((proj, index) => (
-              <div key={proj.id || index} className="mb-3 break-inside-avoid">
-                <div className="mb-0.5 flex items-baseline justify-between">
-                  <span className="text-[13px] font-bold">{proj.name}</span>
-                  <span className="text-[12px] font-bold">
-                    {renderDateRange(
-                      proj.startDate,
-                      proj.endDate,
-                      proj.isCurrent,
+              {safeEducation.map((edu, index) => (
+                <div key={edu.id || index} className="mb-1">
+                  <div className="mb-0.5 flex items-baseline justify-between">
+                    <span className="text-[13px] font-bold">{edu.school}</span>
+                    <span className="text-[12px] font-bold">
+                      {renderDateRange(edu.startDate, edu.endDate)}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[13px] italic">
+                      {edu.degree}
+                      {edu.field ? ` in ${edu.field}` : ''}
+                    </span>
+                    {edu.location && (
+                      <span className="text-[13px]">{edu.location}</span>
                     )}
-                  </span>
-                </div>
-                <div className="mb-1 flex flex-wrap items-center gap-x-2 text-[13px] italic">
-                  {proj.role && <span>{proj.role}</span>}
-                  {(proj.url || proj.repoUrl) && proj.role && (
-                    <span className="text-[10px] not-italic">•</span>
-                  )}
-                  {proj.url && (
-                    <a
-                      href={proj.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-black no-underline hover:underline"
-                    >
-                      Live Demo
-                    </a>
-                  )}
-                  {proj.url && proj.repoUrl && (
-                    <span className="text-[10px] not-italic">•</span>
-                  )}
-                  {proj.repoUrl && (
-                    <a
-                      href={proj.repoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-black no-underline hover:underline"
-                    >
-                      GitHub
-                    </a>
-                  )}
-                </div>
-                <ul className="ml-3 list-none">
-                  {(proj.bullets || []).map((bullet, i) => (
-                    <li
-                      key={bullet.id || i}
-                      className="mb-0.5 flex items-start"
-                    >
-                      <span className="mr-1.5 text-[14px] leading-tight">
-                        •
-                      </span>
-                      <span className="flex-1 text-justify text-[13px] leading-snug">
-                        {bullet.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Skills */}
-        {skills.length > 0 && (
-          <div className="mb-4">
-            <div className="mt-2 mb-1.5 flex items-center">
-              <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
-                Technical Skills
-              </h2>
-              <div className="h-px flex-1 bg-black" />
-            </div>
-            <div className="space-y-0.5">
-              {Object.entries(
-                skills.reduce(
-                  (acc: Record<string, string[]>, skill) => {
-                    const cat = skill.category || 'Other';
-                    if (!acc[cat]) acc[cat] = [];
-                    acc[cat].push(skill.name);
-                    return acc;
-                  },
-                  {} as Record<string, string[]>,
-                ),
-              ).map(([category, names]) => (
-                <div key={category} className="flex text-[13px]">
-                  <span className="w-[120px] shrink-0 font-bold">
-                    {category}:
-                  </span>
-                  <span className="flex-1">{names.join(', ')}</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Experience */}
+          {experiences.length > 0 && (
+            <div className="mb-4">
+              <div className="mt-2 mb-1.5 flex items-center">
+                <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
+                  Experience
+                </h2>
+                <div className="h-px flex-1 bg-black" />
+              </div>
+              {experiences.map((exp, index) => (
+                <div key={exp.id || index} className="mb-3 break-inside-avoid">
+                  <div className="mb-0.5 flex items-baseline justify-between">
+                    <span className="text-[13px] font-bold">{exp.company}</span>
+                    <span className="text-[12px] font-bold">
+                      {renderDateRange(
+                        exp.startDate,
+                        exp.endDate,
+                        exp.isCurrent,
+                      )}
+                    </span>
+                  </div>
+                  <div className="mb-1 flex items-baseline justify-between">
+                    <span className="text-[13px] italic">{exp.title}</span>
+                    {exp.location && (
+                      <span className="text-[13px]">{exp.location}</span>
+                    )}
+                  </div>
+                  <ul className="ml-3 list-none">
+                    {(exp.bullets || []).map((bullet, i) => (
+                      <li
+                        key={bullet.id || i}
+                        className="mb-0.5 flex items-start"
+                      >
+                        <span className="mr-1.5 text-[14px] leading-tight">
+                          •
+                        </span>
+                        <span className="flex-1 text-justify text-[13px] leading-snug">
+                          {bullet.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Projects */}
+          {projects.length > 0 && (
+            <div className="mb-4">
+              <div className="mt-2 mb-1.5 flex items-center">
+                <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
+                  Projects
+                </h2>
+                <div className="h-px flex-1 bg-black" />
+              </div>
+              {projects.map((proj, index) => (
+                <div key={proj.id || index} className="mb-3 break-inside-avoid">
+                  <div className="mb-0.5 flex items-baseline justify-between">
+                    <span className="text-[13px] font-bold">{proj.name}</span>
+                    <span className="text-[12px] font-bold">
+                      {renderDateRange(
+                        proj.startDate,
+                        proj.endDate,
+                        proj.isCurrent,
+                      )}
+                    </span>
+                  </div>
+                  <div className="mb-1 flex flex-wrap items-center gap-x-2 text-[13px] italic">
+                    {proj.role && <span>{proj.role}</span>}
+                    {(proj.url || proj.repoUrl) && proj.role && (
+                      <span className="text-[10px] not-italic">•</span>
+                    )}
+                    {proj.url && (
+                      <a
+                        href={proj.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-black no-underline hover:underline"
+                      >
+                        Live Demo
+                      </a>
+                    )}
+                    {proj.url && proj.repoUrl && (
+                      <span className="text-[10px] not-italic">•</span>
+                    )}
+                    {proj.repoUrl && (
+                      <a
+                        href={proj.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-black no-underline hover:underline"
+                      >
+                        GitHub
+                      </a>
+                    )}
+                  </div>
+                  <ul className="ml-3 list-none">
+                    {(proj.bullets || []).map((bullet, i) => (
+                      <li
+                        key={bullet.id || i}
+                        className="mb-0.5 flex items-start"
+                      >
+                        <span className="mr-1.5 text-[14px] leading-tight">
+                          •
+                        </span>
+                        <span className="flex-1 text-justify text-[13px] leading-snug">
+                          {bullet.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Skills */}
+          {skills.length > 0 && (
+            <div className="mb-4">
+              <div className="mt-2 mb-1.5 flex items-center">
+                <h2 className="mr-2 text-[14px] font-bold tracking-wide uppercase">
+                  Technical Skills
+                </h2>
+                <div className="h-px flex-1 bg-black" />
+              </div>
+              <div className="space-y-0.5">
+                {Object.entries(
+                  skills.reduce(
+                    (acc: Record<string, string[]>, skill) => {
+                      const cat = skill.category || 'Other';
+                      if (!acc[cat]) acc[cat] = [];
+                      acc[cat].push(skill.name);
+                      return acc;
+                    },
+                    {} as Record<string, string[]>,
+                  ),
+                ).map(([category, names]) => (
+                  <div key={category} className="flex text-[13px]">
+                    <span className="w-[120px] shrink-0 font-bold">
+                      {category}:
+                    </span>
+                    <span className="flex-1">{names.join(', ')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
