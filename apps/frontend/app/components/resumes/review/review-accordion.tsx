@@ -105,20 +105,25 @@ export function ReviewAccordion({
 
   return (
     <Accordion
+      variant="surface"
       className={cn('w-full', className)}
       expandedKeys={expandedKeys}
       onExpandedChange={(keys) => onExpandedChange?.(keys as Set<string>)}
     >
       {SECTIONS.map(({ key, label, icon, Editor }) => {
+        const isExpanded = expandedKeys?.has(key) || false;
         const status = statusMap.get(key) || 'missing';
         const { icon: statusIcon, colorClass } = getStatusStyles(status);
 
         return (
           <Accordion.Item key={key} id={key}>
             <Accordion.Heading>
-              <Accordion.Trigger className="flex w-full items-center gap-3 py-3">
+              <Accordion.Trigger className="group/trigger flex w-full items-center gap-3 py-3">
                 <div className="flex items-center gap-2">
-                  <Icon icon={icon} className="text-muted size-4" />
+                  <Icon
+                    icon={icon}
+                    className={`group-hover/trigger:text-foreground size-4 ${isExpanded ? 'text-foreground' : 'text-muted'}`}
+                  />
                   <Icon
                     icon={statusIcon}
                     className={cn('size-4', colorClass)}

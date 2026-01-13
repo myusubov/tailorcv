@@ -12,7 +12,7 @@ import {
   useResumeForm,
 } from '@/app/components/resumes/review/resume-form-context';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
-import { useParams } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { useFormContext } from 'react-hook-form';
 import type { BaseResumeData } from 'shared';
 
@@ -22,7 +22,14 @@ import type { BaseResumeData } from 'shared';
  */
 const ResumeReview = () => {
   const { id }: { id: string } = useParams();
-  const { data: resumeData } = useBaseResumeQuery({ id }, { enabled: !!id });
+  const { data: resumeData, error } = useBaseResumeQuery(
+    { id },
+    { enabled: !!id },
+  );
+
+  if (error?.status === 404) {
+    notFound();
+  }
 
   if (!resumeData) {
     return (
@@ -107,7 +114,7 @@ function ReviewPageContent() {
         {/* Data Analysis Panel - clickable to expand sections */}
         <DataAnalysisPanel
           data={formData}
-          className="mb-6"
+          className="bg-card mb-6"
           onSectionClick={handleSectionClick}
           selectedSection={Array.from(expandedKeys)[0] || ''}
         />

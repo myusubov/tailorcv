@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 import {
   Button,
   TextField,
@@ -8,78 +8,29 @@ import {
   Input,
   Checkbox,
   FieldError,
+  DateField,
+  DateInputGroup,
 } from '@heroui/react';
+import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
-import { nanoid } from 'nanoid';
-import { BulletsEditor } from './experience-editor';
+import { BulletsEditor } from '../experience';
 
 /**
- * Compact projects editor for the review page accordion.
- * Displays projects as expandable cards with add/remove functionality.
+ * Props for the ProjectCard component.
  */
-export function ProjectsEditor() {
-  const { control } = useFormContext<BaseResumeData>();
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'projects',
-  });
-
-  /**
-   * Adds a new empty project entry.
-   */
-  const handleAddProject = () => {
-    append({
-      id: nanoid(),
-      name: '',
-      role: null,
-      startDate: null,
-      endDate: null,
-      isCurrent: false,
-      url: null,
-      repoUrl: null,
-      tech: null,
-      bullets: [],
-    });
-  };
-
-  return (
-    <div className="space-y-4">
-      {fields.map((field, index) => (
-        <ProjectCard
-          key={field.id}
-          index={index}
-          onRemove={() => remove(index)}
-        />
-      ))}
-
-      {/* Add button */}
-      <Button
-        variant="ghost"
-        onPress={handleAddProject}
-        className="border-default-300 w-full border border-dashed"
-      >
-        <Icon icon="lucide:plus" className="size-4" />
-        Add Project
-      </Button>
-
-      {/* Empty state */}
-      {fields.length === 0 && (
-        <p className="text-muted text-center text-sm">No projects added yet.</p>
-      )}
-    </div>
-  );
-}
-
 interface ProjectCardProps {
+  /** Index of the project in the field array */
   index: number;
+  /** Callback to remove this project */
   onRemove: () => void;
 }
 
 /**
  * Individual project card with inline editing.
+ * Displays project name, role, URLs, dates, and achievement bullets.
  */
-function ProjectCard({ index, onRemove }: ProjectCardProps) {
+export function ProjectCard({ index, onRemove }: ProjectCardProps) {
   const { control, watch } = useFormContext<BaseResumeData>();
   const basePath = `projects.${index}` as const;
   const isCurrent = watch(`${basePath}.isCurrent`);
@@ -170,11 +121,24 @@ function ProjectCard({ index, onRemove }: ProjectCardProps) {
           render={({ field }) => (
             <TextField className="w-full">
               <Label>Start Date</Label>
-              <Input
-                {...field}
-                value={field.value || ''}
-                placeholder="YYYY-MM"
-              />
+              <DateField
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+              >
+                <DateInputGroup>
+                  <DateInputGroup.Input>
+                    {(segment) =>
+                      segment.type !== 'day' ? (
+                        <DateInputGroup.Segment segment={segment} />
+                      ) : (
+                        <></>
+                      )
+                    }
+                  </DateInputGroup.Input>
+                </DateInputGroup>
+              </DateField>
             </TextField>
           )}
         />
@@ -185,12 +149,25 @@ function ProjectCard({ index, onRemove }: ProjectCardProps) {
           render={({ field }) => (
             <TextField className="w-full">
               <Label>End Date</Label>
-              <Input
-                {...field}
-                value={field.value || ''}
-                placeholder={isCurrent ? 'Present' : 'YYYY-MM'}
-                disabled={!!isCurrent}
-              />
+              <DateField
+                isDisabled={!!isCurrent}
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+              >
+                <DateInputGroup>
+                  <DateInputGroup.Input>
+                    {(segment) =>
+                      segment.type !== 'day' ? (
+                        <DateInputGroup.Segment segment={segment} />
+                      ) : (
+                        <></>
+                      )
+                    }
+                  </DateInputGroup.Input>
+                </DateInputGroup>
+              </DateField>
             </TextField>
           )}
         />

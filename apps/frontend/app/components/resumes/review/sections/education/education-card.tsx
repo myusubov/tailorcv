@@ -1,79 +1,34 @@
 'use client';
 
-import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
-import { Button, TextField, Label, Input, FieldError } from '@heroui/react';
+import { useFormContext, Controller } from 'react-hook-form';
+import {
+  Button,
+  TextField,
+  Label,
+  Input,
+  FieldError,
+  DateField,
+  DateInputGroup,
+} from '@heroui/react';
+import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
-import { nanoid } from 'nanoid';
 
 /**
- * Compact education editor for the review page accordion.
- * Displays education entries as cards with add/remove functionality.
+ * Props for the EducationCard component.
  */
-export function EducationEditor() {
-  const { control } = useFormContext<BaseResumeData>();
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'education',
-  });
-
-  /**
-   * Adds a new empty education entry.
-   */
-  const handleAddEducation = () => {
-    append({
-      id: nanoid(),
-      school: '',
-      degree: null,
-      field: null,
-      location: null,
-      startDate: null,
-      endDate: null,
-      grade: null,
-      notes: null,
-      isSelfTaught: false,
-    });
-  };
-
-  return (
-    <div className="space-y-4">
-      {fields?.map((field, index) => (
-        <EducationCard
-          key={field.id}
-          index={index}
-          onRemove={() => remove(index)}
-        />
-      ))}
-
-      {/* Add button */}
-      <Button
-        variant="ghost"
-        onPress={handleAddEducation}
-        className="border-default-300 w-full border border-dashed"
-      >
-        <Icon icon="lucide:plus" className="size-4" />
-        Add Education
-      </Button>
-
-      {/* Empty state */}
-      {(!fields || fields.length === 0) && (
-        <p className="text-muted text-center text-sm">
-          No education added yet. This is optional.
-        </p>
-      )}
-    </div>
-  );
-}
-
 interface EducationCardProps {
+  /** Index of the education entry in the field array */
   index: number;
+  /** Callback to remove this education entry */
   onRemove: () => void;
 }
 
 /**
  * Individual education entry card.
+ * Displays school, degree, field of study, location, dates, and grade.
  */
-function EducationCard({ index, onRemove }: EducationCardProps) {
+export function EducationCard({ index, onRemove }: EducationCardProps) {
   const { control } = useFormContext<BaseResumeData>();
   const basePath = `education.${index}` as const;
 
@@ -162,11 +117,24 @@ function EducationCard({ index, onRemove }: EducationCardProps) {
           render={({ field }) => (
             <TextField className="w-full">
               <Label>Start Date</Label>
-              <Input
-                {...field}
-                value={field.value || ''}
-                placeholder="YYYY-MM"
-              />
+              <DateField
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+              >
+                <DateInputGroup>
+                  <DateInputGroup.Input>
+                    {(segment) =>
+                      segment.type !== 'day' ? (
+                        <DateInputGroup.Segment segment={segment} />
+                      ) : (
+                        <></>
+                      )
+                    }
+                  </DateInputGroup.Input>
+                </DateInputGroup>
+              </DateField>
             </TextField>
           )}
         />
@@ -177,11 +145,24 @@ function EducationCard({ index, onRemove }: EducationCardProps) {
           render={({ field }) => (
             <TextField className="w-full">
               <Label>End Date / Expected</Label>
-              <Input
-                {...field}
-                value={field.value || ''}
-                placeholder="YYYY-MM"
-              />
+              <DateField
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+              >
+                <DateInputGroup>
+                  <DateInputGroup.Input>
+                    {(segment) =>
+                      segment.type !== 'day' ? (
+                        <DateInputGroup.Segment segment={segment} />
+                      ) : (
+                        <></>
+                      )
+                    }
+                  </DateInputGroup.Input>
+                </DateInputGroup>
+              </DateField>
             </TextField>
           )}
         />

@@ -31,7 +31,10 @@ export default function RootLayout({
       signUpUrl="/register"
     >
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} antialiased`}>
+        <body
+          className={`${inter.variable} antialiased`}
+          suppressHydrationWarning
+        >
           <NuqsAdapter>
             <ThemeProvider>
               <QueryProvider>
