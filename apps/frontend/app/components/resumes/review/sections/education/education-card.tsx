@@ -13,6 +13,7 @@ import {
 import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
+import { DateSegmentFilter } from '../date-segment-filter';
 
 /**
  * Props for the EducationCard component.
@@ -125,13 +126,7 @@ export function EducationCard({ index, onRemove }: EducationCardProps) {
               >
                 <DateInputGroup>
                   <DateInputGroup.Input>
-                    {(segment) =>
-                      segment.type !== 'day' ? (
-                        <DateInputGroup.Segment segment={segment} />
-                      ) : (
-                        <></>
-                      )
-                    }
+                    {(segment) => <DateSegmentFilter segment={segment} />}
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>
@@ -153,13 +148,7 @@ export function EducationCard({ index, onRemove }: EducationCardProps) {
               >
                 <DateInputGroup>
                   <DateInputGroup.Input>
-                    {(segment) =>
-                      segment.type !== 'day' ? (
-                        <DateInputGroup.Segment segment={segment} />
-                      ) : (
-                        <></>
-                      )
-                    }
+                    {(segment) => <DateSegmentFilter segment={segment} />}
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>

@@ -13,7 +13,7 @@ import {
 } from '@/app/components/resumes/review/resume-form-context';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { notFound, useParams } from 'next/navigation';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import type { BaseResumeData } from 'shared';
 
 /**
@@ -50,11 +50,11 @@ const ResumeReview = () => {
  * Inner content component that has access to form context.
  */
 function ReviewPageContent() {
-  const { watch } = useFormContext<BaseResumeData>();
+  const { control } = useFormContext<BaseResumeData>();
   const { isSaving, lastSaved } = useResumeForm();
 
-  // Watch all form values for live preview updates
-  const formData = watch();
+  // Use useWatch for reliable updates to the feedback panel and preview
+  const formData = useWatch({ control }) as BaseResumeData;
 
   // Accordion expanded state
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());

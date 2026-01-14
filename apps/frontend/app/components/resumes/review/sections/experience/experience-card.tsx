@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormContext, Controller } from 'react-hook-form';
+import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import {
   Button,
   TextField,
@@ -15,6 +15,7 @@ import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
 import { BulletsEditor } from './bullets-editor';
+import { DateSegmentFilter } from '../date-segment-filter';
 
 /**
  * Props for the ExperienceCard component.
@@ -46,9 +47,14 @@ export function ExperienceCard({
   isFirst,
   isLast,
 }: ExperienceCardProps) {
-  const { control, watch } = useFormContext<BaseResumeData>();
+  const { control } = useFormContext<BaseResumeData>();
   const basePath = `experiences.${index}` as const;
-  const isCurrent = watch(`${basePath}.isCurrent`);
+
+  // Use useWatch for reactive updates to checkbox state
+  const isCurrent = useWatch({
+    control,
+    name: `${basePath}.isCurrent`,
+  });
 
   return (
     <div className="border-default-200 space-y-3 rounded-lg border p-4">
@@ -106,13 +112,7 @@ export function ExperienceCard({
           </Button>
 
           {/* Remove button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={onRemove}
-            className="text-danger"
-            isIconOnly
-          >
+          <Button variant="danger-soft" size="sm" onPress={onRemove} isIconOnly>
             <Icon icon="lucide:trash-2" className="size-4" />
           </Button>
         </div>
@@ -150,13 +150,7 @@ export function ExperienceCard({
               >
                 <DateInputGroup>
                   <DateInputGroup.Input>
-                    {(segment) =>
-                      segment.type !== 'day' ? (
-                        <DateInputGroup.Segment segment={segment} />
-                      ) : (
-                        <></>
-                      )
-                    }
+                    {(segment) => <DateSegmentFilter segment={segment} />}
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>
@@ -182,13 +176,7 @@ export function ExperienceCard({
               >
                 <DateInputGroup>
                   <DateInputGroup.Input>
-                    {(segment) =>
-                      segment.type !== 'day' ? (
-                        <DateInputGroup.Segment segment={segment} />
-                      ) : (
-                        <></>
-                      )
-                    }
+                    {(segment) => <DateSegmentFilter segment={segment} />}
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>
@@ -208,7 +196,12 @@ export function ExperienceCard({
               onChange={(isChecked) => field.onChange(isChecked)}
               className="pb-2"
             >
-              <span className="text-sm">Current role</span>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label className="text-sm font-normal">Current role</Label>
+              </Checkbox.Content>
             </Checkbox>
           )}
         />

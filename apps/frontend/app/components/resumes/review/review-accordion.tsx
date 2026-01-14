@@ -63,11 +63,13 @@ type SectionKey = (typeof SECTIONS)[number]['key'];
 function getStatusStyles(status: AnalysisStatus) {
   switch (status) {
     case 'complete':
-      return { icon: 'lucide:check-circle-2', colorClass: 'text-success' };
+      return { colorClass: 'text-success' };
     case 'incomplete':
-      return { icon: 'lucide:alert-circle', colorClass: 'text-warning' };
+      return { colorClass: 'text-warning' };
     case 'missing':
-      return { icon: 'lucide:x-circle', colorClass: 'text-danger' };
+      return { colorClass: 'text-danger' };
+    default:
+      return { colorClass: 'text-default-400' };
   }
 }
 
@@ -113,20 +115,22 @@ export function ReviewAccordion({
       {SECTIONS.map(({ key, label, icon, Editor }) => {
         const isExpanded = expandedKeys?.has(key) || false;
         const status = statusMap.get(key) || 'missing';
-        const { icon: statusIcon, colorClass } = getStatusStyles(status);
+        const { colorClass } = getStatusStyles(status);
 
         return (
           <Accordion.Item key={key} id={key}>
             <Accordion.Heading>
               <Accordion.Trigger className="group/trigger flex w-full items-center gap-3 py-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center">
                   <Icon
                     icon={icon}
-                    className={`group-hover/trigger:text-foreground size-4 ${isExpanded ? 'text-foreground' : 'text-muted'}`}
-                  />
-                  <Icon
-                    icon={statusIcon}
-                    className={cn('size-4', colorClass)}
+                    className={cn(
+                      'size-5 transition-colors',
+                      colorClass,
+                      // On hover or expanded, make it stand out a bit more if it's currently neutral
+                      status === 'missing' && 'group-hover/trigger:text-danger',
+                      isExpanded ? 'opacity-100' : 'opacity-80',
+                    )}
                   />
                 </div>
                 <span className="flex-1 text-left text-sm font-medium">

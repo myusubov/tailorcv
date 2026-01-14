@@ -15,7 +15,7 @@ const dateSchema = z
   .describe('Date in YYYY-MM or YYYY format.')
   .regex(/^\d{4}(-(0[1-9]|1[0-2]))?$/, 'Expected YYYY or YYYY-MM');
 
-const idSchema = z.string().trim().min(1);
+const idSchema = z.string().trim().min(1, 'Missing ID');
 const urlSchema = z.string().trim().nullable();
 
 /**
@@ -27,24 +27,24 @@ export const baseResumeDataSchema = z
     version: z.literal(1),
     contact: z
       .object({
-        firstName: z.string().trim().min(1),
-        lastName: z.string().trim().min(1),
-        headline: z.string().trim().min(1).nullable(),
-        email: z.string().trim().min(1),
-        phone: z.string().trim().min(1).nullable(),
-        location: z.string().trim().min(1).nullable(),
+        firstName: z.string().trim().min(1, 'First name is required'),
+        lastName: z.string().trim().min(1, 'Last name is required'),
+        headline: z.string().trim().min(1, 'Headline is required').nullable(),
+        email: z.email('Invalid email address'),
+        phone: z.string().trim().min(1, 'Phone number is required').nullable(),
+        location: z.string().trim().min(1, 'Location is required').nullable(),
         websiteUrl: urlSchema,
         linkedinUrl: urlSchema,
         githubUrl: urlSchema,
       })
       .strict(),
-    summary: z.string().trim().min(1).nullable(),
+    summary: z.string().trim().min(1, 'Summary is required').nullable(),
     skills: z.array(
       z
         .object({
           id: idSchema,
-          name: z.string().trim().min(1),
-          category: z.string().trim().min(1).nullable(),
+          name: z.string().trim().min(1, 'Skill name is required'),
+          category: z.string().trim().min(1, 'Category is required').nullable(),
           level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).nullable(),
         })
         .strict(),
@@ -53,15 +53,22 @@ export const baseResumeDataSchema = z
       z
         .object({
           id: idSchema,
-          company: z.string().trim().min(1),
-          title: z.string().trim().min(1),
-          location: z.string().trim().min(1).nullable(),
+          company: z.string().trim().min(1, 'Company is required'),
+          title: z.string().trim().min(1, 'Job title is required'),
+          location: z.string().trim().min(1, 'Location is required').nullable(),
           startDate: dateSchema,
           endDate: dateSchema.nullable(),
           isCurrent: z.boolean().nullable(),
-          tech: z.array(z.string().trim().min(1)).nullable(),
+          tech: z
+            .array(z.string().trim().min(1, 'Tech name is required'))
+            .nullable(),
           bullets: z.array(
-            z.object({ id: idSchema, text: z.string().trim().min(1) }).strict(),
+            z
+              .object({
+                id: idSchema,
+                text: z.string().trim().min(1, 'Bullet point text is required'),
+              })
+              .strict(),
           ),
         })
         .strict()
@@ -86,16 +93,23 @@ export const baseResumeDataSchema = z
       z
         .object({
           id: idSchema,
-          name: z.string().trim().min(1),
-          role: z.string().trim().min(1).nullable(),
+          name: z.string().trim().min(1, 'Project name is required'),
+          role: z.string().trim().min(1, 'Project role is required').nullable(),
           startDate: dateSchema.nullable(),
           endDate: dateSchema.nullable(),
           isCurrent: z.boolean().nullable(),
           url: urlSchema,
           repoUrl: urlSchema,
-          tech: z.array(z.string().trim().min(1)).nullable(),
+          tech: z
+            .array(z.string().trim().min(1, 'Tech name is required'))
+            .nullable(),
           bullets: z.array(
-            z.object({ id: idSchema, text: z.string().trim().min(1) }).strict(),
+            z
+              .object({
+                id: idSchema,
+                text: z.string().trim().min(1, 'Bullet point text is required'),
+              })
+              .strict(),
           ),
         })
         .strict()
@@ -121,14 +135,22 @@ export const baseResumeDataSchema = z
         z
           .object({
             id: idSchema,
-            school: z.string().trim().min(1),
-            degree: z.string().trim().min(1).nullable(),
-            field: z.string().trim().min(1).nullable(),
-            location: z.string().trim().min(1).nullable(),
+            school: z.string().trim().min(1, 'School is required'),
+            degree: z.string().trim().min(1, 'Degree is required').nullable(),
+            field: z
+              .string()
+              .trim()
+              .min(1, 'Field of study is required')
+              .nullable(),
+            location: z
+              .string()
+              .trim()
+              .min(1, 'Location is required')
+              .nullable(),
             startDate: dateSchema.nullable(),
             endDate: dateSchema.nullable(),
-            grade: z.string().trim().min(1).nullable(),
-            notes: z.string().trim().min(1).nullable(),
+            grade: z.string().trim().min(1, 'Grade is required').nullable(),
+            notes: z.string().trim().min(1, 'Notes are required').nullable(),
             isSelfTaught: z.boolean().nullable(),
           })
           .strict(),
@@ -139,8 +161,8 @@ export const baseResumeDataSchema = z
         z
           .object({
             id: idSchema,
-            name: z.string().trim().min(1),
-            issuer: z.string().trim().min(1).nullable(),
+            name: z.string().trim().min(1, 'Certification name is required'),
+            issuer: z.string().trim().min(1, 'Issuer is required').nullable(),
             date: dateSchema.nullable(),
             url: urlSchema,
           })
@@ -152,8 +174,12 @@ export const baseResumeDataSchema = z
         z
           .object({
             id: idSchema,
-            name: z.string().trim().min(1),
-            level: z.string().trim().min(1).nullable(),
+            name: z.string().trim().min(1, 'Language is required'),
+            level: z
+              .string()
+              .trim()
+              .min(1, 'Proficiency level is required')
+              .nullable(),
           })
           .strict(),
       )
@@ -171,7 +197,7 @@ export const onboardingSchema = z.object({
   contact: z.object({
     firstName: z.string().trim().min(1, 'First name is required').max(50),
     lastName: z.string().trim().min(1, 'Last name is required').max(50),
-    email: z.string().trim().email('Invalid email address').max(100),
+    email: z.email('Invalid email address').max(100),
     phone: z.string().trim().max(30).optional().default(''),
     location: z.string().trim().min(2, 'Location is required').max(100),
     githubUrl: z.string().trim().max(200).optional().default(''),
@@ -188,7 +214,7 @@ export const onboardingSchema = z.object({
     .array(
       z
         .object({
-          id: z.string().min(1),
+          id: z.string().min(1, 'Missing ID'),
           title: z.string().trim().min(2, 'Title is required').max(100),
           company: z.string().trim().min(2, 'Company is required').max(100),
           startMonth: monthSchema,
@@ -226,7 +252,7 @@ export const onboardingSchema = z.object({
     .array(
       z
         .object({
-          id: z.string().min(1),
+          id: z.string().min(1, 'Missing ID'),
           name: z.string().trim().min(2, 'Name is required').max(100),
           description: z
             .string()
@@ -264,7 +290,7 @@ export const onboardingSchema = z.object({
     .min(1, 'At least one project is required')
     .default([]),
   skills: z
-    .array(z.string().trim().min(1))
+    .array(z.string().trim().min(1, 'Skill cannot be empty'))
     .min(5, 'At least 5 skills required for an optimal resume')
     .default([]),
   education: z

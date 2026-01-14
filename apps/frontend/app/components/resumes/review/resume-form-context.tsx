@@ -10,7 +10,8 @@ import {
   type ReactNode,
 } from 'react';
 import { useForm, FormProvider, type UseFormReturn } from 'react-hook-form';
-import type { BaseResumeData } from 'shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type BaseResumeData, baseResumeDataSchema } from 'shared';
 
 /**
  * Context value for the resume form state.
@@ -68,6 +69,7 @@ export function ResumeFormProvider({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const form = useForm<BaseResumeData>({
+    resolver: zodResolver(baseResumeDataSchema),
     defaultValues: initialData,
     mode: 'onChange',
   });
@@ -96,7 +98,7 @@ export function ResumeFormProvider({
   }, [form, resumeId]);
 
   // Debounced auto-save: save 1 second after last change
-  useEffect(() => {
+  /*   useEffect(() => {
     if (!isDirty) return;
 
     const timeout = setTimeout(() => {
@@ -105,7 +107,7 @@ export function ResumeFormProvider({
 
     return () => clearTimeout(timeout);
   }, [isDirty, saveNow, form.formState]);
-
+ */
   const value = useMemo<ResumeFormContextValue>(
     () => ({
       form,

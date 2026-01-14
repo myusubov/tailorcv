@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormContext, Controller } from 'react-hook-form';
+import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import {
   Button,
   TextField,
@@ -15,6 +15,7 @@ import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
 import { BulletsEditor } from '../experience';
+import { DateSegmentFilter } from '../date-segment-filter';
 
 /**
  * Props for the ProjectCard component.
@@ -31,9 +32,14 @@ interface ProjectCardProps {
  * Displays project name, role, URLs, dates, and achievement bullets.
  */
 export function ProjectCard({ index, onRemove }: ProjectCardProps) {
-  const { control, watch } = useFormContext<BaseResumeData>();
+  const { control } = useFormContext<BaseResumeData>();
   const basePath = `projects.${index}` as const;
-  const isCurrent = watch(`${basePath}.isCurrent`);
+
+  // Use useWatch for reactive updates to checkbox state
+  const isCurrent = useWatch({
+    control,
+    name: `${basePath}.isCurrent`,
+  });
 
   return (
     <div className="border-default-200 space-y-3 rounded-lg border p-4">
@@ -129,13 +135,7 @@ export function ProjectCard({ index, onRemove }: ProjectCardProps) {
               >
                 <DateInputGroup>
                   <DateInputGroup.Input>
-                    {(segment) =>
-                      segment.type !== 'day' ? (
-                        <DateInputGroup.Segment segment={segment} />
-                      ) : (
-                        <></>
-                      )
-                    }
+                    {(segment) => <DateSegmentFilter segment={segment} />}
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>
@@ -158,13 +158,7 @@ export function ProjectCard({ index, onRemove }: ProjectCardProps) {
               >
                 <DateInputGroup>
                   <DateInputGroup.Input>
-                    {(segment) =>
-                      segment.type !== 'day' ? (
-                        <DateInputGroup.Segment segment={segment} />
-                      ) : (
-                        <></>
-                      )
-                    }
+                    {(segment) => <DateSegmentFilter segment={segment} />}
                   </DateInputGroup.Input>
                 </DateInputGroup>
               </DateField>
@@ -181,7 +175,12 @@ export function ProjectCard({ index, onRemove }: ProjectCardProps) {
               onChange={(isChecked) => field.onChange(isChecked)}
               className="pb-2"
             >
-              <span className="text-sm">Active project</span>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label className="text-sm font-normal">Active project</Label>
+              </Checkbox.Content>
             </Checkbox>
           )}
         />
