@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid';
 import { ExperienceCard } from './experience-card';
 import { DeleteExperienceModal } from '@/app/components/experience/delete-experience-modal';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 /**
  * Compact experience/work history editor for the review page accordion.
@@ -52,6 +53,17 @@ export function ExperienceEditor() {
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
+    //undo action
+    const experience = experiences?.[deleteIndex];
+    toast.info('Experience was deleted', {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          append(experience);
+          setDeleteIndex(null);
+        },
+      },
+    });
     remove(deleteIndex);
     setDeleteIndex(null);
   };

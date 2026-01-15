@@ -10,13 +10,13 @@ import {
   FieldError,
   DateField,
   DateInputGroup,
+  Tooltip,
 } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
 import { BulletsEditor } from '../experience';
 import { DateSegmentFilter } from '../date-segment-filter';
-
 /**
  * Props for the ProjectCard component.
  */
@@ -25,13 +25,28 @@ interface ProjectCardProps {
   index: number;
   /** Callback to remove this project */
   onRemove: () => void;
+  /** Callback to move this project up */
+  onMoveUp: () => void;
+  /** Callback to move this project down */
+  onMoveDown: () => void;
+  /** Whether this is the first item */
+  isFirst: boolean;
+  /** Whether this is the last item */
+  isLast: boolean;
 }
 
 /**
  * Individual project card with inline editing.
  * Displays project name, role, URLs, dates, and achievement bullets.
  */
-export function ProjectCard({ index, onRemove }: ProjectCardProps) {
+export function ProjectCard({
+  index,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}: ProjectCardProps) {
   const { control } = useFormContext<BaseResumeData>();
   const basePath = `projects.${index}` as const;
 
@@ -43,7 +58,7 @@ export function ProjectCard({ index, onRemove }: ProjectCardProps) {
 
   return (
     <div className="border-default-200 space-y-3 rounded-lg border p-4">
-      {/* Header with remove button */}
+      {/* Header with reorder and remove buttons */}
       <div className="flex items-start justify-between gap-2">
         <div className="grid flex-1 gap-3 sm:grid-cols-2">
           <Controller
@@ -76,14 +91,45 @@ export function ProjectCard({ index, onRemove }: ProjectCardProps) {
           />
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onPress={onRemove}
-          className="text-danger"
-        >
-          <Icon icon="lucide:trash-2" className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {/* Move up/down buttons */}
+          <Button
+            onPress={onMoveUp}
+            isDisabled={isFirst}
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+          >
+            <Icon icon="lucide:arrow-up" className="size-4" />
+          </Button>
+          <Button
+            onPress={onMoveDown}
+            isDisabled={isLast}
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+          >
+            <Icon icon="lucide:arrow-down" className="size-4" />
+          </Button>
+
+          {/* Remove button */}
+          <Tooltip delay={500}>
+            <Button
+              variant="danger-soft"
+              size="sm"
+              onPress={onRemove}
+              isIconOnly
+              className="rounded-full"
+            >
+              <Icon icon="lucide:trash-2" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Remove project</p>
+            </Tooltip.Content>
+          </Tooltip>
+        </div>
       </div>
 
       {/* URLs */}

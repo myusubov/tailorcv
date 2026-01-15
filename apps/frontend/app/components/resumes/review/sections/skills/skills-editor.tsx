@@ -22,6 +22,10 @@ export function SkillsEditor() {
     name: 'skills',
   });
 
+  const handleRemoveSkill = (index: number) => {
+    remove(index);
+  };
+
   // Local interaction state
   const [addingToCategory, setAddingToCategory] = useState<string | null>(null);
   const [newSkillValue, setNewSkillValue] = useState('');
@@ -229,7 +233,7 @@ export function SkillsEditor() {
             onAddSkill={() => handleAddSkill(category)}
             onCancelAdd={() => setAddingToCategory(null)}
             onStartAdd={() => setAddingToCategory(category)}
-            onRemoveSkill={(index) => remove(index)}
+            onRemoveSkill={handleRemoveSkill}
             onReorderSkills={(newSkills) =>
               handleReorderSkills(category, newSkills)
             }

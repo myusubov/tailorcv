@@ -3,21 +3,21 @@
 import { Modal, Button } from '@heroui/react';
 import { Icon } from '@iconify/react';
 
-export interface DeleteProjectModalProps {
+export interface DeleteEducationModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  projectNumber?: number | null;
+  educationNumber?: number | null;
   label?: string;
   onConfirm: () => void;
 }
 
-export function DeleteProjectModal({
+export function DeleteEducationModal({
   isOpen,
   onOpenChange,
-  projectNumber,
+  educationNumber,
   label,
   onConfirm,
-}: DeleteProjectModalProps) {
+}: DeleteEducationModalProps) {
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop variant="blur">
@@ -32,15 +32,15 @@ export function DeleteProjectModal({
                       className="text-danger size-5"
                     />
                   </Modal.Icon>
-                  <Modal.Heading>Remove project?</Modal.Heading>
+                  <Modal.Heading>Remove education?</Modal.Heading>
                 </Modal.Header>
                 <Modal.Body>
                   <p className="text-muted-foreground text-sm">
                     This will permanently remove{' '}
                     <span className="text-foreground font-medium">
-                      {projectNumber
-                        ? `Project #${projectNumber}`
-                        : 'this project'}
+                      {educationNumber
+                        ? `Education #${educationNumber}`
+                        : 'this education entry'}
                     </span>
                     {label ? (
                       <>

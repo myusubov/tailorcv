@@ -1,10 +1,13 @@
 'use client';
 
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
-import { Button, Label, TextArea } from '@heroui/react';
+import { Button, Label, TextArea, Tooltip } from '@heroui/react';
+import { Reorder } from 'framer-motion';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
 import { nanoid } from 'nanoid';
+import { toast } from 'sonner';
+import { BulletItem } from './bullet-item';
 
 /**
  * Props for the BulletsEditor component.
@@ -16,14 +19,28 @@ interface BulletsEditorProps {
 
 /**
  * Reusable bullets (achievements/responsibilities) editor for experiences and projects.
- * Displays a list of editable bullet points with add/remove functionality.
+ * Displays a list of editable bullet points with add/remove and reorder functionality.
  */
 export function BulletsEditor({ basePath }: BulletsEditorProps) {
   const { control } = useFormContext<BaseResumeData>();
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control,
     name: `${basePath}.bullets` as 'experiences.0.bullets',
   });
+
+  const handleRemove = (index: number) => {
+    const field = fields[index];
+    // allow undo
+    toast.info('Removed bullet point', {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          append(field);
+        },
+      },
+    });
+    remove(index);
+  };
 
   /**
    * Adds a new empty bullet point.
@@ -32,38 +49,45 @@ export function BulletsEditor({ basePath }: BulletsEditorProps) {
     append({ id: nanoid(), text: '' });
   };
 
+  /**
+   * Handles reordering of bullets.
+   * Compares the new order with the old order to find the moved item and persist the change.
+   */
+  const handleReorder = (newItems: typeof fields) => {
+    for (let i = 0; i < newItems.length; i++) {
+      if (newItems[i].id !== fields[i]?.id) {
+        const movedItem = newItems[i];
+        const oldIndex = fields.findIndex((f) => f.id === movedItem.id);
+        if (oldIndex !== -1) {
+          move(oldIndex, i);
+          return;
+        }
+      }
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label className="text-muted text-xs">
         Achievements / Responsibilities
       </Label>
 
-      {fields.map((field, bulletIndex) => (
-        <div key={field.id} className="flex items-start gap-2">
-          <span className="text-muted mt-2.5">•</span>
-          <Controller
-            name={
-              `${basePath}.bullets.${bulletIndex}.text` as 'experiences.0.bullets.0.text'
-            }
-            control={control}
-            render={({ field: inputField }) => (
-              <TextArea
-                {...inputField}
-                placeholder="Describe an achievement or responsibility..."
-                className="min-h-[60px] flex-1"
-              />
-            )}
+      <Reorder.Group
+        axis="y"
+        values={fields}
+        onReorder={handleReorder}
+        className="space-y-2"
+      >
+        {fields.map((field, bulletIndex) => (
+          <BulletItem
+            key={field.id}
+            field={field}
+            basePath={basePath}
+            bulletIndex={bulletIndex}
+            onRemove={() => handleRemove(bulletIndex)}
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={() => remove(bulletIndex)}
-            className="text-danger mt-1"
-          >
-            <Icon icon="lucide:x" className="size-4" />
-          </Button>
-        </div>
-      ))}
+        ))}
+      </Reorder.Group>
 
       <Button
         variant="ghost"

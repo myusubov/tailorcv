@@ -10,6 +10,7 @@ import {
   FieldError,
   DateField,
   DateInputGroup,
+  Tooltip,
 } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
@@ -112,9 +113,19 @@ export function ExperienceCard({
           </Button>
 
           {/* Remove button */}
-          <Button variant="danger-soft" size="sm" onPress={onRemove} isIconOnly>
-            <Icon icon="lucide:trash-2" className="size-4" />
-          </Button>
+          <Tooltip delay={500}>
+            <Button
+              variant="danger-soft"
+              size="sm"
+              onPress={onRemove}
+              isIconOnly
+            >
+              <Icon icon="lucide:trash-2" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Remove experience</p>
+            </Tooltip.Content>
+          </Tooltip>
         </div>
       </div>
 

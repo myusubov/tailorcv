@@ -9,6 +9,7 @@ import {
   FieldError,
   DateField,
   DateInputGroup,
+  Tooltip,
 } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
@@ -23,19 +24,34 @@ interface EducationCardProps {
   index: number;
   /** Callback to remove this education entry */
   onRemove: () => void;
+  /** Callback to move this education up */
+  onMoveUp: () => void;
+  /** Callback to move this education down */
+  onMoveDown: () => void;
+  /** Whether this is the first item */
+  isFirst: boolean;
+  /** Whether this is the last item */
+  isLast: boolean;
 }
 
 /**
  * Individual education entry card.
  * Displays school, degree, field of study, location, dates, and grade.
  */
-export function EducationCard({ index, onRemove }: EducationCardProps) {
+export function EducationCard({
+  index,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}: EducationCardProps) {
   const { control } = useFormContext<BaseResumeData>();
   const basePath = `education.${index}` as const;
 
   return (
     <div className="border-default-200 space-y-3 rounded-lg border p-4">
-      {/* Header with remove button */}
+      {/* Header with reorder and remove buttons */}
       <div className="flex items-start justify-between gap-2">
         <Controller
           name={`${basePath}.school`}
@@ -51,14 +67,45 @@ export function EducationCard({ index, onRemove }: EducationCardProps) {
           )}
         />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onPress={onRemove}
-          className="text-danger mt-6"
-        >
-          <Icon icon="lucide:trash-2" className="size-4" />
-        </Button>
+        <div className="mt-6 flex items-center gap-1">
+          {/* Move up/down buttons */}
+          <Button
+            onPress={onMoveUp}
+            isDisabled={isFirst}
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+          >
+            <Icon icon="lucide:arrow-up" className="size-4" />
+          </Button>
+          <Button
+            onPress={onMoveDown}
+            isDisabled={isLast}
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            className="rounded-full"
+          >
+            <Icon icon="lucide:arrow-down" className="size-4" />
+          </Button>
+
+          {/* Remove button */}
+          <Tooltip delay={500}>
+            <Button
+              variant="danger-soft"
+              size="sm"
+              onPress={onRemove}
+              isIconOnly
+              className="rounded-full"
+            >
+              <Icon icon="lucide:trash-2" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Remove education</p>
+            </Tooltip.Content>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Degree and Field */}
