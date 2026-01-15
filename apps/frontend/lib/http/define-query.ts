@@ -38,10 +38,7 @@ export function defineQuery<TParams, TResponse>(
     const queryKey = makeKey(
       config.keyPrefix,
       ...(config.staticParts ?? []),
-      ...(config.dynamicParts
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (config.dynamicParts(params) as any[])
-        : []),
+      ...(config.dynamicParts ? (config.dynamicParts(params) as any[]) : []),
       ...((keyParts as any[]) ?? []),
     );
 
