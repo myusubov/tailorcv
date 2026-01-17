@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
-import { backendRequest } from '@/lib/api';
-import type { BaseResume } from '@/lib/types/resumes';
+import { getResume } from '@/lib/data/resume';
+import { ErrorCode } from 'shared';
 
 export async function GET(
   _req: Request,
@@ -14,7 +14,7 @@ export async function GET(
       {
         ok: false,
         status: 401,
-        error: { message: 'Unauthorized', code: 'UNAUTHORIZED' },
+        error: { message: 'Unauthorized', code: ErrorCode.UNAUTHORIZED },
       },
       { status: 401 },
     );
@@ -22,11 +22,7 @@ export async function GET(
 
   const { id } = await context.params;
 
-  const result = await backendRequest<BaseResume>(`resumes/base/${id}`, {
-    method: 'GET',
-    auth: 'required',
-    revalidate: 0,
-  });
+  const result = await getResume({ id });
 
   const status = result.ok
     ? 200
