@@ -5,7 +5,11 @@ import {
 } from '@tanstack/react-query';
 
 import { clientGet, type ClientGetOptions } from './client-get';
-import { type ClientGetFn, makeKey, type CacheKeyPart } from './define-client-get';
+import {
+  type ClientGetFn,
+  makeKey,
+  type CacheKeyPart,
+} from './define-client-get';
 
 type DefineQueryOptions<TResponse, TError = ApiRequestError> = Omit<
   UseQueryOptions<TResponse, TError>,

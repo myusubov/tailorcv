@@ -40,7 +40,7 @@ export function EducationEditor() {
       endDate: null,
       grade: null,
       notes: null,
-      isSelfTaught: false,
+      isCurrent: false,
     });
   };
 

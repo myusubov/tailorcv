@@ -200,8 +200,8 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
     projects = [],
     education = [],
   } = data;
-  // Filter out self-taught education entries from the PDF
-  const safeEducation = (education || []).filter((edu) => !edu.isSelfTaught);
+  // Education entries to display
+  const safeEducation = education || [];
 
   return (
     <Document

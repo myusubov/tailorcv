@@ -13,6 +13,7 @@ import {
   Card,
   FieldError,
   useOverlayState,
+  DateField,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import {
@@ -21,10 +22,11 @@ import {
   useFormContext,
   useWatch,
 } from 'react-hook-form';
+import { nanoid } from 'nanoid';
+import { parseDate } from '@internationalized/date';
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
-import { generateUUID } from '@/lib/utils/utils';
 import { DeleteExperienceModal } from '@/app/components/experience/delete-experience-modal';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 
@@ -32,24 +34,6 @@ interface ExperienceStepProps {
   onNext: () => void;
   onBack: () => void;
 }
-
-const months = [
-  { value: '01', label: 'Jan' },
-  { value: '02', label: 'Feb' },
-  { value: '03', label: 'Mar' },
-  { value: '04', label: 'Apr' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'Jun' },
-  { value: '07', label: 'Jul' },
-  { value: '08', label: 'Aug' },
-  { value: '09', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-];
-
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
 
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const deleteModalState = useOverlayState();
@@ -68,17 +52,20 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const labelParts = [title, company].filter(Boolean);
   const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
 
+  /**
+   * Add a new experience entry with proper baseResumeDataSchema structure
+   */
   const addExperience = () => {
     append({
-      id: generateUUID(),
+      id: nanoid(),
       title: '',
       company: '',
-      startMonth: '',
-      startYear: '',
-      endMonth: '',
-      endYear: '',
+      location: null,
+      startDate: null,
+      endDate: null,
       isCurrent: false,
-      description: '',
+      tech: null,
+      bullets: [{ id: nanoid(), text: '' }],
     });
   };
 
@@ -95,8 +82,6 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
   const handleNext = () => {
     if (fields.length === 0) {
-      // Force clear to ensure no ghost data exists in form state
-      // This fixes the issue where useFieldArray is empty but form state isn't
       setValue('experiences', []);
     }
     onNext();
@@ -252,7 +237,7 @@ function ExperienceItemContent({
   onMoveDown,
   onDelete,
 }: ExperienceItemContentProps) {
-  const { control } = useFormContext<OnboardingFormInput>();
+  const { control, setValue } = useFormContext<OnboardingFormInput>();
   const isCurrent = useWatch({
     control,
     name: `experiences.${index}.isCurrent`,
@@ -323,125 +308,38 @@ function ExperienceItemContent({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label className="text-foreground mb-2 block text-sm font-medium">
-              Start Date *
-            </Label>
-            <div className="flex gap-2">
-              <Controller
-                name={`experiences.${index}.startMonth`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    >
-                      <option value="">Month</option>
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
+          <Controller
+            name={`experiences.${index}.startDate`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <DateField
+                label="Start Date *"
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+                isInvalid={!!fieldState.error}
+                errorMessage={fieldState.error?.message}
               />
+            )}
+          />
 
-              <Controller
-                name={`experiences.${index}.startYear`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    >
-                      <option value="">Year</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
+          <Controller
+            name={`experiences.${index}.endDate`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <DateField
+                label="End Date"
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+                isDisabled={!!isCurrent}
+                isInvalid={!!fieldState.error}
+                errorMessage={fieldState.error?.message}
               />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-foreground mb-2 block text-sm font-medium">
-              End Date
-            </Label>
-            <div className="flex gap-2">
-              <Controller
-                name={`experiences.${index}.endMonth`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      disabled={!!isCurrent}
-                    >
-                      <option value="">Month</option>
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              />
-
-              <Controller
-                name={`experiences.${index}.endYear`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      disabled={!!isCurrent}
-                    >
-                      <option value="">Year</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              />
-            </div>
-          </div>
+            )}
+          />
         </div>
 
         <Controller
@@ -450,7 +348,12 @@ function ExperienceItemContent({
           render={({ field }) => (
             <Checkbox
               isSelected={!!field.value}
-              onChange={(selected) => field.onChange(selected)}
+              onChange={(isChecked) => {
+                field.onChange(isChecked);
+                if (isChecked) {
+                  setValue(`experiences.${index}.endDate`, null);
+                }
+              }}
             >
               <Checkbox.Control className="size-5">
                 <Checkbox.Indicator />
@@ -463,13 +366,14 @@ function ExperienceItemContent({
         />
 
         <Controller
-          name={`experiences.${index}.description`}
+          name={`experiences.${index}.bullets.0.text`}
           control={control}
           render={({ field, fieldState }) => (
             <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>What did you do? *</Label>
               <TextArea
                 {...field}
+                value={field.value || ''}
                 placeholder="Led frontend development, built React dashboards, mentored junior devs..."
                 rows={3}
               />

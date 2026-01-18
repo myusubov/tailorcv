@@ -174,8 +174,7 @@ function analyzeProjects(
 function analyzeEducation(
   education: BaseResumeData['education'] | undefined,
 ): AnalysisItem {
-  const nonSelfTaught = education?.filter((edu) => !edu.isSelfTaught) ?? [];
-  const count = nonSelfTaught.length;
+  const count = education?.length ?? 0;
 
   if (count === 0) {
     return {

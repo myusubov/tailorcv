@@ -54,9 +54,9 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>First Name *</Label>
                   <Input {...field} placeholder="John" />
-                  {fieldState.error ? (
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
@@ -70,9 +70,9 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Last Name *</Label>
                   <Input {...field} placeholder="Doe" />
-                  {fieldState.error ? (
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
@@ -92,9 +92,9 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                     type="email"
                     placeholder="john@example.com"
                   />
-                  {fieldState.error ? (
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
@@ -107,7 +107,11 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field }) => (
                 <TextField className="w-full">
                   <Label>Phone Number</Label>
-                  <Input {...field} placeholder="+1 (555) 123-4567" />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="+1 (555) 123-4567"
+                  />
                   <Description>Optional</Description>
                 </TextField>
               )}
@@ -119,13 +123,15 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           <Controller
             name="contact.location"
             control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Location *</Label>
-                <Input {...field} placeholder="San Francisco, CA" />
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
+            render={({ field }) => (
+              <TextField className="w-full">
+                <Label>Location</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="San Francisco, CA"
+                />
+                <Description>Optional</Description>
               </TextField>
             )}
           />
@@ -139,7 +145,11 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field }) => (
                 <TextField className="w-full">
                   <Label>GitHub URL</Label>
-                  <Input {...field} placeholder="github.com/username" />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="github.com/username"
+                  />
                 </TextField>
               )}
             />
@@ -152,7 +162,11 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field }) => (
                 <TextField className="w-full">
                   <Label>LinkedIn URL</Label>
-                  <Input {...field} placeholder="linkedin.com/in/username" />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="linkedin.com/in/username"
+                  />
                 </TextField>
               )}
             />
@@ -166,7 +180,11 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
             render={({ field }) => (
               <TextField className="w-full">
                 <Label>Portfolio / Website</Label>
-                <Input {...field} placeholder="yourwebsite.com" />
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="yourwebsite.com"
+                />
                 <Description>Optional</Description>
               </TextField>
             )}

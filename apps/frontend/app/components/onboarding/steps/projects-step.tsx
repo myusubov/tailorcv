@@ -14,6 +14,7 @@ import {
   TextArea,
   TextField,
   useOverlayState,
+  DateField,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import {
@@ -21,12 +22,14 @@ import {
   useFieldArray,
   useFormContext,
   useFormState,
+  useWatch,
 } from 'react-hook-form';
+import { nanoid } from 'nanoid';
+import { parseDate } from '@internationalized/date';
+
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
-import { generateUUID } from '@/lib/utils/utils';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
-
 import { DeleteProjectModal } from '@/app/components/projects/delete-project-modal';
 
 interface ProjectsStepProps {
@@ -34,31 +37,11 @@ interface ProjectsStepProps {
   onBack: () => void;
 }
 
-const months = [
-  { value: '01', label: 'Jan' },
-  { value: '02', label: 'Feb' },
-  { value: '03', label: 'Mar' },
-  { value: '04', label: 'Apr' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'Jun' },
-  { value: '07', label: 'Jul' },
-  { value: '08', label: 'Aug' },
-  { value: '09', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-];
-
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
-
 export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const deleteModalState = useOverlayState();
   const { control, watch, setValue, getValues } =
     useFormContext<OnboardingFormInput>();
-
   const { errors } = useFormState({ control });
-
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'projects',
@@ -68,73 +51,47 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const skills = watch('skills') ?? [];
   const [skillInput, setSkillInput] = useState('');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const projectName = deleteIndex !== null ? projects?.[deleteIndex]?.name : '';
 
   const addProject = () => {
     append({
-      id: generateUUID(),
+      id: nanoid(),
       name: '',
-      description: '',
-      tech: '',
-      startMonth: '',
-      startYear: '',
-      endMonth: '',
-      endYear: '',
+      role: null,
+      startDate: null,
+      endDate: null,
       isCurrent: false,
-      url: '',
-      repoUrl: '',
+      url: null,
+      repoUrl: null,
+      tech: null,
+      bullets: [{ id: nanoid(), text: '' }],
     });
-  };
-
-  const handleMoveUp = (idx: number) => {
-    move(idx, idx - 1);
-  };
-
-  const handleMoveDown = (idx: number) => {
-    move(idx, idx + 1);
   };
 
   const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return;
-
-    // Fix: Prevent default form submission immediately
     e.preventDefault();
-
     const nextSkill = skillInput.trim();
     if (!nextSkill) return;
     const currentSkills = getValues('skills') ?? [];
-    if (!currentSkills.includes(nextSkill)) {
-      setValue('skills', [...currentSkills, nextSkill], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+    if (!currentSkills.some((s) => s.name === nextSkill)) {
+      setValue(
+        'skills',
+        [
+          ...currentSkills,
+          { id: nanoid(), name: nextSkill, category: null, level: null },
+        ],
+        { shouldDirty: true },
+      );
     }
     setSkillInput('');
   };
 
-  const removeSkill = (skill: string) => {
-    const currentSkills = getValues('skills') ?? [];
+  const removeSkill = (skillId: string) => {
     setValue(
       'skills',
-      currentSkills.filter((s) => s !== skill),
-      { shouldDirty: true, shouldValidate: true },
+      (getValues('skills') ?? []).filter((s) => s.id !== skillId),
+      { shouldDirty: true },
     );
-  };
-
-  const handleDelete = () => {
-    if (deleteIndex === null) return;
-    const indexToRemove = deleteIndex;
-    setTimeout(() => {
-      remove(indexToRemove);
-      setDeleteIndex(null);
-    }, 300);
-  };
-
-  const handleDeleteModalOpenChange = (isOpen: boolean) => {
-    deleteModalState.setOpen(isOpen);
-    if (!isOpen && deleteIndex !== null) {
-      // Don't clear deleteIndex here - let handleDelete do it after removal
-    }
   };
 
   return (
@@ -153,16 +110,8 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
             </p>
             <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
               <li>Add at least 3 skills</li>
-              <li>
-                Add at least 1 project or 1 experience with some details
-                (description or tech stack)
-              </li>
+              <li>Add at least 1 project or 1 experience with some details</li>
             </ul>
-            {errors.projects?.message ? (
-              <p className="text-danger text-sm">
-                {String(errors.projects.message)}
-              </p>
-            ) : null}
           </Card.Content>
         </Card>
 
@@ -176,323 +125,25 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
             <Icon icon="lucide:folder-code" className="size-5" />
             Projects
           </h3>
-          {fields.length === 0 && errors.projects?.message ? (
-            <FieldError>{String(errors.projects.message)}</FieldError>
-          ) : null}
-
           <AnimatePresence mode="popLayout">
             {fields.map((project, index) => (
               <ReorderableItem
                 key={project.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                layout
                 isFirst={index === 0}
                 isLast={index === fields.length - 1}
-                onMoveUp={() => handleMoveUp(index)}
-                onMoveDown={() => handleMoveDown(index)}
+                onMoveUp={() => move(index, index - 1)}
+                onMoveDown={() => move(index, index + 1)}
               >
-                <Card className="mb-4">
-                  <Card.Header className="flex-row items-center justify-between">
-                    <Card.Title className="text-base">
-                      Project #{index + 1}
-                    </Card.Title>
-                    <div className="flex items-center gap-1">
-                      {/* Mobile Reorder Controls */}
-                      <div className="flex items-center gap-1 lg:hidden">
-                        <Button
-                          onPress={() => handleMoveUp(index)}
-                          isDisabled={index === 0}
-                          isIconOnly
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Icon icon="lucide:arrow-up" />
-                        </Button>
-                        <Button
-                          onPress={() => handleMoveDown(index)}
-                          isDisabled={index === fields.length - 1}
-                          isIconOnly
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Icon icon="lucide:arrow-down" />
-                        </Button>
-                      </div>
-
-                      <Button
-                        isIconOnly
-                        variant="danger-soft"
-                        size="sm"
-                        onPress={() => {
-                          setDeleteIndex(index);
-                          deleteModalState.open();
-                        }}
-                      >
-                        <Icon icon="lucide:trash-2" />
-                      </Button>
-                    </div>
-                  </Card.Header>
-
-                  <Card.Content className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Controller
-                        name={`projects.${index}.name`}
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <TextField
-                            className="w-full"
-                            isInvalid={!!fieldState.error}
-                          >
-                            <Label>Project Name *</Label>
-                            <Input {...field} placeholder="TailorCV" />
-                            {fieldState.error ? (
-                              <FieldError>
-                                {fieldState.error.message}
-                              </FieldError>
-                            ) : null}
-                          </TextField>
-                        )}
-                      />
-
-                      <Controller
-                        name={`projects.${index}.tech`}
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <TextField
-                            className="w-full"
-                            isInvalid={!!fieldState.error}
-                          >
-                            <Label>Tech Stack *</Label>
-                            <Input
-                              {...field}
-                              placeholder="Next.js, TypeScript, Tailwind"
-                            />
-                            {fieldState.error ? (
-                              <FieldError>
-                                {fieldState.error.message}
-                              </FieldError>
-                            ) : null}
-                          </TextField>
-                        )}
-                      />
-                    </div>
-
-                    <Controller
-                      name={`projects.${index}.description`}
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <TextField
-                          className="w-full"
-                          isInvalid={!!fieldState.error}
-                        >
-                          <Label>Description *</Label>
-                          <TextArea
-                            {...field}
-                            placeholder="AI-powered resume builder that helps developers..."
-                            rows={4}
-                          />
-                          <Description>
-                            Brief 1-2 sentence description
-                          </Description>
-                          {fieldState.error ? (
-                            <FieldError>{fieldState.error.message}</FieldError>
-                          ) : null}
-                        </TextField>
-                      )}
-                    />
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Controller
-                        name={`projects.${index}.url`}
-                        control={control}
-                        render={({ field }) => (
-                          <TextField className="w-full">
-                            <Label>Project URL</Label>
-                            <Input
-                              {...field}
-                              placeholder="https://myproject.com"
-                            />
-                            <Description>Live demo link (Optional)</Description>
-                          </TextField>
-                        )}
-                      />
-
-                      <Controller
-                        name={`projects.${index}.repoUrl`}
-                        control={control}
-                        render={({ field }) => (
-                          <TextField className="w-full">
-                            <Label>GitHub URL</Label>
-                            <Input
-                              {...field}
-                              placeholder="github.com/username/project"
-                            />
-                            <Description>
-                              Repository link (Optional)
-                            </Description>
-                          </TextField>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <Label className="text-foreground mb-2 block text-sm font-medium">
-                          Start Date
-                        </Label>
-                        <div className="flex gap-2">
-                          <Controller
-                            name={`projects.${index}.startMonth`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                >
-                                  <option value="">Month</option>
-                                  {months.map((m) => (
-                                    <option key={m.value} value={m.value}>
-                                      {m.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-
-                          <Controller
-                            name={`projects.${index}.startYear`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                >
-                                  <option value="">Year</option>
-                                  {years.map((y) => (
-                                    <option key={y} value={y}>
-                                      {y}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-foreground mb-2 block text-sm font-medium">
-                          End Date
-                        </Label>
-                        <div className="flex gap-2">
-                          <Controller
-                            name={`projects.${index}.endMonth`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                  disabled={projects?.[index]?.isCurrent}
-                                >
-                                  <option value="">Month</option>
-                                  {months.map((m) => (
-                                    <option key={m.value} value={m.value}>
-                                      {m.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-
-                          <Controller
-                            name={`projects.${index}.endYear`}
-                            control={control}
-                            render={({ field, fieldState }) => (
-                              <div className="flex-1">
-                                <select
-                                  className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value)
-                                  }
-                                  disabled={projects?.[index]?.isCurrent}
-                                >
-                                  <option value="">Year</option>
-                                  {years.map((y) => (
-                                    <option key={y} value={y}>
-                                      {y}
-                                    </option>
-                                  ))}
-                                </select>
-                                {fieldState.error ? (
-                                  <p className="text-danger mt-1 text-xs">
-                                    {fieldState.error.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Controller
-                      name={`projects.${index}.isCurrent`}
-                      control={control}
-                      render={({ field }) => (
-                        <Checkbox
-                          isSelected={!!field.value}
-                          onChange={(selected) => field.onChange(selected)}
-                        >
-                          <Checkbox.Control className="size-5">
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
-                          <Checkbox.Content>
-                            <span className="text-sm">
-                              I am currently working on this project
-                            </span>
-                          </Checkbox.Content>
-                        </Checkbox>
-                      )}
-                    />
-                  </Card.Content>
-                </Card>
+                <ProjectCard
+                  index={index}
+                  onDelete={() => {
+                    setDeleteIndex(index);
+                    deleteModalState.open();
+                  }}
+                />
               </ReorderableItem>
             ))}
           </AnimatePresence>
-
           <Button variant="secondary" onPress={addProject} className="w-full">
             <Icon icon="lucide:plus" className="size-4" />
             Add {fields.length > 0 ? 'Another ' : ''}Project
@@ -508,10 +159,9 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
             <Icon icon="lucide:wrench" className="size-5" />
             Technical Skills
           </h3>
-
           <Card>
             <Card.Content className="space-y-4">
-              <TextField className="w-full" isInvalid={!!errors.skills}>
+              <TextField className="w-full">
                 <Label>Add Skills</Label>
                 <Input
                   placeholder="Type a skill and press Enter..."
@@ -520,48 +170,24 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                   onKeyDown={handleSkillKeyDown}
                 />
                 <Description>Press Enter to add each skill</Description>
-                {errors.skills?.message ? (
-                  <FieldError>{String(errors.skills.message)}</FieldError>
-                ) : null}
               </TextField>
-
-              <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                <Icon icon="lucide:sparkles" className="text-warning size-3" />
-                <span>
-                  Tip: Don&apos;t worry about categories. AI will organize them
-                  for you.
-                </span>
-              </div>
-
               {skills.length > 0 && (
-                <div>
-                  <Label className="text-muted mb-2 block text-sm">
-                    Your Skills:
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    <AnimatePresence>
-                      {skills.map((skill) => (
-                        <motion.div
-                          key={skill}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Chip className="bg-primary/10 text-primary pr-1">
-                            {skill}
-                            <button
-                              type="button"
-                              onClick={() => removeSkill(skill)}
-                              className="hover:bg-primary/20 ml-1 rounded-full p-0.5"
-                            >
-                              <Icon icon="lucide:x" className="size-3" />
-                            </button>
-                          </Chip>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill) => (
+                    <Chip
+                      key={skill.id}
+                      className="bg-primary/10 text-primary pr-1"
+                    >
+                      {skill.name}
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill.id)}
+                        className="hover:bg-primary/20 ml-1 rounded-full p-0.5"
+                      >
+                        <Icon icon="lucide:x" className="size-3" />
+                      </button>
+                    </Chip>
+                  ))}
                 </div>
               )}
             </Card.Content>
@@ -574,11 +200,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Button
-            variant="ghost"
-            onPress={onBack}
-            className="text-muted hover:text-foreground"
-          >
+          <Button variant="ghost" onPress={onBack}>
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back
           </Button>
@@ -591,14 +213,174 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           </Button>
         </motion.div>
       </div>
-
       <DeleteProjectModal
         isOpen={deleteModalState.isOpen}
-        onOpenChange={handleDeleteModalOpenChange}
+        onOpenChange={(o) => deleteModalState.setOpen(o)}
         projectNumber={deleteIndex !== null ? deleteIndex + 1 : null}
-        label={projectName ? projectName : ''}
-        onConfirm={handleDelete}
+        label={deleteIndex !== null ? projects?.[deleteIndex]?.name || '' : ''}
+        onConfirm={() => {
+          if (deleteIndex !== null) {
+            remove(deleteIndex);
+            setDeleteIndex(null);
+          }
+        }}
       />
     </>
+  );
+}
+
+function ProjectCard({
+  index,
+  onDelete,
+}: {
+  index: number;
+  onDelete: () => void;
+}) {
+  const { control, setValue } = useFormContext<OnboardingFormInput>();
+  const isCurrent = useWatch({ control, name: `projects.${index}.isCurrent` });
+  const tech = useWatch({ control, name: `projects.${index}.tech` });
+
+  return (
+    <Card className="mb-4">
+      <Card.Header className="flex-row items-center justify-between">
+        <Card.Title className="text-base">Project #{index + 1}</Card.Title>
+        <Button isIconOnly variant="danger-soft" size="sm" onPress={onDelete}>
+          <Icon icon="lucide:trash-2" />
+        </Button>
+      </Card.Header>
+      <Card.Content className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Controller
+            name={`projects.${index}.name`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <Label>Project Name *</Label>
+                <Input {...field} placeholder="TailorCV" />
+                {fieldState.error && (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                )}
+              </TextField>
+            )}
+          />
+          <TextField className="w-full">
+            <Label>Tech Stack</Label>
+            <Input
+              value={Array.isArray(tech) ? tech.join(', ') : ''}
+              onChange={(e) => {
+                const arr = e.target.value
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter(Boolean);
+                setValue(`projects.${index}.tech`, arr.length ? arr : null);
+              }}
+              placeholder="React, TypeScript"
+            />
+            <Description>Comma-separated</Description>
+          </TextField>
+        </div>
+        <Controller
+          name={`projects.${index}.bullets.0.text`}
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
+              <Label>Description *</Label>
+              <TextArea
+                {...field}
+                value={field.value || ''}
+                placeholder="AI-powered resume builder..."
+                rows={3}
+              />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
+            </TextField>
+          )}
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Controller
+            name={`projects.${index}.url`}
+            control={control}
+            render={({ field }) => (
+              <TextField className="w-full">
+                <Label>Project URL</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="https://..."
+                />
+              </TextField>
+            )}
+          />
+          <Controller
+            name={`projects.${index}.repoUrl`}
+            control={control}
+            render={({ field }) => (
+              <TextField className="w-full">
+                <Label>GitHub URL</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="github.com/..."
+                />
+              </TextField>
+            )}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Controller
+            name={`projects.${index}.startDate`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <DateField
+                label="Start Date"
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+                isInvalid={!!fieldState.error}
+                errorMessage={fieldState.error?.message}
+              />
+            )}
+          />
+          <Controller
+            name={`projects.${index}.endDate`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <DateField
+                label="End Date"
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : null)
+                }
+                isDisabled={!!isCurrent}
+                isInvalid={!!fieldState.error}
+                errorMessage={fieldState.error?.message}
+              />
+            )}
+          />
+        </div>
+        <Controller
+          name={`projects.${index}.isCurrent`}
+          control={control}
+          render={({ field }) => (
+            <Checkbox
+              isSelected={!!field.value}
+              onChange={(s) => {
+                field.onChange(s);
+                if (s) setValue(`projects.${index}.endDate`, null);
+              }}
+            >
+              <Checkbox.Control className="size-5">
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <span className="text-sm">I am currently working on this</span>
+              </Checkbox.Content>
+            </Checkbox>
+          )}
+        />
+      </Card.Content>
+    </Card>
   );
 }

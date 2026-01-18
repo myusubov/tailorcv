@@ -29,6 +29,10 @@ interface ManualEntryFormProps {
   onBack: () => void;
 }
 
+/**
+ * ManualEntryForm component that handles multi-step onboarding form.
+ * Uses baseResumeDataSchema as the single source of truth.
+ */
 export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -37,34 +41,28 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const form = useForm<OnboardingFormInput>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
+      version: 1,
       contact: {
         firstName: '',
         lastName: '',
+        headline: null,
         email: '',
-        phone: '',
-        location: '',
-        githubUrl: '',
-        linkedinUrl: '',
-        websiteUrl: '',
+        phone: null,
+        location: null,
+        githubUrl: null,
+        linkedinUrl: null,
+        websiteUrl: null,
       },
-      summary: '',
+      summary: null,
       experiences: [],
       projects: [],
       skills: [],
-      education: {
-        school: '',
-        degree: '',
-        startMonth: '',
-        startYear: '',
-        endMonth: '',
-        endYear: '',
-        isSelfTaught: false,
-      },
+      education: null,
+      certifications: null,
+      languages: null,
     },
     mode: 'onSubmit',
   });
-
-  /* console.log({ errors: form.formState.errors }); */
 
   const { mutate: startJob, isPending } = useActionMutation(
     startOnboardingJobAction,

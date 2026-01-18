@@ -93,24 +93,34 @@ export function ExperienceCard({
 
         <div className="flex items-center gap-1">
           {/* Move up/down buttons */}
-          <Button
-            onPress={onMoveUp}
-            isDisabled={isFirst}
-            isIconOnly
-            variant="ghost"
-            size="sm"
-          >
-            <Icon icon="lucide:arrow-up" className="size-4" />
-          </Button>
-          <Button
-            onPress={onMoveDown}
-            isDisabled={isLast}
-            isIconOnly
-            variant="ghost"
-            size="sm"
-          >
-            <Icon icon="lucide:arrow-down" className="size-4" />
-          </Button>
+          <Tooltip delay={500}>
+            <Button
+              onPress={onMoveUp}
+              isDisabled={isFirst}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+            >
+              <Icon icon="lucide:arrow-up" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Move up</p>
+            </Tooltip.Content>
+          </Tooltip>
+          <Tooltip delay={500}>
+            <Button
+              onPress={onMoveDown}
+              isDisabled={isLast}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+            >
+              <Icon icon="lucide:arrow-down" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Move down</p>
+            </Tooltip.Content>
+          </Tooltip>
 
           {/* Remove button */}
           <Tooltip delay={500}>
@@ -151,24 +161,25 @@ export function ExperienceCard({
           name={`${basePath}.startDate`}
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
+            <DateField
+              className="w-full"
+              isInvalid={!!fieldState.error}
+              value={field.value ? parseDate(`${field.value}-01`) : null}
+              onChange={(date) => {
+                console.log(date);
+                field.onChange(date ? date.toString().slice(0, 7) : '');
+              }}
+            >
               <Label>Start Date *</Label>
-              <DateField
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : '')
-                }
-              >
-                <DateInputGroup>
-                  <DateInputGroup.Input>
-                    {(segment) => <DateSegmentFilter segment={segment} />}
-                  </DateInputGroup.Input>
-                </DateInputGroup>
-              </DateField>
+              <DateInputGroup>
+                <DateInputGroup.Input>
+                  {(segment) => <DateInputGroup.Segment segment={segment} />}
+                </DateInputGroup.Input>
+              </DateInputGroup>
               {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
-            </TextField>
+            </DateField>
           )}
         />
 
@@ -176,25 +187,25 @@ export function ExperienceCard({
           name={`${basePath}.endDate`}
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
+            <DateField
+              className="w-full"
+              isInvalid={!!fieldState.error}
+              isDisabled={!!isCurrent}
+              value={field.value ? parseDate(`${field.value}-01`) : null}
+              onChange={(date) =>
+                field.onChange(date ? date.toString().slice(0, 7) : null)
+              }
+            >
               <Label>End Date</Label>
-              <DateField
-                isDisabled={!!isCurrent}
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
-                }
-              >
-                <DateInputGroup>
-                  <DateInputGroup.Input>
-                    {(segment) => <DateSegmentFilter segment={segment} />}
-                  </DateInputGroup.Input>
-                </DateInputGroup>
-              </DateField>
+              <DateInputGroup>
+                <DateInputGroup.Input>
+                  {(segment) => <DateInputGroup.Segment segment={segment} />}
+                </DateInputGroup.Input>
+              </DateInputGroup>
               {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
-            </TextField>
+            </DateField>
           )}
         />
 

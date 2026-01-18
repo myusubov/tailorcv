@@ -6,7 +6,7 @@ export const useBaseResumeQuery = defineQuery<{ id: string }, BaseResume>({
   keyPrefix: 'resumes',
   staticParts: ['base'],
   dynamicParts: ({ id }) => [id],
-  defaults: { 
+  defaults: {
     cache: 'no-store',
     priority: 'high',
   },

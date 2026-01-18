@@ -117,7 +117,7 @@ export function ResumePreview({
     education = [],
   } = data;
 
-  const safeEducation = (education || []).filter((edu) => !edu.isSelfTaught);
+  const safeEducation = education || [];
 
   // Calculate scaled dimensions for the wrapper (prevents layout overflow)
   const scaledWidth = A4_WIDTH_PX * computedScale;

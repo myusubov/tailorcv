@@ -13,7 +13,10 @@ const dateSchema = z
   .string()
   .trim()
   .describe('Date in YYYY-MM or YYYY format.')
-  .regex(/^\d{4}(-(0[1-9]|1[0-2]))?$/, 'Expected YYYY or YYYY-MM');
+  .regex(
+    /^\d{4}(-(0[1-9]|1[0-2]))?$/,
+    'Please enter a valid date in YYYY-MM format (e.g., 2024-05)',
+  );
 
 const idSchema = z.string().trim().min(1, 'Missing ID');
 const urlSchema = z.string().trim().nullable();
@@ -38,7 +41,7 @@ export const baseResumeDataSchema = z
         githubUrl: urlSchema,
       })
       .strict(),
-    summary: z.string().trim().min(1, 'Summary is required').nullable(),
+    summary: z.string().trim().nullable(),
     skills: z.array(
       z
         .object({
@@ -87,6 +90,16 @@ export const baseResumeDataSchema = z
               path: ['startDate'],
             });
           }
+          // Validate date range: startDate must be before or equal to endDate
+          if (data.startDate && data.endDate) {
+            if (data.startDate > data.endDate) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'End date must be after start date',
+                path: ['endDate'],
+              });
+            }
+          }
         }),
     ),
     projects: z.array(
@@ -128,6 +141,16 @@ export const baseResumeDataSchema = z
               path: ['startDate'],
             });
           }
+          // Validate date range: startDate must be before or equal to endDate
+          if (data.startDate && data.endDate) {
+            if (data.startDate > data.endDate) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'End date must be after start date',
+                path: ['endDate'],
+              });
+            }
+          }
         }),
     ),
     education: z
@@ -135,7 +158,10 @@ export const baseResumeDataSchema = z
         z
           .object({
             id: idSchema,
-            school: z.string().trim().min(1, 'School is required'),
+            school: z
+              .string()
+              .trim()
+              .min(1, 'Please enter your school or institution name'),
             degree: z.string().trim().min(1, 'Degree is required').nullable(),
             field: z
               .string()
@@ -151,9 +177,21 @@ export const baseResumeDataSchema = z
             endDate: dateSchema.nullable(),
             grade: z.string().trim().min(1, 'Grade is required').nullable(),
             notes: z.string().trim().min(1, 'Notes are required').nullable(),
-            isSelfTaught: z.boolean().nullable(),
+            isCurrent: z.boolean().nullable(),
           })
-          .strict(),
+          .strict()
+          .superRefine((data, ctx) => {
+            // Validate date range: startDate must be before or equal to endDate
+            if (data.startDate && data.endDate) {
+              if (data.startDate > data.endDate) {
+                ctx.addIssue({
+                  code: 'custom',
+                  message: 'End date must be after start date',
+                  path: ['endDate'],
+                });
+              }
+            }
+          }),
       )
       .nullable(),
     certifications: z
@@ -189,163 +227,7 @@ export const baseResumeDataSchema = z
 
 export type BaseResumeData = z.infer<typeof baseResumeDataSchema>;
 
-/**
- * 2. ONBOARDING FORM SCHEMA
- * This is what the frontend form uses. It maps to the Resume Schema.
- */
-export const onboardingSchema = z.object({
-  contact: z.object({
-    firstName: z.string().trim().min(1, 'First name is required').max(50),
-    lastName: z.string().trim().min(1, 'Last name is required').max(50),
-    email: z.email('Invalid email address').max(100),
-    phone: z.string().trim().max(30).optional().default(''),
-    location: z.string().trim().min(2, 'Location is required').max(100),
-    githubUrl: z.string().trim().max(200).optional().default(''),
-    linkedinUrl: z.string().trim().max(200).optional().default(''),
-    websiteUrl: z.string().trim().max(200).optional().default(''),
-  }),
-  summary: z
-    .string()
-    .trim()
-    .max(1000, 'Summary is too long')
-    .optional()
-    .default(''),
-  experiences: z
-    .array(
-      z
-        .object({
-          id: z.string().min(1, 'Missing ID'),
-          title: z.string().trim().min(2, 'Title is required').max(100),
-          company: z.string().trim().min(2, 'Company is required').max(100),
-          startMonth: monthSchema,
-          startYear: yearSchema,
-          endMonth: z.string().trim().optional().default(''),
-          endYear: z.string().trim().optional().default(''),
-          isCurrent: z.boolean().default(false),
-          description: z
-            .string()
-            .trim()
-            .min(50, 'Provide more detail (min 50 chars) for better AI results')
-            .max(2000),
-        })
-        .superRefine((data, ctx) => {
-          if (!data.isCurrent) {
-            if (!data.endMonth || !MonthRegex.test(data.endMonth)) {
-              ctx.addIssue({
-                code: 'custom',
-                message: 'End month is required',
-                path: ['endMonth'],
-              });
-            }
-            if (!data.endYear || !YearRegex.test(data.endYear)) {
-              ctx.addIssue({
-                code: 'custom',
-                message: 'End year is required',
-                path: ['endYear'],
-              });
-            }
-          }
-        }),
-    )
-    .default([]),
-  projects: z
-    .array(
-      z
-        .object({
-          id: z.string().min(1, 'Missing ID'),
-          name: z.string().trim().min(2, 'Name is required').max(100),
-          description: z
-            .string()
-            .trim()
-            .min(30, 'Provide more detail (min 30 chars) for better AI results')
-            .max(2000),
-          tech: z.string().trim().min(1, 'Tech stack is required').max(500),
-          startMonth: monthSchema,
-          startYear: yearSchema,
-          endMonth: z.string().trim().optional().default(''),
-          endYear: z.string().trim().optional().default(''),
-          isCurrent: z.boolean().default(false),
-          url: z.string().trim().max(200).optional().default(''),
-          repoUrl: z.string().trim().max(200).optional().default(''),
-        })
-        .superRefine((data, ctx) => {
-          if (!data.isCurrent) {
-            if (!data.endMonth || !MonthRegex.test(data.endMonth)) {
-              ctx.addIssue({
-                code: 'custom',
-                message: 'End month is required',
-                path: ['endMonth'],
-              });
-            }
-            if (!data.endYear || !YearRegex.test(data.endYear)) {
-              ctx.addIssue({
-                code: 'custom',
-                message: 'End year is required',
-                path: ['endYear'],
-              });
-            }
-          }
-        }),
-    )
-    .min(1, 'At least one project is required')
-    .default([]),
-  skills: z
-    .array(z.string().trim().min(1, 'Skill cannot be empty'))
-    .min(5, 'At least 5 skills required for an optimal resume')
-    .default([]),
-  education: z
-    .object({
-      school: z.string().trim().max(100).optional().default(''),
-      degree: z.string().trim().max(100).optional().default(''),
-      startMonth: z.string().trim().optional().default(''),
-      startYear: z.string().trim().optional().default(''),
-      endMonth: z.string().trim().optional().default(''),
-      endYear: z.string().trim().optional().default(''),
-      isSelfTaught: z.boolean().default(false),
-    })
-    .superRefine((data, ctx) => {
-      if (!data.isSelfTaught) {
-        if (!data.school || data.school.length < 1) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'School is required',
-            path: ['school'],
-          });
-        }
-        if (!data.startMonth || !MonthRegex.test(data.startMonth)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Start month is required',
-            path: ['startMonth'],
-          });
-        }
-        if (!data.startYear || !YearRegex.test(data.startYear)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Start year is required',
-            path: ['startYear'],
-          });
-        }
-        if (!data.endMonth || !MonthRegex.test(data.endMonth)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Graduation month is required',
-            path: ['endMonth'],
-          });
-        }
-        if (!data.endYear || !YearRegex.test(data.endYear)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Graduation year is required',
-            path: ['endYear'],
-          });
-        }
-      }
-    }),
-});
-
-export type OnboardingFormInput = z.input<typeof onboardingSchema>;
-export type OnboardingFormValues = z.output<typeof onboardingSchema>;
+// Onboarding schema removed in favor of single source of truth (baseResumeDataSchema)
 
 /**
  * 3. COMPATIBILITY EXPORTS

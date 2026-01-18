@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormContext, Controller } from 'react-hook-form';
+import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import {
   Button,
   TextField,
@@ -10,6 +10,7 @@ import {
   DateField,
   DateInputGroup,
   Tooltip,
+  Checkbox,
 } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
@@ -46,8 +47,14 @@ export function EducationCard({
   isFirst,
   isLast,
 }: EducationCardProps) {
-  const { control } = useFormContext<BaseResumeData>();
+  const { control, setValue } = useFormContext<BaseResumeData>();
   const basePath = `education.${index}` as const;
+
+  // Watch fields for conditional disabling
+  const isCurrent = useWatch({
+    control,
+    name: `${basePath}.isCurrent`,
+  });
 
   return (
     <div className="border-default-200 space-y-3 rounded-lg border p-4">
@@ -69,26 +76,36 @@ export function EducationCard({
 
         <div className="mt-6 flex items-center gap-1">
           {/* Move up/down buttons */}
-          <Button
-            onPress={onMoveUp}
-            isDisabled={isFirst}
-            isIconOnly
-            variant="ghost"
-            size="sm"
-            className="rounded-full"
-          >
-            <Icon icon="lucide:arrow-up" className="size-4" />
-          </Button>
-          <Button
-            onPress={onMoveDown}
-            isDisabled={isLast}
-            isIconOnly
-            variant="ghost"
-            size="sm"
-            className="rounded-full"
-          >
-            <Icon icon="lucide:arrow-down" className="size-4" />
-          </Button>
+          <Tooltip delay={500}>
+            <Button
+              onPress={onMoveUp}
+              isDisabled={isFirst}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+            >
+              <Icon icon="lucide:arrow-up" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Move up</p>
+            </Tooltip.Content>
+          </Tooltip>
+          <Tooltip delay={500}>
+            <Button
+              onPress={onMoveDown}
+              isDisabled={isLast}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+            >
+              <Icon icon="lucide:arrow-down" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Move down</p>
+            </Tooltip.Content>
+          </Tooltip>
 
           {/* Remove button */}
           <Tooltip delay={500}>
@@ -162,63 +179,98 @@ export function EducationCard({
         <Controller
           name={`${basePath}.startDate`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <DateField
+              className="w-full"
+              isInvalid={!!fieldState.error}
+              value={field.value ? parseDate(`${field.value}-01`) : null}
+              onChange={(date) =>
+                field.onChange(date ? date.toString().slice(0, 7) : null)
+              }
+            >
               <Label>Start Date</Label>
-              <DateField
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
-                }
-              >
-                <DateInputGroup>
-                  <DateInputGroup.Input>
-                    {(segment) => <DateSegmentFilter segment={segment} />}
-                  </DateInputGroup.Input>
-                </DateInputGroup>
-              </DateField>
-            </TextField>
+              <DateInputGroup>
+                <DateInputGroup.Input>
+                  {(segment) => <DateInputGroup.Segment segment={segment} />}
+                </DateInputGroup.Input>
+              </DateInputGroup>
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
+            </DateField>
           )}
         />
 
         <Controller
           name={`${basePath}.endDate`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <DateField
+              className="w-full"
+              isInvalid={!!fieldState.error}
+              isDisabled={!!isCurrent}
+              value={field.value ? parseDate(`${field.value}-01`) : null}
+              onChange={(date) =>
+                field.onChange(date ? date.toString().slice(0, 7) : null)
+              }
+            >
               <Label>End Date / Expected</Label>
-              <DateField
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
+              <DateInputGroup>
+                <DateInputGroup.Input>
+                  {(segment) => <DateInputGroup.Segment segment={segment} />}
+                </DateInputGroup.Input>
+              </DateInputGroup>
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
+            </DateField>
+          )}
+        />
+
+        <Controller
+          name={`${basePath}.isCurrent`}
+          control={control}
+          render={({ field }) => (
+            <Checkbox
+              isSelected={!!field.value}
+              onChange={(isChecked) => {
+                field.onChange(isChecked);
+                if (isChecked) {
+                  setValue(`${basePath}.endDate`, null);
                 }
-              >
-                <DateInputGroup>
-                  <DateInputGroup.Input>
-                    {(segment) => <DateSegmentFilter segment={segment} />}
-                  </DateInputGroup.Input>
-                </DateInputGroup>
-              </DateField>
-            </TextField>
+              }}
+              className="pb-2"
+            >
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Content>
+                <Label className="text-sm font-normal">
+                  Currently studying
+                </Label>
+              </Checkbox.Content>
+            </Checkbox>
           )}
         />
       </div>
 
       {/* Grade */}
-      <Controller
-        name={`${basePath}.grade`}
-        control={control}
-        render={({ field }) => (
-          <TextField className="w-full">
-            <Label>Grade / GPA</Label>
-            <Input
-              {...field}
-              value={field.value || ''}
-              placeholder="3.8/4.0 or First Class Honours"
-            />
-          </TextField>
-        )}
-      />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Controller
+          name={`${basePath}.grade`}
+          control={control}
+          render={({ field }) => (
+            <TextField className="w-full">
+              <Label>Grade / GPA</Label>
+              <Input
+                {...field}
+                value={field.value || ''}
+                placeholder="3.8/4.0 or First Class Honours"
+              />
+            </TextField>
+          )}
+        />
+      </div>
     </div>
   );
 }

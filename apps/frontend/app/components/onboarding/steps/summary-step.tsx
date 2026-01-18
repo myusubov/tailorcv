@@ -43,12 +43,13 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
               <Label>Your Summary</Label>
               <TextArea
                 {...field}
+                value={field.value || ''}
                 placeholder="I'm a full-stack developer with 3 years of experience building scalable web applications..."
                 rows={6}
               />
-              {fieldState.error ? (
+              {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
-              ) : null}
+              )}
               <Description>
                 Mention your role, experience level, and main technologies.
                 We&apos;ll refine this later.

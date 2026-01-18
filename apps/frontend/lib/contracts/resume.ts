@@ -1,7 +1,7 @@
-import { BaseResume } from "../types/resumes";
+import { BaseResume } from '../types/resumes';
 
 export type GetResumeInput = {
-    id: string;
+  id: string;
 };
 
 export type GetResumeOutput = BaseResume;

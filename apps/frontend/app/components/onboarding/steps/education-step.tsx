@@ -4,15 +4,19 @@ import { motion } from 'framer-motion';
 import {
   Button,
   Card,
-  Checkbox,
   Input,
   Label,
   TextField,
   FieldError,
-  cn,
+  DateField,
+  DateInputGroup,
+  Checkbox,
 } from '@heroui/react';
+import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { nanoid } from 'nanoid';
+import { useEffect } from 'react';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
@@ -23,34 +27,36 @@ interface EducationStepProps {
   isLoading?: boolean;
 }
 
-const months = [
-  { value: '01', label: 'Jan' },
-  { value: '02', label: 'Feb' },
-  { value: '03', label: 'Mar' },
-  { value: '04', label: 'Apr' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'Jun' },
-  { value: '07', label: 'Jul' },
-  { value: '08', label: 'Aug' },
-  { value: '09', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-];
-
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
-
 export function EducationStep({
   onFinish,
   onBack,
   isLoading,
 }: EducationStepProps) {
-  const { control } = useFormContext<OnboardingFormInput>();
-  const isSelfTaught = !!useWatch({
-    control,
-    name: 'education.isSelfTaught',
-  });
+  const { control, setValue, getValues } =
+    useFormContext<OnboardingFormInput>();
+
+  // Initialize education array with one entry if empty
+  useEffect(() => {
+    const edu = getValues('education');
+    if (!edu || edu.length === 0) {
+      setValue('education', [
+        {
+          id: nanoid(),
+          school: '',
+          degree: null,
+          field: null,
+          location: null,
+          startDate: null,
+          endDate: null,
+          grade: null,
+          notes: null,
+          isCurrent: null,
+        },
+      ]);
+    }
+  }, [getValues, setValue]);
+
+  const isCurrent = useWatch({ control, name: 'education.0.isCurrent' });
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -68,170 +74,116 @@ export function EducationStep({
         <Card>
           <Card.Content className="space-y-5 pt-4">
             <Controller
-              name="education.degree"
+              name="education.0.degree"
               control={control}
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Degree / Certification</Label>
                   <Input
                     {...field}
+                    value={field.value || ''}
                     placeholder="Bachelor's in Computer Science"
-                    disabled={isSelfTaught}
                   />
-                  {fieldState.error ? (
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
 
             <Controller
-              name="education.school"
+              name="education.0.school"
               control={control}
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>School / Institution *</Label>
                   <Input
                     {...field}
+                    value={field.value || ''}
                     placeholder="University of Technology"
-                    disabled={isSelfTaught}
                   />
-                  {fieldState.error ? (
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label className="text-foreground mb-2 block text-sm font-medium">
-                  Start Date
-                </Label>
-                <div className="flex gap-2">
-                  <Controller
-                    name="education.startMonth"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex-1">
-                        <select
-                          className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Month</option>
-                          {months.map((m) => (
-                            <option key={m.value} value={m.value}>
-                              {m.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+              <Controller
+                name="education.0.startDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DateField
+                    className="w-full"
+                    isInvalid={!!fieldState.error}
+                    value={field.value ? parseDate(`${field.value}-01`) : null}
+                    onChange={(date) =>
+                      field.onChange(date ? date.toString().slice(0, 7) : null)
+                    }
+                  >
+                    <Label>Start Date</Label>
+                    <DateInputGroup>
+                      <DateInputGroup.Input>
+                        {(segment) => (
+                          <DateInputGroup.Segment segment={segment} />
+                        )}
+                      </DateInputGroup.Input>
+                    </DateInputGroup>
+                    {fieldState.error && (
+                      <FieldError>{fieldState.error.message}</FieldError>
                     )}
-                  />
+                  </DateField>
+                )}
+              />
 
-                  <Controller
-                    name="education.startYear"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex-1">
-                        <select
-                          className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Year</option>
-                          {years.map((y) => (
-                            <option key={y} value={y}>
-                              {y}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+              <Controller
+                name="education.0.endDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DateField
+                    className="w-full"
+                    isInvalid={!!fieldState.error}
+                    isDisabled={!!isCurrent}
+                    value={field.value ? parseDate(`${field.value}-01`) : null}
+                    onChange={(date) =>
+                      field.onChange(date ? date.toString().slice(0, 7) : null)
+                    }
+                  >
+                    <Label>Graduation Date</Label>
+                    <DateInputGroup>
+                      <DateInputGroup.Input>
+                        {(segment) => (
+                          <DateInputGroup.Segment segment={segment} />
+                        )}
+                      </DateInputGroup.Input>
+                    </DateInputGroup>
+                    {fieldState.error && (
+                      <FieldError>{fieldState.error.message}</FieldError>
                     )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-foreground mb-2 block text-sm font-medium">
-                  Graduation Date
-                </Label>
-                <div className="flex gap-2">
-                  <Controller
-                    name="education.endMonth"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex-1">
-                        <select
-                          className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Month</option>
-                          {months.map((m) => (
-                            <option key={m.value} value={m.value}>
-                              {m.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  />
-
-                  <Controller
-                    name="education.endYear"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex-1">
-                        <select
-                          className={cn(
-                            'bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50',
-                            fieldState.error &&
-                              'border-danger focus:border-danger',
-                          )}
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Year</option>
-                          {years.map((y) => (
-                            <option key={y} value={y}>
-                              {y}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-divider relative border-t pt-4">
-              <span className="bg-surface text-muted absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-sm">
-                Or
-              </span>
+                  </DateField>
+                )}
+              />
             </div>
 
             <Controller
-              name="education.isSelfTaught"
+              name="education.0.isCurrent"
               control={control}
               render={({ field }) => (
                 <Checkbox
                   isSelected={!!field.value}
-                  onChange={(isSelected) => field.onChange(isSelected)}
+                  onChange={(isChecked) => {
+                    field.onChange(isChecked);
+                    if (isChecked) {
+                      setValue('education.0.endDate', null);
+                    }
+                  }}
                 >
                   <Checkbox.Control className="size-5">
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Content>
-                    <span className="text-sm">
-                      I&apos;m self-taught / bootcamp graduate
-                    </span>
+                    <span className="text-sm">I am currently studying here</span>
                   </Checkbox.Content>
                 </Checkbox>
               )}
