@@ -6,44 +6,59 @@ import {
   Button,
   Card,
   Chip,
-  Checkbox,
   Description,
-  FieldError,
   Input,
   Label,
-  TextArea,
   TextField,
   useOverlayState,
-  DateField,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import {
-  Controller,
-  useFieldArray,
-  useFormContext,
-  useFormState,
-  useWatch,
-} from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { nanoid } from 'nanoid';
-import { parseDate } from '@internationalized/date';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 import { DeleteProjectModal } from '@/app/components/projects/delete-project-modal';
+import { ProjectItemContent } from './project-item-content';
+import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
 
 interface ProjectsStepProps {
   onNext: () => void;
   onBack: () => void;
 }
 
+/**
+ * Creates a new empty project item with default values.
+ * @returns A new project object ready to be appended to the form
+ */
+function createEmptyProject() {
+  return {
+    id: nanoid(),
+    name: '',
+    role: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false,
+    url: '',
+    repoUrl: '',
+    tech: [],
+    bullets: [{ id: nanoid(), text: '' }],
+  };
+}
+
+/**
+ * Projects & Skills step component for the onboarding wizard.
+ * Allows users to add, edit, reorder, and remove project entries,
+ * as well as manage their technical skills.
+ */
 export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const deleteModalState = useOverlayState();
-  const { control, watch, setValue, getValues } =
-    useFormContext<OnboardingFormInput>();
-  const { errors } = useFormState({ control });
-  const { fields, append, remove, move } = useFieldArray({
-    control,
+  const { watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
+  const { fields, append, remove, move } = useStableFieldArray<
+    OnboardingFormInput,
+    'projects'
+  >({
     name: 'projects',
   });
 
@@ -53,20 +68,23 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const addProject = () => {
-    append({
-      id: nanoid(),
-      name: '',
-      role: null,
-      startDate: null,
-      endDate: null,
-      isCurrent: false,
-      url: null,
-      repoUrl: null,
-      tech: null,
-      bullets: [{ id: nanoid(), text: '' }],
-    });
+    append(createEmptyProject());
   };
 
+  const handleDelete = () => {
+    if (deleteIndex === null) return;
+    remove(deleteIndex);
+    setDeleteIndex(null);
+  };
+
+  const handleDeleteModalOpenChange = (isOpen: boolean) => {
+    deleteModalState.setOpen(isOpen);
+    if (!isOpen) setDeleteIndex(null);
+  };
+
+  /**
+   * Handles Enter key press in the skills input to add a new skill
+   */
   const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
@@ -86,12 +104,23 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
     setSkillInput('');
   };
 
+  /**
+   * Removes a skill by its ID
+   */
   const removeSkill = (skillId: string) => {
     setValue(
       'skills',
       (getValues('skills') ?? []).filter((s) => s.id !== skillId),
       { shouldDirty: true },
     );
+  };
+
+  const handleMoveUp = (idx: number) => {
+    move(idx, idx - 1);
+  };
+
+  const handleMoveDown = (idx: number) => {
+    move(idx, idx + 1);
   };
 
   return (
@@ -115,6 +144,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           </Card.Content>
         </Card>
 
+        {/* Projects Section */}
         <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -129,12 +159,17 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
             {fields.map((project, index) => (
               <ReorderableItem
                 key={project.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                layout
                 isFirst={index === 0}
                 isLast={index === fields.length - 1}
-                onMoveUp={() => move(index, index - 1)}
-                onMoveDown={() => move(index, index + 1)}
+                onMoveUp={() => handleMoveUp(index)}
+                onMoveDown={() => handleMoveDown(index)}
               >
-                <ProjectCard
+                <ProjectItemContent
                   index={index}
                   onDelete={() => {
                     setDeleteIndex(index);
@@ -150,6 +185,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           </Button>
         </motion.div>
 
+        {/* Skills Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -194,6 +230,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           </Card>
         </motion.div>
 
+        {/* Navigation */}
         <motion.div
           className="mt-8 flex items-center justify-between gap-3"
           initial={{ opacity: 0, y: 20 }}
@@ -213,174 +250,14 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           </Button>
         </motion.div>
       </div>
+
       <DeleteProjectModal
         isOpen={deleteModalState.isOpen}
-        onOpenChange={(o) => deleteModalState.setOpen(o)}
+        onOpenChange={handleDeleteModalOpenChange}
         projectNumber={deleteIndex !== null ? deleteIndex + 1 : null}
         label={deleteIndex !== null ? projects?.[deleteIndex]?.name || '' : ''}
-        onConfirm={() => {
-          if (deleteIndex !== null) {
-            remove(deleteIndex);
-            setDeleteIndex(null);
-          }
-        }}
+        onConfirm={handleDelete}
       />
     </>
-  );
-}
-
-function ProjectCard({
-  index,
-  onDelete,
-}: {
-  index: number;
-  onDelete: () => void;
-}) {
-  const { control, setValue } = useFormContext<OnboardingFormInput>();
-  const isCurrent = useWatch({ control, name: `projects.${index}.isCurrent` });
-  const tech = useWatch({ control, name: `projects.${index}.tech` });
-
-  return (
-    <Card className="mb-4">
-      <Card.Header className="flex-row items-center justify-between">
-        <Card.Title className="text-base">Project #{index + 1}</Card.Title>
-        <Button isIconOnly variant="danger-soft" size="sm" onPress={onDelete}>
-          <Icon icon="lucide:trash-2" />
-        </Button>
-      </Card.Header>
-      <Card.Content className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name={`projects.${index}.name`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Project Name *</Label>
-                <Input {...field} placeholder="TailorCV" />
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </TextField>
-            )}
-          />
-          <TextField className="w-full">
-            <Label>Tech Stack</Label>
-            <Input
-              value={Array.isArray(tech) ? tech.join(', ') : ''}
-              onChange={(e) => {
-                const arr = e.target.value
-                  .split(',')
-                  .map((t) => t.trim())
-                  .filter(Boolean);
-                setValue(`projects.${index}.tech`, arr.length ? arr : null);
-              }}
-              placeholder="React, TypeScript"
-            />
-            <Description>Comma-separated</Description>
-          </TextField>
-        </div>
-        <Controller
-          name={`projects.${index}.bullets.0.text`}
-          control={control}
-          render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>Description *</Label>
-              <TextArea
-                {...field}
-                value={field.value || ''}
-                placeholder="AI-powered resume builder..."
-                rows={3}
-              />
-              {fieldState.error && (
-                <FieldError>{fieldState.error.message}</FieldError>
-              )}
-            </TextField>
-          )}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name={`projects.${index}.url`}
-            control={control}
-            render={({ field }) => (
-              <TextField className="w-full">
-                <Label>Project URL</Label>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  placeholder="https://..."
-                />
-              </TextField>
-            )}
-          />
-          <Controller
-            name={`projects.${index}.repoUrl`}
-            control={control}
-            render={({ field }) => (
-              <TextField className="w-full">
-                <Label>GitHub URL</Label>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  placeholder="github.com/..."
-                />
-              </TextField>
-            )}
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name={`projects.${index}.startDate`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <DateField
-                label="Start Date"
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
-                }
-                isInvalid={!!fieldState.error}
-                errorMessage={fieldState.error?.message}
-              />
-            )}
-          />
-          <Controller
-            name={`projects.${index}.endDate`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <DateField
-                label="End Date"
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
-                }
-                isDisabled={!!isCurrent}
-                isInvalid={!!fieldState.error}
-                errorMessage={fieldState.error?.message}
-              />
-            )}
-          />
-        </div>
-        <Controller
-          name={`projects.${index}.isCurrent`}
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              isSelected={!!field.value}
-              onChange={(s) => {
-                field.onChange(s);
-                if (s) setValue(`projects.${index}.endDate`, null);
-              }}
-            >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <span className="text-sm">I am currently working on this</span>
-              </Checkbox.Content>
-            </Checkbox>
-          )}
-        />
-      </Card.Content>
-    </Card>
   );
 }

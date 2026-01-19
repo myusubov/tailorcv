@@ -186,7 +186,7 @@ export function ProjectCard({
               isInvalid={!!fieldState.error}
               value={field.value ? parseDate(`${field.value}-01`) : null}
               onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : null)
+                field.onChange(date ? date.toString().slice(0, 7) : '')
               }
             >
               <Label>Start Date</Label>
@@ -212,7 +212,7 @@ export function ProjectCard({
               isDisabled={!!isCurrent}
               value={field.value ? parseDate(`${field.value}-01`) : null}
               onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : null)
+                field.onChange(date ? date.toString().slice(0, 7) : '')
               }
             >
               <Label>End Date</Label>

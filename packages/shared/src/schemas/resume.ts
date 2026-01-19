@@ -76,6 +76,7 @@ export const baseResumeDataSchema = z
         })
         .strict()
         .superRefine((data, ctx) => {
+          // If isCurrent, startDate is required
           if (data.isCurrent && !data.startDate) {
             ctx.addIssue({
               code: 'custom',
@@ -83,11 +84,20 @@ export const baseResumeDataSchema = z
               path: ['startDate'],
             });
           }
+          // If endDate exists, startDate is required
           if (data.endDate && !data.startDate) {
             ctx.addIssue({
               code: 'custom',
               message: 'Start date is required if end date is present',
               path: ['startDate'],
+            });
+          }
+          // If startDate exists and not current, endDate is required
+          if (data.startDate && !data.isCurrent && !data.endDate) {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'End date is required (or check "I currently work here")',
+              path: ['endDate'],
             });
           }
           // Validate date range: startDate must be before or equal to endDate
@@ -127,6 +137,7 @@ export const baseResumeDataSchema = z
         })
         .strict()
         .superRefine((data, ctx) => {
+          // If isCurrent, startDate is required
           if (data.isCurrent && !data.startDate) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
@@ -134,11 +145,20 @@ export const baseResumeDataSchema = z
               path: ['startDate'],
             });
           }
+          // If endDate exists, startDate is required
           if (data.endDate && !data.startDate) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'Start date is required if end date is present',
               path: ['startDate'],
+            });
+          }
+          // If startDate exists and not current, endDate is required
+          if (data.startDate && !data.isCurrent && !data.endDate) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'End date is required (or check "I am currently working on this")',
+              path: ['endDate'],
             });
           }
           // Validate date range: startDate must be before or equal to endDate
@@ -159,7 +179,7 @@ export const baseResumeDataSchema = z
           .object({
             id: idSchema,
             school: z
-              .string()
+              .string({ error: 'Please enter your school or institution name' })
               .trim()
               .min(1, 'Please enter your school or institution name'),
             degree: z.string().trim().min(1, 'Degree is required').nullable(),
@@ -181,12 +201,36 @@ export const baseResumeDataSchema = z
           })
           .strict()
           .superRefine((data, ctx) => {
+            // If isCurrent, startDate is required
+            if (data.isCurrent && !data.startDate) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'Start date is required if currently studying',
+                path: ['startDate'],
+              });
+            }
+            // If endDate exists, startDate is required
+            if (data.endDate && !data.startDate) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'Start date is required if graduation date is present',
+                path: ['startDate'],
+              });
+            }
+            // If startDate exists and not current, endDate is required
+            if (data.startDate && !data.isCurrent && !data.endDate) {
+              ctx.addIssue({
+                code: 'custom',
+                message: 'Graduation date is required (or check "I am currently studying here")',
+                path: ['endDate'],
+              });
+            }
             // Validate date range: startDate must be before or equal to endDate
             if (data.startDate && data.endDate) {
               if (data.startDate > data.endDate) {
                 ctx.addIssue({
                   code: 'custom',
-                  message: 'End date must be after start date',
+                  message: 'Graduation date must be after start date',
                   path: ['endDate'],
                 });
               }

@@ -43,14 +43,14 @@ export function EducationStep({
         {
           id: nanoid(),
           school: '',
-          degree: null,
-          field: null,
-          location: null,
-          startDate: null,
-          endDate: null,
-          grade: null,
-          notes: null,
-          isCurrent: null,
+          degree: '',
+          field: '',
+          location: '',
+          startDate: '',
+          endDate: '',
+          grade: '',
+          notes: '',
+          isCurrent: false,
         },
       ]);
     }
@@ -119,7 +119,7 @@ export function EducationStep({
                     isInvalid={!!fieldState.error}
                     value={field.value ? parseDate(`${field.value}-01`) : null}
                     onChange={(date) =>
-                      field.onChange(date ? date.toString().slice(0, 7) : null)
+                      field.onChange(date ? date.toString().slice(0, 7) : '')
                     }
                   >
                     <Label>Start Date</Label>
@@ -147,7 +147,7 @@ export function EducationStep({
                     isDisabled={!!isCurrent}
                     value={field.value ? parseDate(`${field.value}-01`) : null}
                     onChange={(date) =>
-                      field.onChange(date ? date.toString().slice(0, 7) : null)
+                      field.onChange(date ? date.toString().slice(0, 7) : '')
                     }
                   >
                     <Label>Graduation Date</Label>
@@ -175,7 +175,9 @@ export function EducationStep({
                   onChange={(isChecked) => {
                     field.onChange(isChecked);
                     if (isChecked) {
-                      setValue('education.0.endDate', null);
+                      setValue('education.0.endDate', null, {
+                        shouldValidate: true,
+                      });
                     }
                   }}
                 >
@@ -183,7 +185,9 @@ export function EducationStep({
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                   <Checkbox.Content>
-                    <span className="text-sm">I am currently studying here</span>
+                    <span className="text-sm">
+                      I am currently studying here
+                    </span>
                   </Checkbox.Content>
                 </Checkbox>
               )}

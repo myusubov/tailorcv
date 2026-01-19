@@ -185,7 +185,7 @@ export function EducationCard({
               isInvalid={!!fieldState.error}
               value={field.value ? parseDate(`${field.value}-01`) : null}
               onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : null)
+                field.onChange(date ? date.toString().slice(0, 7) : '')
               }
             >
               <Label>Start Date</Label>
@@ -211,7 +211,7 @@ export function EducationCard({
               isDisabled={!!isCurrent}
               value={field.value ? parseDate(`${field.value}-01`) : null}
               onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : null)
+                field.onChange(date ? date.toString().slice(0, 7) : '')
               }
             >
               <Label>End Date / Expected</Label>
@@ -236,7 +236,7 @@ export function EducationCard({
               onChange={(isChecked) => {
                 field.onChange(isChecked);
                 if (isChecked) {
-                  setValue(`${basePath}.endDate`, null);
+                  setValue(`${basePath}.endDate`, '');
                 }
               }}
               className="pb-2"

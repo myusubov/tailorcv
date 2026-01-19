@@ -2,71 +2,67 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  TextField,
-  Label,
-  Input,
-  TextArea,
-  Description,
-  Button,
-  Checkbox,
-  Card,
-  FieldError,
-  useOverlayState,
-  DateField,
-} from '@heroui/react';
+import { Button, Card, useOverlayState } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import {
-  Controller,
-  useFieldArray,
-  useFormContext,
-  useWatch,
-} from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { nanoid } from 'nanoid';
-import { parseDate } from '@internationalized/date';
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { DeleteExperienceModal } from '@/app/components/experience/delete-experience-modal';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
+import { ExperienceItemContent } from './experience-item-content';
+import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
 
 interface ExperienceStepProps {
   onNext: () => void;
   onBack: () => void;
 }
 
+/**
+ * Creates a new empty experience item with default values.
+ * @returns A new experience object ready to be appended to the form
+ */
+function createEmptyExperience() {
+  return {
+    id: nanoid(),
+    title: '',
+    company: '',
+    location: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false,
+    tech: [],
+    bullets: [{ id: nanoid(), text: '' }],
+  };
+}
+
+/**
+ * Experience step component for the onboarding wizard.
+ * Allows users to add, edit, reorder, and remove work experience entries.
+ */
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const deleteModalState = useOverlayState();
-  const { control, watch, setValue } = useFormContext<OnboardingFormInput>();
-  const { fields, append, remove, move } = useFieldArray({
-    control,
+  const { watch, setValue } = useFormContext<OnboardingFormInput>();
+  const { fields, append, remove, move } = useStableFieldArray<
+    OnboardingFormInput,
+    'experiences'
+  >({
     name: 'experiences',
   });
 
   const experiences = watch('experiences');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
+  // Derive delete modal label from the item being deleted
   const company =
     deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
   const title = deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
   const labelParts = [title, company].filter(Boolean);
   const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
 
-  /**
-   * Add a new experience entry with proper baseResumeDataSchema structure
-   */
   const addExperience = () => {
-    append({
-      id: nanoid(),
-      title: '',
-      company: '',
-      location: null,
-      startDate: null,
-      endDate: null,
-      isCurrent: false,
-      tech: null,
-      bullets: [{ id: nanoid(), text: '' }],
-    });
+    append(createEmptyExperience());
   };
 
   const handleDelete = () => {
@@ -105,34 +101,32 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
         />
 
         <AnimatePresence mode="popLayout">
-          {fields.map((field, index) => {
-            return (
-              <ReorderableItem
-                key={field.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                layout
+          {fields.map((field, index) => (
+            <ReorderableItem
+              key={field.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              layout
+              isFirst={index === 0}
+              isLast={index === fields.length - 1}
+              onMoveUp={() => handleMoveUp(index)}
+              onMoveDown={() => handleMoveDown(index)}
+            >
+              <ExperienceItemContent
+                index={index}
                 isFirst={index === 0}
                 isLast={index === fields.length - 1}
                 onMoveUp={() => handleMoveUp(index)}
                 onMoveDown={() => handleMoveDown(index)}
-              >
-                <ExperienceItemContent
-                  index={index}
-                  isFirst={index === 0}
-                  isLast={index === fields.length - 1}
-                  onMoveUp={() => handleMoveUp(index)}
-                  onMoveDown={() => handleMoveDown(index)}
-                  onDelete={() => {
-                    setDeleteIndex(index);
-                    deleteModalState.open();
-                  }}
-                />
-              </ReorderableItem>
-            );
-          })}
+                onDelete={() => {
+                  setDeleteIndex(index);
+                  deleteModalState.open();
+                }}
+              />
+            </ReorderableItem>
+          ))}
         </AnimatePresence>
 
         {fields.length === 0 ? (
@@ -217,177 +211,5 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
         onConfirm={handleDelete}
       />
     </>
-  );
-}
-
-interface ExperienceItemContentProps {
-  index: number;
-  isFirst: boolean;
-  isLast: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDelete: () => void;
-}
-
-function ExperienceItemContent({
-  index,
-  isFirst,
-  isLast,
-  onMoveUp,
-  onMoveDown,
-  onDelete,
-}: ExperienceItemContentProps) {
-  const { control, setValue } = useFormContext<OnboardingFormInput>();
-  const isCurrent = useWatch({
-    control,
-    name: `experiences.${index}.isCurrent`,
-  });
-
-  return (
-    <Card className="mb-4 overflow-visible">
-      <Card.Header className="flex-row items-center justify-between">
-        <Card.Title className="text-base">Job #{index + 1}</Card.Title>
-        <div className="flex items-center gap-1">
-          {/* Mobile Reorder Controls */}
-          <div className="flex items-center gap-1 lg:hidden">
-            <Button
-              onPress={onMoveUp}
-              isDisabled={isFirst}
-              isIconOnly
-              variant="ghost"
-              size="sm"
-            >
-              <Icon icon="lucide:arrow-up" />
-            </Button>
-            <Button
-              onPress={onMoveDown}
-              isDisabled={isLast}
-              isIconOnly
-              variant="ghost"
-              size="sm"
-            >
-              <Icon icon="lucide:arrow-down" />
-            </Button>
-          </div>
-
-          <Button isIconOnly variant="danger-soft" size="sm" onPress={onDelete}>
-            <Icon icon="lucide:trash-2" />
-          </Button>
-        </div>
-      </Card.Header>
-
-      <Card.Content className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name={`experiences.${index}.title`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Job Title *</Label>
-                <Input {...field} placeholder="Frontend Developer" />
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
-              </TextField>
-            )}
-          />
-
-          <Controller
-            name={`experiences.${index}.company`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Company *</Label>
-                <Input {...field} placeholder="Acme Inc." />
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
-              </TextField>
-            )}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name={`experiences.${index}.startDate`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <DateField
-                label="Start Date *"
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
-                }
-                isInvalid={!!fieldState.error}
-                errorMessage={fieldState.error?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name={`experiences.${index}.endDate`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <DateField
-                label="End Date"
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : null)
-                }
-                isDisabled={!!isCurrent}
-                isInvalid={!!fieldState.error}
-                errorMessage={fieldState.error?.message}
-              />
-            )}
-          />
-        </div>
-
-        <Controller
-          name={`experiences.${index}.isCurrent`}
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              isSelected={!!field.value}
-              onChange={(isChecked) => {
-                field.onChange(isChecked);
-                if (isChecked) {
-                  setValue(`experiences.${index}.endDate`, null);
-                }
-              }}
-            >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <span className="text-sm">I currently work here</span>
-              </Checkbox.Content>
-            </Checkbox>
-          )}
-        />
-
-        <Controller
-          name={`experiences.${index}.bullets.0.text`}
-          control={control}
-          render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>What did you do? *</Label>
-              <TextArea
-                {...field}
-                value={field.value || ''}
-                placeholder="Led frontend development, built React dashboards, mentored junior devs..."
-                rows={3}
-              />
-              {fieldState.error ? (
-                <FieldError>{fieldState.error.message}</FieldError>
-              ) : null}
-              <Description>
-                Write 2-3 sentences. We&apos;ll expand this into professional
-                bullet points.
-              </Description>
-            </TextField>
-          )}
-        />
-      </Card.Content>
-    </Card>
   );
 }
