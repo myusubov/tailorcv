@@ -27,9 +27,9 @@ interface UseStableFieldArrayReturn<
   TFieldValues extends FieldValues,
   TFieldArrayName extends FieldArrayPath<TFieldValues>,
 > extends Omit<
-    UseFieldArrayReturn<TFieldValues, TFieldArrayName>,
-    'append' | 'remove'
-  > {
+  UseFieldArrayReturn<TFieldValues, TFieldArrayName, '_hfId'>,
+  'append' | 'remove'
+> {
   /** Append item using setValue to avoid ghost item bug */
   append: (item: FieldArray<TFieldValues, TFieldArrayName>) => void;
   /** Remove item by index using setValue to avoid ghost item bug */
@@ -62,6 +62,7 @@ export function useStableFieldArray<
   const fieldArray = useFieldArray({
     control,
     name,
+    keyName: '_hfId', // Preserve our stable 'id' by using a different name for react-hook-form's internal key
   });
 
   /**
@@ -71,7 +72,8 @@ export function useStableFieldArray<
    */
   const stableAppend = useCallback(
     (item: FieldArray<TFieldValues, TFieldArrayName>) => {
-      const current = (watch(name as unknown as Path<TFieldValues>) as unknown[]) || [];
+      const current =
+        (watch(name as unknown as Path<TFieldValues>) as unknown[]) || [];
       setValue(
         name as unknown as Path<TFieldValues>,
         [...current, item] as TFieldValues[TFieldArrayName],
@@ -85,7 +87,8 @@ export function useStableFieldArray<
    */
   const stableRemove = useCallback(
     (index: number) => {
-      const current = (watch(name as unknown as Path<TFieldValues>) as unknown[]) || [];
+      const current =
+        (watch(name as unknown as Path<TFieldValues>) as unknown[]) || [];
       setValue(
         name as unknown as Path<TFieldValues>,
         current.filter((_, i) => i !== index) as TFieldValues[TFieldArrayName],

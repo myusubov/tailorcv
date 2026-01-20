@@ -133,10 +133,24 @@ export function ReviewAccordion({
                     )}
                   />
                 </div>
-                <span className="flex-1 text-left text-sm font-medium">
+                <span
+                  className={cn(
+                    'flex-1 text-left text-sm font-medium transition-colors',
+                    isExpanded
+                      ? 'text-foreground'
+                      : 'text-muted-foreground group-hover/trigger:text-foreground',
+                  )}
+                >
                   {label}
                 </span>
-                <Accordion.Indicator />
+                <Accordion.Indicator
+                  className={cn(
+                    'transition-colors',
+                    isExpanded
+                      ? 'text-foreground'
+                      : 'text-muted-foreground group-hover/trigger:text-foreground',
+                  )}
+                />
               </Accordion.Trigger>
             </Accordion.Heading>
             <Accordion.Panel>

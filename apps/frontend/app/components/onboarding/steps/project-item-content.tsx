@@ -12,6 +12,7 @@ import {
   FieldError,
   DateField,
   DateInputGroup,
+  Tooltip,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
@@ -23,7 +24,10 @@ export interface ProjectItemContentProps {
   /** Array index of this project item */
   index: number;
   /** Callback to delete this item */
+  /** Callback to delete this item */
   onDelete: () => void;
+  /** Callback to duplicate this item */
+  onDuplicate: () => void;
 }
 
 /**
@@ -33,6 +37,7 @@ export interface ProjectItemContentProps {
 export function ProjectItemContent({
   index,
   onDelete,
+  onDuplicate,
 }: ProjectItemContentProps) {
   const { control, setValue } = useFormContext<OnboardingFormInput>();
   const isCurrent = useWatch({ control, name: `projects.${index}.isCurrent` });
@@ -42,9 +47,36 @@ export function ProjectItemContent({
     <Card className="mb-4">
       <Card.Header className="flex-row items-center justify-between">
         <Card.Title className="text-base">Project #{index + 1}</Card.Title>
-        <Button isIconOnly variant="danger-soft" size="sm" onPress={onDelete}>
-          <Icon icon="lucide:trash-2" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Tooltip delay={500}>
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              onPress={onDuplicate}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Icon icon="lucide:copy" />
+            </Button>
+            <Tooltip.Content>
+              <p>Duplicate</p>
+            </Tooltip.Content>
+          </Tooltip>
+          <Tooltip delay={500}>
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              onPress={onDelete}
+              className="text-danger/50 hover:bg-danger/10 hover:text-danger transition-colors"
+            >
+              <Icon icon="lucide:trash-2" />
+            </Button>
+            <Tooltip.Content>
+              <p>Remove project</p>
+            </Tooltip.Content>
+          </Tooltip>
+        </div>
       </Card.Header>
       <Card.Content className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">

@@ -118,7 +118,7 @@ export function DataAnalysisPanel({
                     type="button"
                     onClick={() => onSectionClick?.(item.section)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
+                      'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
                       'hover:ring-primary/30 cursor-pointer hover:ring-2',
                       bgClass,
                       // Selected state comes LAST to override bgClass
@@ -129,10 +129,26 @@ export function DataAnalysisPanel({
                       icon={icon}
                       className={cn('size-4 shrink-0', colorClass)}
                     />
-                    <span className="text-foreground flex-1 text-sm font-medium">
+                    <span
+                      className={cn(
+                        'flex-1 text-sm font-medium transition-colors',
+                        isSelected
+                          ? 'text-foreground'
+                          : 'text-muted-foreground group-hover:text-foreground',
+                      )}
+                    >
                       {item.section}
                     </span>
-                    <span className="text-muted text-xs">{item.message}</span>
+                    <span
+                      className={cn(
+                        'text-[10px] transition-colors',
+                        isSelected
+                          ? 'text-muted-foreground'
+                          : 'text-muted group-hover:text-muted-foreground',
+                      )}
+                    >
+                      {item.message}
+                    </span>
                   </button>
                 );
               })}

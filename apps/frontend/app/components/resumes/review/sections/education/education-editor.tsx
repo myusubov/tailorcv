@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 export function EducationEditor() {
   const deleteModalState = useOverlayState();
   const { control, watch } = useFormContext<BaseResumeData>();
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove, move, insert } = useFieldArray({
     control,
     name: 'education',
   });
@@ -42,6 +42,21 @@ export function EducationEditor() {
       notes: null,
       isCurrent: false,
     });
+  };
+
+  /**
+   * Duplicates an education entry.
+   */
+  const handleDuplicate = (index: number) => {
+    const itemToDuplicate = education?.[index];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+    };
+
+    insert(index + 1, newItem);
   };
 
   const handleMoveUp = (index: number) => {
@@ -101,6 +116,7 @@ export function EducationEditor() {
               }}
               onMoveUp={() => handleMoveUp(index)}
               onMoveDown={() => handleMoveDown(index)}
+              onDuplicate={() => handleDuplicate(index)}
               isFirst={index === 0}
               isLast={index === fields.length - 1}
             />

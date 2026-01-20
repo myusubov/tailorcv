@@ -28,7 +28,10 @@ interface EducationCardProps {
   /** Callback to move this education up */
   onMoveUp: () => void;
   /** Callback to move this education down */
+  /** Callback to move this education down */
   onMoveDown: () => void;
+  /** Callback to duplicate this education entry */
+  onDuplicate: () => void;
   /** Whether this is the first item */
   isFirst: boolean;
   /** Whether this is the last item */
@@ -44,10 +47,11 @@ export function EducationCard({
   onRemove,
   onMoveUp,
   onMoveDown,
+  onDuplicate,
   isFirst,
   isLast,
 }: EducationCardProps) {
-  const { control, setValue } = useFormContext<BaseResumeData>();
+  const { control, setValue, clearErrors } = useFormContext<BaseResumeData>();
   const basePath = `education.${index}` as const;
 
   // Watch fields for conditional disabling
@@ -83,7 +87,7 @@ export function EducationCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="rounded-full"
+              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:arrow-up" className="size-4" />
             </Button>
@@ -98,7 +102,7 @@ export function EducationCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="rounded-full"
+              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:arrow-down" className="size-4" />
             </Button>
@@ -107,14 +111,30 @@ export function EducationCard({
             </Tooltip.Content>
           </Tooltip>
 
+          {/* Duplicate button */}
+          <Tooltip delay={500}>
+            <Button
+              onPress={onDuplicate}
+              isIconOnly
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+            >
+              <Icon icon="lucide:copy" className="size-4" />
+            </Button>
+            <Tooltip.Content>
+              <p>Duplicate</p>
+            </Tooltip.Content>
+          </Tooltip>
+
           {/* Remove button */}
           <Tooltip delay={500}>
             <Button
-              variant="danger-soft"
+              variant="ghost"
               size="sm"
               onPress={onRemove}
               isIconOnly
-              className="rounded-full"
+              className="text-danger/50 hover:bg-danger/10 hover:text-danger rounded-full transition-colors"
             >
               <Icon icon="lucide:trash-2" className="size-4" />
             </Button>
@@ -236,7 +256,8 @@ export function EducationCard({
               onChange={(isChecked) => {
                 field.onChange(isChecked);
                 if (isChecked) {
-                  setValue(`${basePath}.endDate`, '');
+                  setValue(`${basePath}.endDate`, null);
+                  clearErrors(`${basePath}.endDate`);
                 }
               }}
               className="pb-2"

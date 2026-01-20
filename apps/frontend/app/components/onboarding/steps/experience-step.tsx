@@ -43,7 +43,7 @@ function createEmptyExperience() {
  */
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const deleteModalState = useOverlayState();
-  const { watch, setValue } = useFormContext<OnboardingFormInput>();
+  const { watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
   const { fields, append, remove, move } = useStableFieldArray<
     OnboardingFormInput,
     'experiences'
@@ -81,6 +81,27 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
       setValue('experiences', []);
     }
     onNext();
+  };
+
+  const handleDuplicate = (idx: number) => {
+    const current = getValues('experiences');
+    const itemToDuplicate = current?.[idx];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+      bullets:
+        itemToDuplicate.bullets?.map((b) => ({ ...b, id: nanoid() })) || [],
+    };
+
+    const newExperiences = [
+      ...(current || []).slice(0, idx + 1),
+      newItem,
+      ...(current || []).slice(idx + 1),
+    ];
+
+    setValue('experiences', newExperiences);
   };
 
   const handleMoveUp = (idx: number) => {
@@ -124,6 +145,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
                   setDeleteIndex(index);
                   deleteModalState.open();
                 }}
+                onDuplicate={() => handleDuplicate(index)}
               />
             </ReorderableItem>
           ))}

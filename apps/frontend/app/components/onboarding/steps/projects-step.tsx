@@ -123,6 +123,27 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
     move(idx, idx + 1);
   };
 
+  const handleDuplicate = (idx: number) => {
+    const current = getValues('projects');
+    const itemToDuplicate = current?.[idx];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+      bullets:
+        itemToDuplicate.bullets?.map((b) => ({ ...b, id: nanoid() })) || [],
+    };
+
+    const newProjects = [
+      ...(current || []).slice(0, idx + 1),
+      newItem,
+      ...(current || []).slice(idx + 1),
+    ];
+
+    setValue('projects', newProjects);
+  };
+
   return (
     <>
       <div className="mx-auto w-full max-w-2xl">
@@ -175,6 +196,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                     setDeleteIndex(index);
                     deleteModalState.open();
                   }}
+                  onDuplicate={() => handleDuplicate(index)}
                 />
               </ReorderableItem>
             ))}
@@ -237,7 +259,11 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Button variant="ghost" onPress={onBack}>
+          <Button
+            className="text-muted-foreground hover:text-foreground"
+            variant="ghost"
+            onPress={onBack}
+          >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back
           </Button>

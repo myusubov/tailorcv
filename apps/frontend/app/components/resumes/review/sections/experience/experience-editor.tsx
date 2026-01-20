@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 export function ExperienceEditor() {
   const deleteModalState = useOverlayState();
   const { control, watch } = useFormContext<BaseResumeData>();
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove, move, insert } = useFieldArray({
     control,
     name: 'experiences',
   });
@@ -41,6 +41,26 @@ export function ExperienceEditor() {
       tech: null,
       bullets: [],
     });
+  };
+
+  /**
+   * Duplicates an experience entry.
+   */
+  const handleDuplicate = (index: number) => {
+    const itemToDuplicate = experiences?.[index];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+      bullets:
+        itemToDuplicate.bullets?.map((bullet) => ({
+          ...bullet,
+          id: nanoid(),
+        })) || [],
+    };
+
+    insert(index + 1, newItem);
   };
 
   const handleMoveUp = (index: number) => {
@@ -100,6 +120,7 @@ export function ExperienceEditor() {
               }}
               onMoveUp={() => handleMoveUp(index)}
               onMoveDown={() => handleMoveDown(index)}
+              onDuplicate={() => handleDuplicate(index)}
               isFirst={index === 0}
               isLast={index === fields.length - 1}
             />

@@ -57,9 +57,9 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
       experiences: [],
       projects: [],
       skills: [],
-      education: null,
-      certifications: null,
-      languages: null,
+      education: [],
+      certifications: [],
+      languages: [],
     },
     mode: 'onSubmit',
   });
@@ -161,6 +161,8 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
         return null;
     }
   };
+
+  console.log({ errors: form.formState.errors });
 
   return (
     <FormProvider {...form}>

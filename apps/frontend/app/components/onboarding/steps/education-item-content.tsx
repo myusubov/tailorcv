@@ -4,8 +4,6 @@ import {
   TextField,
   Label,
   Input,
-  TextArea,
-  Description,
   Button,
   Checkbox,
   Card,
@@ -20,8 +18,8 @@ import { parseDate } from '@internationalized/date';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 
-export interface ExperienceItemContentProps {
-  /** Array index of this experience item */
+export interface EducationItemContentProps {
+  /** Array index of this education item */
   index: number;
   /** Whether this is the first item in the list */
   isFirst: boolean;
@@ -32,17 +30,16 @@ export interface ExperienceItemContentProps {
   /** Callback to move item down in the list */
   onMoveDown: () => void;
   /** Callback to delete this item */
-  /** Callback to delete this item */
   onDelete: () => void;
   /** Callback to duplicate this item */
   onDuplicate: () => void;
 }
 
 /**
- * Renders the content of a single experience/job entry card.
- * Handles form fields for title, company, dates, current status, and description.
+ * Renders the content of a single education entry card.
+ * Handles form fields for school, degree, field of study, dates, and grade.
  */
-export function ExperienceItemContent({
+export function EducationItemContent({
   index,
   isFirst,
   isLast,
@@ -50,46 +47,50 @@ export function ExperienceItemContent({
   onMoveDown,
   onDelete,
   onDuplicate,
-}: ExperienceItemContentProps) {
+}: EducationItemContentProps) {
   const { control, setValue } = useFormContext<OnboardingFormInput>();
   const isCurrent = useWatch({
     control,
-    name: `experiences.${index}.isCurrent`,
+    name: `education.${index}.isCurrent`,
   });
 
   return (
     <Card className="mb-4 overflow-visible">
       <Card.Header className="flex-row items-center justify-between">
-        <Card.Title className="text-base">Job #{index + 1}</Card.Title>
+        <Card.Title className="text-base">Education #{index + 1}</Card.Title>
         <div className="flex items-center gap-1">
           {/* Mobile Reorder Controls */}
           <div className="flex items-center gap-1 lg:hidden">
             <Tooltip delay={500}>
-              <Button
-                onPress={onMoveUp}
-                isDisabled={isFirst}
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Icon icon="lucide:arrow-up" />
-              </Button>
+              <Tooltip.Trigger>
+                <Button
+                  onPress={onMoveUp}
+                  isDisabled={isFirst}
+                  isIconOnly
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Icon icon="lucide:arrow-up" />
+                </Button>
+              </Tooltip.Trigger>
               <Tooltip.Content>
                 <p>Move up</p>
               </Tooltip.Content>
             </Tooltip>
             <Tooltip delay={500}>
-              <Button
-                onPress={onMoveDown}
-                isDisabled={isLast}
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Icon icon="lucide:arrow-down" />
-              </Button>
+              <Tooltip.Trigger>
+                <Button
+                  onPress={onMoveDown}
+                  isDisabled={isLast}
+                  isIconOnly
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Icon icon="lucide:arrow-down" />
+                </Button>
+              </Tooltip.Trigger>
               <Tooltip.Content>
                 <p>Move down</p>
               </Tooltip.Content>
@@ -97,32 +98,36 @@ export function ExperienceItemContent({
           </div>
 
           <Tooltip delay={500}>
-            <Button
-              isIconOnly
-              variant="ghost"
-              size="sm"
-              onPress={onDuplicate}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Icon icon="lucide:copy" />
-            </Button>
+            <Tooltip.Trigger>
+              <Button
+                isIconOnly
+                variant="ghost"
+                size="sm"
+                onPress={onDuplicate}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Icon icon="lucide:copy" />
+              </Button>
+            </Tooltip.Trigger>
             <Tooltip.Content>
               <p>Duplicate</p>
             </Tooltip.Content>
           </Tooltip>
 
           <Tooltip delay={500}>
-            <Button
-              isIconOnly
-              variant="ghost"
-              size="sm"
-              onPress={onDelete}
-              className="text-danger/50 hover:bg-danger/10 hover:text-danger transition-colors"
-            >
-              <Icon icon="lucide:trash-2" />
-            </Button>
+            <Tooltip.Trigger>
+              <Button
+                isIconOnly
+                variant="ghost"
+                size="sm"
+                onPress={onDelete}
+                className="text-danger/50 hover:bg-danger/10 hover:text-danger transition-colors"
+              >
+                <Icon icon="lucide:trash-2" />
+              </Button>
+            </Tooltip.Trigger>
             <Tooltip.Content>
-              <p>Remove experience</p>
+              <p>Remove education</p>
             </Tooltip.Content>
           </Tooltip>
         </div>
@@ -131,12 +136,16 @@ export function ExperienceItemContent({
       <Card.Content className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Controller
-            name={`experiences.${index}.title`}
+            name={`education.${index}.degree`}
             control={control}
             render={({ field, fieldState }) => (
               <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Job Title *</Label>
-                <Input {...field} placeholder="Frontend Developer" />
+                <Label>Degree / Certification *</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="Bachelor's"
+                />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>
                 ) : null}
@@ -145,12 +154,72 @@ export function ExperienceItemContent({
           />
 
           <Controller
-            name={`experiences.${index}.company`}
+            name={`education.${index}.field`}
             control={control}
             render={({ field, fieldState }) => (
               <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Company *</Label>
-                <Input {...field} placeholder="Acme Inc." />
+                <Label>Field of Study *</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="Computer Science"
+                />
+                {fieldState.error ? (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                ) : null}
+              </TextField>
+            )}
+          />
+        </div>
+
+        <Controller
+          name={`education.${index}.school`}
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
+              <Label>School / Institution *</Label>
+              <Input
+                {...field}
+                value={field.value || ''}
+                placeholder="University of Technology"
+              />
+              {fieldState.error ? (
+                <FieldError>{fieldState.error.message}</FieldError>
+              ) : null}
+            </TextField>
+          )}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Controller
+            name={`education.${index}.location`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <Label>Location *</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="City, Country"
+                />
+                {fieldState.error ? (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                ) : null}
+              </TextField>
+            )}
+          />
+
+          <Controller
+            name={`education.${index}.grade`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <Label>Grade / GPA (Optional)</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="3.8/4.0 or honors"
+                />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>
                 ) : null}
@@ -161,7 +230,7 @@ export function ExperienceItemContent({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Controller
-            name={`experiences.${index}.startDate`}
+            name={`education.${index}.startDate`}
             control={control}
             render={({ field, fieldState }) => (
               <DateField
@@ -185,7 +254,7 @@ export function ExperienceItemContent({
           />
 
           <Controller
-            name={`experiences.${index}.endDate`}
+            name={`education.${index}.endDate`}
             control={control}
             render={({ field, fieldState }) => (
               <DateField
@@ -196,7 +265,7 @@ export function ExperienceItemContent({
                 isDisabled={!!isCurrent}
                 isInvalid={!!fieldState.error}
               >
-                <Label>End Date</Label>
+                <Label>Graduation Date</Label>
                 <DateInputGroup>
                   <DateInputGroup.Input>
                     {(segment) => <DateInputGroup.Segment segment={segment} />}
@@ -211,7 +280,7 @@ export function ExperienceItemContent({
         </div>
 
         <Controller
-          name={`experiences.${index}.isCurrent`}
+          name={`education.${index}.isCurrent`}
           control={control}
           render={({ field }) => (
             <Checkbox
@@ -219,7 +288,7 @@ export function ExperienceItemContent({
               onChange={(isChecked) => {
                 field.onChange(isChecked);
                 if (isChecked) {
-                  setValue(`experiences.${index}.endDate`, null, {
+                  setValue(`education.${index}.endDate`, null, {
                     shouldValidate: true,
                   });
                 }
@@ -229,32 +298,9 @@ export function ExperienceItemContent({
                 <Checkbox.Indicator />
               </Checkbox.Control>
               <Checkbox.Content>
-                <span className="text-sm">I currently work here</span>
+                <span className="text-sm">I am currently studying here</span>
               </Checkbox.Content>
             </Checkbox>
-          )}
-        />
-
-        <Controller
-          name={`experiences.${index}.bullets.0.text`}
-          control={control}
-          render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>What did you do? *</Label>
-              <TextArea
-                {...field}
-                value={field.value || ''}
-                placeholder="Led frontend development, built React dashboards, mentored junior devs..."
-                rows={3}
-              />
-              {fieldState.error ? (
-                <FieldError>{fieldState.error.message}</FieldError>
-              ) : null}
-              <Description>
-                Write 2-3 sentences. We&apos;ll expand this into professional
-                bullet points.
-              </Description>
-            </TextField>
           )}
         />
       </Card.Content>

@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 export function ProjectsEditor() {
   const deleteModalState = useOverlayState();
   const { control, watch } = useFormContext<BaseResumeData>();
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove, move, insert } = useFieldArray({
     control,
     name: 'projects',
   });
@@ -42,6 +42,26 @@ export function ProjectsEditor() {
       tech: null,
       bullets: [],
     });
+  };
+
+  /**
+   * Duplicates a project entry.
+   */
+  const handleDuplicate = (index: number) => {
+    const itemToDuplicate = projects?.[index];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+      bullets:
+        itemToDuplicate.bullets?.map((bullet) => ({
+          ...bullet,
+          id: nanoid(),
+        })) || [],
+    };
+
+    insert(index + 1, newItem);
   };
 
   const handleMoveUp = (index: number) => {
@@ -101,6 +121,7 @@ export function ProjectsEditor() {
               }}
               onMoveUp={() => handleMoveUp(index)}
               onMoveDown={() => handleMoveDown(index)}
+              onDuplicate={() => handleDuplicate(index)}
               isFirst={index === 0}
               isLast={index === fields.length - 1}
             />
