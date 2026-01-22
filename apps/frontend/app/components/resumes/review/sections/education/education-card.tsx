@@ -178,21 +178,39 @@ export function EducationCard({
         />
       </div>
 
-      {/* Location */}
-      <Controller
-        name={`${basePath}.location`}
-        control={control}
-        render={({ field }) => (
-          <TextField className="w-full">
-            <Label>Location</Label>
-            <Input
-              {...field}
-              value={field.value || ''}
-              placeholder="City, Country"
-            />
-          </TextField>
-        )}
-      />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Location */}
+        <Controller
+          name={`${basePath}.location`}
+          control={control}
+          render={({ field }) => (
+            <TextField className="w-full">
+              <Label>Location</Label>
+              <Input
+                {...field}
+                value={field.value || ''}
+                placeholder="City, Country"
+              />
+            </TextField>
+          )}
+        />
+
+        {/* Grade */}
+        <Controller
+          name={`${basePath}.grade`}
+          control={control}
+          render={({ field }) => (
+            <TextField className="w-full">
+              <Label>Grade / GPA</Label>
+              <Input
+                {...field}
+                value={field.value || ''}
+                placeholder="3.8/4.0 or First Class Honours"
+              />
+            </TextField>
+          )}
+        />
+      </div>
 
       {/* Dates */}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -271,24 +289,6 @@ export function EducationCard({
                 </Label>
               </Checkbox.Content>
             </Checkbox>
-          )}
-        />
-      </div>
-
-      {/* Grade */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Controller
-          name={`${basePath}.grade`}
-          control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
-              <Label>Grade / GPA</Label>
-              <Input
-                {...field}
-                value={field.value || ''}
-                placeholder="3.8/4.0 or First Class Honours"
-              />
-            </TextField>
           )}
         />
       </div>

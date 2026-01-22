@@ -8,6 +8,7 @@ import { QueryProvider } from './providers/query-provider';
 import { ThemeToggle } from './components/theme-toggle';
 import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Toast } from '@heroui/react';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -38,6 +39,7 @@ export default function RootLayout({
           <NuqsAdapter>
             <ThemeProvider>
               <QueryProvider>
+                <Toast.Container placement='bottom end' />
                 <Suspense
                   fallback={
                     <div className="flex min-h-screen items-center justify-center">
