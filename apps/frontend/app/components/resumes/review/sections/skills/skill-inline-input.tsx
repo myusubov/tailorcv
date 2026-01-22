@@ -62,7 +62,7 @@ export function SkillInlineInput({
           }
         }}
         placeholder={placeholder}
-        className="placeholder:text-muted w-24 bg-transparent px-1 text-sm outline-none"
+        className="placeholder:text-muted w-32 bg-transparent px-1 text-sm outline-none"
       />
       <button
         type="button"

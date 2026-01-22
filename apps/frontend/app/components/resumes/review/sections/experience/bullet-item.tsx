@@ -95,7 +95,7 @@ export function BulletItem({
           size="sm"
           isIconOnly
           onPress={onRemove}
-          className="text-danger mt-1"
+          className="text-danger/50 hover:text-danger mt-1"
         >
           <Icon icon="lucide:x" className="size-4" />
         </Button>

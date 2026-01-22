@@ -131,7 +131,7 @@ export function ExperienceEditor() {
         <Button
           variant="ghost"
           onPress={handleAddExperience}
-          className="border-default-300 w-full border border-dashed"
+          className="border-default-300 text-muted-foreground hover:text-foreground w-full border border-dashed transition-colors"
         >
           <Icon icon="lucide:plus" className="size-4" />
           Add Experience

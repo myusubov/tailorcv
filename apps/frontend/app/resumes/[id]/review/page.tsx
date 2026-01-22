@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { Button, cn } from '@heroui/react';
+import { Icon } from '@iconify/react';
 import { ResumePreview } from '@/app/components/resumes/review/resume-preview';
 import { DataAnalysisPanel } from '@/app/components/resumes/review/data-analysis-panel';
+import { SmallScreenWarning } from '@/app/components/resumes/review/small-screen-warning';
 import {
   ReviewAccordion,
   type SectionKey,
@@ -56,8 +59,6 @@ function ReviewPageContent() {
   // Use useWatch for reliable updates to the feedback panel and preview
   const formData = useWatch({ control }) as BaseResumeData;
 
-  console.log({ formData });
-
   // Accordion expanded state
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
@@ -90,7 +91,9 @@ function ReviewPageContent() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col xl:flex-row">
+    <div className="relative mx-auto flex w-full max-w-7xl flex-col xl:flex-row">
+      <SmallScreenWarning />
+
       {/* Left Panel - Editor */}
       <div className="border-default-200 w-full min-w-0 shrink-0 border-b p-4 md:p-6 xl:h-screen xl:w-1/2 xl:overflow-y-auto xl:border-r xl:border-b-0">
         {/* Header */}
@@ -132,7 +135,9 @@ function ReviewPageContent() {
 
       {/* Right Panel - Preview (vertical scroll only, no horizontal overflow) */}
       <div className="w-full min-w-0 shrink-0 overflow-x-hidden overflow-y-auto p-4 md:p-6 xl:sticky xl:top-0 xl:h-screen xl:w-1/2">
-        <ResumePreview data={formData} />
+        <div className="mx-auto w-full max-w-full xl:max-w-none">
+          <ResumePreview data={formData} />
+        </div>
       </div>
     </div>
   );

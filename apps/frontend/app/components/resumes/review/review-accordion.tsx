@@ -108,7 +108,7 @@ export function ReviewAccordion({
   return (
     <Accordion
       variant="surface"
-      className={cn('w-full', className)}
+      className={cn('w-full shadow', className)}
       expandedKeys={expandedKeys}
       onExpandedChange={(keys) => onExpandedChange?.(keys as Set<string>)}
     >

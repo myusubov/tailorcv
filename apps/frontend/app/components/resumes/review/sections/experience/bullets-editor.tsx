@@ -93,9 +93,9 @@ export function BulletsEditor({ basePath }: BulletsEditorProps) {
         variant="ghost"
         size="sm"
         onPress={handleAddBullet}
-        className="text-sm"
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <Icon icon="lucide:plus" className="size-3" />
+        <Icon icon="lucide:plus" className="size-4" />
         Add bullet point
       </Button>
     </div>

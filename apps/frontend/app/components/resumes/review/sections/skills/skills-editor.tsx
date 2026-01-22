@@ -254,7 +254,6 @@ export function SkillsEditor() {
                 setNewCategoryValue('');
               }}
               placeholder="Category name..."
-              className="border-default-300 rounded-lg bg-transparent px-3 py-1"
             />
           </div>
         ) : (
