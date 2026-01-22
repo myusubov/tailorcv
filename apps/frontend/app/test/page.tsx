@@ -11,7 +11,9 @@ export default function TestPage() {
         31
       </div>
       <UserButton signInUrl={config.auth.signInUrl} />
-      <Button variant="outline" onClick={() => toast.warning('Toast')}>Toast</Button>
+      <Button variant="outline" onClick={() => toast.warning('Toast')}>
+        Toast
+      </Button>
     </div>
   );
 }

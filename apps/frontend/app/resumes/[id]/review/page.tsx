@@ -59,7 +59,6 @@ function ReviewPageContent() {
   // Use useWatch for reliable updates to the feedback panel and preview
   const formData = useWatch({ control }) as BaseResumeData;
 
-
   // Accordion expanded state
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 

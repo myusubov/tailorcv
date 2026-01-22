@@ -39,7 +39,7 @@ export default function RootLayout({
           <NuqsAdapter>
             <ThemeProvider>
               <QueryProvider>
-                <Toast.Container placement='bottom end' />
+                <Toast.Container placement="bottom end" />
                 <Suspense
                   fallback={
                     <div className="flex min-h-screen items-center justify-center">
