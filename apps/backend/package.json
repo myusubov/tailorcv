@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:worker": "tsx watch src/worker-runner.ts",
+    "test": "vitest run",
     "build": "tsc -p tsconfig.build.json",
     "start": "cross-env TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/src/server.js",
     "start:worker": "cross-env TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/src/worker-runner.js",
@@ -58,6 +59,7 @@
     "@types/pg": "^8.11.10",
     "prisma": "^7.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vite-tsconfig-paths": "^6.0.4"
   }
 }

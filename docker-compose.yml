@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # FRONTEND (Next.js 16 - User Intent)
+  # -------------------------------------------------------------
+  frontend:
+    container_name: tailorcv-frontend
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080 
+      - INTERNAL_API_URL=http://backend:8080      
+    env_file:
+      - apps/frontend/.env.local
+    depends_on:
+      - backend
+    networks:
+      - trust-network
+
+  # -------------------------------------------------------------
+  # BACKEND (Node.js API & Workers - Orchestration)
+  # -------------------------------------------------------------
+  backend:
+    container_name: tailorcv-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/tailorcv
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - apps/backend/.env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - trust-network
+
+  # -------------------------------------------------------------
+  # PERSISTENCE (PostgreSQL - Data Integrity)
+  # -------------------------------------------------------------
+  postgres:
+    container_name: tailorcv-db
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tailorcv
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - trust-network
+
+  # -------------------------------------------------------------
+  # QUEUE (Redis - Async Processing)
+  # -------------------------------------------------------------
+  redis:
+    container_name: tailorcv-redis
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - trust-network
+
+networks:
+  trust-network:
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:

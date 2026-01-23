@@ -73,7 +73,7 @@ export const baseResumeDataSchema = z.object({
       .object({
         id: idSchema,
         name: z.string().trim().min(1, 'Skill name is required'),
-        category: z.string().trim().min(1, 'Category is required').nullable(),
+        category: optionalStringSchema('Category cannot be empty'),
         level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).nullable(),
       })
       .strict(),
@@ -84,7 +84,7 @@ export const baseResumeDataSchema = z.object({
         id: idSchema,
         company: z.string().trim().min(1, 'Company is required'),
         title: z.string().trim().min(1, 'Job title is required'),
-        location: z.string().trim().min(1, 'Location is required').nullable(),
+        location: optionalStringSchema('Location cannot be empty'),
         startDate: dateSchema,
         endDate: dateSchema.nullable(),
         isCurrent: z.boolean().nullable(),
@@ -143,7 +143,8 @@ export const baseResumeDataSchema = z.object({
       .object({
         id: idSchema,
         name: z.string().trim().min(1, 'Project name is required'),
-        role: z.string().trim().min(1, 'Project role is required').nullable(),
+        role: optionalStringSchema('Project role cannot be empty'),
+        location: optionalStringSchema('Location cannot be empty'),
         startDate: dateSchema.nullable(),
         endDate: dateSchema.nullable(),
         isCurrent: z.boolean().nullable(),
@@ -209,13 +210,9 @@ export const baseResumeDataSchema = z.object({
             .string({ error: 'Please enter your school or institution name' })
             .trim()
             .min(1, 'Please enter your school or institution name'),
-          degree: z.string().trim().min(1, 'Degree is required').nullable(),
-          field: z
-            .string()
-            .trim()
-            .min(1, 'Field of study is required')
-            .nullable(),
-          location: z.string().trim().min(1, 'Location is required').nullable(),
+          degree: optionalStringSchema('Degree cannot be empty'),
+          field: optionalStringSchema('Field of study cannot be empty'),
+          location: optionalStringSchema('Location cannot be empty'),
           startDate: dateSchema.nullable(),
           endDate: dateSchema.nullable(),
           grade: z.string().trim().nullish(),
@@ -268,7 +265,7 @@ export const baseResumeDataSchema = z.object({
         .object({
           id: idSchema,
           name: z.string().trim().min(1, 'Certification name is required'),
-          issuer: z.string().trim().min(1, 'Issuer is required').nullable(),
+          issuer: optionalStringSchema('Issuer cannot be empty'),
           date: dateSchema.nullable(),
           url: urlSchema,
         })
@@ -281,11 +278,7 @@ export const baseResumeDataSchema = z.object({
         .object({
           id: idSchema,
           name: z.string().trim().min(1, 'Language is required'),
-          level: z
-            .string()
-            .trim()
-            .min(1, 'Proficiency level is required')
-            .nullable(),
+          level: optionalStringSchema('Proficiency level cannot be empty'),
         })
         .strict(),
     )

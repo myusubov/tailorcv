@@ -144,19 +144,39 @@ export function ExperienceItemContent({
             )}
           />
 
-          <Controller
-            name={`experiences.${index}.company`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Company *</Label>
-                <Input {...field} placeholder="Acme Inc." />
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
-              </TextField>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Controller
+              name={`experiences.${index}.company`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <Label>Company *</Label>
+                  <Input {...field} placeholder="Acme Inc." />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </TextField>
+              )}
+            />
+
+            <Controller
+              name={`experiences.${index}.location`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <Label>Location</Label>
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="Remote / New York"
+                  />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </TextField>
+              )}
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

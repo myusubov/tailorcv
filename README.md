@@ -1,37 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TailorCV: The Trust Engine
 
-## Getting Started
+> **Architect**: `tailorcv` Team
+> **Status**: Active Development (Phase 2: Documentation)
+> **Stack**: Next.js 16, Node.js, PostgreSQL, Redis
 
-First, run the development server:
+## ⚡ Mission
+**TailorCV** is an AI-driven orchestration engine designed to mathematically minimize the distance between a candidate's experience and a job description's requirements. It transforms the resume creation process from a creative writing exercise into a **data-driven engineering problem**.
+
+---
+
+## 🏗 The Architect Stack
+
+We utilize a **Type-Safe Monorepo** architecture to ensure absolute integrity across the full stack.
+
+| Layer | Technology | Version | Purpose |
+|-------|------------|---------|---------|
+| **Orchestration** | **Docker** | `latest` | Containerization and "Local Sovereignty". |
+| **Frontend** | **Next.js** | `16.0.x` | React 19, Server Actions, HeroUI v3. |
+| **Backend** | **Node.js** | `20.x` | Express, REST API, Worker Management. |
+| **Data Integrity**| **Zod** | `v4` | Shared Schema Validation (Single Source of Truth). |
+| **Persistence** | **PostgreSQL**| `15+` | Relational Data Storage (Prisma ORM). |
+| **Queues** | **Redis** | `7+` | Asynchronous Job Processing. |
+
+---
+
+## 🚀 Local Sovereignty (Getting Started)
+
+We prioritize **Local Sovereignty**: checking out the repo and running one command should give you the entire "Trust Engine" running on your machine.
+
+### Prerequisites
+*   Node.js 20+
+*   Docker & Docker Compose (Required for Phase 3)
+*   PostgreSQL & Redis (If running locally without Docker)
+
+### Installation
+
+1.  **Clone the Trust Engine**
+    ```bash
+    git clone <repo-url>
+    cd tailorcv
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    # This installs dependencies for Frontend, Backend, and Shared workspaces.
+    ```
+
+3.  **Environment Setup**
+    Create a `.env` file in the root (see `.env.example` if available) with your credentials:
+    ```env
+    DATABASE_URL="postgresql://..."
+    REDIS_URL="redis://..."
+    OPENAI_API_KEY="sk-..."
+    ```
+
+4.  **Ignite the Engine**
+    ```bash
+    npm run dev
+    ```
+    *   **Frontend**: `http://localhost:3000`
+    *   **Backend**: `http://localhost:8080`
+
+---
+
+## 🧠 Core Features
+
+### 1. The Shared Truth Strategy
+The `packages/shared` workspace is the mathematical heart of the system. It defines the `Zod` schemas for every piece of data (Resumes, Users, Jobs). Both the Frontend and Backend import from this package, ensuring it is **impossible** for the UI to be out of sync with the API validation logic.
+
+### 2. Event-Driven Generation
+AI Generation is slow. We don't block the user.
+*   **User** submits request → **API** validates & queues → **Redis** holds job → **Worker** generates → **UI** updates optimistically.
+
+### 3. HeroUI Experience
+A premium, "wow-factor" interface built with **HeroUI v3**, featuring glassmorphism, micro-interactions, and responsive framer-motion animations.
+
+---
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-
-pnpm dev
-# or
-bun dev
+tailorcv/
+├── apps/
+│   ├── frontend/   # Next.js 16 Application
+│   └── backend/    # Node.js API & Workers
+├── packages/
+│   └── shared/     # Shared Zod Schemas & Types
+├── ARCHITECTURE.md # Detailed System Engineering Documents
+└── Dockerfile      # Orchestration Logic
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Verified by the Trust Engine Protocol.*
