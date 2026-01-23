@@ -37,6 +37,7 @@ function createEmptyProject() {
     id: nanoid(),
     name: '',
     role: '',
+    location: '',
     startDate: '',
     endDate: '',
     isCurrent: false,
