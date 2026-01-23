@@ -144,7 +144,6 @@ export const baseResumeDataSchema = z.object({
         id: idSchema,
         name: z.string().trim().min(1, 'Project name is required'),
         role: optionalStringSchema('Project role cannot be empty'),
-        location: optionalStringSchema('Location cannot be empty'),
         startDate: dateSchema.nullable(),
         endDate: dateSchema.nullable(),
         isCurrent: z.boolean().nullable(),
