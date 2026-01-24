@@ -123,11 +123,14 @@ export async function generateFromAboutMe(
     'Successfully extracted resume data draft from raw text',
   );
 
+  // Apply strict validation and transforms before saving
+  const validatedData = baseResumeDataSchema.parse(enrichedData);
+
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
       name: 'Initial Resume (Draft)',
-      data: enrichedData,
+      data: validatedData,
       status: 'DRAFT',
     },
   });
@@ -440,11 +443,14 @@ CRITICAL INSTRUCTION:
     'Successfully generated resume draft from GitHub data',
   );
 
+  // Apply strict validation and transforms before saving
+  const validatedData = baseResumeDataSchema.parse(enrichedData);
+
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
       name: 'GitHub Resume (Draft)',
-      data: enrichedData,
+      data: validatedData,
       status: 'DRAFT',
     },
   });

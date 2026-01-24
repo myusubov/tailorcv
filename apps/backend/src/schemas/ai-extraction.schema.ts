@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { baseResumeDataSchema } from 'shared';
+import { openAiResumeSchema } from 'shared';
 
 /**
  * Schema for AI response when attempting to extract resume data from raw text.
@@ -18,7 +18,7 @@ export const aiExtractionResponseSchema = z.object({
     .describe(
       'Brief reason why data is insufficient, or empty string if sufficient',
     ),
-  data: baseResumeDataSchema,
+  data: openAiResumeSchema,
 });
 
 export type AiExtractionResponse = z.infer<typeof aiExtractionResponseSchema>;
