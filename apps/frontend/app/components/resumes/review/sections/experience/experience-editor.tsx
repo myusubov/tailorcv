@@ -17,14 +17,14 @@ import { toast } from 'sonner';
  */
 export function ExperienceEditor() {
   const deleteModalState = useOverlayState();
-  const { control, watch } = useFormContext<BaseResumeData>();
+  const { control, getValues } = useFormContext<BaseResumeData>();
   const { fields, append, remove, move, insert } = useFieldArray({
     control,
     name: 'experiences',
   });
 
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const experiences = watch('experiences');
+  // REMOVED: const experiences = watch('experiences'); - This caused re-renders on every keystroke
 
   /**
    * Adds a new empty experience entry.
@@ -47,7 +47,8 @@ export function ExperienceEditor() {
    * Duplicates an experience entry.
    */
   const handleDuplicate = (index: number) => {
-    const itemToDuplicate = experiences?.[index];
+    const allExperiences = getValues('experiences');
+    const itemToDuplicate = allExperiences?.[index];
     if (!itemToDuplicate) return;
 
     const newItem = {
@@ -73,14 +74,19 @@ export function ExperienceEditor() {
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
-    //undo action
-    const experience = experiences?.[deleteIndex];
+
+    // undo action
+    const allExperiences = getValues('experiences');
+    const experience = allExperiences?.[deleteIndex];
+
     toast.info('Experience was deleted', {
       action: {
         label: 'Undo',
         onClick: () => {
-          append(experience);
-          setDeleteIndex(null);
+          if (experience) {
+            append(experience);
+            setDeleteIndex(null);
+          }
         },
       },
     });
@@ -94,11 +100,17 @@ export function ExperienceEditor() {
   };
 
   // Build label for modal
-  const company =
-    deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
-  const title = deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
-  const labelParts = [title, company].filter(Boolean);
-  const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
+  // Build label for modal - fetch fresh values when modal opens
+  const getDeleteLabel = () => {
+    if (deleteIndex === null) return '';
+    const allExperiences = getValues('experiences');
+    const exp = allExperiences?.[deleteIndex];
+    if (!exp) return '';
+    const parts = [exp.title, exp.company].filter(Boolean);
+    return parts.length > 0 ? parts.join(' at ') : '';
+  };
+
+  const label = getDeleteLabel();
 
   return (
     <>

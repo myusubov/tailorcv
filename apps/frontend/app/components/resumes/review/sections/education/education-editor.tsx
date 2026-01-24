@@ -17,14 +17,14 @@ import { toast } from 'sonner';
  */
 export function EducationEditor() {
   const deleteModalState = useOverlayState();
-  const { control, watch } = useFormContext<BaseResumeData>();
+  const { control, getValues } = useFormContext<BaseResumeData>();
   const { fields, append, remove, move, insert } = useFieldArray({
     control,
     name: 'education',
   });
 
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const education = watch('education');
+  // REMOVED: const education = watch('education'); - Prevents re-renders on keystrokes
 
   /**
    * Adds a new empty education entry.
@@ -48,7 +48,8 @@ export function EducationEditor() {
    * Duplicates an education entry.
    */
   const handleDuplicate = (index: number) => {
-    const itemToDuplicate = education?.[index];
+    const allEducation = getValues('education');
+    const itemToDuplicate = allEducation?.[index];
     if (!itemToDuplicate) return;
 
     const newItem = {
@@ -69,7 +70,9 @@ export function EducationEditor() {
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
-    const entry = education?.[deleteIndex];
+    // undo action
+    const allEducation = getValues('education');
+    const entry = allEducation?.[deleteIndex];
     toast.info('Education was deleted', {
       action: {
         label: 'Undo',
@@ -91,10 +94,17 @@ export function EducationEditor() {
   };
 
   // Build label for modal
-  const school = deleteIndex !== null ? education?.[deleteIndex]?.school : '';
-  const degree = deleteIndex !== null ? education?.[deleteIndex]?.degree : '';
-  const labelParts = [school, degree].filter(Boolean);
-  const label = labelParts.length > 0 ? labelParts.join(' - ') : '';
+  // Build label for modal - fetch fresh values when modal opens
+  const getDeleteLabel = () => {
+    if (deleteIndex === null) return '';
+    const allEducation = getValues('education');
+    const entry = allEducation?.[deleteIndex];
+    if (!entry) return '';
+    const parts = [entry.school, entry.degree].filter(Boolean);
+    return parts.length > 0 ? parts.join(' - ') : '';
+  };
+
+  const label = getDeleteLabel();
 
   return (
     <>

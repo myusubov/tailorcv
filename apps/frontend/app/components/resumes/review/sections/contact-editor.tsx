@@ -63,14 +63,17 @@ export function ContactEditor() {
         <Controller
           name="contact.phone"
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Phone</Label>
               <Input
                 {...field}
                 value={field.value || ''}
                 placeholder="+1 555 123 4567"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -80,14 +83,17 @@ export function ContactEditor() {
       <Controller
         name="contact.location"
         control={control}
-        render={({ field }) => (
-          <TextField className="w-full">
+        render={({ field, fieldState }) => (
+          <TextField className="w-full" isInvalid={!!fieldState.error}>
             <Label>Location</Label>
             <Input
               {...field}
               value={field.value || ''}
               placeholder="San Francisco, CA"
             />
+            {fieldState.error && (
+              <FieldError>{fieldState.error.message}</FieldError>
+            )}
           </TextField>
         )}
       />
@@ -97,14 +103,17 @@ export function ContactEditor() {
         <Controller
           name="contact.linkedinUrl"
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField isInvalid={!!fieldState.error} className="w-full">
               <Label>LinkedIn URL</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="linkedin.com/in/username"
+                placeholder="https://linkedin.com/in/username"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -112,14 +121,17 @@ export function ContactEditor() {
         <Controller
           name="contact.githubUrl"
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField isInvalid={!!fieldState.error} className="w-full">
               <Label>GitHub URL</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="github.com/username"
+                placeholder="https://github.com/username"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -129,14 +141,17 @@ export function ContactEditor() {
       <Controller
         name="contact.websiteUrl"
         control={control}
-        render={({ field }) => (
-          <TextField className="w-full">
+        render={({ field, fieldState }) => (
+          <TextField isInvalid={!!fieldState.error} className="w-full">
             <Label>Website</Label>
             <Input
               {...field}
               value={field.value || ''}
-              placeholder="yourwebsite.com"
+              placeholder="https://yourwebsite.com"
             />
+            {fieldState.error && (
+              <FieldError>{fieldState.error.message}</FieldError>
+            )}
           </TextField>
         )}
       />

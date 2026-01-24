@@ -150,14 +150,17 @@ export function EducationCard({
         <Controller
           name={`${basePath}.degree`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Degree</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="Bachelor of Science"
+                placeholder="e.g. Bachelor of Science"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -165,14 +168,17 @@ export function EducationCard({
         <Controller
           name={`${basePath}.field`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Field of Study</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="Computer Science"
+                placeholder="e.g. Computer Science"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -183,14 +189,17 @@ export function EducationCard({
         <Controller
           name={`${basePath}.location`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Location</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="City, Country"
+                placeholder="e.g. London, UK"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -199,14 +208,17 @@ export function EducationCard({
         <Controller
           name={`${basePath}.grade`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Grade / GPA</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="3.8/4.0 or First Class Honours"
+                placeholder="e.g. 3.8/4.0"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />

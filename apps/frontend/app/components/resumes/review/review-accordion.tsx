@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Accordion, cn } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { useResumeAnalysis } from '@/lib/hooks/use-resume-analysis';
 import type { AnalysisStatus } from '@/lib/types/resumes';
 
@@ -74,8 +75,6 @@ function getStatusStyles(status: AnalysisStatus) {
 }
 
 interface ReviewAccordionProps {
-  /** Resume data for analysis status display */
-  data: BaseResumeData;
   /** Optional className for the accordion container */
   className?: string;
   /** Controlled expanded keys (for external control like DataAnalysisPanel clicks) */
@@ -89,11 +88,15 @@ interface ReviewAccordionProps {
  * Each section shows its completion status and expands to reveal the editor.
  */
 export function ReviewAccordion({
-  data,
   className,
   expandedKeys,
   onExpandedChange,
 }: ReviewAccordionProps) {
+  const { control } = useFormContext<BaseResumeData>();
+  
+  // Watch all data for analysis, but inside this component
+  const data = useWatch({ control }) as BaseResumeData;
+  
   const { items: analysisItems } = useResumeAnalysis(data);
 
   // Map section names to their analysis status

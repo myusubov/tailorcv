@@ -17,14 +17,14 @@ import { toast } from 'sonner';
  */
 export function ProjectsEditor() {
   const deleteModalState = useOverlayState();
-  const { control, watch } = useFormContext<BaseResumeData>();
+  const { control, getValues } = useFormContext<BaseResumeData>();
   const { fields, append, remove, move, insert } = useFieldArray({
     control,
     name: 'projects',
   });
 
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const projects = watch('projects');
+  // REMOVED: const projects = watch('projects'); - Prevents re-renders on keystrokes
 
   /**
    * Adds a new empty project entry.
@@ -48,7 +48,8 @@ export function ProjectsEditor() {
    * Duplicates a project entry.
    */
   const handleDuplicate = (index: number) => {
-    const itemToDuplicate = projects?.[index];
+    const allProjects = getValues('projects');
+    const itemToDuplicate = allProjects?.[index];
     if (!itemToDuplicate) return;
 
     const newItem = {
@@ -74,7 +75,10 @@ export function ProjectsEditor() {
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
-    const project = projects?.[deleteIndex];
+    // undo action
+    const allProjects = getValues('projects');
+    const project = allProjects?.[deleteIndex];
+    
     toast.info('Project was deleted', {
       action: {
         label: 'Undo',
@@ -96,10 +100,17 @@ export function ProjectsEditor() {
   };
 
   // Build label for modal
-  const projectName = deleteIndex !== null ? projects?.[deleteIndex]?.name : '';
-  const role = deleteIndex !== null ? projects?.[deleteIndex]?.role : '';
-  const labelParts = [projectName, role].filter(Boolean);
-  const label = labelParts.length > 0 ? labelParts.join(' - ') : '';
+  // Build label for modal - fetch fresh values when modal opens
+  const getDeleteLabel = () => {
+    if (deleteIndex === null) return '';
+    const allProjects = getValues('projects');
+    const proj = allProjects?.[deleteIndex];
+    if (!proj) return '';
+    const parts = [proj.name, proj.role].filter(Boolean);
+    return parts.length > 0 ? parts.join(' - ') : '';
+  };
+
+  const label = getDeleteLabel();
 
   return (
     <>

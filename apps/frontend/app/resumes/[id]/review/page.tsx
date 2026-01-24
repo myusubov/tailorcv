@@ -126,7 +126,6 @@ function ReviewPageContent() {
 
         {/* Accordion Editor */}
         <ReviewAccordion
-          data={formData}
           expandedKeys={expandedKeys}
           onExpandedChange={setExpandedKeys}
           className="mb-6"

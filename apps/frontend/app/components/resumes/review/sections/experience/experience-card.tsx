@@ -166,14 +166,17 @@ export function ExperienceCard({
       <Controller
         name={`${basePath}.location`}
         control={control}
-        render={({ field }) => (
-          <TextField className="w-full">
+        render={({ field, fieldState }) => (
+          <TextField className="w-full" isInvalid={!!fieldState.error}>
             <Label>Location</Label>
             <Input
               {...field}
               value={field.value || ''}
               placeholder="City, Country"
             />
+            {fieldState.error && (
+              <FieldError>{fieldState.error.message}</FieldError>
+            )}
           </TextField>
         )}
       />
@@ -189,7 +192,6 @@ export function ExperienceCard({
               isInvalid={!!fieldState.error}
               value={field.value ? parseDate(`${field.value}-01`) : null}
               onChange={(date) => {
-                console.log(date);
                 field.onChange(date ? date.toString().slice(0, 7) : '');
               }}
             >

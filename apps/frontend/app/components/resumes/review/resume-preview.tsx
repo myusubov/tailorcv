@@ -72,7 +72,6 @@ export function ResumePreview({
   className,
   scale: maxScale = 1.0,
 }: ResumePreviewProps) {
-  console.log(`[Re-render Check] ResumePreview rendered at ${new Date().toLocaleTimeString()}`);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [computedScale, setComputedScale] = React.useState<number>(0.5);

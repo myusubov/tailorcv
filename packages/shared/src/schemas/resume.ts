@@ -3,12 +3,6 @@ import { z } from 'zod';
 /**
  * SHARED CONSTANTS & HELPERS
  */
-const MonthRegex = /^(0[1-9]|1[0-2])$/;
-const YearRegex = /^\d{4}$/;
-
-const monthSchema = z.string().trim().regex(MonthRegex, 'Month must be 01-12');
-const yearSchema = z.string().trim().regex(YearRegex, 'Year must be 4 digits');
-
 const dateSchema = z
   .string()
   .trim()
@@ -80,8 +74,8 @@ const projectPureShape = {
   startDate: dateSchema.nullable(),
   endDate: dateSchema.nullable(),
   isCurrent: z.boolean().nullable(),
-  url: urlSchema,
-  repoUrl: urlSchema,
+  url: pureUrlSchema,
+  repoUrl: pureUrlSchema,
   tech: z.array(z.string().trim().min(1, 'Tech name is required')).nullable(),
   bullets: z.array(z.object(bulletPureShape).strict()),
 };
@@ -146,6 +140,9 @@ export const baseResumeDataSchema = z.object({
       location: optionalStringSchema('Location cannot be empty'),
       websiteUrl: z
         .url({ message: 'Invalid website URL' })
+        .regex(/^(https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/, {
+          message: 'Must be a valid website URL',
+        })
         .or(z.literal(''))
         .transform((val) => val || null)
         .nullable(),
@@ -247,8 +244,25 @@ export const baseResumeDataSchema = z.object({
         startDate: dateSchema.nullable(),
         endDate: dateSchema.nullable(),
         isCurrent: z.boolean().nullable(),
-        url: urlSchema,
-        repoUrl: urlSchema,
+        url: z
+          .url({ message: 'Invalid project URL' })
+          .regex(
+            /^(https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
+            {
+              message: 'Must be a valid URL',
+            },
+          )
+          .or(z.literal(''))
+          .transform((val) => val || null)
+          .nullable(),
+        repoUrl: z
+          .url({ message: 'Invalid repository URL' })
+          .regex(/(?:https?:\/\/)?(?:www\.)?github\.com/, {
+            message: 'Must be a valid GitHub URL',
+          })
+          .or(z.literal(''))
+          .transform((val) => val || null)
+          .nullable(),
         tech: z
           .array(z.string().trim().min(1, 'Tech name is required'))
           .nullable(),
@@ -314,7 +328,7 @@ export const baseResumeDataSchema = z.object({
           location: optionalStringSchema('Location cannot be empty'),
           startDate: dateSchema.nullable(),
           endDate: dateSchema.nullable(),
-          grade: z.string().trim().nullish(),
+          grade: optionalStringSchema('Grade cannot be empty'),
           notes: z.string().trim().nullish(),
           isCurrent: z.boolean().nullable(),
         })

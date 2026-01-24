@@ -71,7 +71,7 @@ export function ProjectCard({
             render={({ field, fieldState }) => (
               <TextField className="w-full" isInvalid={!!fieldState.error}>
                 <Label>Project Name *</Label>
-                <Input {...field} placeholder="Project name" />
+                <Input {...field} placeholder="e.g. Personal Portfolio" />
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
                 )}
@@ -82,14 +82,17 @@ export function ProjectCard({
           <Controller
             name={`${basePath}.role`}
             control={control}
-            render={({ field }) => (
-              <TextField className="w-full">
+            render={({ field, fieldState }) => (
+              <TextField className="w-full" isInvalid={!!fieldState.error}>
                 <Label>Your Role</Label>
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="Lead Developer"
+                  placeholder="e.g. Full Stack Developer"
                 />
+                {fieldState.error && (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                )}
               </TextField>
             )}
           />
@@ -167,14 +170,17 @@ export function ProjectCard({
         <Controller
           name={`${basePath}.url`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Live URL</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="https://..."
+                placeholder="https://my-app.vercel.app"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
@@ -182,14 +188,17 @@ export function ProjectCard({
         <Controller
           name={`${basePath}.repoUrl`}
           control={control}
-          render={({ field }) => (
-            <TextField className="w-full">
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
               <Label>Repository URL</Label>
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="github.com/..."
+                placeholder="https://github.com/username/repo"
               />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
             </TextField>
           )}
         />
