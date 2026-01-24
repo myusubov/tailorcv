@@ -144,7 +144,7 @@ export function EducationItemContent({
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="Bachelor's"
+                  placeholder="e.g. Bachelor's"
                 />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>
@@ -162,7 +162,7 @@ export function EducationItemContent({
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="Computer Science"
+                  placeholder="e.g. Computer Science"
                 />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>
@@ -181,7 +181,7 @@ export function EducationItemContent({
               <Input
                 {...field}
                 value={field.value || ''}
-                placeholder="University of Technology"
+                placeholder="e.g. University of Technology"
               />
               {fieldState.error ? (
                 <FieldError>{fieldState.error.message}</FieldError>
@@ -200,7 +200,7 @@ export function EducationItemContent({
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="City, Country"
+                  placeholder="e.g. New York, NY"
                 />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>
@@ -218,7 +218,7 @@ export function EducationItemContent({
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="3.8/4.0 or honors"
+                  placeholder="e.g. 3.8/4.0"
                 />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>

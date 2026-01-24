@@ -17,13 +17,12 @@ import {
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { parseDate } from '@internationalized/date';
-
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
+import { ArrayInput } from '@/app/components/ui';
 
 export interface ProjectItemContentProps {
   /** Array index of this project item */
   index: number;
-  /** Callback to delete this item */
   /** Callback to delete this item */
   onDelete: () => void;
   /** Callback to duplicate this item */
@@ -41,7 +40,6 @@ export function ProjectItemContent({
 }: ProjectItemContentProps) {
   const { control, setValue } = useFormContext<OnboardingFormInput>();
   const isCurrent = useWatch({ control, name: `projects.${index}.isCurrent` });
-  const tech = useWatch({ control, name: `projects.${index}.tech` });
 
   return (
     <Card className="mb-4">
@@ -86,28 +84,28 @@ export function ProjectItemContent({
             render={({ field, fieldState }) => (
               <TextField className="w-full" isInvalid={!!fieldState.error}>
                 <Label>Project Name *</Label>
-                <Input {...field} placeholder="TailorCV" />
+                <Input {...field} placeholder="e.g. Personal Portfolio" />
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
                 )}
               </TextField>
             )}
           />
-          <TextField className="w-full">
-            <Label>Tech Stack</Label>
-            <Input
-              value={Array.isArray(tech) ? tech.join(', ') : ''}
-              onChange={(e) => {
-                const arr = e.target.value
-                  .split(',')
-                  .map((t) => t.trim())
-                  .filter(Boolean);
-                setValue(`projects.${index}.tech`, arr.length ? arr : null);
-              }}
-              placeholder="React, TypeScript"
-            />
-            <Description>Comma-separated</Description>
-          </TextField>
+          <Controller
+            name={`projects.${index}.tech`}
+            control={control}
+            render={({ field }) => (
+              <ArrayInput
+                label="Tech Stack"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="e.g. React, Node.js, TypeScript"
+                description="Comma-separated"
+                className="w-full"
+              />
+            )}
+          />
         </div>
 
         <Controller
@@ -119,7 +117,7 @@ export function ProjectItemContent({
               <TextArea
                 {...field}
                 value={field.value || ''}
-                placeholder="AI-powered resume builder..."
+                placeholder="Briefly describe what you built and the impact it had..."
                 rows={3}
               />
               {fieldState.error && (
@@ -139,7 +137,7 @@ export function ProjectItemContent({
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="https://..."
+                  placeholder="https://my-app.vercel.app"
                 />
               </TextField>
             )}
@@ -153,7 +151,7 @@ export function ProjectItemContent({
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="github.com/..."
+                  placeholder="https://github.com/username/repo"
                 />
               </TextField>
             )}

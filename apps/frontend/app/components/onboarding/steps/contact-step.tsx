@@ -53,7 +53,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>First Name *</Label>
-                  <Input {...field} placeholder="John" />
+                  <Input {...field} placeholder="e.g. Jane" />
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
                   )}
@@ -69,7 +69,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Last Name *</Label>
-                  <Input {...field} placeholder="Doe" />
+                  <Input {...field} placeholder="e.g. Doe" />
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
                   )}
@@ -90,7 +90,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                   <Input
                     {...field}
                     type="email"
-                    placeholder="john@example.com"
+                    placeholder="e.g. jane.doe@example.com"
                   />
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
@@ -110,7 +110,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                   <Input
                     {...field}
                     value={field.value || ''}
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="e.g. +1 (555) 000-0000"
                   />
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
@@ -132,7 +132,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                 <Input
                   {...field}
                   value={field.value || ''}
-                  placeholder="San Francisco, CA"
+                  placeholder="e.g. San Francisco, CA"
                 />
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>

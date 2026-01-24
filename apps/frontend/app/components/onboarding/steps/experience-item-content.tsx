@@ -151,7 +151,7 @@ export function ExperienceItemContent({
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Company *</Label>
-                  <Input {...field} placeholder="Acme Inc." />
+                  <Input {...field} placeholder="e.g. Acme Inc." />
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
                   ) : null}
@@ -168,7 +168,7 @@ export function ExperienceItemContent({
                   <Input
                     {...field}
                     value={field.value || ''}
-                    placeholder="Remote / New York"
+                    placeholder="e.g. New York, NY"
                   />
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
