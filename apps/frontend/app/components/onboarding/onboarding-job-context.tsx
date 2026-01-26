@@ -21,6 +21,7 @@ import { useStream } from '@/lib/hooks/use-stream';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { showErrorToast } from '@/lib/utils/error-toast';
 import { useRouter } from 'next/navigation';
+import { ErrorCode } from 'shared';
 
 const STORAGE_KEY = 'onboardingJobId';
 
@@ -157,6 +158,20 @@ export function OnboardingJobProvider({
       // Deferring these updates to the next tick to avoid "cascading renders" ESlint warning.
       // This ensures we don't update state synchronously during a render phase.
       setTimeout(() => {
+        // Check for insufficient data from AI extraction
+        const aiResponse = jobData?.rawAiResponse;
+        if (aiResponse?._isDataSufficient === false) {
+          const reason =
+            aiResponse._insufficientReason || 'Some details were missing';
+          showErrorToast(
+            {
+              code: ErrorCode.INSUFFICIENT_DATA,
+              message: `${reason}. However, we still generated your resume draft by filling in placeholders for critical missing info.`,
+            },
+            { duration: 10000 },
+          );
+        }
+
         setGeneratedData({
           baseResumeId: resumeData.id,
           data: resumeData.data,
@@ -168,7 +183,7 @@ export function OnboardingJobProvider({
         clearJob();
       }, 0);
     }
-  }, [resumeData, jobData?.status, router]);
+  }, [resumeData, jobData?.status, jobData?.rawAiResponse, router]);
 
   const value = useMemo<OnboardingJobContextValue>(
     () => ({

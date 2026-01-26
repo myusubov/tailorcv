@@ -18,6 +18,7 @@ export function UploadStep({ onBack }: UploadStepProps) {
       onSuccess: ({ jobId }) => {
         beginJob(jobId);
       },
+      showErrorToast: true,
     },
   );
 

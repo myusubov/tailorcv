@@ -52,7 +52,7 @@ export async function generateFromAboutMe(
 ): Promise<GenerateOnboardingOutput> {
   const { clerkUserId, text: rawText } = input;
 
-  const model = 'gpt-4o-mini';
+  const model = 'gpt-4o';
   const system = env.OPENAI_ONBOARDING_SYSTEM_PROMPT;
 
   logger.info(
@@ -64,7 +64,8 @@ export async function generateFromAboutMe(
   );
 
   const truncatedText = rawText.slice(0, 30000); // Token safety
-  const prompt = `SOURCE MATERIAL (Raw Text from CV/Profile):\n---\n${truncatedText}\n---\n\nCRITICAL INSTRUCTION:\n1. PARSE EVERYTHING: Extract as much detail as possible from the text above into the resume schema.\n2. DATA SUFFICIENCY: Set "_isDataSufficient" to false if critical info like project/experience START DATES or basic career context is missing. Provide reasoning in "_insufficientReason" (or empty string if sufficient).\n3. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01". Every project/experience MUST have a startDate.\n4. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.`;
+  const currentDate = new Date().toISOString().split('T')[0];
+  const prompt = `Today's Date: ${currentDate}\n\nSOURCE MATERIAL (Raw Text from CV/Profile):\n---\n${truncatedText}\n---\n\nCRITICAL INSTRUCTION:\n1. PARSE EVERYTHING: Extract as much detail as possible from the text above into the resume schema.\n2. DATA SUFFICIENCY: Set "_isDataSufficient" to true unless critical identity info (Name) or more than 50% of career context is completely missing. Do NOT set to false just because minor fields like phone or specific dates are missing; use placeholders for dates as instructed.\n3. DATE FORMAT: All dates MUST be in "YYYY-MM" format. If you only have a year, use "YYYY-01". Every project/experience MUST have a startDate.\n4. BOOLEAN FIELDS: "isCurrent" must be true for ongoing items, false otherwise.`;
 
   const response = await openai.chat.completions.parse({
     model,
@@ -98,22 +99,22 @@ export async function generateFromAboutMe(
   }
 
   // Fetch the user's "ground truth" identity from the DB
-  const user = await prisma.user.findUnique({
-    where: { clerkUserId },
-    select: { firstName: true, lastName: true, email: true },
-  });
-
-  // Enrich the AI data with the actual user profile
-  const enrichedData = {
-    ...parsedResponse.data,
-    contact: {
-      ...parsedResponse.data.contact,
-      firstName:
-        user?.firstName || parsedResponse.data.contact?.firstName || '',
-      lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
-      email: user?.email || parsedResponse.data.contact?.email || '',
-    },
-  };
+  /*   const user = await prisma.user.findUnique({
+      where: { clerkUserId },
+      select: { firstName: true, lastName: true, email: true },
+    });
+   */
+  /*   // Enrich the AI data with the actual user profile
+    const enrichedData = {
+      ...parsedResponse.data,
+      contact: {
+        ...parsedResponse.data.contact,
+        firstName:
+          user?.firstName || parsedResponse.data.contact?.firstName || '',
+        lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
+        email: user?.email || parsedResponse.data.contact?.email || '',
+      },
+    }; */
 
   logger.info(
     {
@@ -124,7 +125,7 @@ export async function generateFromAboutMe(
   );
 
   // Apply strict validation and transforms before saving
-  const validatedData = baseResumeDataSchema.parse(enrichedData);
+  const validatedData = baseResumeDataSchema.parse(parsedResponse.data);
 
   const baseResume = await prisma.baseResume.create({
     data: {
@@ -137,7 +138,7 @@ export async function generateFromAboutMe(
 
   return {
     baseResumeId: baseResume.id,
-    data: enrichedData,
+    data: validatedData,
     rawAiResponse: parsedResponse,
     meta: { model, finishReason: response.choices[0].finish_reason },
   };
@@ -155,11 +156,12 @@ export async function generateOnboarding(
 ): Promise<GenerateOnboardingOutput> {
   const { clerkUserId, body } = input;
 
-  const model = 'gpt-4o-mini';
+  const model = 'gpt-4o';
   const system = env.OPENAI_ONBOARDING_SYSTEM_PROMPT;
 
+  const currentDate = new Date().toISOString().split('T')[0];
   // DIRECT INPUT: No compression, no modifications
-  const prompt = `Onboarding form input (JSON):\n${JSON.stringify(body, null, 2)}`;
+  const prompt = `Today's Date: ${currentDate}\n\nOnboarding form input (JSON):\n${JSON.stringify(body, null, 2)}`;
 
   logger.info(
     `AI generation (OpenAI Structured) starting for user ${clerkUserId}`,
@@ -262,7 +264,7 @@ export async function generateFromGithub(
 ): Promise<GenerateOnboardingOutput> {
   const { clerkUserId, repositoryIds } = input;
 
-  const model = 'gpt-4o-mini';
+  const model = 'gpt-4o';
   const system = env.OPENAI_ONBOARDING_SYSTEM_PROMPT;
 
   logger.info(
@@ -354,8 +356,9 @@ export async function generateFromGithub(
     'GitHub data fetched successfully',
   );
 
+  const currentDate = new Date().toISOString().split('T')[0];
   // Create prompt from GitHub data
-  const prompt = `SOURCE MATERIAL (GitHub Activity):
+  const prompt = `Today's Date: ${currentDate}\n\nSOURCE MATERIAL (GitHub Activity):
 
 REPOSITORIES:
 ${githubData.map((d) => `- ${d.repository.full_name}: ${d.repository.description || 'No description'}`).join('\n')}
@@ -365,17 +368,17 @@ ${allTechStack.join(', ')}
 
 RECENT COMMITS (${allCommits.length} total):
 ${allCommits
-  .slice(0, 30)
-  .map((c: GitHubCommit) => `- ${c.commit.message} (${c.commit.author.date})`)
-  .join('\n')}
+      .slice(0, 30)
+      .map((c: GitHubCommit) => `- ${c.commit.message} (${c.commit.author.date})`)
+      .join('\n')}
 
 PULL REQUESTS (${allPRs.length} total):
 ${allPRs
-  .slice(0, 15)
-  .map(
-    (pr: GitHubPullRequest) => `- ${pr.title}: ${pr.body || 'No description'}`,
-  )
-  .join('\n')}
+      .slice(0, 15)
+      .map(
+        (pr: GitHubPullRequest) => `- ${pr.title}: ${pr.body || 'No description'}`,
+      )
+      .join('\n')}
 
 CRITICAL INSTRUCTION:
 1. CONVERT TO RESUME: Transform the GitHub activity above into professional resume format
@@ -417,24 +420,24 @@ CRITICAL INSTRUCTION:
     );
   }
 
-  // Fetch the user's "ground truth" identity from the DB
-  const user = await prisma.user.findUnique({
-    where: { clerkUserId },
-    select: { firstName: true, lastName: true, email: true },
-  });
+  /*   // Fetch the user's "ground truth" identity from the DB
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId },
+      select: { firstName: true, lastName: true, email: true },
+    }); */
 
-  // Enrich the AI data with the actual user profile
-  const enrichedData = {
-    ...parsedResponse.data,
-    contact: {
-      ...parsedResponse.data.contact,
-      firstName:
-        user?.firstName || parsedResponse.data.contact?.firstName || '',
-      lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
-      email: user?.email || parsedResponse.data.contact?.email || '',
-    },
-  };
-
+  /*   // Enrich the AI data with the actual user profile
+    const enrichedData = {
+      ...parsedResponse.data,
+      contact: {
+        ...parsedResponse.data.contact,
+        firstName:
+          user?.firstName || parsedResponse.data.contact?.firstName || '',
+        lastName: user?.lastName || parsedResponse.data.contact?.lastName || '',
+        email: user?.email || parsedResponse.data.contact?.email || '',
+      },
+    };
+   */
   logger.info(
     {
       clerkUserId,
@@ -444,7 +447,7 @@ CRITICAL INSTRUCTION:
   );
 
   // Apply strict validation and transforms before saving
-  const validatedData = baseResumeDataSchema.parse(enrichedData);
+  const validatedData = baseResumeDataSchema.parse(parsedResponse.data);
 
   const baseResume = await prisma.baseResume.create({
     data: {
@@ -457,7 +460,7 @@ CRITICAL INSTRUCTION:
 
   return {
     baseResumeId: baseResume.id,
-    data: enrichedData,
+    data: validatedData,
     rawAiResponse: parsedResponse,
     meta: { model, finishReason: response.choices[0].finish_reason },
   };

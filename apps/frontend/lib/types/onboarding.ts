@@ -33,4 +33,5 @@ export type GetOnboardingJobOutput = {
   updatedAt: string;
   resultBaseResumeId?: string;
   error?: { message: string; code: string; details?: unknown };
+  rawAiResponse?: any;
 };
