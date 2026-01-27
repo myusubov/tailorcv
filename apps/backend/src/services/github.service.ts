@@ -369,6 +369,32 @@ export async function fetchRepoFile(
 }
 
 /**
+ * Fetches the README content for a repository
+ * Uses the efficient /readme endpoint which handles finding the correct file
+ * @param input - Access token, owner, and repo name
+ * @returns Decoded README content or null if not found
+ */
+export async function fetchRepoReadme(input: {
+  accessToken: string;
+  owner: string;
+  repo: string;
+}): Promise<string | null> {
+  const { accessToken, owner, repo } = input;
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/readme`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github.raw', // Request raw content directly
+      },
+    },
+  );
+
+  if (!response.ok) return null;
+  return await response.text();
+}
+
+/**
  * Detects tech stack from a repository by analyzing config files
  * @param input - Access token, owner, and repo name
  * @returns Array of detected technologies

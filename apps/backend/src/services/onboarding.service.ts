@@ -281,6 +281,7 @@ export async function generateFromGithub(
     fetchGithubRepos,
     fetchRepoCommits,
     fetchRepoPullRequests,
+    fetchRepoReadme, // Added
     detectRepoTechStack,
   } = await import('./github.service');
 
@@ -310,20 +311,25 @@ export async function generateFromGithub(
       const owner = repo.owner.login;
       const repoName = repo.name;
 
-      const [commits, prs, techStack] = await Promise.all([
+      const [commits, prs, techStack, readme] = await Promise.all([
         fetchRepoCommits({
           accessToken,
           owner,
           repo: repoName,
-          limit: 50, // Limit to recent commits
+          limit: 30, // Reduced to focus on recent high-value commits
         }),
         fetchRepoPullRequests({
           accessToken,
           owner,
           repo: repoName,
-          limit: 20, // Limit to recent PRs
+          limit: 10,
         }),
         detectRepoTechStack({
+          accessToken,
+          owner,
+          repo: repoName,
+        }),
+        fetchRepoReadme({
           accessToken,
           owner,
           repo: repoName,
@@ -335,58 +341,55 @@ export async function generateFromGithub(
         commits,
         pullRequests: prs,
         techStack,
+        readme: readme ? readme.slice(0, 5000) : null, // Limit README size to save tokens
       };
     }),
   );
 
-  // Aggregate all data
-  const allCommits = githubData.flatMap((d) => d.commits);
-  const allPRs = githubData.flatMap((d) => d.pullRequests);
-  const allTechStack = [
-    ...new Set(githubData.flatMap((d) => d.techStack)),
-  ] as string[];
-
   logger.info(
     {
       clerkUserId,
-      totalCommits: allCommits.length,
-      totalPRs: allPRs.length,
-      techStack: allTechStack,
+      repositoryCount: githubData.length,
     },
     'GitHub data fetched successfully',
   );
 
   const currentDate = new Date().toISOString().split('T')[0];
+
+  // Build structured context for each repository
+  const repoContexts = githubData.map((d) => {
+    const readmeSnippet = d.readme
+      ? d.readme.replace(/\n/g, ' ').substring(0, 1000) + '...'
+      : 'No README found';
+    const recentActivity = d.commits
+      .slice(0, 10)
+      .map((c) => `[${c.commit.author.date}] ${c.commit.message}`)
+      .join('; ');
+
+    return `
+REPOSITORY: ${d.repository.name}
+- DESCRIPTION: ${d.repository.description || 'No description provided'}
+- URL: ${d.repository.html_url}
+- LANGUAGE: ${d.repository.language || 'Unknown'}
+- DETECTED TECH STACK: ${d.techStack.join(', ')}
+- README SNIPPET: ${readmeSnippet}
+- RECENT ACTIVITY: ${recentActivity}
+    `.trim();
+  }).join('\n\n----------------\n\n');
+
   // Create prompt from GitHub data
-  const prompt = `Today's Date: ${currentDate}\n\nSOURCE MATERIAL (GitHub Activity):
+  const prompt = `Today's Date: ${currentDate}
 
-REPOSITORIES:
-${githubData.map((d) => `- ${d.repository.full_name}: ${d.repository.description || 'No description'}`).join('\n')}
+Source Material (Selected GitHub Repositories):
 
-TECH STACK:
-${allTechStack.join(', ')}
-
-RECENT COMMITS (${allCommits.length} total):
-${allCommits
-      .slice(0, 30)
-      .map((c: GitHubCommit) => `- ${c.commit.message} (${c.commit.author.date})`)
-      .join('\n')}
-
-PULL REQUESTS (${allPRs.length} total):
-${allPRs
-      .slice(0, 15)
-      .map(
-        (pr: GitHubPullRequest) => `- ${pr.title}: ${pr.body || 'No description'}`,
-      )
-      .join('\n')}
+${repoContexts}
 
 CRITICAL INSTRUCTION:
-1. CONVERT TO RESUME: Transform the GitHub activity above into professional resume format
-2. PROJECTS: Create project entries from the repositories, highlighting key contributions
-3. SKILLS: Extract technical skills from the tech stack and commit messages
-4. EXPERIENCE: If commits show professional patterns, create experience entries
-5. DATES: Use commit dates to infer project timelines (format: "YYYY-MM")
-6. IMPACT: Highlight meaningful contributions, not just "fixed bugs"`;
+1. CONVERT TO RESUME: Analyze the repositories above to create a "Projects" section.
+2. PROJECT DESCRIPTIONS: Use the README content and Tech Stack to write impactful bullet points. Do NOT just say "Initial commit" or "Fixed bug". Focus on WHAT the project does.
+3. DATES: Use the commit timestamps to determine the approximate Start and End dates for each project.
+4. SKILLS: Aggregate all "Detected Tech Stack" items into the Skills section.
+5. SUFFICIENCY: Set "_isDataSufficient" to true unless the repositories are empty or contain no code.`;
 
   const response = await openai.chat.completions.parse({
     model,
