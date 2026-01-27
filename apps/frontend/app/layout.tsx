@@ -49,7 +49,7 @@ export default function RootLayout({
                 >
                   {children}
                 </Suspense>
-                <ThemeToggle />
+                {/* <ThemeToggle /> */}
                 <Toaster richColors closeButton position="bottom-right" />
               </QueryProvider>
             </ThemeProvider>

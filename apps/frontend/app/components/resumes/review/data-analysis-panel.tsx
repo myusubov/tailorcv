@@ -60,7 +60,7 @@ export function DataAnalysisPanel({
   return (
     <div
       className={cn(
-        'border-default-200 bg-default-50 rounded-xl border p-4 shadow',
+        'border-default-200 bg-default-50 rounded-xl border p-4 shadow sticky top-0 z-10',
         className,
       )}
     >

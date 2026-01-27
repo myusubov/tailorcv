@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, cn } from '@heroui/react';
-import { Icon } from '@iconify/react';
 import { ResumePreview } from '@/app/components/resumes/review/resume-preview';
 import { DataAnalysisPanel } from '@/app/components/resumes/review/data-analysis-panel';
 import { SmallScreenWarning } from '@/app/components/resumes/review/small-screen-warning';
@@ -10,6 +8,7 @@ import {
   ReviewAccordion,
   type SectionKey,
 } from '@/app/components/resumes/review/review-accordion';
+import { AIChatBox } from '@/app/components/resumes/review/ai-chat-box';
 import {
   ResumeFormProvider,
   useResumeForm,
@@ -138,6 +137,9 @@ function ReviewPageContent() {
           <ResumePreview data={formData} />
         </div>
       </div>
+
+      {/* AI Assistant Chat - Fixed Position */}
+      <AIChatBox className="block" />
     </div>
   );
 }
