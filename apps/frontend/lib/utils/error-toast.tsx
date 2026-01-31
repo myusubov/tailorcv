@@ -13,6 +13,8 @@ const FRIENDLY_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
     'The AI took too long to respond. It might be busy.',
   [ErrorCode.NETWORK_ERROR]: 'Connectivity issue. Please check your internet.',
   [ErrorCode.VALIDATION_ERROR]: 'Please fix any errors in the form.',
+  [ErrorCode.CONVERSATION_NOT_FOUND]: 'Conversation not found.',
+  [ErrorCode.INTERNAL_ERROR]: 'Something went wrong. Please try again.',
 };
 
 interface ShowErrorToastOptions {
@@ -39,7 +41,10 @@ export function showErrorToast(
     [
       ErrorCode.AI_TIMEOUT_ERROR,
       ErrorCode.AI_PARSE_ERROR,
+      ErrorCode.AI_GENERATION_ERROR,
       ErrorCode.NETWORK_ERROR,
+      ErrorCode.INTERNAL_ERROR,
+      ErrorCode.INVALID_RESPONSE,
     ].includes(code) && !!options?.onRetry;
 
   toast.error(friendlyMessage, {

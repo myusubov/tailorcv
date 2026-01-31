@@ -33,12 +33,24 @@ export class ApiRequestError extends Error {
 /**
  * Configuration for direct query definition (new API).
  */
-export type DefineQueryConfig<TParams> = {
+export type DefineQueryConfig<TParams, TResponse> = {
   path: string | ((params: TParams) => string);
   keyPrefix: string;
   staticParts?: CacheKeyPart[];
   dynamicParts?: (params: TParams) => CacheKeyPart[];
   defaults?: ClientGetOptions;
+  /** Default TanStack Query options */
+  queryDefaults?: DefineQueryOptions<TResponse>;
+};
+
+/**
+ * The hook returned by defineQuery, with metadata attached.
+ */
+export type DefinedQueryHook<TParams, TResponse> = ((
+  params: TParams,
+  options?: DefineQueryOptions<TResponse>,
+) => UseQueryResult<TResponse, ApiRequestError>) & {
+  getKey: (params: TParams, keyParts?: unknown[]) => Array<string | number>;
 };
 
 /**
@@ -46,60 +58,67 @@ export type DefineQueryConfig<TParams> = {
  */
 export function defineQuery<TParams, TResponse>(
   clientFn: ClientGetFn<TParams, TResponse>,
-): (
-  params: TParams,
-  options?: DefineQueryOptions<TResponse>,
-) => UseQueryResult<TResponse, ApiRequestError>;
+): DefinedQueryHook<TParams, TResponse>;
 
 /**
  * Overload 2: Accept a config object directly (new streamlined API)
  */
 export function defineQuery<TParams, TResponse>(
-  config: DefineQueryConfig<TParams>,
-): (
-  params: TParams,
-  options?: DefineQueryOptions<TResponse>,
-) => UseQueryResult<TResponse, ApiRequestError>;
+  config: DefineQueryConfig<TParams, TResponse>,
+): DefinedQueryHook<TParams, TResponse>;
 
 /**
  * Overload 3: No params (void)
  */
 export function defineQuery<TResponse>(
-  config: DefineQueryConfig<void>,
-): (
-  params?: void,
-  options?: DefineQueryOptions<TResponse>,
-) => UseQueryResult<TResponse, ApiRequestError>;
+  config: DefineQueryConfig<void, TResponse>,
+): DefinedQueryHook<void, TResponse>;
 
 /**
  * Implementation
  */
 export function defineQuery<TParams, TResponse>(
-  configOrFn: DefineQueryConfig<TParams> | ClientGetFn<TParams, TResponse>,
+  configOrFn:
+    | DefineQueryConfig<TParams, TResponse>
+    | ClientGetFn<TParams, TResponse>,
 ) {
   // Check if it's a ClientGetFn (has 'config' property)
   const isClientFn = typeof configOrFn === 'function' && 'config' in configOrFn;
 
-  return function useGeneratedQuery(
+  const getKey = (params: TParams, keyParts?: unknown[]) => {
+    if (isClientFn) {
+      const { config } = configOrFn as ClientGetFn<TParams, TResponse>;
+      return makeKey(
+        config.keyPrefix,
+        ...(config.staticParts ?? []),
+        ...(config.dynamicParts
+          ? (config.dynamicParts(params) as CacheKeyPart[])
+          : []),
+        ...((keyParts as CacheKeyPart[]) ?? []),
+      );
+    } else {
+      const config = configOrFn as DefineQueryConfig<TParams, TResponse>;
+      return makeKey(
+        config.keyPrefix,
+        ...(config.staticParts ?? []),
+        ...(config.dynamicParts ? config.dynamicParts(params) : []),
+        ...((keyParts as CacheKeyPart[]) ?? []),
+      );
+    }
+  };
+
+  function useGeneratedQuery(
     params: TParams,
     options?: DefineQueryOptions<TResponse>,
   ): UseQueryResult<TResponse, ApiRequestError> {
     const { keyParts, ...queryOptions } = options ?? {};
 
-    let queryKey: Array<string | number>;
+    const queryKey = getKey(params, keyParts);
     let queryFn: () => Promise<TResponse>;
 
     if (isClientFn) {
       // Legacy API: unwrap ClientGetFn
       const clientFn = configOrFn as ClientGetFn<TParams, TResponse>;
-      const { config } = clientFn;
-
-      queryKey = makeKey(
-        config.keyPrefix,
-        ...(config.staticParts ?? []),
-        ...(config.dynamicParts ? (config.dynamicParts(params) as any[]) : []),
-        ...((keyParts as any[]) ?? []),
-      );
 
       queryFn = async () => {
         const result = await clientFn(params);
@@ -118,14 +137,7 @@ export function defineQuery<TParams, TResponse>(
       };
     } else {
       // New API: use config directly
-      const config = configOrFn as DefineQueryConfig<TParams>;
-
-      queryKey = makeKey(
-        config.keyPrefix,
-        ...(config.staticParts ?? []),
-        ...(config.dynamicParts ? config.dynamicParts(params) : []),
-        ...((keyParts as any[]) ?? []),
-      );
+      const config = configOrFn as DefineQueryConfig<TParams, TResponse>;
 
       queryFn = async () => {
         const path =
@@ -149,10 +161,22 @@ export function defineQuery<TParams, TResponse>(
       };
     }
 
+    // Merge defaults from config with options from the call site
+    const mergedOptions = {
+      ...(!isClientFn
+        ? (configOrFn as DefineQueryConfig<TParams, TResponse>).queryDefaults
+        : {}),
+      ...queryOptions,
+    };
+
     return useQuery({
       queryKey,
       queryFn,
-      ...queryOptions,
+      ...mergedOptions,
     }) as UseQueryResult<TResponse, ApiRequestError>;
-  };
+  }
+
+  useGeneratedQuery.getKey = getKey;
+
+  return useGeneratedQuery as DefinedQueryHook<TParams, TResponse>;
 }

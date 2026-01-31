@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: true,
     typedEnv: true,
+    mcpServer: true,
   },
   typedRoutes: true,
   reactCompiler: true,

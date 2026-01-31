@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Card, cn } from '@heroui/react';
+import { useRef, useEffect } from 'react';
+import { cn } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChatMessage } from './ai-chat/types';
 import { ChatHeader } from './ai-chat/chat-header';
+import { ChatSidebar } from './ai-chat/chat-sidebar';
 import { ChatMessageList } from './ai-chat/chat-message-list';
 import { ChatQuickActions } from './ai-chat/chat-quick-actions';
 import { ChatInputArea } from './ai-chat/chat-input-area';
 import { ChatTriggerButton } from './ai-chat/chat-trigger-button';
+import { useAIChat } from '@/app/providers/ai-chat-provider';
 
 /**
  * Props for the AIChatBox component.
@@ -26,23 +27,26 @@ interface AIChatBoxProps {
  * @returns The rendered chat widget
  */
 export function AIChatBox({ className }: AIChatBoxProps) {
-  const [input, setInput] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isInputFullscreen, setIsInputFullscreen] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const {
+    messages,
+    input,
+    isExpanded,
+    isFullscreen,
+    isInputFullscreen,
+    isSidebarOpen,
+    isTyping,
+    setInput,
+    setIsFullscreen,
+    setIsInputFullscreen,
+    sendMessage,
+    handleQuickAction,
+    toggleExpand,
+    closeChat,
+    currentResume,
+  } = useAIChat();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content:
-        "Hi! I'm your AI resume assistant. Ask me to update your summary, add skills, or rephrase bullet points.",
-      timestamp: new Date(),
-    },
-  ]);
 
   /**
    * Scrolls the message container to the bottom when new messages arrive.
@@ -65,51 +69,11 @@ export function AIChatBox({ className }: AIChatBoxProps) {
   }, [isExpanded]);
 
   /**
-   * Handles input changes and triggers auto-expansion of textarea if threshold is met.
-   */
-  const handleInputChange = (value: string) => {
-    setInput(value);
-  };
-
-  /**
    * Handles sending a message from the user.
-   * Currently uses mock AI responses for demonstration.
    */
   const handleSend = () => {
     if (!input.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
-    setIsInputFullscreen(false);
-    setIsTyping(true);
-
-    // Simulate AI response with typing delay
-    setTimeout(() => {
-      const aiMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: `I'll help you with "${userMsg.content}". This feature is coming soon!`,
-        timestamp: new Date(),
-      };
-      setIsTyping(false);
-      setMessages((prev) => [...prev, aiMsg]);
-    }, 1500);
-  };
-
-  /**
-   * Handles clicking a quick action chip.
-   * @param action - The quick action text to send
-   */
-  const handleQuickAction = (action: string) => {
-    handleInputChange(action);
-    setTimeout(() => handleSend(), 100);
+    sendMessage(input);
   };
 
   /**
@@ -123,12 +87,9 @@ export function AIChatBox({ className }: AIChatBoxProps) {
     }
   };
 
-  const toggleExpand = () => setIsExpanded(!isExpanded);
-  const closeChat = () => {
-    setIsExpanded(false);
-    setIsFullscreen(false);
-    setIsInputFullscreen(false);
-  };
+  const contextLabel = currentResume
+    ? `${currentResume.contact.firstName}'s Resume`
+    : null;
 
   return (
     <div
@@ -147,42 +108,52 @@ export function AIChatBox({ className }: AIChatBoxProps) {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'z-50 flex flex-col overflow-hidden',
+              'z-50 flex overflow-hidden',
               'bg-surface/90 border border-white/10 shadow-2xl backdrop-blur-xl',
               isFullscreen
                 ? 'fixed inset-0 m-0 h-full w-full rounded-none'
-                : 'absolute right-0 bottom-0 h-[520px] w-[380px] rounded-3xl',
+                : cn(
+                    'absolute right-0 bottom-0 h-130 rounded-3xl transition-all duration-300 ease-in-out',
+                    isSidebarOpen ? 'w-180' : 'w-100', // Using standard spacing units
+                  ),
             )}
           >
-            <ChatHeader
-              onClose={closeChat}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-            />
+            {/* Sidebar */}
+            <ChatSidebar />
 
-            <div className="relative flex flex-1 flex-col overflow-hidden">
-              <ChatMessageList
-                messages={messages}
-                isTyping={isTyping}
-                messagesEndRef={messagesEndRef}
+            {/* Main Chat Area */}
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <ChatHeader
+                onClose={closeChat}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               />
 
-              {messages.length <= 2 && !isTyping && !isInputFullscreen && (
-                <ChatQuickActions onActionClick={handleQuickAction} />
-              )}
+              <div className="relative flex flex-1 flex-col overflow-hidden">
+                <ChatMessageList
+                  messages={messages}
+                  isTyping={isTyping}
+                  messagesEndRef={messagesEndRef}
+                />
 
-              <ChatInputArea
-                input={input}
-                isTyping={isTyping}
-                isInputFullscreen={isInputFullscreen}
-                inputRef={inputRef}
-                onInputChange={handleInputChange}
-                onSend={handleSend}
-                onKeyDown={handleKeyDown}
-                onToggleInputFullscreen={() =>
-                  setIsInputFullscreen(!isInputFullscreen)
-                }
-              />
+                {messages.length <= 1 && !isTyping && !isInputFullscreen && (
+                  <ChatQuickActions onActionClick={handleQuickAction} />
+                )}
+
+                <ChatInputArea
+                  input={input}
+                  isTyping={isTyping}
+                  isInputFullscreen={isInputFullscreen}
+                  contextName={contextLabel}
+                  inputRef={inputRef}
+                  onInputChange={setInput}
+                  onSend={handleSend}
+                  onKeyDown={handleKeyDown}
+                  onToggleInputFullscreen={() =>
+                    setIsInputFullscreen(!isInputFullscreen)
+                  }
+                />
+              </div>
             </div>
           </motion.div>
         )}

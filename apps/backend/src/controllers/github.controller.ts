@@ -69,11 +69,13 @@ export async function handleGithubCallback(
       `${env.FRONTEND_URL}/onboarding?method=github&status=connected`,
     );
   } catch (error: any) {
-    const errorMessage = error.message || 'connection_failed';
+    console.error('GitHub Callback Error:', error); // Log the real error
+    const errorMessage = 'connection_failed'; // Sanitize for the user
     res.redirect(
       `${env.FRONTEND_URL}/onboarding?method=github&status=error&message=${encodeURIComponent(errorMessage)}`,
     );
   }
+
 }
 
 export async function getGithubRepos(

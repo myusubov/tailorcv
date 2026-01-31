@@ -59,7 +59,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
       if (oauthParams.status === 'connected') {
         toast.success('GitHub connected successfully');
       } else if (oauthParams.status === 'error') {
-        toast.error(oauthParams.message || 'Failed to connect to GitHub');
+        toast.error('Failed to connect to GitHub');
       }
 
       // Atomic cleanup using nuqs

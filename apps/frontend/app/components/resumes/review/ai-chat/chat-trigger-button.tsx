@@ -29,8 +29,7 @@ export function ChatTriggerButton({
           <Icon icon="solar:stars-bold" className="size-6" />
         </Button>
       </Tooltip.Trigger>
-      <Tooltip.Content showArrow placement="left">
-        <Tooltip.Arrow />
+      <Tooltip.Content placement="left">
         <p className="font-medium">AI Assistant</p>
       </Tooltip.Content>
     </Tooltip>

@@ -5,6 +5,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from './providers/theme-provider';
 import { QueryProvider } from './providers/query-provider';
+import { AIChatProvider } from './providers/ai-chat-provider';
+import { AIChatBox } from './components/resumes/review/ai-chat-box';
 import { ThemeToggle } from './components/theme-toggle';
 import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
@@ -39,18 +41,21 @@ export default function RootLayout({
           <NuqsAdapter>
             <ThemeProvider>
               <QueryProvider>
-                <Toast.Container placement="bottom end" />
-                <Suspense
-                  fallback={
-                    <div className="flex min-h-screen items-center justify-center">
-                      Loading...
-                    </div>
-                  }
-                >
-                  {children}
-                </Suspense>
-                {/* <ThemeToggle /> */}
-                <Toaster richColors closeButton position="bottom-right" />
+                <AIChatProvider>
+                  <Toast.Container placement="bottom end" />
+                  <Suspense
+                    fallback={
+                      <div className="flex min-h-screen items-center justify-center">
+                        Loading...
+                      </div>
+                    }
+                  >
+                    {children}
+                  </Suspense>
+                  <AIChatBox />
+                  <ThemeToggle />
+                  <Toaster richColors closeButton position="bottom-right" />
+                </AIChatProvider>
               </QueryProvider>
             </ThemeProvider>
           </NuqsAdapter>

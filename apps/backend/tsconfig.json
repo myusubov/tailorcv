@@ -6,7 +6,7 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "outDir": "./dist",
-    "rootDir": "../..",
+    "rootDir": "./",
     "noEmit": false,
     "esModuleInterop": true,
     "strict": true,
@@ -19,8 +19,7 @@
   "include": [
     "src/**/*",
     "types/**/*",
-    "prisma/generated/**/*",
-    "../../packages/shared/src/**/*"
+    "prisma/generated/**/*"
   ],
   "exclude": [
     "node_modules",

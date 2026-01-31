@@ -83,7 +83,10 @@ async function backendFetch(
   }
 
   const requestHeaders = new Headers(headers);
-  requestHeaders.set('Accept', 'application/json');
+  if (!requestHeaders.has('Accept')) {
+    requestHeaders.set('Accept', 'application/json');
+  }
+
 
   const isFormData = body instanceof FormData;
   if (body !== undefined && !isFormData) {
@@ -110,6 +113,14 @@ export async function backendRequest<T>(
 ): Promise<ApiResult<T>> {
   try {
     const response = await backendFetch(path, options);
+
+    if (response.status === 204) {
+      return {
+        ok: true,
+        status: 204,
+        data: null as T,
+      };
+    }
 
     const payload = (await response
       .json()

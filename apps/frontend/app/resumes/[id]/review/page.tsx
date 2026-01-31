@@ -8,13 +8,14 @@ import {
   ReviewAccordion,
   type SectionKey,
 } from '@/app/components/resumes/review/review-accordion';
-import { AIChatBox } from '@/app/components/resumes/review/ai-chat-box';
 import {
   ResumeFormProvider,
   useResumeForm,
 } from '@/app/components/resumes/review/resume-form-context';
+import { useAIChat } from '@/app/providers/ai-chat-provider';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { notFound, useParams } from 'next/navigation';
+import { useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import type { BaseResumeData } from 'shared';
 
@@ -54,9 +55,16 @@ const ResumeReview = () => {
 function ReviewPageContent() {
   const { control } = useFormContext<BaseResumeData>();
   const { isSaving, lastSaved } = useResumeForm();
+  const { setCurrentResume } = useAIChat();
 
   // Use useWatch for reliable updates to the feedback panel and preview
   const formData = useWatch({ control }) as BaseResumeData;
+
+  // Keep the AI Coach in sync with the current resume data
+  useEffect(() => {
+    setCurrentResume(formData);
+    return () => setCurrentResume(null);
+  }, [formData, setCurrentResume]);
 
   // Accordion expanded state
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
@@ -137,9 +145,6 @@ function ReviewPageContent() {
           <ResumePreview data={formData} />
         </div>
       </div>
-
-      {/* AI Assistant Chat - Fixed Position */}
-      <AIChatBox className="block" />
     </div>
   );
 }
