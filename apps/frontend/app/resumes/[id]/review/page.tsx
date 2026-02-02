@@ -8,6 +8,7 @@ import {
   ReviewAccordion,
   type SectionKey,
 } from '@/app/components/resumes/review/review-accordion';
+import { ReviewPageSkeleton } from '@/app/components/resumes/review/review-page-skeleton';
 import {
   ResumeFormProvider,
   useResumeForm,
@@ -25,21 +26,18 @@ import type { BaseResumeData } from 'shared';
  */
 const ResumeReview = () => {
   const { id }: { id: string } = useParams();
-  const { data: resumeData, error } = useBaseResumeQuery(
-    { id },
-    { enabled: !!id },
-  );
+  const {
+    data: resumeData,
+    error,
+    isLoading,
+  } = useBaseResumeQuery({ id }, { enabled: !!id });
 
   if (error?.status === 404) {
     notFound();
   }
 
-  if (!resumeData) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
+  if (!resumeData?.data || isLoading) {
+    return <ReviewPageSkeleton />;
   }
 
   return (
