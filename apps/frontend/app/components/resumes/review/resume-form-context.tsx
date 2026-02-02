@@ -74,8 +74,6 @@ export function ResumeFormProvider({
     mode: 'onChange',
   });
 
-  console.log({ errors: form.formState.errors });
-
   const isDirty = form.formState.isDirty;
 
   /**

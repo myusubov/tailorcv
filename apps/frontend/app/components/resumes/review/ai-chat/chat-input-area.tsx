@@ -48,13 +48,13 @@ export function ChatInputArea({
           <div className="flex px-1.5 pt-1">
             <Tooltip delay={300}>
               <Tooltip.Trigger>
-                <div className="bg-primary/10 border-primary/20 text-primary flex cursor-help items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors hover:bg-primary/20">
+                <div className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 flex cursor-help items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors">
                   <Icon icon="solar:document-bold" className="size-3" />
                   <span>{contextName}</span>
                 </div>
               </Tooltip.Trigger>
               <Tooltip.Content>
-                <p className="max-w-xs text-xs font-medium leading-relaxed">
+                <p className="max-w-xs text-xs leading-relaxed font-medium">
                   The AI is currently using this document as context for its
                   suggestions and edits.
                 </p>
@@ -63,13 +63,15 @@ export function ChatInputArea({
           </div>
         )}
 
-        <div className={cn(
-          'flex flex-1 items-stretch gap-2',
-          isInputFullscreen ? 'flex-col' : 'flex-row items-end'
-        )}>
+        <div
+          className={cn(
+            'flex flex-1 items-stretch gap-2',
+            isInputFullscreen ? 'flex-col' : 'flex-row items-end',
+          )}
+        >
           <textarea
             ref={inputRef}
-            rows={isInputFullscreen ? 12 : 1}
+            rows={isInputFullscreen ? 12 : input.length > 80 ? 4 : 1}
             placeholder="Ask AI to edit your resume..."
             value={input}
             onChange={(e) => onInputChange(e.target.value)}
@@ -94,9 +96,9 @@ export function ChatInputArea({
                 <Button
                   isIconOnly
                   size="sm"
+                  className="text-muted-foreground hover:text-foreground"
                   variant="ghost"
                   onPress={onToggleInputFullscreen}
-                  className="hover:bg-default size-9 rounded-lg border-none transition-transform active:scale-90"
                   aria-label={
                     isInputFullscreen ? 'Minimize Input' : 'Expand Input'
                   }
@@ -125,7 +127,6 @@ export function ChatInputArea({
               onPress={onSend}
               isDisabled={!input.trim() || isTyping}
               className={cn(
-                'size-9 shrink-0 rounded-lg transition-all active:scale-95',
                 input.trim() && !isTyping
                   ? 'bg-accent text-accent-foreground'
                   : 'bg-default text-muted',

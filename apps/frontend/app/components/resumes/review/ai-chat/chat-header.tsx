@@ -30,11 +30,12 @@ export function ChatHeader({
           <Tooltip.Trigger>
             <Button
               isIconOnly
+              size="sm"
               variant="ghost"
               onPress={() => setIsSidebarOpen(!isSidebarOpen)}
               className={cn(
-                'size-8 rounded-full border-none transition-all active:scale-95',
                 isSidebarOpen && 'bg-default/60',
+                !isSidebarOpen && 'text-muted-foreground hover:text-foreground',
               )}
               aria-label={isSidebarOpen ? 'Hide history' : 'Show history'}
             >
@@ -44,7 +45,7 @@ export function ChatHeader({
                     ? 'solar:sidebar-minimalistic-bold'
                     : 'solar:sidebar-minimalistic-linear'
                 }
-                width={18}
+                className="size-4"
               />
             </Button>
           </Tooltip.Trigger>
@@ -58,7 +59,7 @@ export function ChatHeader({
 
         <div className="flex items-center gap-3">
           <div className="bg-accent text-accent-foreground flex size-9 items-center justify-center rounded-full">
-            <Icon icon="solar:chat-dots-bold" width={18} />
+            <Icon icon="solar:chat-dots-bold" className="size-4" />
           </div>
           <div className="flex flex-col gap-0">
             <Card.Title className="text-sm font-semibold">
@@ -75,12 +76,13 @@ export function ChatHeader({
             <Tooltip.Trigger>
               <Button
                 isIconOnly
+                size="sm"
                 variant="ghost"
                 onPress={() => createNewConversation()}
-                className="size-8 rounded-full border-none transition-all active:scale-95"
+                className={cn('text-muted-foreground hover:text-foreground')}
                 aria-label="New conversation"
               >
-                <Icon icon="solar:add-circle-linear" width={18} />
+                <Icon icon="solar:add-circle-linear" className="size-4" />
               </Button>
             </Tooltip.Trigger>
             <Tooltip.Content showArrow>
@@ -95,8 +97,9 @@ export function ChatHeader({
             <Button
               isIconOnly
               variant="ghost"
+              size="sm"
               onPress={onToggleFullscreen}
-              className="size-8 rounded-full border-none transition-all active:scale-95"
+              className={cn('text-muted-foreground hover:text-foreground')}
               aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
             >
               <Icon
@@ -105,7 +108,7 @@ export function ChatHeader({
                     ? 'solar:minimize-linear'
                     : 'solar:maximize-linear'
                 }
-                width={18}
+                className="size-4"
               />
             </Button>
           </Tooltip.Trigger>
@@ -119,11 +122,16 @@ export function ChatHeader({
 
         <Tooltip delay={300}>
           <Tooltip.Trigger>
-            <CloseButton
+            <Button
+              isIconOnly
+              variant="ghost"
+              size="sm"
               onPress={onClose}
-              className="hover:bg-default size-8 rounded-full transition-all active:scale-90"
+              className={cn('text-muted-foreground hover:text-foreground')}
               aria-label="Close chat"
-            />
+            >
+              <Icon icon="solar:close-circle-linear" className="size-4" />
+            </Button>
           </Tooltip.Trigger>
           <Tooltip.Content showArrow>
             <Tooltip.Arrow />

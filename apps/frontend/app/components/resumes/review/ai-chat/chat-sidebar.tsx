@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@heroui/react';
+import { Button, Tooltip } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAIChat } from '@/app/providers/ai-chat-provider';
@@ -49,26 +49,45 @@ export function ChatSidebar() {
                 Conversations
               </h3>
               <div className="flex items-center gap-1">
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="ghost"
-                  onPress={() => createNewConversation()}
-                  className="size-7"
-                  aria-label="New conversation"
-                >
-                  <Icon icon="solar:add-circle-linear" className="size-4" />
-                </Button>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="ghost"
-                  onPress={() => setIsSidebarOpen(false)}
-                  className="size-7"
-                  aria-label="Close sidebar"
-                >
-                  <Icon icon="solar:alt-arrow-left-linear" className="size-4" />
-                </Button>
+                <Tooltip delay={300}>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="ghost"
+                      onPress={() => createNewConversation()}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="New conversation"
+                    >
+                      <Icon icon="solar:add-circle-linear" className="size-4" />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content showArrow>
+                    <Tooltip.Arrow />
+                    <p className="text-xs font-medium">New conversation</p>
+                  </Tooltip.Content>
+                </Tooltip>
+                <Tooltip delay={300}>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="ghost"
+                      onPress={() => setIsSidebarOpen(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="Close sidebar"
+                    >
+                      <Icon
+                        icon="solar:alt-arrow-left-linear"
+                        className="size-4"
+                      />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content showArrow>
+                    <Tooltip.Arrow />
+                    <p className="text-xs font-medium">Close sidebar</p>
+                  </Tooltip.Content>
+                </Tooltip>
               </div>
             </div>
 

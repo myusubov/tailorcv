@@ -5,14 +5,15 @@ import type {
 } from '@/lib/types/ai-chat';
 import { useQueryCache } from '@/lib/hooks/use-query-cache';
 
-export const useConversationsQuery = defineQuery<
-  void,
-  ConversationListItem[]
->({
+export const useConversationsQuery = defineQuery<void, ConversationListItem[]>({
   path: '/api/ai/chat/conversations',
   keyPrefix: 'ai-conversations',
   defaults: {
     cache: 'no-store',
+  },
+  queryDefaults: {
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 5,
   },
 });
 
@@ -27,8 +28,8 @@ export const useConversationDetailsQuery = defineQuery<
     cache: 'no-store',
   },
   queryDefaults: {
-    staleTime: 1000 * 60 * 5, // Keep messages fresh for 5 minutes
-    gcTime: 1000 * 60 * 5, // Garbage collect after 5 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 5,
   },
 });
 
@@ -40,4 +41,3 @@ export function useConversationsCache() {
     useConversationsQuery.getKey(undefined),
   );
 }
-

@@ -1,4 +1,4 @@
-import { Button, cn } from '@heroui/react';
+import { Button, cn, Tooltip } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { formatDistanceToNow } from 'date-fns';
 import type { ConversationListItem } from '@/lib/types/ai-chat';
@@ -31,25 +31,35 @@ export function ConversationItem({
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn(
-            'text-foreground line-clamp-2 flex-1 text-sm font-medium',
-            !conversation.title && 'text-muted italic',
+            'line-clamp-2 flex-1 text-sm font-medium',
+            !conversation.title && 'text-muted-foreground italic',
+            isActive && 'text-foreground',
+            !isActive && 'text-muted-foreground group-hover:text-foreground',
           )}
         >
           {conversation.title || 'New conversation'}
         </span>
-        <Button
-          isIconOnly
-          size="sm"
-          variant="danger-soft"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="size-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-          aria-label="Delete conversation"
-        >
-          <Icon icon="solar:trash-bin-trash-linear" className="size-3.5" />
-        </Button>
+        <Tooltip delay={300}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="danger-soft"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+              aria-label="Delete conversation"
+            >
+              <Icon icon="solar:trash-bin-trash-linear" className="size-4" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content showArrow>
+            <Tooltip.Arrow />
+            <p className="text-xs font-medium">Delete conversation</p>
+          </Tooltip.Content>
+        </Tooltip>
       </div>
       <div className="text-muted flex items-center gap-2 text-xs">
         <span>

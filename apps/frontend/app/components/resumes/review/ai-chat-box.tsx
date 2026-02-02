@@ -43,6 +43,7 @@ export function AIChatBox({ className }: AIChatBoxProps) {
     toggleExpand,
     closeChat,
     currentResume,
+    isLoadingMessages,
   } = useAIChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,12 +61,20 @@ export function AIChatBox({ className }: AIChatBoxProps) {
   }, [messages, isTyping]);
 
   /**
-   * Focus the input when the chat expands.
+   * Handle Side Effects when Chat Expands/Collapses:
+   * 1. Focus input (delayed for animation)
+   * 2. Lock body scroll
    */
   useEffect(() => {
     if (isExpanded) {
-      setTimeout(() => inputRef.current?.focus(), 300);
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => inputRef.current?.focus(), 200);
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isExpanded]);
 
   /**
@@ -103,6 +112,7 @@ export function AIChatBox({ className }: AIChatBoxProps) {
       <AnimatePresence>
         {isExpanded && (
           <motion.div
+            layout
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -113,8 +123,8 @@ export function AIChatBox({ className }: AIChatBoxProps) {
               isFullscreen
                 ? 'fixed inset-0 m-0 h-full w-full rounded-none'
                 : cn(
-                    'absolute right-0 bottom-0 h-130 rounded-3xl transition-all duration-300 ease-in-out',
-                    isSidebarOpen ? 'w-180' : 'w-100', // Using standard spacing units
+                    'absolute right-0 bottom-0 h-130 rounded-3xl',
+                    isSidebarOpen ? 'w-180' : 'w-100',
                   ),
             )}
           >
@@ -134,6 +144,7 @@ export function AIChatBox({ className }: AIChatBoxProps) {
                   messages={messages}
                   isTyping={isTyping}
                   messagesEndRef={messagesEndRef}
+                  isLoadingMessages={isLoadingMessages}
                 />
 
                 {messages.length <= 1 && !isTyping && !isInputFullscreen && (

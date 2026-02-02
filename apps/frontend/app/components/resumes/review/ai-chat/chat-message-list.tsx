@@ -1,25 +1,28 @@
-'use client';
-
 import { Card, ScrollShadow } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { ChatMessage } from '@/lib/types/ai-chat';
 import { ChatMessageBubble } from './chat-message-bubble';
+import { ChatMessageSkeleton } from './chat-message-skeleton';
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
   isTyping: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  isLoadingMessages: boolean;
 }
 
 export function ChatMessageList({
   messages,
   isTyping,
   messagesEndRef,
+  isLoadingMessages,
 }: ChatMessageListProps) {
   return (
     <Card.Content className="relative flex flex-1 flex-col overflow-hidden p-0">
       <ScrollShadow className="h-full space-y-3 p-4" size={30}>
-        {messages.length === 0 && !isTyping ? (
+        {isLoadingMessages ? (
+          <ChatMessageSkeleton />
+        ) : messages.length === 0 && !isTyping ? (
           <div className="flex h-full flex-col items-center justify-center space-y-4 px-8 text-center">
             <div className="bg-default-100 flex size-20 items-center justify-center rounded-3xl">
               <Icon

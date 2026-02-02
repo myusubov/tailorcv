@@ -1,11 +1,17 @@
 'use server';
 
-import { fa } from 'zod/v4/locales';
 import { defineAction } from './_action';
 
 export const createConversationAction = defineAction<
   { title?: string },
-  { id: string; title: string | null }
+  {
+    id: string;
+    title: string | null;
+    responseId: string | null;
+    createdAt: string;
+    updatedAt: string;
+    _count: { messages: number };
+  }
 >({
   method: 'POST',
   path: 'ai/chat/conversations',

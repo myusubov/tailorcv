@@ -1,9 +1,9 @@
-'use client';
-
+import { useState } from 'react';
+import { Button, cn, Tooltip } from '@heroui/react';
+import { Icon } from '@iconify/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { cn } from '@heroui/react';
 import { ChatMessage } from '@/lib/types/ai-chat';
 import { CodeBlock } from './code-block';
 
@@ -13,17 +13,28 @@ interface ChatMessageBubbleProps {
 
 export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   const isUser = message.role === 'user';
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (isCopied) return;
+    navigator.clipboard.writeText(message.content);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   return (
     <div
-      className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}
+      className={cn(
+        'group relative flex w-full',
+        isUser ? 'justify-end' : 'justify-start',
+      )}
     >
       <div
         className={cn(
-          'wrap-break-words max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+          'wrap-break-words relative max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed transition-all',
           isUser
             ? 'bg-primary text-primary-foreground'
-            : 'bg-content2 text-foreground', // content2 is a cleaner "paper" background in HeroUI
+            : 'bg-content2 text-foreground pb-8', // Added padding for the footer actions
         )}
       >
         <ReactMarkdown
@@ -134,6 +145,44 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
         >
           {message.content}
         </ReactMarkdown>
+
+        {/* Action Bar (Assistant Only) */}
+        {!isUser && (
+          <div className="absolute right-2 bottom-1.5 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <Tooltip delay={300}>
+              <Tooltip.Trigger>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="ghost"
+                  className={cn(
+                    'text-muted-foreground hover:text-foreground size-7',
+                    isCopied && 'text-success bg-success/10',
+                  )}
+                  onPress={handleCopy}
+                  isDisabled={isCopied}
+                  aria-label={isCopied ? 'Copied' : 'Copy response'}
+                >
+                  <Icon
+                    icon={
+                      isCopied ? 'solar:check-read-linear' : 'solar:copy-linear'
+                    }
+                    className={cn(
+                      'size-4 transition-transform',
+                      isCopied && 'scale-110',
+                    )}
+                  />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Content showArrow>
+                <Tooltip.Arrow />
+                <p className="text-xs font-medium">
+                  {isCopied ? 'Copied!' : 'Copy response'}
+                </p>
+              </Tooltip.Content>
+            </Tooltip>
+          </div>
+        )}
       </div>
     </div>
   );

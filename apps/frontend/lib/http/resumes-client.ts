@@ -10,4 +10,8 @@ export const useBaseResumeQuery = defineQuery<{ id: string }, BaseResume>({
     cache: 'no-store',
     priority: 'high',
   },
+  queryDefaults: {
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 5,
+  },
 });

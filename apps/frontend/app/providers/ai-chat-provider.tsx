@@ -104,7 +104,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
 
   const { data: conversationDetails, isLoading: isLoadingMessages } =
     useConversationDetailsQuery(
-      conversationId ? { id: conversationId } : { id: '' },
+      { id: conversationId || '' },
       {
         enabled: !!conversationId,
       },
@@ -128,15 +128,25 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   const conversationsCache = useConversationsCache();
 
   // Mutations
-  const { mutate: createConv } =
-    useActionMutation(createConversationAction, {
-      onSuccess: (data) => {
-        setConversationId(data.id);
-        setMessages([]);
-        refetchConversations();
-      },
-      showErrorToast: false,
-    });
+  const { mutate: createConv } = useActionMutation(createConversationAction, {
+    onMutate: async () => {
+      const previous = conversationsCache.getData();
+      return { previous };
+    },
+    onSuccess: (data) => {
+      setConversationId(data.id);
+      setMessages([]);
+      conversationsCache.list.add(data);
+    },
+    onError: (_err, _variables, ctx) => {
+      if (!ctx) return;
+      const { previous } = ctx;
+      if (previous) {
+        conversationsCache.rollback(previous);
+      }
+    },
+    showErrorToast: false,
+  });
 
   const { mutate: deleteConv } = useActionMutation(deleteConversationAction, {
     onMutate: async ({ id }) => {

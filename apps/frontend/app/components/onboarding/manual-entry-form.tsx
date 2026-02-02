@@ -64,8 +64,6 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
     mode: 'onSubmit',
   });
 
-  console.log({ errors: form.formState.errors })
-
   const { mutate: startJob, isPending } = useActionMutation(
     startOnboardingJobAction,
     {
@@ -163,8 +161,6 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
         return null;
     }
   };
-
-  console.log({ errors: form.formState.errors });
 
   return (
     <FormProvider {...form}>

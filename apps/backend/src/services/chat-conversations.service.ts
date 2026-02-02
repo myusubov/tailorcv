@@ -20,6 +20,16 @@ export async function createConversation(input: CreateConversationInput) {
       title: input.title,
       responseId: input.responseId,
     },
+    select: {
+      id: true,
+      title: true,
+      responseId: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: { messages: true },
+      },
+    },
   });
 }
 
