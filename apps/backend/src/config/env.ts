@@ -15,9 +15,8 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.url(),
   SHADOW_DATABASE_URL: z.url(),
-
   // Redis
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.url(),
 
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1),
@@ -46,6 +45,11 @@ const envSchema = z.object({
 
   // Optional: Additional configs
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // Chaos testing: which GitHub call to simulate failure (token=OAuth exchange, repos=fetch repos, all=both)
+  GITHUB_CHAOS_FAKE_FAIL: z
+    .enum(['token', 'repos', 'all'])
+    .optional(),
 
   // Admin user IDs (comma-separated Clerk user IDs)
   ADMIN_USER_IDS: z.string().optional(),

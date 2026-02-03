@@ -14,6 +14,9 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { onboardingQueue, analysisQueue } from './lib/queue';
 import { requireAdmin } from './middleware/admin';
+import { prisma } from './lib/prisma';
+import { redisPublisher, redisSubscriber } from './lib/redis';
+import { globalRateLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
@@ -26,6 +29,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 app.use(requestLogger);
+
+// Apply global rate limiting to all API routes
+app.use('/api', globalRateLimiter);
 
 // Bull Board UI for queue monitoring
 const serverAdapter = new ExpressAdapter();
@@ -66,7 +72,48 @@ app.use((req, res, next) => {
 // Global Error Handler
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info({ port: PORT }, 'Backend server listening');
   console.log('Force restart for schema update');
 });
+
+// Graceful shutdown handler
+const gracefulShutdown = async (signal: string) => {
+  logger.info({ signal }, 'Received shutdown signal, starting graceful shutdown...');
+
+  // Stop accepting new connections
+  server.close(async (err) => {
+    if (err) {
+      logger.error({ error: err }, 'Error during server shutdown');
+      process.exit(1);
+    }
+
+    logger.info('HTTP server closed, cleaning up resources...');
+
+    try {
+      // Disconnect Prisma
+      await prisma.$disconnect();
+      logger.info('Prisma disconnected');
+
+      // Disconnect Redis clients
+      await Promise.all([redisPublisher.quit(), redisSubscriber.quit()]);
+      logger.info('Redis clients disconnected');
+
+      logger.info('Graceful shutdown completed');
+      process.exit(0);
+    } catch (error) {
+      logger.error({ error }, 'Error during resource cleanup');
+      process.exit(1);
+    }
+  });
+
+  // Force shutdown after 30 seconds if graceful shutdown fails
+  setTimeout(() => {
+    logger.error('Graceful shutdown timeout, forcing exit');
+    process.exit(1);
+  }, 30000);
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

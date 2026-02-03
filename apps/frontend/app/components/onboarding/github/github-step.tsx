@@ -14,6 +14,7 @@ import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 import { startOnboardingGithubJobAction } from '@/lib/actions/onboarding.actions';
 import { env } from '@/lib/config';
 import { useQueryStates, parseAsString } from 'nuqs';
+import GithubErrorView from './github-error-view';
 
 interface GitHubStepProps {
   onBack: () => void;
@@ -50,8 +51,15 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     error: connectionError,
   } = useGithubConnectionQuery();
 
-  const { data: githubRepos, isLoading: isLoadingRepos } =
-    useGithubReposQuery();
+  const {
+    data: githubRepos,
+    isLoading: isLoadingRepos,
+    error: reposError,
+    refetch: refetchRepos,
+  } = useGithubReposQuery(undefined, {
+    enabled: !!githubConnection && !connectionError,
+    retry: 1, // Retry once automatically before showing error
+  });
 
   // Show toasts and clear params immediately after mount
   useEffect(() => {
@@ -84,7 +92,21 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   // If connected and we have repos, show the selection view
   // Note: connectionError with 404/502 means no connection found
   if (githubConnection && !connectionError) {
-    if (isLoadingRepos || !githubRepos) {
+    if (isLoadingRepos) {
+      return <GitHubLoadingView />;
+    }
+
+    if (reposError) {
+      return (
+        <GithubErrorView
+          error={reposError}
+          onRetry={() => refetchRepos()}
+          goBack={onBack}
+        />
+      );
+    }
+
+    if (!githubRepos) {
       return <GitHubLoadingView />;
     }
 

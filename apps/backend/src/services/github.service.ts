@@ -19,6 +19,7 @@ import {
   GitHubPullRequest,
   DetectRepoTechStackInput,
 } from '../types/github';
+import { githubApiPolicy } from '../lib/resilience';
 
 /**
  * Generates the GitHub OAuth authorization URL
@@ -120,22 +121,28 @@ export async function exchangeCodeForToken(
     code,
   });
 
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params.toString(),
+  const response = await githubApiPolicy.execute(async () => {
+    // Chaos: GITHUB_CHAOS_FAKE_FAIL=token or all
+    if (env.GITHUB_CHAOS_FAKE_FAIL === 'token' || env.GITHUB_CHAOS_FAKE_FAIL === 'all') {
+      throw new Error('Chaos: simulated GitHub API failure (token)');
+    }
+    const res = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+    if (!res.ok) {
+      throw new AppError(
+        `GitHub token exchange failed: ${res.statusText}`,
+        ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
+        502,
+      );
+    }
+    return res;
   });
-
-  if (!response.ok) {
-    throw new AppError(
-      `GitHub token exchange failed: ${response.statusText}`,
-      ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
-      502,
-    );
-  }
 
   const data = (await response.json()) as GitHubTokenErrorResponse;
 
@@ -164,21 +171,23 @@ export async function getGitHubUser(accessToken: string): Promise<GitHubUser> {
     ErrorCode.GITHUB_USER_FETCH_FAILED,
     502
   ); */
-  const response = await fetch('https://api.github.com/user', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
+  const response = await githubApiPolicy.execute(async () => {
+    const res = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+    if (!res.ok) {
+      throw new AppError(
+        `Failed to fetch GitHub user: ${res.statusText}`,
+        ErrorCode.GITHUB_USER_FETCH_FAILED,
+        502,
+      );
+    }
+    return res;
   });
-
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub user: ${response.statusText}`,
-      ErrorCode.GITHUB_USER_FETCH_FAILED,
-      502,
-    );
-  }
 
   return response.json() as Promise<GitHubUser>;
 }
@@ -221,24 +230,30 @@ export async function saveGitHubConnection(input: SaveGitHubConnectionInput) {
 export async function fetchGithubRepos(
   accessToken: string,
 ): Promise<GitHubRepo[]> {
-  const response = await fetch(
-    'https://api.github.com/user/repos?sort=updated&visibility=all',
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
+  const response = await githubApiPolicy.execute(async () => {
+    // Chaos: GITHUB_CHAOS_FAKE_FAIL=repos or all
+    if (env.GITHUB_CHAOS_FAKE_FAIL === 'repos' || env.GITHUB_CHAOS_FAKE_FAIL === 'all') {
+      throw new Error('Chaos: simulated GitHub API failure (repos)');
+    }
+    const res = await fetch(
+      'https://api.github.com/user/repos?sort=updated&visibility=all',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
       },
-    },
-  );
-
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub repos: ${response.statusText}`,
-      ErrorCode.GITHUB_REPOS_FETCH_FAILED,
-      502,
     );
-  }
+    if (!res.ok) {
+      throw new AppError(
+        `Failed to fetch GitHub repos: ${res.statusText}`,
+        ErrorCode.GITHUB_REPOS_FETCH_FAILED,
+        502,
+      );
+    }
+    return res;
+  });
 
   return response.json() as Promise<GitHubRepo[]>;
 }
@@ -273,23 +288,25 @@ export async function fetchRepoCommits(
   input: FetchGithubCommitsInput,
 ): Promise<GitHubCommit[]> {
   const { accessToken, owner, repo, limit = 100 } = input;
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${limit}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
+  const response = await githubApiPolicy.execute(async () => {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+        },
       },
-    },
-  );
-
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub commits: ${response.statusText}`,
-      ErrorCode.GITHUB_COMMITS_FETCH_FAILED,
-      502,
     );
-  }
+    if (!res.ok) {
+      throw new AppError(
+        `Failed to fetch GitHub commits: ${res.statusText}`,
+        ErrorCode.GITHUB_COMMITS_FETCH_FAILED,
+        502,
+      );
+    }
+    return res;
+  });
 
   return (await response.json()) as GitHubCommit[];
 }
@@ -303,23 +320,25 @@ export async function fetchRepoPullRequests(
   input: FetchGithubPullRequestsInput,
 ): Promise<GitHubPullRequest[]> {
   const { accessToken, owner, repo, limit = 50 } = input;
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/pulls?per_page=${limit}&state=all`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
+  const response = await githubApiPolicy.execute(async () => {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/pulls?per_page=${limit}&state=all`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+        },
       },
-    },
-  );
-
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub pull requests: ${response.statusText}`,
-      ErrorCode.GITHUB_PULL_REQUESTS_FETCH_FAILED,
-      502,
     );
-  }
+    if (!res.ok) {
+      throw new AppError(
+        `Failed to fetch GitHub pull requests: ${res.statusText}`,
+        ErrorCode.GITHUB_PULL_REQUESTS_FETCH_FAILED,
+        502,
+      );
+    }
+    return res;
+  });
 
   return (await response.json()) as GitHubPullRequest[];
 }
@@ -335,28 +354,29 @@ export async function fetchRepoFile(
 ): Promise<string | null> {
   const { accessToken, owner, repo, path } = input;
 
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
+  const response = await githubApiPolicy.execute(async () => {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+        },
       },
-    },
-  );
-
-  // File not found is expected for some tech stack files
-  if (response.status === 404) {
-    return null;
-  }
-
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub file: ${response.statusText}`,
-      ErrorCode.GITHUB_FILE_FETCH_FAILED,
-      502,
     );
-  }
+    // File not found is expected for some tech stack files - do not retry
+    if (res.status === 404) return res;
+    if (!res.ok) {
+      throw new AppError(
+        `Failed to fetch GitHub file: ${res.statusText}`,
+        ErrorCode.GITHUB_FILE_FETCH_FAILED,
+        502,
+      );
+    }
+    return res;
+  });
+
+  if (response.status === 404) return null;
 
   const data = (await response.json()) as { content: string; encoding: string };
 
@@ -380,17 +400,29 @@ export async function fetchRepoReadme(input: {
   repo: string;
 }): Promise<string | null> {
   const { accessToken, owner, repo } = input;
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/readme`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github.raw', // Request raw content directly
+  const response = await githubApiPolicy.execute(async () => {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/readme`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github.raw', // Request raw content directly
+        },
       },
-    },
-  );
+    );
+    // No readme is normal - do not retry
+    if (res.status === 404) return res;
+    if (!res.ok) {
+      throw new AppError(
+        `Failed to fetch GitHub readme: ${res.statusText}`,
+        ErrorCode.GITHUB_FILE_FETCH_FAILED,
+        502,
+      );
+    }
+    return res;
+  });
 
-  if (!response.ok) return null;
+  if (response.status === 404) return null;
   return await response.text();
 }
 

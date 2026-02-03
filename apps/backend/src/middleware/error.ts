@@ -5,6 +5,7 @@ import { errorResponse } from '../utils/response';
 import { ErrorCode } from 'shared';
 import { env } from '../config/env';
 import { Prisma } from '../../prisma/generated/client/client.js';
+import { BrokenCircuitError, TaskCancelledError } from 'cockatiel';
 
 export const errorHandler = (
   err: Error,
@@ -78,6 +79,26 @@ export const errorHandler = (
       'Authentication Error',
       401,
       ErrorCode.UNAUTHORIZED,
+    );
+  }
+
+  // Handle Circuit Breaker Errors (service temporarily unavailable)
+  if (err instanceof BrokenCircuitError) {
+    return errorResponse(
+      res,
+      'External service temporarily unavailable. Please try again later.',
+      503,
+      ErrorCode.SERVICE_UNAVAILABLE,
+    );
+  }
+
+  // Handle Task Cancelled Errors (timeout)
+  if (err instanceof TaskCancelledError) {
+    return errorResponse(
+      res,
+      'Request timeout - the operation took too long to complete.',
+      504,
+      ErrorCode.GATEWAY_TIMEOUT,
     );
   }
 

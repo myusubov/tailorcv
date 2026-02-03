@@ -1,6 +1,7 @@
 import { openai } from '../lib/openai';
 import type { StreamChatInput } from '../types/ai-chat';
 import type { BaseResumeData } from 'shared';
+import { openaiApiPolicy } from '../lib/resilience';
 
 /**
  * Result of a streamed chat response
@@ -63,12 +64,15 @@ export async function streamChatResponse(
         resolveResponseId = resolve;
     });
 
-    const openaiStream = openai.responses.stream({
-        model: 'gpt-4o',
-        instructions: buildInstructions(resumeContext),
-        input,
-        ...(previousResponseId && { previous_response_id: previousResponseId }),
-    });
+    // Wrap the OpenAI stream initialization with resilience policy
+    const openaiStream = await openaiApiPolicy.execute(() =>
+        openai.responses.stream({
+            model: 'gpt-4o',
+            instructions: buildInstructions(resumeContext),
+            input,
+            ...(previousResponseId && { previous_response_id: previousResponseId }),
+        }),
+    );
 
     async function* textGenerator(): AsyncGenerator<string, void, unknown> {
         let responseId = '';
