@@ -5,10 +5,15 @@ import { errorResponse } from '../utils/response';
 import { ErrorCode } from 'shared';
 import { env } from '../config/env';
 import { Prisma } from '../../prisma/generated/client/client.js';
-import { BrokenCircuitError, TaskCancelledError } from 'cockatiel';
+import {
+  BrokenCircuitError,
+  TaskCancelledError,
+  BulkheadRejectedError,
+} from 'cockatiel';
+import { handleResilienceError } from '../lib/resilience';
 
 export const errorHandler = (
-  err: Error,
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -19,14 +24,28 @@ export const errorHandler = (
     console.error(err.stack);
   }
 
+  // Handle Resilience Errors (cockatiel) automatically if they have context
+  const isResilienceError =
+    err instanceof BrokenCircuitError ||
+    err instanceof TaskCancelledError ||
+    err instanceof BulkheadRejectedError ||
+    ['BrokenCircuitError', 'TaskCancelledError', 'BulkheadRejectedError', 'BulkheadRejectedException'].includes(
+      err.name,
+    );
+
+  let errorToHandle = err;
+  if (isResilienceError && !(err instanceof AppError)) {
+    errorToHandle = handleResilienceError(err, err.context || 'External Service');
+  }
+
   // Handle AppError (operational errors)
-  if (err instanceof AppError) {
+  if (errorToHandle instanceof AppError) {
     return errorResponse(
       res,
-      err.message,
-      err.statusCode,
-      err.errorCode,
-      err.details,
+      errorToHandle.message,
+      errorToHandle.statusCode,
+      errorToHandle.errorCode,
+      errorToHandle.details,
     );
   }
 
@@ -73,32 +92,12 @@ export const errorHandler = (
   }
 
   // Handle Clerk Authentication Errors (if any specific ones bubble up)
-  if (err.message.includes('Clerk')) {
+  if (err.message && err.message.includes('Clerk')) {
     return errorResponse(
       res,
       'Authentication Error',
       401,
       ErrorCode.UNAUTHORIZED,
-    );
-  }
-
-  // Handle Circuit Breaker Errors (service temporarily unavailable)
-  if (err instanceof BrokenCircuitError) {
-    return errorResponse(
-      res,
-      'External service temporarily unavailable. Please try again later.',
-      503,
-      ErrorCode.SERVICE_UNAVAILABLE,
-    );
-  }
-
-  // Handle Task Cancelled Errors (timeout)
-  if (err instanceof TaskCancelledError) {
-    return errorResponse(
-      res,
-      'Request timeout - the operation took too long to complete.',
-      504,
-      ErrorCode.GATEWAY_TIMEOUT,
     );
   }
 

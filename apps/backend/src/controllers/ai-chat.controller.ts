@@ -10,6 +10,7 @@ import {
 } from '../services/chat-conversations.service';
 
 import { logger } from '../lib/logger';
+import { handleResilienceError } from '../lib/resilience';
 
 /**
  * Handles POST /api/v1/ai/chat
@@ -32,6 +33,21 @@ export const postChatMessage = async (
       { clerkUserId, conversationId: requestedId, hasResumeContext: !!resumeContext },
       'AI chat request received',
     );
+
+    // Handle idempotent replay
+    if (req.isIdempotentReplay) {
+      logger.info({ clerkUserId, conversationId: requestedId }, 'Replaying idempotent chat request');
+      // For now, we'll just return a success message indicating it was already processed.
+      // In a more advanced version, we could fetch the last message from the DB and stream it back.
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      });
+      res.write(`data: ${JSON.stringify({ type: 'text', content: 'This request was already processed successfully.' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+      return res.end();
+    }
 
     if (!activeConversationId) {
       // Create a new conversation if none provided
@@ -100,6 +116,8 @@ export const postChatMessage = async (
         clerkUserId,
         responseId: newResponseId,
       }),
+      // Mark as completed in idempotency layer
+      res.markIdempotentCompleted?.(),
     ]);
 
     // Send final event
@@ -117,12 +135,18 @@ export const postChatMessage = async (
       'AI chat response completed',
     );
   } catch (err) {
-    logger.error({ err }, 'AI chat error');
+    const appError = handleResilienceError(err, 'AI Chat');
+    logger.error({ err, errorCode: appError.errorCode }, 'AI chat error');
+
     if (!res.headersSent) {
-      next(err);
+      next(appError);
     } else {
       res.write(
-        `data: ${JSON.stringify({ type: 'error', message: 'An error occurred' })}\n\n`,
+        `data: ${JSON.stringify({
+          type: 'error',
+          message: appError.message,
+          code: appError.errorCode,
+        })}\n\n`,
       );
       res.end();
     }

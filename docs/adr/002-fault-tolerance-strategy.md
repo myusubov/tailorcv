@@ -21,11 +21,20 @@ We have implemented a multi-layered fault tolerance and resilience strategy usin
 
 We introduced a centralized resilience layer in `apps/backend/src/lib/resilience.ts` using the `cockatiel` library. All external API calls are wrapped in a combined policy:
 
-- **Retry Policy:** 3 attempts with exponential backoff to handle transient network glitches.
-- **Circuit Breaker:** Trips if 50% of requests fail in a 10s window. This prevents the system from repeatedly hitting a known-down service, allowing it to "fail fast" and recover.
+- **Retry Policy:** 3 attempts with exponential backoff and **decorrelated jitter** to handle transient network glitches and prevent "Thundering Herds."
+- **Isolated Circuit Breakers:** Each external service (GitHub, OpenAI) has its own dedicated circuit breaker instance. This prevents a failure in one service from tripping the safety fuse for others.
+- **Bulkhead Pattern:** Implemented a bulkhead for OpenAI calls (10 concurrent slots, 20 queue slots) to prevent slow AI responses from exhausting server resources and impacting unrelated routes.
 - **Timeout Policy:** Hard limits (30s for GitHub, 60s for OpenAI) to prevent hanging connections.
 
-### 2. API Rate Limiting
+### 2. Centralized Resilience Error Mapping
+
+To maintain clean controllers and a consistent API contract, we implemented a global error mapping strategy:
+
+- **Contextual Errors:** The `executeWithPolicy` helper attaches a context string (e.g., 'GitHub') to thrown errors.
+- **Universal Translator:** A `handleResilienceError` utility maps low-level infrastructure errors to domain-specific `AppError` instances with precise status codes (e.g., `429 SYSTEM_BUSY`, `503 CIRCUIT_BROKEN`).
+- **Middleware Integration:** The global `errorHandler` automatically detects these errors and formats them, ensuring consistent error responses across standard JSON and SSE streaming routes.
+
+### 3. API Rate Limiting
 
 Implemented `express-rate-limit` with a Redis store (`rate-limit-redis`) to protect the perimeter:
 

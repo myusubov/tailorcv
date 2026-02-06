@@ -9,108 +9,127 @@ import {
   IPolicy,
   SamplingBreaker,
   TimeoutStrategy,
+  bulkhead,
 } from 'cockatiel';
 import { logger } from './logger';
+import { ErrorCode } from 'shared';
+import { AppError } from '../utils/AppError';
 
 /**
- * Retry policy with exponential backoff
- * - 3 attempts maximum
- * - Initial delay: 100ms
- * - Max delay: 2000ms
- * - Backoff multiplier: 2
+ * Factory for creating retry policies with exponential backoff and jitter.
+ * Cockatiel v3+ includes decorrelated jitter by default in ExponentialBackoff.
  */
-export const retryPolicy = retry(handleAll, {
-  maxAttempts: 3,
-  backoff: new ExponentialBackoff({
-    initialDelay: 100,
-    maxDelay: 2000,
-  }),
-});
+const createRetryPolicy = (name: string) => {
+  const policy = retry(handleAll, {
+    maxAttempts: 3,
+    backoff: new ExponentialBackoff({
+      initialDelay: 100,
+      maxDelay: 2000,
+    }),
+  });
+
+  policy.onRetry((data) => {
+    logger.warn({ data, service: name }, 'Retry policy - retrying...');
+  });
+
+  policy.onSuccess((data) => {
+    logger.info({ data, service: name }, 'Retry policy - successful');
+  });
+
+  policy.onFailure((data) => {
+    logger.error({ data, service: name }, 'Retry policy - failed');
+  });
+
+  return policy;
+};
 
 /**
- * Circuit breaker policy for external services
- * - Opens when 50% of requests fail in a 10-second window
- * - Requires at least 5 requests before opening
- * - Half-opens after 30 seconds to test if service recovered
+ * Factory for creating circuit breaker policies.
+ * Isolated instances prevent failures in one service from affecting others.
  */
-export const circuitBreakerPolicy = circuitBreaker(handleAll, {
-  halfOpenAfter: 30 * 1000, // 30 seconds
-  breaker: new SamplingBreaker({
-    // Opens circuit if 50% of requests fail
-    threshold: 0.5,
-    // Look at requests in last 10 seconds
-    duration: 10 * 1000,
-    // Require at least 5 requests before making a decision
-    minimumRps: 5,
-  }),
-});
+const createCircuitBreakerPolicy = (name: string) => {
+  const policy = circuitBreaker(handleAll, {
+    halfOpenAfter: 30 * 1000, // 30 seconds
+    breaker: new SamplingBreaker({
+      threshold: 0.5,
+      duration: 10 * 1000,
+      minimumRps: 5,
+    }),
+  });
+
+  policy.onBreak((data) => {
+    logger.warn(
+      { data, service: name },
+      'Circuit breaker opened - too many failures detected',
+    );
+  });
+
+  policy.onReset((data) => {
+    logger.info({ data, service: name }, 'Circuit breaker closed - service recovered');
+  });
+
+  policy.onHalfOpen((data) => {
+    logger.info(
+      { data, service: name },
+      'Circuit breaker half-open - testing service recovery',
+    );
+  });
+
+  return policy;
+};
 
 /**
- * Timeout policy for external API calls
- * - 30 seconds timeout
+ * Timeout policy for external API calls (30 seconds)
  */
 export const timeoutPolicy = timeout(30 * 1000, TimeoutStrategy.Aggressive);
 
 /**
- * Combined resilience policy for GitHub API calls
- * Combines timeout -> retry -> circuit breaker
+ * OpenAI specific bulkhead to limit concurrent expensive calls.
+ * Prevents resource exhaustion.
  */
+const openaiBulkhead = bulkhead(10, 20); // 10 concurrent, 20 in queue
+
+/**
+ * Combined resilience policy for GitHub API calls.
+ * Isolated retry and circuit breaker.
+ */
+const githubRetry = createRetryPolicy('github');
+const githubBreaker = createCircuitBreakerPolicy('github');
+
 export const githubApiPolicy = wrap(
   timeoutPolicy,
-  retryPolicy,
-  circuitBreakerPolicy,
+  githubRetry,
+  githubBreaker,
 );
 
 /**
- * Combined resilience policy for OpenAI API calls
- * Uses longer timeout due to streaming nature
+ * Combined resilience policy for OpenAI API calls.
+ * Includes bulkhead and longer timeout.
  */
+const openaiRetry = createRetryPolicy('openai');
+const openaiBreaker = createCircuitBreakerPolicy('openai');
+
 export const openaiApiPolicy = wrap(
+  openaiBulkhead,
   timeout(60 * 1000, TimeoutStrategy.Aggressive),
-  retryPolicy,
-  circuitBreakerPolicy,
+  openaiRetry,
+  openaiBreaker,
 );
 
 /**
- * Generic resilience policy for other external services
+ * Generic resilience policy for other external services.
  */
+const genericRetry = createRetryPolicy('generic');
+const genericBreaker = createCircuitBreakerPolicy('generic');
+
 export const genericApiPolicy = wrap(
   timeoutPolicy,
-  retryPolicy,
-  circuitBreakerPolicy,
+  genericRetry,
+  genericBreaker,
 );
 
-// Event listeners for circuit breaker monitoring
-circuitBreakerPolicy.onBreak((data) => {
-  logger.warn({ data }, 'Circuit breaker opened - too many failures detected');
-});
-
-circuitBreakerPolicy.onReset((data) => {
-  logger.info({ data }, 'Circuit breaker closed - service recovered');
-});
-
-circuitBreakerPolicy.onHalfOpen((data) => {
-  logger.info({ data }, 'Circuit breaker half-open - testing service recovery');
-});
-
-// Event listeners for retry policy monitoring
-retryPolicy.onRetry((data) => {
-  logger.warn({ data }, 'Retry policy - retrying...');
-});
-
-retryPolicy.onSuccess((data) => {
-  logger.info({ data }, 'Retry policy - successful');
-});
-
-retryPolicy.onFailure((data) => {
-  logger.error({ data }, 'Retry policy - failed');
-});
-
 /**
- * Helper function to execute a function with a specific policy
- * @param policy The resilience policy to use
- * @param fn The function to execute
- * @param context Optional context for logging
+ * Helper function to execute a function with a specific policy.
  */
 export async function executeWithPolicy<T>(
   policy: IPolicy,
@@ -119,17 +138,62 @@ export async function executeWithPolicy<T>(
 ): Promise<T> {
   try {
     return await policy.execute(fn);
-  } catch (error) {
+  } catch (error: any) {
     if (context) {
       logger.error({ error, context }, 'Resilience policy execution failed');
+      // Attach context to the error object so the global middleware can use it
+      error.context = context;
     }
     throw error;
   }
 }
 
 /**
- * Check if circuit breaker is currently open
+ * Maps resilience-related errors (cockatiel) to AppError.
+ * @param err The error to map
+ * @param context Context string for the error message (e.g., 'AI Chat')
  */
-export function isCircuitBreakerOpen(): boolean {
-  return circuitBreakerPolicy.state === CircuitState.Open;
+export function handleResilienceError(err: any, context: string): AppError {
+  if (err.name === 'BulkheadRejectedException') {
+    return new AppError(
+      `The ${context} service is currently busy. Please try again in a few seconds.`,
+      ErrorCode.SYSTEM_BUSY,
+      429,
+    );
+  }
+
+  if (err.name === 'BrokenCircuitError') {
+    return new AppError(
+      `The ${context} service is temporarily unavailable due to high failure rates.`,
+      ErrorCode.CIRCUIT_BROKEN,
+      503,
+    );
+  }
+
+  if (err.name === 'TaskCancelledError') {
+    return new AppError(
+      `The request to ${context} timed out.`,
+      ErrorCode.GATEWAY_TIMEOUT,
+      504,
+    );
+  }
+
+  if (err instanceof AppError) {
+    return err;
+  }
+
+  return new AppError(
+    err.message || 'An unexpected error occurred',
+    ErrorCode.INTERNAL_ERROR,
+    500,
+  );
+}
+
+/**
+ * Check if a specific circuit breaker is open.
+ * Note: Since we now have isolated breakers, we check the one provided.
+ */
+export function isCircuitBreakerOpen(policy: any): boolean {
+  // This is a simplified check; in a real app you might want to track breaker states differently
+  return policy.state === CircuitState.Open;
 }

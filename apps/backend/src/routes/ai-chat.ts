@@ -7,6 +7,7 @@ import {
   deleteConversationController,
 } from '../controllers/chat-conversations.controller';
 import { requireClerkAuth } from '../middleware/auth';
+import { idempotency } from '../middleware/idempotency';
 
 export const aiChatRouter = Router();
 
@@ -19,7 +20,7 @@ export const aiChatRouter = Router();
  * - message: string (required)
  * - resumeContext: BaseResumeData | null (optional)
  */
-aiChatRouter.post('/', requireClerkAuth, postChatMessage);
+aiChatRouter.post('/', requireClerkAuth, idempotency(), postChatMessage);
 
 /**
  * GET /api/v1/ai/chat/conversations

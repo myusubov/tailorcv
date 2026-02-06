@@ -6,11 +6,10 @@ import './globals.css';
 import { ThemeProvider } from './providers/theme-provider';
 import { QueryProvider } from './providers/query-provider';
 import { AIChatProvider } from './providers/ai-chat-provider';
-import { AIChatBox } from './components/resumes/review/ai-chat-box';
-import { ThemeToggle } from './components/theme-toggle';
 import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toast } from '@heroui/react';
+import { ClientOnlyComponents } from './components/client-only-components';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -52,8 +51,7 @@ export default function RootLayout({
                   >
                     {children}
                   </Suspense>
-                  <AIChatBox />
-                  <ThemeToggle />
+                  <ClientOnlyComponents />
                   <Toaster richColors closeButton position="bottom-right" />
                 </AIChatProvider>
               </QueryProvider>

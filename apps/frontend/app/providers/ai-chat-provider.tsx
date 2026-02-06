@@ -242,6 +242,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       setIsInputFullscreen(false);
       setIsTyping(true);
 
+      const idempotencyKey = crypto.randomUUID();
       let accumulatedContent = '';
       let assistantMsgId: string | null = null;
       const abortController = new AbortController();
@@ -258,6 +259,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'text/event-stream',
+            'x-idempotency-key': idempotencyKey,
           },
           body: JSON.stringify(requestBody),
           signal: abortController.signal,

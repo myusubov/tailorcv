@@ -13,6 +13,7 @@ import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import { successResponse } from '../utils/response';
+import { handleResilienceError } from '../lib/resilience';
 
 /**
  * Initiates the GitHub OAuth flow by redirecting to GitHub
@@ -69,13 +70,14 @@ export async function handleGithubCallback(
       `${env.FRONTEND_URL}/onboarding?method=github&status=connected`,
     );
   } catch (error: any) {
+    const appError =
+      error instanceof AppError ? error : handleResilienceError(error, 'GitHub');
     console.error('GitHub Callback Error:', error); // Log the real error
-    const errorMessage = 'connection_failed'; // Sanitize for the user
+    const errorMessage = appError.errorCode.toLowerCase(); // Use the standardized error code
     res.redirect(
       `${env.FRONTEND_URL}/onboarding?method=github&status=error&message=${encodeURIComponent(errorMessage)}`,
     );
   }
-
 }
 
 export async function getGithubRepos(
