@@ -14,6 +14,8 @@ interface ChatInputAreaProps {
   onSend: () => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onToggleInputFullscreen: () => void;
+  canStopResponse: boolean;
+  stopResponse: () => void;
 }
 
 export function ChatInputArea({
@@ -26,6 +28,8 @@ export function ChatInputArea({
   onSend,
   onKeyDown,
   onToggleInputFullscreen,
+  canStopResponse,
+  stopResponse,
 }: ChatInputAreaProps) {
   return (
     <motion.div
@@ -121,20 +125,45 @@ export function ChatInputArea({
               </Tooltip.Content>
             </Tooltip>
 
-            <Button
-              isIconOnly
-              size="sm"
-              onPress={onSend}
-              isDisabled={!input.trim() || isTyping}
-              className={cn(
-                input.trim() && !isTyping
-                  ? 'bg-accent text-accent-foreground'
-                  : 'bg-default text-muted',
-              )}
-              aria-label="Send message"
-            >
-              <Icon icon="solar:arrow-up-linear" width={18} />
-            </Button>
+            {canStopResponse ? (
+              // Stop button (shown when AI is streaming)
+              <Tooltip delay={300}>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="tertiary"
+                    onPress={stopResponse}
+                    aria-label="Stop generating"
+                  >
+                    <motion.div
+                    >
+                      <Icon icon="solar:stop-circle-bold" width={20} />
+                    </motion.div>
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content showArrow>
+                  <Tooltip.Arrow />
+                  <p className="text-xs font-medium">Stop generating</p>
+                </Tooltip.Content>
+              </Tooltip>
+            ) : (
+              // Send button (shown when not streaming)
+              <Button
+                isIconOnly
+                size="sm"
+                onPress={onSend}
+                isDisabled={!input.trim() || isTyping}
+                className={cn(
+                  input.trim() && !isTyping
+                    ? 'bg-accent text-accent-foreground'
+                    : 'bg-default text-muted',
+                )}
+                aria-label="Send message"
+              >
+                <Icon icon="solar:arrow-up-linear" width={18} />
+              </Button>
+            )}
           </div>
         </div>
       </div>

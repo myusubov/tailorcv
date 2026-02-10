@@ -11,6 +11,8 @@ export interface StreamChatResult {
     stream: AsyncGenerator<string, void, unknown>;
     /** Promise that resolves to the response ID after streaming completes */
     getResponseId: () => Promise<string>;
+    /** Controller to abort the OpenAI stream */
+    controller: AbortController;
 }
 
 
@@ -60,8 +62,17 @@ export async function streamChatResponse(
     const { input, previousResponseId, resumeContext } = params;
 
     let resolveResponseId: (id: string) => void;
-    const responseIdPromise = new Promise<string>((resolve) => {
+    let rejectResponseId: (err: Error) => void;
+    const responseIdPromise = new Promise<string>((resolve, reject) => {
         resolveResponseId = resolve;
+        rejectResponseId = reject;
+    });
+
+    const controller = new AbortController();
+
+    // If the stream is aborted, reject the responseId promise
+    controller.signal.addEventListener('abort', () => {
+        rejectResponseId(new Error('Stream aborted'));
     });
 
     // Wrap the OpenAI stream initialization with resilience policy
@@ -71,26 +82,33 @@ export async function streamChatResponse(
             instructions: buildInstructions(resumeContext),
             input,
             ...(previousResponseId && { previous_response_id: previousResponseId }),
+        }, {
+            signal: controller.signal,
         }),
     );
 
     async function* textGenerator(): AsyncGenerator<string, void, unknown> {
         let responseId = '';
-        for await (const event of openaiStream) {
-            // Extract text deltas from the stream
-            if (event.type === 'response.output_text.delta') {
-                yield event.delta;
+        try {
+            for await (const event of openaiStream) {
+                // Extract text deltas from the stream
+                if (event.type === 'response.output_text.delta') {
+                    yield event.delta;
+                }
+                // Capture response ID when available
+                if (event.type === 'response.completed' && event.response?.id) {
+                    responseId = event.response.id;
+                }
             }
-            // Capture response ID when available
-            if (event.type === 'response.completed' && event.response?.id) {
-                responseId = event.response.id;
-            }
+            resolveResponseId!(responseId);
+        } catch {
+            // Generator was aborted - promise already rejected by abort listener
         }
-        resolveResponseId!(responseId);
     }
 
     return {
         stream: textGenerator(),
         getResponseId: () => responseIdPromise,
+        controller,
     };
 }

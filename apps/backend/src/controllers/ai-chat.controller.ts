@@ -84,54 +84,120 @@ export const postChatMessage = async (
       Connection: 'keep-alive',
     });
 
+    // Track if client disconnected (user clicked stop)
+    let clientDisconnected = false;
+    let streamController: AbortController | null = null;
+
+    req.on('close', () => {
+      clientDisconnected = true;
+      // Abort the OpenAI stream immediately
+      if (streamController) {
+        streamController.abort();
+      }
+      logger.info(
+        { clerkUserId, conversationId: activeConversationId },
+        'Client disconnected from AI chat stream (user stopped response)',
+      );
+    });
+
     // Start streaming with the conversation's stored responseId
-    const { stream, getResponseId } = await streamChatResponse({
+    const { stream, getResponseId, controller } = await streamChatResponse({
       input: message,
       previousResponseId,
       resumeContext,
     });
 
+    // Store reference for abort
+    streamController = controller;
+
     // Collect the full response for saving
     let fullResponse = '';
 
     // Stream text chunks to client
-    for await (const chunk of stream) {
-      fullResponse += chunk;
-      res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
+    try {
+      for await (const chunk of stream) {
+        fullResponse += chunk;
+
+        // Try to write the chunk - if it fails, client disconnected
+        const writeSuccessful = res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
+
+        if (!writeSuccessful || res.writableEnded) {
+          // Client disconnected (user clicked stop)
+          clientDisconnected = true;
+          logger.info(
+            { clerkUserId, conversationId: activeConversationId, partialLength: fullResponse.length },
+            'Client disconnected mid-stream, aborting OpenAI request',
+          );
+          // Abort the OpenAI stream immediately
+          if (streamController) {
+            streamController.abort();
+          }
+          break;
+        }
+      }
+    } catch (streamError) {
+      // If stream breaks (OpenAI error, abort, network issue), log and save what we got
+      clientDisconnected = (streamError as Error).name === 'AbortError';
+      logger.warn(
+        { err: streamError, clerkUserId, conversationId: activeConversationId, partialLength: fullResponse.length },
+        'Stream interrupted during iteration',
+      );
     }
 
-    // Get the new responseId from OpenAI
-    const newResponseId = await getResponseId();
+    // Get the new responseId from OpenAI (or null if stream broke early)
+    const newResponseId = await getResponseId().catch(() => null);
 
-    // Parallelize: Save assistant message AND update conversation responseId
-    await Promise.all([
-      addMessage({
-        conversationId: activeConversationId,
-        clerkUserId,
-        role: 'assistant',
-        content: fullResponse,
-      }),
-      updateConversationResponseId({
-        conversationId: activeConversationId,
-        clerkUserId,
-        responseId: newResponseId,
-      }),
+    // Save partial response even if user stopped mid-stream
+    if (fullResponse.length > 0) {
+      const savePromises: Promise<unknown>[] = [
+        addMessage({
+          conversationId: activeConversationId,
+          clerkUserId,
+          role: 'assistant',
+          content: fullResponse,
+        }),
+      ];
+
+      // Only update responseId if we got one (stream completed normally)
+      if (newResponseId) {
+        savePromises.push(
+          updateConversationResponseId({
+            conversationId: activeConversationId,
+            clerkUserId,
+            responseId: newResponseId,
+          }),
+        );
+      }
+
       // Mark as completed in idempotency layer
-      res.markIdempotentCompleted?.(),
-    ]);
+      if (res.markIdempotentCompleted) {
+        savePromises.push(res.markIdempotentCompleted());
+      }
 
-    // Send final event
-    res.write(
-      `data: ${JSON.stringify({
-        type: 'done',
-        responseId: newResponseId,
-        conversationId: activeConversationId,
-      })}\n\n`,
-    );
+      await Promise.all(savePromises);
+    }
+
+    // Send final event only if client is still connected
+    if (!clientDisconnected) {
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'done',
+          responseId: newResponseId,
+          conversationId: activeConversationId,
+        })}\n\n`,
+      );
+    }
+
     res.end();
 
     logger.info(
-      { clerkUserId, conversationId: activeConversationId, newResponseId },
+      {
+        clerkUserId,
+        conversationId: activeConversationId,
+        newResponseId,
+        wasAborted: clientDisconnected,
+        responseLength: fullResponse.length,
+      },
       'AI chat response completed',
     );
   } catch (err) {

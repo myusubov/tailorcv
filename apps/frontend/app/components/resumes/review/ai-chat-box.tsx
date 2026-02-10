@@ -44,6 +44,8 @@ export function AIChatBox({ className }: AIChatBoxProps) {
     closeChat,
     currentResume,
     isLoadingMessages,
+    canStopResponse,
+    stopResponse,
   } = useAIChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -119,7 +121,7 @@ export function AIChatBox({ className }: AIChatBoxProps) {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
               'z-50 flex overflow-hidden',
-              'bg-surface border border-border shadow-2xl',
+              'bg-surface border-border border shadow-2xl',
               isFullscreen
                 ? 'fixed inset-0 m-0 h-full w-full rounded-none'
                 : cn(
@@ -163,6 +165,8 @@ export function AIChatBox({ className }: AIChatBoxProps) {
                   onToggleInputFullscreen={() =>
                     setIsInputFullscreen(!isInputFullscreen)
                   }
+                  canStopResponse={canStopResponse}
+                  stopResponse={stopResponse}
                 />
               </div>
             </div>

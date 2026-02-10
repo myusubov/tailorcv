@@ -67,6 +67,10 @@ interface AIChatContextType {
   handleQuickAction: (action: string) => void;
   toggleExpand: () => void;
   closeChat: () => void;
+  
+  // Stop response
+  canStopResponse: boolean;
+  stopResponse: () => void;
 
   // Conversation actions
   loadConversations: () => Promise<void>;
@@ -93,6 +97,9 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   
   // Track if we created this conversation during streaming (to prevent refetch)
   const conversationJustCreated = useRef(false);
+  
+  // Track current AbortController for stopping responses
+  const currentAbortController = useRef<AbortController | null>(null);
 
   // Resume context
   const [currentResume, setCurrentResume] = useState<BaseResumeData | null>(
@@ -243,6 +250,22 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
+   * Stop the current AI response mid-stream
+   */
+  const stopResponse = useCallback(() => {
+    if (currentAbortController.current) {
+      currentAbortController.current.abort();
+      setIsTyping(false);
+      currentAbortController.current = null;
+    }
+  }, []);
+  
+  /**
+   * Can stop response if we're currently streaming
+   */
+  const canStopResponse = isTyping && currentAbortController.current !== null;
+
+  /**
    * Send a message
    */
   const sendMessage = useCallback(
@@ -265,6 +288,9 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       let accumulatedContent = '';
       let assistantMsgId: string | null = null;
       const abortController = new AbortController();
+      
+      // Store reference for stopResponse function
+      currentAbortController.current = abortController;
 
       const requestBody: AIChatRequest = {
         conversationId: conversationId || '', // Backend will create if empty
@@ -318,7 +344,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                     timestamp: new Date(),
                   };
                   setMessages((prev) => [...prev, newAssistantMsg]);
-                  setIsTyping(false);
                 } else {
                   const currentId = assistantMsgId;
                   setMessages((prev) =>
@@ -394,6 +419,9 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
           console.error('AI Chat error:', error);
         }
         setIsTyping(false);
+      } finally {
+        // Clear the abort controller reference
+        currentAbortController.current = null;
       }
     },
     [conversationId, currentResume],
@@ -432,6 +460,8 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         handleQuickAction,
         toggleExpand,
         closeChat,
+        canStopResponse,
+        stopResponse,
         loadConversations,
         createNewConversation,
         selectConversation,
