@@ -11,7 +11,7 @@ import type { Request, Response } from 'express';
  */
 export const globalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 250, // Limit each IP to 250 requests per windowMs
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   store: new RedisStore({
@@ -52,6 +52,32 @@ export const aiChatRateLimiter = rateLimit({
     errorResponse(
       res,
       'AI chat rate limit exceeded. Please wait before sending more messages.',
+      429,
+      ErrorCode.RATE_LIMIT_EXCEEDED,
+    );
+  },
+});
+
+/**
+ * Moderate rate limiter for AI conversation CRUD operations
+ * - 100 requests per 15 minutes per IP
+ * - Less strict than AI chat (which calls OpenAI API)
+ * - Protects against conversation spam/deletion abuse
+ */
+export const aiConversationCrudRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // More lenient than AI chat messages
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (command: string, ...args: string[]) =>
+      redisPublisher.call(command, ...args) as Promise<RedisReply>,
+    prefix: 'rl:ai-conv-crud:',
+  }),
+  handler: (req: Request, res: Response) => {
+    errorResponse(
+      res,
+      'Too many conversation operations. Please wait before trying again.',
       429,
       ErrorCode.RATE_LIMIT_EXCEEDED,
     );

@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react';
 import { ChatMessage } from '@/lib/types/ai-chat';
 import { ChatMessageBubble } from './chat-message-bubble';
 import { ChatMessageSkeleton } from './chat-message-skeleton';
+import { AIThinkingIndicatorCompact } from './ai-thinking-indicator';
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -46,18 +47,7 @@ export function ChatMessageList({
           ))
         )}
 
-        {isTyping && (
-          <div className="flex items-center gap-2">
-            <div className="bg-accent/10 text-accent flex size-7 shrink-0 items-center justify-center rounded-full">
-              <Icon icon="solar:chat-dots-bold" width={14} />
-            </div>
-            <div className="bg-default flex items-center gap-1.5 rounded-2xl px-4 py-3">
-              <span className="bg-accent size-2 animate-bounce rounded-full [animation-delay:-0.3s]" />
-              <span className="bg-accent size-2 animate-bounce rounded-full [animation-delay:-0.15s]" />
-              <span className="bg-accent size-2 animate-bounce rounded-full" />
-            </div>
-          </div>
-        )}
+        {isTyping && <AIThinkingIndicatorCompact />}
 
         <div ref={messagesEndRef} />
       </ScrollShadow>

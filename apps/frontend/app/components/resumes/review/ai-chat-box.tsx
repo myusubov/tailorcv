@@ -119,7 +119,7 @@ export function AIChatBox({ className }: AIChatBoxProps) {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
               'z-50 flex overflow-hidden',
-              'bg-surface/90 border border-white/10 shadow-2xl backdrop-blur-xl',
+              'bg-surface border border-border shadow-2xl',
               isFullscreen
                 ? 'fixed inset-0 m-0 h-full w-full rounded-none'
                 : cn(

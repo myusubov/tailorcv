@@ -23,7 +23,7 @@ export function ChatHeader({
   } = useAIChat();
 
   return (
-    <Card.Header className="border-separator flex shrink-0 flex-row items-center justify-between border-b px-4 py-3">
+    <Card.Header className="border-separator flex shrink-0 flex-row items-center justify-between border-b px-4 h-ai-header">
       <div className="flex items-center gap-2">
         {/* Sidebar toggle */}
         <Tooltip delay={300}>

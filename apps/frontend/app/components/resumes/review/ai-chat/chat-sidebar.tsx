@@ -16,7 +16,7 @@ export function ChatSidebar() {
     conversationId,
     isLoadingConversations,
     isSidebarOpen,
-    setIsSidebarOpen,
+    isCreatingConv,
     selectConversation,
     createNewConversation,
     deleteConversation,
@@ -41,10 +41,10 @@ export function ChatSidebar() {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-content1 flex h-full shrink-0 flex-col overflow-hidden border-r border-white/10"
+            className="bg-content1 border-separator flex h-full shrink-0 flex-col overflow-hidden border-r"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-3 py-3">
+            <div className="h-ai-header border-separator flex items-center justify-between border-b px-3">
               <h3 className="text-foreground text-sm font-semibold">
                 Conversations
               </h3>
@@ -58,6 +58,7 @@ export function ChatSidebar() {
                       onPress={() => createNewConversation()}
                       className="text-muted-foreground hover:text-foreground"
                       aria-label="New conversation"
+                      isDisabled={isCreatingConv}
                     >
                       <Icon icon="solar:add-circle-linear" className="size-4" />
                     </Button>
@@ -67,7 +68,7 @@ export function ChatSidebar() {
                     <p className="text-xs font-medium">New conversation</p>
                   </Tooltip.Content>
                 </Tooltip>
-                <Tooltip delay={300}>
+                {/* <Tooltip delay={300}>
                   <Tooltip.Trigger>
                     <Button
                       isIconOnly
@@ -87,7 +88,7 @@ export function ChatSidebar() {
                     <Tooltip.Arrow />
                     <p className="text-xs font-medium">Close sidebar</p>
                   </Tooltip.Content>
-                </Tooltip>
+                </Tooltip> */}
               </div>
             </div>
 

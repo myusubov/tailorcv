@@ -6,6 +6,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useRef,
 } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -28,6 +29,7 @@ import {
   deleteConversationAction,
 } from '@/lib/actions/ai-chat.actions';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Context type for AI Chat functionality
@@ -44,6 +46,7 @@ interface AIChatContextType {
   isFullscreen: boolean;
   isInputFullscreen: boolean;
   isSidebarOpen: boolean;
+  isCreatingConv: boolean;
 
   // Conversation list
   conversations: ConversationListItem[];
@@ -87,6 +90,9 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   // Conversation state
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  
+  // Track if we created this conversation during streaming (to prevent refetch)
+  const conversationJustCreated = useRef(false);
 
   // Resume context
   const [currentResume, setCurrentResume] = useState<BaseResumeData | null>(
@@ -106,7 +112,8 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
     useConversationDetailsQuery(
       { id: conversationId || '' },
       {
-        enabled: !!conversationId,
+        // Only fetch if we have a conversationId AND we didn't just create it during streaming
+        enabled: !!conversationId && !conversationJustCreated.current,
       },
     );
 
@@ -128,25 +135,36 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   const conversationsCache = useConversationsCache();
 
   // Mutations
-  const { mutate: createConv } = useActionMutation(createConversationAction, {
-    onMutate: async () => {
-      const previous = conversationsCache.getData();
-      return { previous };
+  const { mutate: createConv, isPending: isCreatingConv } = useActionMutation(
+    createConversationAction,
+    {
+      onMutate: async () => {
+        const toastId = uuidv4();
+        const previous = conversationsCache.getData();
+        toast.loading('Creating new conversation...', {
+          id: toastId,
+        });
+        return { previous, toastId };
+      },
+      onSuccess: (data, _variables, ctx) => {
+        setConversationId(data.id);
+        setMessages([]);
+        conversationsCache.list.add(data);
+        toast.dismiss(ctx?.toastId);
+      },
+      onError: (_err, _variables, ctx) => {
+        if (!ctx) return;
+        const { previous, toastId } = ctx;
+        if (previous) {
+          conversationsCache.rollback(previous);
+        }
+        toast.error(_err.message || 'Failed to create conversation', {
+          id: toastId,
+        });
+      },
+      showErrorToast: false,
     },
-    onSuccess: (data) => {
-      setConversationId(data.id);
-      setMessages([]);
-      conversationsCache.list.add(data);
-    },
-    onError: (_err, _variables, ctx) => {
-      if (!ctx) return;
-      const { previous } = ctx;
-      if (previous) {
-        conversationsCache.rollback(previous);
-      }
-    },
-    showErrorToast: false,
-  });
+  );
 
   const { mutate: deleteConv } = useActionMutation(deleteConversationAction, {
     onMutate: async ({ id }) => {
@@ -206,6 +224,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   const selectConversation = useCallback(
     async (id: string) => {
       if (conversationId === id) return;
+      conversationJustCreated.current = false; // Reset flag when switching conversations
       setConversationId(id);
       setMessages([]); // Clear while loading
       // Query will trigger automatically
@@ -231,7 +250,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       if (!content.trim()) return;
 
       const userMsg: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         role: 'user',
         content: content,
         timestamp: new Date(),
@@ -242,7 +261,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       setIsInputFullscreen(false);
       setIsTyping(true);
 
-      const idempotencyKey = crypto.randomUUID();
+      const idempotencyKey = uuidv4();
       let accumulatedContent = '';
       let assistantMsgId: string | null = null;
       const abortController = new AbortController();
@@ -264,6 +283,25 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify(requestBody),
           signal: abortController.signal,
           openWhenHidden: true,
+          async onopen(response) {
+            if (
+              response.ok &&
+              response.headers
+                .get('content-type')
+                ?.includes('text/event-stream')
+            ) {
+              return; // smooth sailing
+            }
+
+            // If we got an error (like 429), parse the JSON message
+            const data = await response.json().catch(() => ({}));
+            const errorMessage =
+              data.message ||
+              data.error?.message ||
+              `Error ${response.status}: ${response.statusText}`;
+
+            throw new Error(errorMessage);
+          },
           onmessage(ev) {
             if (!ev.data) return;
             try {
@@ -272,7 +310,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                 accumulatedContent += event.content;
 
                 if (!assistantMsgId) {
-                  assistantMsgId = crypto.randomUUID();
+                  assistantMsgId = uuidv4();
                   const newAssistantMsg: ChatMessage = {
                     id: assistantMsgId,
                     role: 'assistant',
@@ -300,11 +338,13 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                   event.conversationId &&
                   event.conversationId !== conversationId
                 ) {
+                  // Mark that we just created this conversation (don't refetch)
+                  conversationJustCreated.current = true;
                   setConversationId(event.conversationId);
                 }
 
-                // Refresh title/list
-                refetchConversations();
+                // Refresh conversation list to show the new title
+                conversationsCache.invalidate();
               } else if (event.type === 'error') {
                 throw new Error(event.message);
               }
@@ -316,6 +356,11 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
             console.error('AI Chat SSE error:', err);
             setIsTyping(false);
 
+            const errorMessage =
+              err instanceof Error
+                ? err.message
+                : 'Sorry, something went wrong. Please try again.';
+
             if (assistantMsgId) {
               const currentId = assistantMsgId;
               setMessages((prev) =>
@@ -324,16 +369,16 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                     ? {
                         ...msg,
                         content:
-                          accumulatedContent + '\n\n[Error: Connection lost]',
+                          accumulatedContent + `\n\n[Error: ${errorMessage}]`,
                       }
                     : msg,
                 ),
               );
             } else {
               const errorMsg: ChatMessage = {
-                id: crypto.randomUUID(),
+                id: uuidv4(),
                 role: 'assistant',
-                content: 'Sorry, something went wrong. Please try again.',
+                content: errorMessage,
                 timestamp: new Date(),
               };
               setMessages((prev) => [...prev, errorMsg]);
@@ -351,7 +396,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         setIsTyping(false);
       }
     },
-    [conversationId, currentResume, refetchConversations],
+    [conversationId, currentResume],
   );
 
   const handleQuickAction = useCallback(
@@ -372,6 +417,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         isFullscreen,
         isInputFullscreen,
         isSidebarOpen,
+        isCreatingConv,
         conversations,
         isLoadingConversations,
         isLoadingMessages,

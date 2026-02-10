@@ -41,7 +41,7 @@ export default function RootLayout({
             <ThemeProvider>
               <QueryProvider>
                 <AIChatProvider>
-                  <Toast.Container placement="bottom end" />
+                  <Toast.Provider placement="bottom end" />
                   <Suspense
                     fallback={
                       <div className="flex min-h-screen items-center justify-center">

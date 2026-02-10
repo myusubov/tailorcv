@@ -21,7 +21,7 @@ router.use('/auth/github', githubAuthRateLimiter, githubRouter);
 router.use('/webhooks', webhooksRouter);
 router.use('/resumes', resumesRouter);
 router.use('/onboarding', onboardingRouter);
-router.use('/ai/chat', aiChatRateLimiter, aiChatRouter);
+router.use('/ai/chat', aiChatRouter);
 
 // Apply GitHub API rate limiter to GitHub-related routes
 router.use('/github', githubApiRateLimiter);
