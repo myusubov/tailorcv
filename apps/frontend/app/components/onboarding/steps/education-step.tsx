@@ -1,21 +1,17 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  Button,
-  Card,
-  Checkbox,
-  Input,
-  Label,
-  TextField,
-  FieldError,
-  cn,
-} from '@heroui/react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button, Card, useOverlayState } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
+import { nanoid } from 'nanoid';
 
-import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { StepHeader } from '../step-header';
+import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
+import { ReorderableItem } from '@/app/components/ui/reorderable-item';
+import { EducationItemContent } from './education-item-content';
+import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
 
 interface EducationStepProps {
   onFinish: () => void;
@@ -23,270 +19,211 @@ interface EducationStepProps {
   isLoading?: boolean;
 }
 
-const months = [
-  { value: '01', label: 'Jan' },
-  { value: '02', label: 'Feb' },
-  { value: '03', label: 'Mar' },
-  { value: '04', label: 'Apr' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'Jun' },
-  { value: '07', label: 'Jul' },
-  { value: '08', label: 'Aug' },
-  { value: '09', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-];
-
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 40 }, (_, i) => String(currentYear - i));
+/**
+ * Creates a new empty education item with default values.
+ */
+function createEmptyEducation() {
+  return {
+    id: nanoid(),
+    school: '',
+    degree: '',
+    field: '',
+    location: '',
+    startDate: '',
+    endDate: '',
+    grade: '',
+    notes: '',
+    isCurrent: false,
+  };
+}
 
 export function EducationStep({
   onFinish,
   onBack,
   isLoading,
 }: EducationStepProps) {
-  const { control } = useFormContext<OnboardingFormInput>();
-  const isSelfTaught = !!useWatch({
-    control,
-    name: 'education.isSelfTaught',
+  const { watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
+  const { fields, append, remove, move } = useStableFieldArray<
+    OnboardingFormInput,
+    'education'
+  >({
+    name: 'education',
   });
 
+  const education = watch('education');
+  // Simple delete handling without complex modal for now to match structure
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+
+  const addEducation = () => {
+    append(createEmptyEducation());
+  };
+
+  const handleDelete = (index: number) => {
+    remove(index);
+    setDeleteIndex(null);
+  };
+
+  const handleDuplicate = (idx: number) => {
+    const current = getValues('education');
+    const itemToDuplicate = current?.[idx];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+    };
+
+    const newEducation = [
+      ...(current || []).slice(0, idx + 1),
+      newItem,
+      ...(current || []).slice(idx + 1),
+    ];
+
+    setValue('education', newEducation);
+  };
+
+  const handleMoveUp = (idx: number) => {
+    move(idx, idx - 1);
+  };
+
+  const handleMoveDown = (idx: number) => {
+    move(idx, idx + 1);
+  };
+
   return (
-    <div className="mx-auto w-full max-w-xl">
-      <StepHeader
-        icon="lucide:graduation-cap"
-        title="Education"
-        description="Almost done! Tell us about your education."
-      />
+    <>
+      <div className="mx-auto w-full max-w-2xl">
+        <StepHeader
+          icon="lucide:graduation-cap"
+          title="Education"
+          description="Tell us about your educational background and certifications."
+        />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card>
-          <Card.Content className="space-y-5 pt-4">
-            <Controller
-              name="education.degree"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>Degree / Certification</Label>
-                  <Input
-                    {...field}
-                    placeholder="Bachelor's in Computer Science"
-                    disabled={isSelfTaught}
-                  />
-                  {fieldState.error ? (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
-                </TextField>
-              )}
-            />
+        <AnimatePresence mode="popLayout">
+          {fields.map((field, index) => (
+            <ReorderableItem
+              key={field.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              layout
+              isFirst={index === 0}
+              isLast={index === fields.length - 1}
+              onMoveUp={() => handleMoveUp(index)}
+              onMoveDown={() => handleMoveDown(index)}
+            >
+              <EducationItemContent
+                index={index}
+                isFirst={index === 0}
+                isLast={index === fields.length - 1}
+                onMoveUp={() => handleMoveUp(index)}
+                onMoveDown={() => handleMoveDown(index)}
+                onDelete={() => handleDelete(index)}
+                onDuplicate={() => handleDuplicate(index)}
+              />
+            </ReorderableItem>
+          ))}
+        </AnimatePresence>
 
-            <Controller
-              name="education.school"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>School / Institution *</Label>
-                  <Input
-                    {...field}
-                    placeholder="University of Technology"
-                    disabled={isSelfTaught}
-                  />
-                  {fieldState.error ? (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
-                </TextField>
-              )}
-            />
+        {fields.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card className="mt-2">
+              <Card.Content className="flex flex-col items-center justify-center px-6 py-8 text-center">
+                <h3 className="text-foreground text-lg font-semibold">
+                  No education added yet?
+                </h3>
+                <p className="text-muted-foreground mt-2 max-w-md text-sm">
+                  Add your formal education, bootcamps, or certifications.
+                </p>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label className="text-foreground mb-2 block text-sm font-medium">
-                  Start Date
-                </Label>
-                <div className="flex gap-2">
-                  <Controller
-                    name="education.startMonth"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex-1">
-                        <select
-                          className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Month</option>
-                          {months.map((m) => (
-                            <option key={m.value} value={m.value}>
-                              {m.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  />
-
-                  <Controller
-                    name="education.startYear"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex-1">
-                        <select
-                          className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Year</option>
-                          {years.map((y) => (
-                            <option key={y} value={y}>
-                              {y}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  />
+                <div className="mt-6 w-full max-w-sm">
+                  <Button
+                    variant="secondary"
+                    onPress={addEducation}
+                    className="w-full"
+                  >
+                    <Icon icon="lucide:plus" className="size-4" />
+                    Add Education
+                  </Button>
                 </div>
-              </div>
+              </Card.Content>
+            </Card>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="flex flex-col gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Button
+              variant="secondary"
+              onPress={addEducation}
+              className="w-full"
+            >
+              <Icon icon="lucide:plus" className="size-4" />
+              Add Another Education
+            </Button>
+          </motion.div>
+        )}
 
-              <div>
-                <Label className="text-foreground mb-2 block text-sm font-medium">
-                  Graduation Date
-                </Label>
-                <div className="flex gap-2">
-                  <Controller
-                    name="education.endMonth"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex-1">
-                        <select
-                          className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Month</option>
-                          {months.map((m) => (
-                            <option key={m.value} value={m.value}>
-                              {m.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  />
-
-                  <Controller
-                    name="education.endYear"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex-1">
-                        <select
-                          className={cn(
-                            'bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50',
-                            fieldState.error && 'border-danger focus:border-danger',
-                          )}
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          disabled={isSelfTaught}
-                        >
-                          <option value="">Year</option>
-                          {years.map((y) => (
-                            <option key={y} value={y}>
-                              {y}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-divider relative border-t pt-4">
-              <span className="bg-surface text-muted absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-sm">
-                Or
-              </span>
-            </div>
-
-            <Controller
-              name="education.isSelfTaught"
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  isSelected={!!field.value}
-                  onChange={(isSelected) => field.onChange(isSelected)}
-                >
-                  <Checkbox.Control className="size-5">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Content>
-                    <span className="text-sm">
-                      I&apos;m self-taught / bootcamp graduate
-                    </span>
-                  </Checkbox.Content>
-                </Checkbox>
-              )}
-            />
-          </Card.Content>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        className="bg-surface mt-6 rounded-xl p-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-            <Icon icon="lucide:check-circle" className="size-4" />
-          </div>
-          <div>
-            <p className="text-foreground text-sm font-medium">
-              You&apos;re all set!
-            </p>
-            <p className="text-muted mt-0.5 text-sm">
-              Click the button below to generate your professional resume.
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="mt-8 flex items-center justify-between gap-3"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Button
-          variant="ghost"
-          onPress={onBack}
-          isDisabled={isLoading}
-          className="text-muted hover:text-foreground"
+        <motion.div
+          className="bg-surface mt-6 rounded-xl p-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
         >
-          <Icon icon="lucide:arrow-left" className="size-4" />
-          Back
-        </Button>
-        <Button
-          variant="primary"
-          onPress={onFinish}
-          isPending={isLoading}
-          className="px-6"
+          <div className="flex items-start gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
+              <Icon icon="lucide:check-circle" className="size-4" />
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-medium">
+                You&apos;re all set!
+              </p>
+              <p className="text-muted mt-0.5 text-sm">
+                Click the button below to generate your professional resume.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mt-8 flex items-center justify-between gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
         >
-          {!isLoading && (
-            <Icon icon="solar:magic-stick-3-bold-duotone" className="size-5" />
-          )}
-          {isLoading ? 'Generating...' : 'Generate Resume!'}
-        </Button>
-      </motion.div>
-    </div>
+          <Button
+            variant="ghost"
+            onPress={onBack}
+            isDisabled={isLoading}
+            className="text-muted hover:text-foreground"
+          >
+            <Icon icon="lucide:arrow-left" className="size-4" />
+            Back
+          </Button>
+          <Button
+            variant="primary"
+            onPress={onFinish}
+            isPending={isLoading}
+            className="px-6"
+          >
+            {!isLoading && (
+              <Icon
+                icon="solar:magic-stick-3-bold-duotone"
+                className="size-5"
+              />
+            )}
+            {isLoading ? 'Generating...' : 'Generate Resume!'}
+          </Button>
+        </motion.div>
+      </div>
+    </>
   );
 }

@@ -52,57 +52,75 @@ function buildBackendUrl(
   return url;
 }
 
+/**
+ * Internal helper to handle URL building and Clerk Authentication.
+ * Returns the raw Fetch Response.
+ */
+async function backendFetch(
+  path: string,
+  options: BackendRequestOptions = {},
+): Promise<Response> {
+  const {
+    pathPrefix = '/api/v1',
+    query,
+    body,
+    auth: authMode = 'required',
+    headers,
+    tags,
+    revalidate,
+    ...init
+  } = options;
+
+  const url = buildBackendUrl(path, query, pathPrefix);
+
+  const token =
+    authMode === 'none'
+      ? null
+      : await (await auth()).getToken().catch(() => null);
+
+  if (!token && authMode === 'required') {
+    throw new Error('Authentication required');
+  }
+
+  const requestHeaders = new Headers(headers);
+  if (!requestHeaders.has('Accept')) {
+    requestHeaders.set('Accept', 'application/json');
+  }
+
+
+  const isFormData = body instanceof FormData;
+  if (body !== undefined && !isFormData) {
+    requestHeaders.set('Content-Type', 'application/json');
+  }
+
+  if (token) requestHeaders.set('Authorization', `Bearer ${token}`);
+
+  return fetch(url, {
+    ...init,
+    headers: requestHeaders,
+    body:
+      body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+    next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
+  });
+}
+
+/**
+ * Standard JSON-based backend request handler.
+ */
 export async function backendRequest<T>(
   path: string,
   options: BackendRequestOptions = {},
 ): Promise<ApiResult<T>> {
   try {
-    const {
-      pathPrefix = '/api/v1',
-      query,
-      body,
-      auth: authMode = 'required',
-      headers,
-      tags,
-      revalidate,
-      ...init
-    } = options;
+    const response = await backendFetch(path, options);
 
-    const url = buildBackendUrl(path, query, pathPrefix);
-
-    const token =
-      authMode === 'none'
-        ? null
-        : await (await auth()).getToken().catch(() => null);
-
-    if (!token && authMode === 'required') {
+    if (response.status === 204) {
       return {
-        ok: false,
-        status: 401,
-        error: {
-          message: 'Authentication required',
-          code: ErrorCode.UNAUTHORIZED,
-        },
+        ok: true,
+        status: 204,
+        data: null as T,
       };
     }
-
-    const requestHeaders = new Headers(headers);
-    requestHeaders.set('Accept', 'application/json');
-
-    const isFormData = body instanceof FormData;
-
-    if (body !== undefined && !isFormData) {
-      requestHeaders.set('Content-Type', 'application/json');
-    }
-
-    if (token) requestHeaders.set('Authorization', `Bearer ${token}`);
-
-    const response = await fetch(url, {
-      ...init,
-      headers: requestHeaders,
-      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-      next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
-    });
 
     const payload = (await response
       .json()
@@ -139,11 +157,40 @@ export async function backendRequest<T>(
       data: payload.data as T,
       meta: payload.meta,
     };
-  } catch {
+  } catch (err: any) {
+    if (err.message === 'Authentication required') {
+      return {
+        ok: false,
+        status: 401,
+        error: {
+          message: 'Authentication required',
+          code: ErrorCode.UNAUTHORIZED,
+        },
+      };
+    }
     return {
       ok: false,
       status: 0,
       error: { message: 'Network error', code: ErrorCode.NETWORK_ERROR },
     };
   }
+}
+
+/**
+ * Specialized handler for Server-Sent Events (SSE).
+ * Reuses authentication and URL logic but returns a raw Response.
+ */
+export async function backendStream(
+  path: string,
+  options: Omit<BackendRequestOptions, 'revalidate' | 'tags'> = {},
+): Promise<Response> {
+  const response = await backendFetch(path, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Accept: 'text/event-stream',
+    },
+  });
+
+  return response;
 }

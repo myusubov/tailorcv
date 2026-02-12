@@ -1,23 +1,28 @@
+import type { BaseResumeData } from 'shared';
+
 type Primitive = string | number | boolean | null | undefined;
 
 function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, ' ').trim();
 }
 
-function clampString(value: Primitive, maxChars: number) {
-  if (typeof value !== 'string') return value;
+function clampString(value: Primitive, maxChars: number): string | null {
+  if (typeof value !== 'string') return null;
   const normalized = normalizeWhitespace(value);
   if (normalized.length <= maxChars) return normalized;
   return `${normalized.slice(0, maxChars - 1).trimEnd()}…`;
 }
 
-function toYearMonth(year: Primitive, month: Primitive) {
-  if (typeof year !== 'string' || typeof month !== 'string' || !year || !month)
-    return null;
-  const y = Number(year);
-  const m = Number(month);
-  if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
-  return y * 100 + m;
+/**
+ * Parse YYYY-MM date string to comparable number for sorting
+ */
+function parseDateToNumber(date: string | null | undefined): number {
+  if (!date) return -1;
+  const parts = date.split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1] || '01', 10);
+  if (!Number.isFinite(year)) return -1;
+  return year * 100 + month;
 }
 
 function uniqStable(values: string[]) {
@@ -31,64 +36,82 @@ function uniqStable(values: string[]) {
   return result;
 }
 
-export function compressOnboardingBody<T extends Record<string, any>>(
-  body: T,
+/**
+ * Compress onboarding body data for AI processing.
+ * Adjusts limits based on level (0=least, 2=most compression).
+ */
+export function compressOnboardingBody(
+  body: BaseResumeData,
   level: 0 | 1 | 2,
-): T {
+): BaseResumeData {
   const limitsByLevel = [
-    { experiences: 8, projects: 6, skills: 40, expDesc: 700, projDesc: 450 },
-    { experiences: 6, projects: 4, skills: 30, expDesc: 500, projDesc: 320 },
-    { experiences: 4, projects: 3, skills: 24, expDesc: 360, projDesc: 240 },
+    { experiences: 8, projects: 6, skills: 40, bulletChars: 700 },
+    { experiences: 6, projects: 4, skills: 30, bulletChars: 500 },
+    { experiences: 4, projects: 3, skills: 24, bulletChars: 360 },
   ] as const;
 
   const limits = limitsByLevel[level];
-
   const safe = (v: Primitive, max: number) => clampString(v, max);
 
-  const next: any = { ...body };
+  const next: BaseResumeData = { ...body };
 
-  if (next.summary != null) next.summary = safe(next.summary, 500);
-
-  if (next.contact && typeof next.contact === 'object') {
-    next.contact = { ...next.contact };
-    next.contact.fullName = safe(next.contact.fullName, 80);
-    next.contact.email = safe(next.contact.email, 120);
-    next.contact.phone = safe(next.contact.phone, 40);
-    next.contact.location = safe(next.contact.location, 80);
-    next.contact.github = safe(next.contact.github, 200);
-    next.contact.linkedin = safe(next.contact.linkedin, 200);
-    next.contact.portfolio = safe(next.contact.portfolio, 200);
+  // Compress summary
+  if (next.summary != null) {
+    next.summary = safe(next.summary, 500);
   }
 
+  // Compress contact
+  if (next.contact) {
+    next.contact = {
+      ...next.contact,
+      firstName: safe(next.contact.firstName, 40) || '',
+      lastName: safe(next.contact.lastName, 40) || '',
+      headline: safe(next.contact.headline, 100),
+      email: safe(next.contact.email, 120) || '',
+      phone: safe(next.contact.phone, 40),
+      location: safe(next.contact.location, 80),
+      githubUrl: safe(next.contact.githubUrl, 200),
+      linkedinUrl: safe(next.contact.linkedinUrl, 200),
+      websiteUrl: safe(next.contact.websiteUrl, 200),
+    };
+  }
+
+  // Compress skills
   if (Array.isArray(next.skills)) {
     const normalized = uniqStable(
-      next.skills
-        .filter((s: unknown): s is string => typeof s === 'string')
-        .map((s: string) => normalizeWhitespace(s))
-        .filter(Boolean),
+      next.skills.map((s) => normalizeWhitespace(s.name)).filter(Boolean),
     );
-    next.skills = normalized.slice(0, limits.skills);
+    next.skills = normalized.slice(0, limits.skills).map((name, i) => ({
+      id: next.skills[i]?.id || `skill-${i}`,
+      name,
+      category: next.skills[i]?.category || null,
+      level: next.skills[i]?.level || null,
+    }));
   }
 
+  // Compress experiences - sort by most recent first
   if (Array.isArray(next.experiences)) {
     const experiences = next.experiences
-      .filter((e: any) => e && typeof e === 'object')
-      .map((e: any) => ({
+      .map((e) => ({
         ...e,
-        jobTitle: safe(e.jobTitle, 80),
-        company: safe(e.company, 80),
-        description: safe(e.description, limits.expDesc),
+        title: safe(e.title, 80) || '',
+        company: safe(e.company, 80) || '',
+        location: safe(e.location, 80),
+        bullets: e.bullets.map((b) => ({
+          id: b.id,
+          text: safe(b.text, limits.bulletChars) || '',
+        })),
       }))
-      .sort((a: any, b: any) => {
+      .sort((a, b) => {
         const aEnd = a.isCurrent
           ? Number.POSITIVE_INFINITY
-          : (toYearMonth(a.endYear, a.endMonth) ?? -1);
+          : parseDateToNumber(a.endDate);
         const bEnd = b.isCurrent
           ? Number.POSITIVE_INFINITY
-          : (toYearMonth(b.endYear, b.endMonth) ?? -1);
+          : parseDateToNumber(b.endDate);
         if (bEnd !== aEnd) return bEnd - aEnd;
-        const aStart = toYearMonth(a.startYear, a.startMonth) ?? -1;
-        const bStart = toYearMonth(b.startYear, b.startMonth) ?? -1;
+        const aStart = parseDateToNumber(a.startDate);
+        const bStart = parseDateToNumber(b.startDate);
         return bStart - aStart;
       })
       .slice(0, limits.experiences);
@@ -96,52 +119,48 @@ export function compressOnboardingBody<T extends Record<string, any>>(
     next.experiences = experiences;
   }
 
+  // Compress projects - sort by most recent first
   if (Array.isArray(next.projects)) {
     const projects = next.projects
-      .filter((p: any) => p && typeof p === 'object')
-      .map((p: any) => ({
+      .map((p) => ({
         ...p,
-        name: safe(p.name, 80),
-        techStack: safe(p.techStack, 200),
-        description: safe(p.description, limits.projDesc),
-        link: safe(p.link, 200),
+        name: safe(p.name, 80) || '',
+        role: safe(p.role, 80),
+        url: safe(p.url, 200),
         repoUrl: safe(p.repoUrl, 200),
+        bullets: p.bullets.map((b) => ({
+          id: b.id,
+          text: safe(b.text, limits.bulletChars) || '',
+        })),
       }))
-      .sort((a: any, b: any) => {
-        // Sort projects by recency (end date, then start date)
+      .sort((a, b) => {
         const aEnd = a.isCurrent
           ? Number.POSITIVE_INFINITY
-          : (toYearMonth(a.endYear, a.endMonth) ?? -1);
+          : parseDateToNumber(a.endDate);
         const bEnd = b.isCurrent
           ? Number.POSITIVE_INFINITY
-          : (toYearMonth(b.endYear, b.endMonth) ?? -1);
-
+          : parseDateToNumber(b.endDate);
         if (bEnd !== aEnd) return bEnd - aEnd;
-
-        const aStart = toYearMonth(a.startYear, a.startMonth) ?? -1;
-        const bStart = toYearMonth(b.startYear, b.startMonth) ?? -1;
-
-        if (bStart !== aStart) return bStart - aStart;
-
-        // Fallback to score (detail level) if dates are identical/missing
-        const getScore = (p: any) =>
-          (typeof p.description === 'string' ? p.description.length : 0) +
-          (typeof p.techStack === 'string' ? p.techStack.length : 0) +
-          (p.link ? 50 : 0) +
-          (p.repoUrl ? 50 : 0);
-
-        return getScore(b) - getScore(a);
+        const aStart = parseDateToNumber(a.startDate);
+        const bStart = parseDateToNumber(b.startDate);
+        return bStart - aStart;
       })
       .slice(0, limits.projects);
 
     next.projects = projects;
   }
 
-  if (next.education && typeof next.education === 'object') {
-    next.education = { ...next.education };
-    next.education.degree = safe(next.education.degree, 100);
-    next.education.school = safe(next.education.school, 120);
-    next.education.graduationYear = safe(next.education.graduationYear, 4);
+  // Compress education
+  if (Array.isArray(next.education)) {
+    next.education = next.education.map((edu) => ({
+      ...edu,
+      school: safe(edu.school, 120) || '',
+      degree: safe(edu.degree, 100),
+      field: safe(edu.field, 100),
+      location: safe(edu.location, 80),
+      grade: safe(edu.grade, 20),
+      notes: safe(edu.notes, 200),
+    }));
   }
 
   return next;

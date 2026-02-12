@@ -27,6 +27,7 @@ const isProtectedRoute = createRouteMatcher([
   '/profile(.*)',
   '/settings(.*)',
   '/test(.*)',
+  '/resumes(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -57,14 +58,16 @@ export default clerkMiddleware(async (auth, req) => {
 
     const json = (await response.json().catch(() => null)) as {
       ok: boolean;
-      data?: { hasBaseResume?: boolean };
+      data?: { hasBaseResume?: boolean, latestBaseResumeId?: string };
     } | null;
 
+
     const hasBaseResume = Boolean(json?.ok && json?.data?.hasBaseResume);
+    const latestBaseResumeId = json?.data?.latestBaseResumeId;
 
     // If they have a base resume but are trying to access onboarding, redirect home/dashboard
     if (hasBaseResume && isOnboardingRoute) {
-      return NextResponse.redirect(new URL('/test', req.url));
+      return NextResponse.redirect(new URL(`/resumes/${latestBaseResumeId}/review`, req.url));
     }
 
     // If they DON'T have a base resume and are NOT on the onboarding page, force them to onboarding

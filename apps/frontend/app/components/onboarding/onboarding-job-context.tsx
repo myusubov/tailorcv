@@ -1,12 +1,27 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from 'react';
 
-import type { GenerateOnboardingOutput } from '@/lib/types/onboarding';
-import { useOnboardingJobQuery } from '@/lib/http/onboarding-client';
+import type {
+  GetOnboardingJobOutput,
+  GenerateOnboardingOutput,
+} from '@/lib/types/onboarding';
+import {
+  getOnboardingJobStream,
+  useOnboardingJobQuery,
+} from '@/lib/http/onboarding-client';
+import { useStream } from '@/lib/hooks/use-stream';
 import { useBaseResumeQuery } from '@/lib/http/resumes-client';
 import { showErrorToast } from '@/lib/utils/error-toast';
+import { useRouter } from 'next/navigation';
+import { ErrorCode } from 'shared';
 
 const STORAGE_KEY = 'onboardingJobId';
 
@@ -45,44 +60,73 @@ export function OnboardingJobProvider({
   children: React.ReactNode;
 }) {
   const [jobId, setJobId] = useState<string | null>(() => readStoredJobId());
+  const [liveJobData, setLiveJobData] = useState<GetOnboardingJobOutput | null>(
+    null,
+  );
   const [generatedData, setGeneratedData] =
     useState<GenerateOnboardingOutput | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const router = useRouter();
 
-  const { data: jobData, error: jobError } = useOnboardingJobQuery(
+  // Hybrid Polling/Streaming: We use TanStack Query as an initial fetch and safety fallback.
+  const { data: initialJobData, error: jobError } = useOnboardingJobQuery(
     { id: jobId! },
     {
-      enabled: !!jobId,
+      // We only poll if we don't have active live data yet.
+      enabled: !!jobId && !liveJobData,
       refetchInterval: (query) => {
-        const data = query.state.data as typeof jobData;
-        if (data?.status === 'SUCCEEDED' || data?.status === 'FAILED') {
+        const job = query.state.data as GetOnboardingJobOutput | undefined;
+        if (
+          job?.status === 'SUCCEEDED' ||
+          job?.status === 'FAILED' ||
+          liveJobData
+        ) {
           return false;
         }
-        return 1500;
-      },
-      retry: (failureCount, error) => {
-        if (error.status === 404) return false;
-        return failureCount < 3;
+        return 3000;
       },
     },
   );
 
-  useEffect(() => {
-    if (jobError?.status === 404) {
-      clearJob();
-    }
-  }, [jobError]);
+  // Computed job data (Live stream takes priority over initial query data)
+  const jobData = liveJobData || initialJobData;
 
-  const resumeId = jobData?.resultBaseResumeId;
-  const { data: resumeData } = useBaseResumeQuery(
-    { id: resumeId ?? '' },
-    { enabled: !!resumeId },
-  );
+  // Memoize params to prevent the stream from reconnecting on every render
+  const streamParams = useMemo(() => ({ id: jobId! }), [jobId]);
+
+  // Centralized SSE Stream: Replaces manual fetch/parsing logic
+  useStream(getOnboardingJobStream, streamParams, {
+    enabled:
+      !!jobId &&
+      jobData?.status !== 'SUCCEEDED' &&
+      jobData?.status !== 'FAILED',
+    onData: setLiveJobData,
+  });
+
+  // Early persistence cleanup: Clear localStorage as soon as the job is terminal.
+  // We keep the state 'jobId' alive to finish our current UI/Data flow.
+  useEffect(() => {
+    if (jobData?.status === 'SUCCEEDED' || jobData?.status === 'FAILED') {
+      clearStoredJobId();
+    }
+  }, [jobData?.status]);
 
   const clearJob = () => {
     setJobId(null);
     clearStoredJobId();
   };
+
+  useEffect(() => {
+    if (jobError?.status === 404) {
+      setTimeout(() => clearJob(), 0);
+    }
+  }, [jobError]);
+
+  const resumeId = jobData?.resultBaseResumeId;
+  const { data: resumeData } = useBaseResumeQuery(
+    { id: resumeId! },
+    { enabled: !!resumeId },
+  );
 
   const beginJob = (nextJobId: string) => {
     setGeneratedData(null);
@@ -93,22 +137,53 @@ export function OnboardingJobProvider({
 
   useEffect(() => {
     if (jobData?.status === 'FAILED') {
-      showErrorToast(jobData.error)
-      clearJob();
+      showErrorToast(jobData.error);
+      setTimeout(() => {
+        clearJob();
+        setLiveJobData(null);
+      }, 0);
     }
   }, [jobData?.status, jobData?.error]);
 
+  // Prefetch resume review page
+
+  /*   useEffect(() => {
+    if (resumeId) {
+      router.prefetch(`/resumes/${resumeId}/review`);
+    }
+  }, [resumeId, router]); */
+
   useEffect(() => {
     if (resumeData && jobData?.status === 'SUCCEEDED') {
-      setGeneratedData({
-        baseResumeId: resumeData.id,
-        data: resumeData.data,
-        meta: { model: 'worker', finishReason: 'STOP' },
-      });
-      setShowSuccessModal(true);
-      clearJob();
+      // Deferring these updates to the next tick to avoid "cascading renders" ESlint warning.
+      // This ensures we don't update state synchronously during a render phase.
+      setTimeout(() => {
+        // Check for insufficient data from AI extraction
+        const aiResponse = jobData?.rawAiResponse;
+        if (aiResponse?._isDataSufficient === false) {
+          const reason =
+            aiResponse._insufficientReason || 'Some details were missing';
+          showErrorToast(
+            {
+              code: ErrorCode.INSUFFICIENT_DATA,
+              message: `${reason}. However, we still generated your resume draft by filling in placeholders for critical missing info.`,
+            },
+            { duration: 10000 },
+          );
+        }
+
+        setGeneratedData({
+          baseResumeId: resumeData.id,
+          data: resumeData.data,
+          meta: { model: 'worker', finishReason: 'STOP' },
+        });
+        /* setShowSuccessModal(true); */
+        router.push(`/resumes/${resumeData.id}/review`);
+        setLiveJobData(null);
+        clearJob();
+      }, 0);
     }
-  }, [resumeData, jobData?.status]);
+  }, [resumeData, jobData?.status, jobData?.rawAiResponse, router]);
 
   const value = useMemo<OnboardingJobContextValue>(
     () => ({

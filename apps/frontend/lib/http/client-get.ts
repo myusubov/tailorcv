@@ -35,6 +35,7 @@ export type ClientGetOptions = {
   cache?: RequestCache;
   headers?: HeadersInit;
   signal?: AbortSignal;
+  priority?: 'high' | 'low' | 'auto';
 };
 
 export async function clientGet<T>(
@@ -46,7 +47,8 @@ export async function clientGet<T>(
     cache: options.cache ?? 'no-store',
     headers: { Accept: 'application/json', ...(options.headers ?? {}) },
     signal: options.signal,
-  });
+    priority: options.priority,
+  } as RequestInit);
 
   const json = await parseJsonSafe(response);
   if (!isApiResult(json)) return null;

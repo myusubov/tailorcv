@@ -1,0 +1,97 @@
+name: Trust Engine CI (Integrity Guard)
+
+on:
+  push:
+    branches: [main, dev, feature/*]
+  pull_request:
+    branches: [main, dev]
+
+env:
+  DATABASE_URL: "postgresql://postgres:password@localhost:5432/tailorcv"
+  DIRECT_URL: "postgresql://postgres:password@localhost:5432/tailorcv"
+  SHADOW_DATABASE_URL: "postgresql://postgres:password@localhost:5432/tailorcv_shadow"
+  REDIS_URL: "redis://localhost:6379"
+  CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz1234567890"
+  CLERK_PUBLISHABLE_KEY: "pk_test_1234567890abcdefghijklmnopqrstuvwxyz1234567890"
+  CLERK_WEBHOOK_SECRET: "whsec_1234567890abcdefghijklmnopqrstuvwxyz1234567890"
+  OPENAI_ONBOARDING_SYSTEM_PROMPT: "mock_system_prompt"
+  OPENAI_API_KEY: "sk-1234567890abcdefghijklmnopqrstuvwxyz1234567890"
+  GITHUB_CLIENT_ID: "mock_github_client_id"
+  GITHUB_CLIENT_SECRET: "mock_github_client_secret"
+  JWT_SECRET: "12345678901234567890123456789012"
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_1234567890abcdefghijklmnopqrstuvwxyz1234567890"
+
+jobs:
+  # 1. Integrity Check: Linting & Type Validation
+  integrity:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint Check
+        run: npm run lint
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Build Shared Package
+        run: npm run build --workspace=shared
+
+      - name: Type Check (Global)
+        run: npm run build # Ensures all type-checking passes during compilation
+
+  # 2. Sovereignty Audit: Docker Build Verification
+  docker-audit:
+    name: Docker Build Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Audit Backend Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+
+      - name: Audit Frontend Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: false
+
+  # 3. Mathematical Verification: Unit Tests
+  test:
+    name: Unit Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Run Unit Tests
+        run: npm run test

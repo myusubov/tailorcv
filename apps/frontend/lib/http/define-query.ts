@@ -4,9 +4,11 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 
+import { clientGet, type ClientGetOptions } from './client-get';
 import {
   type ClientGetFn,
   makeKey,
+  type CacheKeyPart,
 } from './define-client-get';
 
 type DefineQueryOptions<TResponse, TError = ApiRequestError> = Omit<
@@ -28,46 +30,153 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * Configuration for direct query definition (new API).
+ */
+export type DefineQueryConfig<TParams, TResponse> = {
+  path: string | ((params: TParams) => string);
+  keyPrefix: string;
+  staticParts?: CacheKeyPart[];
+  dynamicParts?: (params: TParams) => CacheKeyPart[];
+  defaults?: ClientGetOptions;
+  /** Default TanStack Query options */
+  queryDefaults?: DefineQueryOptions<TResponse>;
+};
+
+/**
+ * The hook returned by defineQuery, with metadata attached.
+ */
+export type DefinedQueryHook<TParams, TResponse> = ((
+  params: TParams,
+  options?: DefineQueryOptions<TResponse>,
+) => UseQueryResult<TResponse, ApiRequestError>) & {
+  getKey: (params: TParams, keyParts?: unknown[]) => Array<string | number>;
+};
+
+/**
+ * Overload 1: Accept a ClientGetFn (legacy API for backwards compatibility)
+ */
 export function defineQuery<TParams, TResponse>(
   clientFn: ClientGetFn<TParams, TResponse>,
+): DefinedQueryHook<TParams, TResponse>;
+
+/**
+ * Overload 2: Accept a config object directly (new streamlined API)
+ */
+export function defineQuery<TParams, TResponse>(
+  config: DefineQueryConfig<TParams, TResponse>,
+): DefinedQueryHook<TParams, TResponse>;
+
+/**
+ * Overload 3: No params (void)
+ */
+export function defineQuery<TResponse>(
+  config: DefineQueryConfig<void, TResponse>,
+): DefinedQueryHook<void, TResponse>;
+
+/**
+ * Implementation
+ */
+export function defineQuery<TParams, TResponse>(
+  configOrFn:
+    | DefineQueryConfig<TParams, TResponse>
+    | ClientGetFn<TParams, TResponse>,
 ) {
-  return function useGeneratedQuery(
+  // Check if it's a ClientGetFn (has 'config' property)
+  const isClientFn = typeof configOrFn === 'function' && 'config' in configOrFn;
+
+  const getKey = (params: TParams, keyParts?: unknown[]) => {
+    if (isClientFn) {
+      const { config } = configOrFn as ClientGetFn<TParams, TResponse>;
+      return makeKey(
+        config.keyPrefix,
+        ...(config.staticParts ?? []),
+        ...(config.dynamicParts
+          ? (config.dynamicParts(params) as CacheKeyPart[])
+          : []),
+        ...((keyParts as CacheKeyPart[]) ?? []),
+      );
+    } else {
+      const config = configOrFn as DefineQueryConfig<TParams, TResponse>;
+      return makeKey(
+        config.keyPrefix,
+        ...(config.staticParts ?? []),
+        ...(config.dynamicParts ? config.dynamicParts(params) : []),
+        ...((keyParts as CacheKeyPart[]) ?? []),
+      );
+    }
+  };
+
+  function useGeneratedQuery(
     params: TParams,
     options?: DefineQueryOptions<TResponse>,
   ): UseQueryResult<TResponse, ApiRequestError> {
-    const { config } = clientFn;
     const { keyParts, ...queryOptions } = options ?? {};
 
-    const queryKey = makeKey(
-      config.keyPrefix,
-      ...(config.staticParts ?? []),
-      ...(config.dynamicParts
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (config.dynamicParts(params) as any[])
-        : []),
-      ...((keyParts as any[]) ?? []),
-    );
+    const queryKey = getKey(params, keyParts);
+    let queryFn: () => Promise<TResponse>;
 
-    const queryFn = async () => {
-      const result = await clientFn(params);
-      if (!result) {
-        throw new Error('No result returned from client function');
-      }
-      if (!result.ok) {
-        throw new ApiRequestError(
-          result.status,
-          result.error.code,
-          result.error.message,
-          result.error.details,
-        );
-      }
-      return result.data;
+    if (isClientFn) {
+      // Legacy API: unwrap ClientGetFn
+      const clientFn = configOrFn as ClientGetFn<TParams, TResponse>;
+
+      queryFn = async () => {
+        const result = await clientFn(params);
+        if (!result) {
+          throw new Error('No result returned from client function');
+        }
+        if (!result.ok) {
+          throw new ApiRequestError(
+            result.status,
+            result.error.code,
+            result.error.message,
+            result.error.details,
+          );
+        }
+        return result.data;
+      };
+    } else {
+      // New API: use config directly
+      const config = configOrFn as DefineQueryConfig<TParams, TResponse>;
+
+      queryFn = async () => {
+        const path =
+          typeof config.path === 'function'
+            ? config.path(params as TParams)
+            : config.path;
+
+        const result = await clientGet<TResponse>(path, config.defaults ?? {});
+        if (!result) {
+          throw new Error('No result returned from client function');
+        }
+        if (!result.ok) {
+          throw new ApiRequestError(
+            result.status,
+            result.error.code,
+            result.error.message,
+            result.error.details,
+          );
+        }
+        return result.data;
+      };
+    }
+
+    // Merge defaults from config with options from the call site
+    const mergedOptions = {
+      ...(!isClientFn
+        ? (configOrFn as DefineQueryConfig<TParams, TResponse>).queryDefaults
+        : {}),
+      ...queryOptions,
     };
 
     return useQuery({
       queryKey,
       queryFn,
-      ...queryOptions,
+      ...mergedOptions,
     }) as UseQueryResult<TResponse, ApiRequestError>;
-  };
+  }
+
+  useGeneratedQuery.getKey = getKey;
+
+  return useGeneratedQuery as DefinedQueryHook<TParams, TResponse>;
 }

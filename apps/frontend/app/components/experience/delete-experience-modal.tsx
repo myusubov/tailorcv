@@ -19,7 +19,7 @@ export function DeleteExperienceModal({
   onConfirm,
 }: DeleteExperienceModalProps) {
   return (
-    <Modal.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+    <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop variant="blur">
         <Modal.Container className="w-full max-w-md">
           <Modal.Dialog>
@@ -68,6 +68,6 @@ export function DeleteExperienceModal({
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
-    </Modal.Root>
+    </Modal>
   );
 }

@@ -22,14 +22,16 @@ export async function startOnboardingJobAction(input: GenerateOnboardingInput) {
   return _startOnboardingJobImpl(input);
 }
 
-const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>({
-  method: 'POST',
-  path: 'onboarding/about-me',
-  auth: 'required',
-  keyPrefix: 'onboarding',
-  staticParts: ['status'],
-  revalidate: { fromKey: true },
-});
+const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>(
+  {
+    method: 'POST',
+    path: 'onboarding/about-me',
+    auth: 'required',
+    keyPrefix: 'onboarding',
+    staticParts: ['status'],
+    revalidate: { fromKey: true },
+  },
+);
 
 /**
  * Starts an onboarding job by parsing a resume file (About Me / Resume Upload).
@@ -37,4 +39,26 @@ const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>(
  */
 export async function startOnboardingAboutMeJobAction(formData: FormData) {
   return _startOnAboutMeJobImpl(formData);
+}
+
+const _startOnboardingGithubJobImpl = defineAction<
+  { repositoryIds: string[] },
+  StartOnboardingJobOutput
+>({
+  method: 'POST',
+  path: 'onboarding/github',
+  auth: 'required',
+  keyPrefix: 'onboarding',
+  staticParts: ['status'],
+  revalidate: { fromKey: true },
+});
+
+/**
+ * Starts an onboarding job from GitHub repositories.
+ * @param input - Object containing repositoryIds array.
+ */
+export async function startOnboardingGithubJobAction(input: {
+  repositoryIds: string[];
+}) {
+  return _startOnboardingGithubJobImpl(input);
 }

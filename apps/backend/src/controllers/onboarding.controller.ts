@@ -6,15 +6,17 @@ import {
   getOnboardingJob,
   startOnboardingJob,
   startOnboardingAboutMeJob,
+  startOnboardingGithubJob,
 } from '../services/onboarding-jobs.service';
 import { extractTextFromFile } from '../utils/file-extraction';
 import { logger } from '../lib/logger';
+import { addConnection as addJobConnection } from '../services/job-notifier.service';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 
 export const getOnboardingStatusController = async (
   _req: Request,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -30,7 +32,7 @@ export const getOnboardingStatusController = async (
 
 export const generateOnboardingController = async (
   _req: Request,
-  res: Response<any, GenerateOnboardingLocals>,
+  res: Response<unknown, GenerateOnboardingLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -59,7 +61,7 @@ export const generateOnboardingController = async (
 
 export const getOnboardingJobController = async (
   req: Request<{ id: string }>,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -73,7 +75,7 @@ export const getOnboardingJobController = async (
 
 export const generateFromAboutMeController = async (
   req: Request,
-  res: Response<any, ClerkLocals>,
+  res: Response<unknown, ClerkLocals>,
   next: NextFunction,
 ) => {
   try {
@@ -84,22 +86,89 @@ export const generateFromAboutMeController = async (
       throw new AppError('No file uploaded', ErrorCode.BAD_REQUEST, 400);
     }
 
-    logger.info({ clerkUserId, filename: file.originalname }, 'extracting text from about-me file');
+    logger.info(
+      { clerkUserId, filename: file.originalname },
+      'extracting text from about-me file',
+    );
     const text = await extractTextFromFile(file.buffer, file.mimetype);
-    
+
     if (!text || text.trim().length < 50) {
       throw new AppError(
         'The uploaded file is too short or empty. Please provide a more detailed document.',
         ErrorCode.INSUFFICIENT_DATA,
-        400
+        400,
       );
     }
 
     logger.info({ clerkUserId }, 'onboarding about-me enqueue start');
     const result = await startOnboardingAboutMeJob({ clerkUserId, text });
-    
+
     return successResponse(res, result, 202);
   } catch (err) {
     next(err);
   }
+};
+
+export const generateFromGithubController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { clerkUserId } = res.locals as ClerkLocals;
+    const { repositoryIds } = req.body as { repositoryIds: string[] };
+
+    logger.info(
+      { clerkUserId, repositoryCount: repositoryIds.length },
+      'onboarding github enqueue start',
+    );
+    const result = await startOnboardingGithubJob({
+      clerkUserId,
+      repositoryIds,
+    });
+
+    return successResponse(res, result, 202);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const streamOnboardingJobController = async (
+  req: Request<{ id: string }>,
+  res: Response<unknown, ClerkLocals>,
+  _next: NextFunction,
+) => {
+  const jobId = req.params.id;
+  const { clerkUserId } = res.locals;
+
+  // Set SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+
+  // Keep connection alive with retry instruction
+  res.write('retry: 10000\n\n');
+
+  // Immediately send the current status if possible
+  try {
+    const job = await getOnboardingJob({ jobId, clerkUserId });
+    res.write(`data: ${JSON.stringify(job)}\n\n`);
+  } catch (err) {
+    logger.warn(
+      { jobId, clerkUserId, err },
+      'Failed to fetch initial job state for stream',
+    );
+  }
+
+  // Subscribe to updates
+  const unsubscribe = addJobConnection(jobId, (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  });
+
+  // Cleanup on close
+  req.on('close', () => {
+    unsubscribe();
+  });
 };

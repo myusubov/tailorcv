@@ -3,6 +3,8 @@ import type { OnboardingFormValues } from '@/lib/schemas/onboarding';
 
 export type GenerateOnboardingInput = OnboardingFormValues & { model?: string };
 
+export type GenerateOnboardingGithubInput = { repositoryIds: string[] };
+
 export type GenerateOnboardingOutput = {
   baseResumeId: string;
   data: BaseResumeData;
@@ -31,4 +33,5 @@ export type GetOnboardingJobOutput = {
   updatedAt: string;
   resultBaseResumeId?: string;
   error?: { message: string; code: string; details?: unknown };
+  rawAiResponse?: any;
 };

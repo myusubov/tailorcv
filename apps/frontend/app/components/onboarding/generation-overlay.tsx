@@ -36,8 +36,8 @@ export function GenerationOverlay({
 
   useEffect(() => {
     if (!isVisible) {
-      setStepIndex(0);
-      setElapsedMs(0);
+      setTimeout(() => setStepIndex(0), 0);
+      setTimeout(() => setElapsedMs(0), 0);
       return;
     }
 
@@ -146,7 +146,7 @@ export function GenerationOverlay({
 
               {safeProgress !== null ? (
                 <div className="mx-auto w-full max-w-sm">
-                  <div className="bg-default-200/40 h-2 w-full overflow-hidden rounded-full">
+                  <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">
                     <motion.div
                       className="bg-primary h-full"
                       initial={{ width: 0 }}

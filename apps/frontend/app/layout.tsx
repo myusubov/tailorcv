@@ -5,10 +5,11 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from './providers/theme-provider';
 import { QueryProvider } from './providers/query-provider';
-import { ThemeToggle } from './components/theme-toggle';
+import { AIChatProvider } from './providers/ai-chat-provider';
 import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
-
+import { Toast } from '@heroui/react';
+import { ClientOnlyComponents } from './components/client-only-components';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -32,21 +33,27 @@ export default function RootLayout({
       signUpUrl="/register"
     >
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} antialiased`}>
+        <body
+          className={`${inter.variable} antialiased`}
+          suppressHydrationWarning
+        >
           <NuqsAdapter>
             <ThemeProvider>
               <QueryProvider>
-                <Suspense
-                  fallback={
-                    <div className="flex min-h-screen items-center justify-center">
-                      Loading...
-                    </div>
-                  }
-                >
-                  {children}
-                </Suspense>
-                <ThemeToggle />
-                <Toaster richColors closeButton position="bottom-right" />
+                <AIChatProvider>
+                  <Toast.Provider placement="bottom end" />
+                  <Suspense
+                    fallback={
+                      <div className="flex min-h-screen items-center justify-center">
+                        Loading...
+                      </div>
+                    }
+                  >
+                    {children}
+                  </Suspense>
+                  <ClientOnlyComponents />
+                  <Toaster richColors closeButton position="bottom-right" />
+                </AIChatProvider>
               </QueryProvider>
             </ThemeProvider>
           </NuqsAdapter>

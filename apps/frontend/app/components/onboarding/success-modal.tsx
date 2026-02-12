@@ -21,12 +21,12 @@ export function SuccessModal({
   if (!data || !data.data) return null;
 
   const { data: resumeData } = data;
-  const { 
-    contact, 
-    summary = '', 
-    skills = [], 
-    experiences = [], 
-    projects = [] 
+  const {
+    contact,
+    summary = '',
+    skills = [],
+    experiences = [],
+    projects = [],
   } = resumeData;
 
   const firstName = contact?.firstName ?? '';
