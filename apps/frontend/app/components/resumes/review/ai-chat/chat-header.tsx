@@ -23,7 +23,7 @@ export function ChatHeader({
   } = useAIChat();
 
   return (
-    <Card.Header className="border-separator flex shrink-0 flex-row items-center justify-between border-b px-4 h-ai-header">
+    <Card.Header className="border-separator h-ai-header flex shrink-0 flex-row items-center justify-between border-b px-4">
       <div className="flex items-center gap-2">
         {/* Sidebar toggle */}
         <Tooltip delay={300}>
@@ -58,9 +58,9 @@ export function ChatHeader({
         </Tooltip>
 
         <div className="flex items-center gap-3">
-          <div className="bg-accent text-accent-foreground flex size-9 items-center justify-center rounded-full">
+          {/* <div className="bg-accent text-accent-foreground flex size-9 items-center justify-center rounded-full">
             <Icon icon="solar:chat-dots-bold" className="size-4" />
-          </div>
+          </div> */}
           <div className="flex flex-col gap-0">
             <Card.Title className="text-sm font-semibold">
               AI Assistant
@@ -71,7 +71,7 @@ export function ChatHeader({
 
       <div className="flex items-center gap-1">
         {/* New conversation - Only show if we're in an existing conversation */}
-        {conversationId && (
+        {/* {conversationId && (
           <Tooltip delay={300}>
             <Tooltip.Trigger>
               <Button
@@ -90,7 +90,7 @@ export function ChatHeader({
               <p className="text-xs font-medium">New conversation</p>
             </Tooltip.Content>
           </Tooltip>
-        )}
+        )} */}
 
         <Tooltip delay={300}>
           <Tooltip.Trigger>
