@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "./generated/client"
 }
 
@@ -22,8 +22,56 @@ model User {
   baseResumes       BaseResume[]
   customizedResumes CustomizedResume[]
   onboardingJobs    OnboardingJob[]
+  githubConnection  GitHubConnection?
+  chatConversations ChatConversation[]
 
   @@map("users")
+}
+
+/// Represents an AI chat conversation session
+model ChatConversation {
+  id         String   @id @default(uuid())
+  userId     String
+  responseId String? /// OpenAI response ID for context continuity
+  title      String? /// First user message (truncated) or AI-generated title
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@map("chat_conversations")
+}
+
+/// Individual message within a chat conversation
+model ChatMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           String /// 'user' | 'assistant'
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+model GitHubConnection {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  accessToken     String
+  githubUserId    Int
+  githubUsername  String
+  githubAvatarUrl String?
+  scopes          String // Space-separated scopes (e.g., "repo read:user")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+
+  @@map("github_connections")
 }
 
 model BaseResume {
@@ -35,6 +83,7 @@ model BaseResume {
   updatedAt         DateTime           @updatedAt
   user              User               @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
   customizedResumes CustomizedResume[]
+  status            BaseResumeStatus   @default(DRAFT)
 
   @@map("base_resumes")
 }
@@ -96,4 +145,10 @@ enum OnboardingJobStage {
   SAVING
   DONE
   FAILED
+}
+
+enum BaseResumeStatus {
+  DRAFT
+  COMPLETED
+  PUBLISHED
 }

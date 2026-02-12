@@ -3,10 +3,10 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ['shared'],
-  cacheComponents: true,
   experimental: {
     turbopackFileSystemCacheForDev: true,
     typedEnv: true,
+    mcpServer: true,
   },
   typedRoutes: true,
   reactCompiler: true,
@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '9nghnaawajmv9mqf.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
         port: '',
         pathname: '/**',
       },

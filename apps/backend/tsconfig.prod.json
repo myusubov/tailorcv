@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "baseUrl": "./dist",
+    "paths": {
+      "shared": ["../../../packages/shared/dist"],
+      "src/*": ["src/*"]
+    }
+  }
+}

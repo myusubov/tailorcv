@@ -11,6 +11,11 @@ import type {
   UpdateBaseResumeInput,
 } from '../types/resumes';
 
+/**
+ * Creates a new base resume for a user
+ * @param input - User ID, resume name, and resume data
+ * @returns Created resume record
+ */
 export async function createBaseResume(input: CreateBaseResumeInput) {
   return prisma.baseResume.create({
     data: {
@@ -21,6 +26,11 @@ export async function createBaseResume(input: CreateBaseResumeInput) {
   });
 }
 
+/**
+ * Lists all base resumes for a user
+ * @param input - User's Clerk ID
+ * @returns Array of resumes ordered by most recently updated
+ */
 export async function listBaseResumes(input: ListBaseResumesInput) {
   return prisma.baseResume.findMany({
     where: { userId: input.clerkUserId },
@@ -28,6 +38,12 @@ export async function listBaseResumes(input: ListBaseResumesInput) {
   });
 }
 
+/**
+ * Retrieves a specific base resume by ID
+ * @param input - Resume ID and user's Clerk ID
+ * @returns Resume record
+ * @throws AppError if resume not found or doesn't belong to user
+ */
 export async function getBaseResumeById(input: GetBaseResumeByIdInput) {
   const baseResume = await prisma.baseResume.findFirst({
     where: { id: input.id, userId: input.clerkUserId },
@@ -40,6 +56,12 @@ export async function getBaseResumeById(input: GetBaseResumeByIdInput) {
   return baseResume;
 }
 
+/**
+ * Updates a base resume with new data (deep merge)
+ * @param input - Resume ID, user ID, and partial update data
+ * @returns Updated resume record
+ * @throws AppError if resume not found or doesn't belong to user
+ */
 export async function updateBaseResume(input: UpdateBaseResumeInput) {
   const existing = await prisma.baseResume.findFirst({
     where: { id: input.id, userId: input.clerkUserId },
@@ -64,6 +86,11 @@ export async function updateBaseResume(input: UpdateBaseResumeInput) {
   });
 }
 
+/**
+ * Deletes a base resume
+ * @param input - Resume ID and user's Clerk ID
+ * @throws AppError if resume not found or doesn't belong to user
+ */
 export async function deleteBaseResume(input: DeleteBaseResumeInput) {
   const existing = await prisma.baseResume.findFirst({
     where: { id: input.id, userId: input.clerkUserId },

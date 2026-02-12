@@ -142,7 +142,20 @@ const formatDate = (dateString?: string | null) => {
   if (!dateString) return '';
   const parts = dateString.split('-');
   if (parts.length >= 2) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const year = parts[0];
     const monthIndex = parseInt(parts[1], 10) - 1;
     if (monthIndex >= 0 && monthIndex < 12) {
@@ -158,17 +171,20 @@ const renderDateRange = (
   isCurrent?: boolean | null,
 ) => {
   const formattedStart = formatDate(start);
-  const isExplicitlyFalse = isCurrent === false || String(isCurrent) === 'false';
+  const isExplicitlyFalse =
+    isCurrent === false || String(isCurrent) === 'false';
   const isExplicitlyTrue = isCurrent === true || String(isCurrent) === 'true';
   const isPresent = isExplicitlyTrue || (!isExplicitlyFalse && !end && !!start);
   const formattedEnd = isPresent ? 'Present' : formatDate(end);
 
   if (!formattedStart && !formattedEnd) return null;
-  if (!formattedStart) return <Text style={styles.dateText}>{formattedEnd}</Text>;
+  if (!formattedStart)
+    return <Text style={styles.dateText}>{formattedEnd}</Text>;
 
   return (
     <Text style={styles.dateText}>
-      {formattedStart}{formattedEnd ? ` – ${formattedEnd}` : ''}
+      {formattedStart}
+      {formattedEnd ? ` – ${formattedEnd}` : ''}
     </Text>
   );
 };
@@ -176,9 +192,16 @@ const renderDateRange = (
 export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
   if (!data) return null;
 
-  const { contact, summary, skills = [], experiences = [], projects = [], education = [] } = data;
-  // Filter out self-taught education entries from the PDF
-  const safeEducation = (education || []).filter((edu) => !edu.isSelfTaught);
+  const {
+    contact,
+    summary,
+    skills = [],
+    experiences = [],
+    projects = [],
+    education = [],
+  } = data;
+  // Education entries to display
+  const safeEducation = education || [];
 
   return (
     <Document
@@ -189,9 +212,13 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
     >
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.name}>{contact.firstName} {contact.lastName}</Text>
+          <Text style={styles.name}>
+            {contact.firstName} {contact.lastName}
+          </Text>
           <View style={styles.contactRow}>
-            {contact.location && <Text style={styles.contactItem}>{contact.location}</Text>}
+            {contact.location && (
+              <Text style={styles.contactItem}>{contact.location}</Text>
+            )}
             {contact.phone && (
               <>
                 <Text style={styles.contactItem}>•</Text>
@@ -199,23 +226,31 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
               </>
             )}
             <Text style={styles.contactItem}>•</Text>
-            <Link src={`mailto:${contact.email}`} style={styles.contactItem}>{contact.email}</Link>
+            <Link src={`mailto:${contact.email}`} style={styles.contactItem}>
+              {contact.email}
+            </Link>
             {contact.websiteUrl && (
               <>
                 <Text style={styles.contactItem}>•</Text>
-                <Link src={contact.websiteUrl} style={styles.contactItem}>Website</Link>
+                <Link src={contact.websiteUrl} style={styles.contactItem}>
+                  Website
+                </Link>
               </>
             )}
             {contact.linkedinUrl && (
               <>
                 <Text style={styles.contactItem}>•</Text>
-                <Link src={contact.linkedinUrl} style={styles.contactItem}>LinkedIn</Link>
+                <Link src={contact.linkedinUrl} style={styles.contactItem}>
+                  LinkedIn
+                </Link>
               </>
             )}
             {contact.githubUrl && (
               <>
                 <Text style={styles.contactItem}>•</Text>
-                <Link src={contact.githubUrl} style={styles.contactItem}>GitHub</Link>
+                <Link src={contact.githubUrl} style={styles.contactItem}>
+                  GitHub
+                </Link>
               </>
             )}
           </View>
@@ -245,10 +280,13 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                 </View>
                 <View style={styles.row}>
                   <Text style={styles.subtitleText}>
-                    {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
+                    {edu.degree}
+                    {edu.field ? ` in ${edu.field}` : ''}
                   </Text>
                   {edu.location && (
-                    <Text style={[styles.subtitleText, { fontStyle: 'normal' }]}>
+                    <Text
+                      style={[styles.subtitleText, { fontStyle: 'normal' }]}
+                    >
                       {edu.location}
                     </Text>
                   )}
@@ -273,7 +311,9 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                 <View style={styles.row}>
                   <Text style={styles.subtitleText}>{exp.title}</Text>
                   {exp.location && (
-                    <Text style={[styles.subtitleText, { fontStyle: 'normal' }]}>
+                    <Text
+                      style={[styles.subtitleText, { fontStyle: 'normal' }]}
+                    >
                       {exp.location}
                     </Text>
                   )}
@@ -301,20 +341,47 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
               <View key={proj.id || index} style={styles.block} wrap>
                 <View style={styles.row}>
                   <Text style={styles.primaryText}>{proj.name}</Text>
-                  {renderDateRange(proj.startDate, proj.endDate, proj.isCurrent)}
+                  {renderDateRange(
+                    proj.startDate,
+                    proj.endDate,
+                    proj.isCurrent,
+                  )}
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 2,
+                  }}
+                >
                   {proj.role && (
-                    <Text style={[styles.subtitleText, { marginBottom: 0, marginRight: 8 }]}>
+                    <Text
+                      style={[
+                        styles.subtitleText,
+                        { marginBottom: 0, marginRight: 8 },
+                      ]}
+                    >
                       {proj.role}
                     </Text>
                   )}
                   {(proj.url || proj.repoUrl) && (
                     <View style={{ flexDirection: 'row', gap: 6 }}>
-                      {proj.role && <Text style={{ fontSize: 10, color: '#000' }}>•</Text>}
-                      {proj.url && <Link src={proj.url} style={styles.contactItem}>Live Demo</Link>}
-                      {proj.url && proj.repoUrl && <Text style={{ fontSize: 10, color: '#000' }}>•</Text>}
-                      {proj.repoUrl && <Link src={proj.repoUrl} style={styles.contactItem}>GitHub</Link>}
+                      {proj.role && (
+                        <Text style={{ fontSize: 10, color: '#000' }}>•</Text>
+                      )}
+                      {proj.url && (
+                        <Link src={proj.url} style={styles.contactItem}>
+                          Live Demo
+                        </Link>
+                      )}
+                      {proj.url && proj.repoUrl && (
+                        <Text style={{ fontSize: 10, color: '#000' }}>•</Text>
+                      )}
+                      {proj.repoUrl && (
+                        <Link src={proj.repoUrl} style={styles.contactItem}>
+                          GitHub
+                        </Link>
+                      )}
                     </View>
                   )}
                 </View>
@@ -349,9 +416,16 @@ export const ResumePDFTemplate = ({ data }: ResumePDFProps) => {
                   {} as Record<string, string[]>,
                 ),
               ).map(([category, names]) => (
-                <View key={category} style={{ flexDirection: 'row', marginBottom: 2 }}>
-                  <Text style={[styles.primaryText, { width: 100 }]}>{category}:</Text>
-                  <Text style={[styles.skillText, { flex: 1 }]}>{names.join(', ')}</Text>
+                <View
+                  key={category}
+                  style={{ flexDirection: 'row', marginBottom: 2 }}
+                >
+                  <Text style={[styles.primaryText, { width: 100 }]}>
+                    {category}:
+                  </Text>
+                  <Text style={[styles.skillText, { flex: 1 }]}>
+                    {names.join(', ')}
+                  </Text>
                 </View>
               ))}
             </View>

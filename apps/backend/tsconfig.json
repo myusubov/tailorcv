@@ -6,14 +6,26 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "outDir": "./dist",
+    "rootDir": "./",
     "noEmit": false,
     "esModuleInterop": true,
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "shared": ["../../packages/shared/src"]
+      "shared": ["../../packages/shared/src"],
+      "src/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", "types/**/*", "prisma/generated/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "types/**/*",
+    "prisma/generated/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts"
+  ]
 }

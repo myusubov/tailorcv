@@ -4,19 +4,23 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "test": "vitest run",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.6",
-    "@heroui/react": "^3.0.0-beta.3",
-    "@heroui/styles": "^3.0.0-beta.3",
+    "@heroui/react": "^3.0.0-beta.6",
+    "@heroui/styles": "^3.0.0-beta.6",
     "@hookform/resolvers": "^5.2.2",
     "@iconify/react": "^6.0.2",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@react-pdf/renderer": "^4.3.1",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-query": "^5.90.12",
+    "@tanstack/react-query-devtools": "^5.91.3",
+    "@types/uuid": "^10.0.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
@@ -28,17 +32,25 @@
     "react-dom": "19.2.0",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.68.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "shared": "*",
     "sonner": "^2.0.7",
     "tailwindcss": "^4",
     "tanstack": "^1.0.3",
+    "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.2",
     "eslint-config-next": "16.0.4",
-    "typescript": "^5"
+    "jsdom": "^27.4.0",
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.0.4"
   }
 }

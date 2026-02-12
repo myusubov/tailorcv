@@ -19,7 +19,7 @@ export function DeleteProjectModal({
   onConfirm,
 }: DeleteProjectModalProps) {
   return (
-    <Modal.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+    <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Backdrop variant="blur">
         <Modal.Container className="w-full max-w-md">
           <Modal.Dialog>
@@ -70,6 +70,6 @@ export function DeleteProjectModal({
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
-    </Modal.Root>
+    </Modal>
   );
 }

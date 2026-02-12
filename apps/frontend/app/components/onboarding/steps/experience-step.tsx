@@ -2,93 +2,106 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  TextField,
-  Label,
-  Input,
-  TextArea,
-  Description,
-  Button,
-  Checkbox,
-  Card,
-  FieldError,
-  useOverlayState,
-} from '@heroui/react';
+import { Button, Card, useOverlayState } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
+import { nanoid } from 'nanoid';
 
 import { StepHeader } from '../step-header';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
-import { generateUUID } from '@/lib/utils/utils';
 import { DeleteExperienceModal } from '@/app/components/experience/delete-experience-modal';
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
+import { ExperienceItemContent } from './experience-item-content';
+import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
 
 interface ExperienceStepProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-const months = [
-  { value: '01', label: 'Jan' },
-  { value: '02', label: 'Feb' },
-  { value: '03', label: 'Mar' },
-  { value: '04', label: 'Apr' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'Jun' },
-  { value: '07', label: 'Jul' },
-  { value: '08', label: 'Aug' },
-  { value: '09', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-];
+/**
+ * Creates a new empty experience item with default values.
+ * @returns A new experience object ready to be appended to the form
+ */
+function createEmptyExperience() {
+  return {
+    id: nanoid(),
+    title: '',
+    company: '',
+    location: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false,
+    tech: [],
+    bullets: [{ id: nanoid(), text: '' }],
+  };
+}
 
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 30 }, (_, i) => String(currentYear - i));
-
+/**
+ * Experience step component for the onboarding wizard.
+ * Allows users to add, edit, reorder, and remove work experience entries.
+ */
 export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
   const deleteModalState = useOverlayState();
-  const { control, watch } = useFormContext<OnboardingFormInput>();
-  const { fields, append, remove, move } = useFieldArray({
-    control,
+  const { watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
+  const { fields, append, remove, move } = useStableFieldArray<
+    OnboardingFormInput,
+    'experiences'
+  >({
     name: 'experiences',
   });
 
   const experiences = watch('experiences');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
+  // Derive delete modal label from the item being deleted
   const company =
     deleteIndex !== null ? experiences?.[deleteIndex]?.company : '';
-  const title =
-    deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
+  const title = deleteIndex !== null ? experiences?.[deleteIndex]?.title : '';
   const labelParts = [title, company].filter(Boolean);
   const label = labelParts.length > 0 ? labelParts.join(' at ') : '';
 
   const addExperience = () => {
-    append({
-      id: generateUUID(),
-      title: '',
-      company: '',
-      startMonth: '',
-      startYear: '',
-      endMonth: '',
-      endYear: '',
-      isCurrent: false,
-      description: '',
-    });
+    append(createEmptyExperience());
   };
 
   const handleDelete = () => {
     if (deleteIndex === null) return;
-    setTimeout(() => {
-      remove(deleteIndex);
-    }, 300);
+    remove(deleteIndex);
     setDeleteIndex(null);
   };
 
   const handleDeleteModalOpenChange = (isOpen: boolean) => {
     deleteModalState.setOpen(isOpen);
     if (!isOpen) setDeleteIndex(null);
+  };
+
+  const handleNext = () => {
+    if (fields.length === 0) {
+      setValue('experiences', []);
+    }
+    onNext();
+  };
+
+  const handleDuplicate = (idx: number) => {
+    const current = getValues('experiences');
+    const itemToDuplicate = current?.[idx];
+    if (!itemToDuplicate) return;
+
+    const newItem = {
+      ...itemToDuplicate,
+      id: nanoid(),
+      bullets:
+        itemToDuplicate.bullets?.map((b) => ({ ...b, id: nanoid() })) || [],
+    };
+
+    const newExperiences = [
+      ...(current || []).slice(0, idx + 1),
+      newItem,
+      ...(current || []).slice(idx + 1),
+    ];
+
+    setValue('experiences', newExperiences);
   };
 
   const handleMoveUp = (idx: number) => {
@@ -109,34 +122,33 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
         />
 
         <AnimatePresence mode="popLayout">
-          {fields.map((field, index) => {
-            return (
-              <ReorderableItem
-                key={field.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                layout
+          {fields.map((field, index) => (
+            <ReorderableItem
+              key={field.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              layout
+              isFirst={index === 0}
+              isLast={index === fields.length - 1}
+              onMoveUp={() => handleMoveUp(index)}
+              onMoveDown={() => handleMoveDown(index)}
+            >
+              <ExperienceItemContent
+                index={index}
                 isFirst={index === 0}
                 isLast={index === fields.length - 1}
                 onMoveUp={() => handleMoveUp(index)}
                 onMoveDown={() => handleMoveDown(index)}
-              >
-                <ExperienceItemContent
-                  index={index}
-                  isFirst={index === 0}
-                  isLast={index === fields.length - 1}
-                  onMoveUp={() => handleMoveUp(index)}
-                  onMoveDown={() => handleMoveDown(index)}
-                  onDelete={() => {
-                    setDeleteIndex(index);
-                    deleteModalState.open();
-                  }}
-                />
-              </ReorderableItem>
-            );
-          })}
+                onDelete={() => {
+                  setDeleteIndex(index);
+                  deleteModalState.open();
+                }}
+                onDuplicate={() => handleDuplicate(index)}
+              />
+            </ReorderableItem>
+          ))}
         </AnimatePresence>
 
         {fields.length === 0 ? (
@@ -196,12 +208,12 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
           <Button
             variant="ghost"
             onPress={onBack}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back
           </Button>
-          <Button onPress={onNext} className="group px-6">
+          <Button onPress={handleNext} className="group px-6">
             {fields.length === 0
               ? 'Skip: Projects & Skills'
               : 'Next: Projects & Skills'}
@@ -221,263 +233,5 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
         onConfirm={handleDelete}
       />
     </>
-  );
-}
-
-interface ExperienceItemContentProps {
-  index: number;
-  isFirst: boolean;
-  isLast: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDelete: () => void;
-}
-
-function ExperienceItemContent({
-  index,
-  isFirst,
-  isLast,
-  onMoveUp,
-  onMoveDown,
-  onDelete,
-}: ExperienceItemContentProps) {
-  const { control } = useFormContext<OnboardingFormInput>();
-  const isCurrent = useWatch({
-    control,
-    name: `experiences.${index}.isCurrent`,
-  });
-
-  return (
-    <Card className="mb-4 overflow-visible">
-      <Card.Header className="flex-row items-center justify-between">
-        <Card.Title className="text-base">Job #{index + 1}</Card.Title>
-        <div className="flex items-center gap-1">
-          {/* Mobile Reorder Controls */}
-          <div className="flex items-center gap-1 lg:hidden">
-            <Button
-              onPress={onMoveUp}
-              isDisabled={isFirst}
-              isIconOnly
-              variant="ghost"
-              size="sm"
-            >
-              <Icon icon="lucide:arrow-up" />
-            </Button>
-            <Button
-              onPress={onMoveDown}
-              isDisabled={isLast}
-              isIconOnly
-              variant="ghost"
-              size="sm"
-            >
-              <Icon icon="lucide:arrow-down" />
-            </Button>
-          </div>
-
-          <Button
-            isIconOnly
-            variant="danger-soft"
-            size="sm"
-            onPress={onDelete}
-          >
-            <Icon icon="lucide:trash-2" />
-          </Button>
-        </div>
-      </Card.Header>
-
-      <Card.Content className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name={`experiences.${index}.title`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Job Title *</Label>
-                <Input {...field} placeholder="Frontend Developer" />
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
-              </TextField>
-            )}
-          />
-
-          <Controller
-            name={`experiences.${index}.company`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Company *</Label>
-                <Input {...field} placeholder="Acme Inc." />
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
-              </TextField>
-            )}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label className="text-foreground mb-2 block text-sm font-medium">
-              Start Date *
-            </Label>
-            <div className="flex gap-2">
-              <Controller
-                name={`experiences.${index}.startMonth`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    >
-                      <option value="">Month</option>
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              />
-
-              <Controller
-                name={`experiences.${index}.startYear`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    >
-                      <option value="">Year</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-foreground mb-2 block text-sm font-medium">
-              End Date
-            </Label>
-            <div className="flex gap-2">
-              <Controller
-                name={`experiences.${index}.endMonth`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      disabled={!!isCurrent}
-                    >
-                      <option value="">Month</option>
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              />
-
-              <Controller
-                name={`experiences.${index}.endYear`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <div className="flex-1">
-                    <select
-                      className="bg-surface-tertiary border-divider text-foreground w-full rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      disabled={!!isCurrent}
-                    >
-                      <option value="">Year</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldState.error ? (
-                      <p className="text-danger mt-1 text-xs">
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-              />
-            </div>
-          </div>
-        </div>
-
-        <Controller
-          name={`experiences.${index}.isCurrent`}
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              isSelected={!!field.value}
-              onChange={(selected) => field.onChange(selected)}
-            >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <span className="text-sm">I currently work here</span>
-              </Checkbox.Content>
-            </Checkbox>
-          )}
-        />
-
-        <Controller
-          name={`experiences.${index}.description`}
-          control={control}
-          render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>What did you do? *</Label>
-              <TextArea
-                {...field}
-                placeholder="Led frontend development, built React dashboards, mentored junior devs..."
-                rows={3}
-              />
-              {fieldState.error ? (
-                <FieldError>{fieldState.error.message}</FieldError>
-              ) : null}
-              <Description>
-                Write 2-3 sentences. We&apos;ll expand this into professional
-                bullet points.
-              </Description>
-            </TextField>
-          )}
-        />
-      </Card.Content>
-    </Card>
   );
 }

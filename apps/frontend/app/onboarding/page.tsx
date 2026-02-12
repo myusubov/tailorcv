@@ -1,11 +1,11 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  MethodSelection, 
-  ManualEntryForm, 
-  GitHubStep, 
-  UploadStep 
+import {
+  MethodSelection,
+  ManualEntryForm,
+  GitHubStep,
+  UploadStep,
 } from '../components/onboarding';
 import type { OnboardingMethod } from './types';
 import { OnboardingJobProvider } from '../components/onboarding/onboarding-job-context';
@@ -13,10 +13,17 @@ import { OnboardingJobUI } from '../components/onboarding/onboarding-job-ui';
 
 import { useQueryState, parseAsStringLiteral } from 'nuqs';
 
-const methodParser = parseAsStringLiteral(['github', 'upload', 'manual'] as const);
+const methodParser = parseAsStringLiteral([
+  'github',
+  'upload',
+  'manual',
+] as const);
 
 function OnboardingContent() {
-  const [selectedMethod, setSelectedMethod] = useQueryState('method', methodParser);
+  const [selectedMethod, setSelectedMethod] = useQueryState(
+    'method',
+    methodParser,
+  );
   const isMethodSelected = selectedMethod !== null;
 
   const handleSelectMethod = (method: OnboardingMethod) => {

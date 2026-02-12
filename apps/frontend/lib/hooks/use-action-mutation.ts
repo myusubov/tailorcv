@@ -20,9 +20,9 @@ export class ActionError extends Error {
 /**
  * A centralized hook to handle mutations for server actions defined via `defineAction`.
  */
-export function useActionMutation<TInput, TOutput>(
+export function useActionMutation<TInput, TOutput, TContext>(
   action: (input: TInput) => Promise<ApiResult<TOutput>>,
-  options?: UseMutationOptions<TOutput, ActionError, TInput> & {
+  options?: UseMutationOptions<TOutput, ActionError, TInput, TContext> & {
     successMessage?: string | ((data: TOutput) => string);
     showErrorToast?: boolean;
     form?: UseFormReturn<any>;
@@ -30,7 +30,7 @@ export function useActionMutation<TInput, TOutput>(
 ) {
   const showToast = options?.showErrorToast !== false;
 
-  const mutation = useMutation({
+  const mutation = useMutation<TOutput, ActionError, TInput, TContext>({
     ...options,
     mutationFn: async (input: TInput) => {
       const result = await action(input);
@@ -45,7 +45,11 @@ export function useActionMutation<TInput, TOutput>(
 
       return result.data;
     },
-    onSuccess: (data: TOutput, variables: TInput, context: unknown) => {
+    onSuccess: (
+      data: TOutput,
+      variables: TInput,
+      context: TContext | undefined,
+    ) => {
       if (options?.successMessage) {
         const message =
           typeof options.successMessage === 'function'
@@ -56,7 +60,11 @@ export function useActionMutation<TInput, TOutput>(
       // @ts-ignore
       options?.onSuccess?.(data, variables, context);
     },
-    onError: (error: ActionError, variables: TInput, context: unknown) => {
+    onError: (
+      error: ActionError,
+      variables: TInput,
+      context: TContext | undefined,
+    ) => {
       // 1. Automatic Validation Mapping
       if (
         error.code === ErrorCode.VALIDATION_ERROR &&

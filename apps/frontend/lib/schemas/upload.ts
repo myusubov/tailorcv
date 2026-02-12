@@ -11,10 +11,13 @@ const ACCEPTED_FILE_TYPES = [
 export const fileUploadSchema = z.object({
   file: z // We use custom validation for the File object
     .custom<File>((val) => val instanceof File, 'Please upload a valid file')
-    .refine((file) => file.size <= MAX_FILE_SIZE, 'File size must be less than 5MB')
+    .refine(
+      (file) => file.size <= MAX_FILE_SIZE,
+      'File size must be less than 5MB',
+    )
     .refine(
       (file) => ACCEPTED_FILE_TYPES.includes(file.type),
-      'Only .pdf, .docx, and .txt formats are supported'
+      'Only .pdf, .docx, and .txt formats are supported',
     ),
 });
 

@@ -53,10 +53,10 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>First Name *</Label>
-                  <Input {...field} placeholder="John" />
-                  {fieldState.error ? (
+                  <Input {...field} placeholder="e.g. Jane" />
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
@@ -69,10 +69,10 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               render={({ field, fieldState }) => (
                 <TextField className="w-full" isInvalid={!!fieldState.error}>
                   <Label>Last Name *</Label>
-                  <Input {...field} placeholder="Doe" />
-                  {fieldState.error ? (
+                  <Input {...field} placeholder="e.g. Doe" />
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
@@ -90,11 +90,11 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                   <Input
                     {...field}
                     type="email"
-                    placeholder="john@example.com"
+                    placeholder="e.g. jane.doe@example.com"
                   />
-                  {fieldState.error ? (
+                  {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
+                  )}
                 </TextField>
               )}
             />
@@ -104,10 +104,17 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
             <Controller
               name="contact.phone"
               control={control}
-              render={({ field }) => (
-                <TextField className="w-full">
+              render={({ field, fieldState }) => (
+                <TextField isInvalid={!!fieldState.error} className="w-full">
                   <Label>Phone Number</Label>
-                  <Input {...field} placeholder="+1 (555) 123-4567" />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="e.g. +1 (555) 000-0000"
+                  />
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
                   <Description>Optional</Description>
                 </TextField>
               )}
@@ -120,12 +127,17 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
             name="contact.location"
             control={control}
             render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Location *</Label>
-                <Input {...field} placeholder="San Francisco, CA" />
-                {fieldState.error ? (
+              <TextField isInvalid={!!fieldState.error} className="w-full">
+                <Label>Location</Label>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="e.g. San Francisco, CA"
+                />
+                {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
+                )}
+                <Description>Optional</Description>
               </TextField>
             )}
           />
@@ -136,10 +148,18 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
             <Controller
               name="contact.githubUrl"
               control={control}
-              render={({ field }) => (
-                <TextField className="w-full">
+              render={({ field, fieldState }) => (
+                <TextField isInvalid={!!fieldState.error} className="w-full">
                   <Label>GitHub URL</Label>
-                  <Input {...field} placeholder="github.com/username" />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="https://github.com/username"
+                  />
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
+                  <Description>Optional</Description>
                 </TextField>
               )}
             />
@@ -149,10 +169,18 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
             <Controller
               name="contact.linkedinUrl"
               control={control}
-              render={({ field }) => (
-                <TextField className="w-full">
+              render={({ field, fieldState }) => (
+                <TextField isInvalid={!!fieldState.error} className="w-full">
                   <Label>LinkedIn URL</Label>
-                  <Input {...field} placeholder="linkedin.com/in/username" />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
+                  <Description>Optional</Description>
                 </TextField>
               )}
             />
@@ -163,10 +191,17 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           <Controller
             name="contact.websiteUrl"
             control={control}
-            render={({ field }) => (
-              <TextField className="w-full">
+            render={({ field, fieldState }) => (
+              <TextField isInvalid={!!fieldState.error} className="w-full">
                 <Label>Portfolio / Website</Label>
-                <Input {...field} placeholder="yourwebsite.com" />
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="https://yourwebsite.com"
+                />
+                {fieldState.error && (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                )}
                 <Description>Optional</Description>
               </TextField>
             )}

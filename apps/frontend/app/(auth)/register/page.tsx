@@ -220,7 +220,7 @@ export default function RegisterPage() {
                       isIconOnly
                       className="text-muted hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
                       onClick={handleGoBack}
-                    // TODO: wire this to go back and change email
+                      // TODO: wire this to go back and change email
                     >
                       <Icon icon="lucide:undo-2" className="h-3 w-3" />
                     </Button>

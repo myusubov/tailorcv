@@ -15,6 +15,8 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.url(),
   SHADOW_DATABASE_URL: z.url(),
+  // Redis
+  REDIS_URL: z.url(),
 
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1),
@@ -28,11 +30,29 @@ const envSchema = z.object({
   // OpenAI AI
   OPENAI_API_KEY: z.string().min(1),
 
+  // GitHub OAuth
+  GITHUB_CLIENT_ID: z.string().min(1),
+  GITHUB_CLIENT_SECRET: z.string().min(1),
+  GITHUB_REDIRECT_URI: z
+    .url()
+    .default('http://localhost:8080/api/v1/auth/github/callback'),
+
+  // JWT Secret (for OAuth state signing)
+  JWT_SECRET: z.string().min(32),
+
   // Frontend URL (for CORS)
   FRONTEND_URL: z.url().default('http://localhost:3000'),
 
   // Optional: Additional configs
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // Chaos testing: which GitHub call to simulate failure (token=OAuth exchange, repos=fetch repos, all=both)
+  GITHUB_CHAOS_FAKE_FAIL: z
+    .enum(['token', 'repos', 'all'])
+    .optional(),
+
+  // Admin user IDs (comma-separated Clerk user IDs)
+  ADMIN_USER_IDS: z.string().optional(),
 
   // Dev-only auth bypass (for local testing without Clerk tokens)
   DEV_AUTH_BYPASS: z

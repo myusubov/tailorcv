@@ -27,6 +27,7 @@ export type OnboardingJobError = {
   details?: unknown;
 };
 
-export type OnboardingJobPayload = 
+export type OnboardingJobPayload =
   | (OnboardingGenerateBaseBody & { _type: 'form' })
-  | { _type: 'about-me'; text: string };
+  | { _type: 'about-me'; text: string }
+  | { _type: 'github'; repositoryIds: string[] };
