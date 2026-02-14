@@ -8,6 +8,10 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  // AI Proposals for resume editing
+  proposal?: Partial<BaseResumeData> | null;
+  explanation?: string | null;
+  status?: 'pending' | 'applied' | 'discarded' | null;
 }
 
 /**
@@ -17,6 +21,7 @@ export interface AIChatRequest {
   conversationId: string;
   message: string;
   resumeContext?: BaseResumeData | null;
+  assistantMessageId?: string;
 }
 
 
@@ -25,9 +30,10 @@ export interface AIChatRequest {
  */
 export type AIChatStreamEvent =
   | { type: 'text'; content: string }
+  | { type: 'proposal'; data: Partial<BaseResumeData>; explanation: string }
   | { type: 'done'; responseId: string; conversationId?: string }
-
   | { type: 'error'; message: string };
+
 
 /**
  * Conversation list item (from list endpoint)
@@ -50,6 +56,9 @@ export interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  proposal?: Partial<BaseResumeData> | null;
+  explanation?: string | null;
+  status?: 'pending' | 'applied' | 'discarded' | null;
 }
 
 /**

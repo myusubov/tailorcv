@@ -9,3 +9,4 @@ export * from './schemas/resume';
 
 // Export utilities
 export * from './utils/helpers';
+export * from './utils/deepMerge';

@@ -5,8 +5,17 @@ import { BaseResumeData } from 'shared';
  * @param resumeContext - Optional resume data to include in context
  * @returns System instruction string
  */
-export function buildInstructions(resumeContext?: Partial<BaseResumeData> | null): string {
-    const baseInstructions = `You are a professional resume coach and career assistant for TailorCV.
+/**
+ * Builds the system instructions for the AI assistant
+ * @param resumeContext - Optional resume data to include in context
+ * @param includeToolRules - Whether to include rules for using resume edit tools
+ * @returns System instruction string
+ */
+export function buildInstructions(
+    resumeContext?: Partial<BaseResumeData> | null,
+    includeToolRules = false
+): string {
+    let instructions = `You are a professional resume coach and career assistant for TailorCV.
 Your goal is to help users build high-impact, professional resumes.
 
 Guidelines:
@@ -15,12 +24,19 @@ Guidelines:
 - Keep responses conversational but focused.
 - If asked to make edits, explain what you would change and why.`;
 
+    if (includeToolRules) {
+        instructions += `
+
+CORE RULES:
+1. If the user request implies a specific change (e.g., "Change name to Murad", "Add React skill"), you MUST call the "update_resume" tool.
+2. Do NOT just describe the change in text.
+3. ONLY respond with plain text if the request is impossible or requires clarification.`;
+    }
+
     if (resumeContext) {
-        // Stringify the full resume context to give the AI complete visibility
-        // We'll filter out potentially undefined nulls to keep it clean
         const contextString = JSON.stringify(resumeContext);
 
-        return `${baseInstructions}
+        instructions += `
 
 CURRENT RESUME CONTEXT (JSON Format):
 ${contextString}
@@ -32,5 +48,5 @@ CRITICAL INSTRUCTIONS FOR USING CONTEXT:
 4. Completeness: Use the full details provided (bullets, dates, tech stacks) to give actionable advice avoiding generic responses.`;
     }
 
-    return baseInstructions;
+    return instructions;
 }

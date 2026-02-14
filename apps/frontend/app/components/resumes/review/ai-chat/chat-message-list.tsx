@@ -47,7 +47,9 @@ export function ChatMessageList({
           ))
         )}
 
-        {isTyping && <AIThinkingIndicatorCompact />}
+        {isTyping && messages[messages.length - 1]?.role !== 'assistant' && (
+          <AIThinkingIndicatorCompact />
+        )}
 
         <div ref={messagesEndRef} />
       </ScrollShadow>

@@ -5,6 +5,7 @@ import {
   getConversationController,
   createConversationController,
   deleteConversationController,
+  patchMessageStatusController,
 } from '../controllers/chat-conversations.controller';
 import { requireClerkAuth } from '../middleware/auth';
 import { idempotency } from '../middleware/idempotency';
@@ -46,4 +47,11 @@ aiChatRouter.get('/conversations/:id', aiConversationCrudRateLimiter, requireCle
  * Delete a conversation
  */
 aiChatRouter.delete('/conversations/:id', aiConversationCrudRateLimiter, requireClerkAuth, deleteConversationController);
+
+/**
+ * PATCH /api/v1/ai/chat/messages/:id/status
+ * Update the status of a message (e.g., for AI proposals)
+ */
+aiChatRouter.patch('/messages/:id/status', aiConversationCrudRateLimiter, requireClerkAuth, patchMessageStatusController);
+
 

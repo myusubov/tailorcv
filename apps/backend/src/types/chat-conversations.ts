@@ -15,6 +15,7 @@ export interface AddMessageInput {
   clerkUserId: string;
   role: 'user' | 'assistant';
   content: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**

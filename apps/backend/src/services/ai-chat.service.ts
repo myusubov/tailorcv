@@ -1,39 +1,53 @@
 import { openai } from '../lib/openai';
-import type { StreamChatInput } from '../types/ai-chat';
+import type { StreamChatInput, StreamChatResult } from '../types/ai-chat';
 import { openaiApiPolicy } from '../lib/resilience';
 import { cleanResumeContext } from '../utils/ai-context';
 import { buildInstructions } from '../utils/ai-prompts';
-import { classifyIntent } from '../utils/ai-intent';
+import { handleOpenAIStream } from '../utils/ai-stream';
+import { AI_TOOLS } from '../utils/ai-tools';
 import { logger } from '../lib/logger';
 
 /**
- * Result of a streamed chat response
- */
-export interface StreamChatResult {
-    /** Async generator yielding text chunks */
-    stream: AsyncGenerator<string, void, unknown>;
-    /** Promise that resolves to the response ID after streaming completes */
-    getResponseId: () => Promise<string>;
-    /** Controller to abort the OpenAI stream */
-    controller: AbortController;
-}
-
-/**
- * Streams a chat response from OpenAI Responses API
- * @param params - Input message, previous response ID, and resume context
- * @returns Stream of text chunks and a function to get the final response ID
+ * Streams an AI chat response using the OpenAI Responses API.
+ * 
+ * Handles both regular chat and resume edit operations through a unified streaming interface.
+ * Edit operations are detected via tool calls and returned as 'proposal' events for client-side execution.
+ * 
+ * @param params.input - The user's message
+ * @param params.previousResponseId - ID from the last response to continue conversation context (optional)
+ * @param params.resumeContext - Current resume data to include in the AI's context (optional)
+ * 
+ * @returns An async generator yielding chat/proposal events, plus methods to get the response ID and abort controller
+ * 
+ * @example
+ * const { stream, getResponseId } = await streamChatResponse({
+ *   input: "Change my name to John",
+ *   resumeContext: currentResume
+ * });
+ * 
+ * for await (const event of stream) {
+ *   if (event.type === 'text') console.log(event.content);
+ *   if (event.type === 'proposal') applyEdit(event.data);
+ * }
  */
 export async function streamChatResponse(
     params: StreamChatInput,
 ): Promise<StreamChatResult> {
     const { input, previousResponseId, resumeContext } = params;
+    const controller = new AbortController();
 
-    // 1. Determine Model based on Intent
-    const intent = await classifyIntent(input);
-    const model = intent === 'complex' ? 'gpt-4o' : 'gpt-4o-mini';
+    // 1. Prepare Content & Instructions
+    const cleaned = resumeContext ? cleanResumeContext(resumeContext) : null;
+    const instructions = buildInstructions(cleaned, true);
 
-    logger.info({ intent, model }, 'AI Chat model selection');
+    if (resumeContext) {
+        logger.info({
+            rawSize: JSON.stringify(resumeContext).length,
+            cleanSize: JSON.stringify(cleaned).length
+        }, 'AI Chat context optimization');
+    }
 
+    // 2. Setup IDs
     let resolveResponseId: (id: string) => void;
     let rejectResponseId: (err: Error) => void;
     const responseIdPromise = new Promise<string>((resolve, reject) => {
@@ -41,57 +55,37 @@ export async function streamChatResponse(
         rejectResponseId = reject;
     });
 
-    const controller = new AbortController();
-
-    // If the stream is aborted, reject the responseId promise
     controller.signal.addEventListener('abort', () => {
         rejectResponseId(new Error('Stream aborted'));
     });
 
-    // 2. Clean Context to save tokens
-    const cleaned = resumeContext ? cleanResumeContext(resumeContext) : null;
-    const instructions = buildInstructions(cleaned);
+    // 3. Initialize OpenAI Stream
+    // The Responses API supports conversation continuity via `previous_response_id`.
+    // However, we can only continue from text responses, not tool calls.
+    // Tool calls require us to submit the tool's output to continue, which we don't do
+    // since edits are executed client-side. So we exclude those IDs to avoid errors.
+    const canContinueConversation = previousResponseId && 
+        !previousResponseId.startsWith('edit-') && // Legacy edit placeholders
+        !previousResponseId.startsWith('fc_');     // Function call IDs
 
-    if (resumeContext) {
-        const rawSize = JSON.stringify(resumeContext, null, 2).length;
-        const cleanSize = JSON.stringify(cleaned).length;
-        const savings = Math.round((1 - cleanSize / rawSize) * 100);
-        logger.info({ rawSize, cleanSize, savings }, 'AI Chat context optimization');
-    }
-
-    // Wrap the OpenAI stream initialization with resilience policy
     const openaiStream = await openaiApiPolicy.execute(() =>
         openai.responses.stream({
-            model,
+            model: 'gpt-4o',
             instructions,
             input,
-            ...(previousResponseId && { previous_response_id: previousResponseId }),
+            tools: AI_TOOLS as any,
+            ...(canContinueConversation ? { previous_response_id: previousResponseId } : {}),
         }, {
             signal: controller.signal,
         }),
     );
 
-    async function* textGenerator(): AsyncGenerator<string, void, unknown> {
-        let responseId = '';
-        try {
-            for await (const event of openaiStream) {
-                // Extract text deltas from the stream
-                if (event.type === 'response.output_text.delta') {
-                    yield event.delta;
-                }
-                // Capture response ID when available
-                if (event.type === 'response.completed' && event.response?.id) {
-                    responseId = event.response.id;
-                }
-            }
-            resolveResponseId!(responseId);
-        } catch {
-            // Generator was aborted - promise already rejected by abort listener
-        }
-    }
-
+    // 4. Transform and Return Stream
     return {
-        stream: textGenerator(),
+        stream: handleOpenAIStream(openaiStream, {
+            onResponseId: (id) => resolveResponseId(id),
+            controller
+        }),
         getResponseId: () => responseIdPromise,
         controller,
     };

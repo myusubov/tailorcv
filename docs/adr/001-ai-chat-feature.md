@@ -4,6 +4,7 @@
 
 **Implemented** - January 30, 2026
 **Optimized** - February 12, 2026
+**Synchronized** - February 14, 2026
 
 ## Context
 
@@ -72,6 +73,16 @@ The AI Chat feature provides a continuously accessible drawer interface with the
 
 - **Decision**: Extract prompt building, context cleaning, and intent classification into separate utility modules.
 - **Reasoning**: Prevents the `ai-chat.service.ts` from becoming a monolithic "god file" and improves testability of individual components (e.g., unit testing the context cleaner).
+
+### Client-Driven ID Generation (Added Feb 14)
+
+- **Decision**: The frontend generates a UUID (the `assistantMessageId`) **before** initiating the stream and sends it to the backend. The backend is forced to use this specific ID for the assistant's message.
+- **Reasoning**: Eliminates the "Message not found" race condition. Previously, if a user performed an action (Apply/Discard) before the backend had finished saving its auto-generated ID, the action would fail. Matching IDs from the start ensures immediate actionability.
+
+### Cache-Direct Streaming (Added Feb 14)
+
+- **Decision**: Remove local component state for messages. Streamed content is written surgically into the TanStack Query cache (`useConversationDetailsQuery`) in real-time.
+- **Reasoning**: Solves the "Vanishing Message" bug when switching chats. Because data lives in the global cache bucket keyed by `conversationId`, switching views and back preserves any paritially streamed content or new messages instantly.
 
 ### Navigation & Persistence
 
