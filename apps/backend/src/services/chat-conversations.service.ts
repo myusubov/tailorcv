@@ -8,6 +8,7 @@ import type {
   DeleteConversationInput,
 } from '../types/chat-conversations';
 import { InputJsonValue, JsonValue } from 'prisma/generated/client/runtime/client';
+import { generateConversationTitle } from './ai-chat.service';
 
 /**
  * Creates a new chat conversation for a user
@@ -17,6 +18,7 @@ import { InputJsonValue, JsonValue } from 'prisma/generated/client/runtime/clien
 export async function createConversation(input: CreateConversationInput) {
   return prisma.chatConversation.create({
     data: {
+      ...(input.id ? { id: input.id } : {}),
       userId: input.clerkUserId,
       title: input.title,
       responseId: input.responseId,
@@ -230,6 +232,10 @@ export async function updateMessageStatus({
 
 /**
  * Ensures a chat session exists and returns the conversation ID and last response ID
+ *
+ * If conversationId is provided:
+ * 1. Tries to find existing conversation
+ * 2. If not found, creates a new one with that ID (client-side generation support)
  */
 export async function ensureChatSession({
   clerkUserId,
@@ -243,15 +249,36 @@ export async function ensureChatSession({
   let activeConversationId = conversationId;
   let previousResponseId: string | null = null;
 
-  if (!activeConversationId) {
+  if (activeConversationId) {
+    try {
+      const conversation = await getConversationWithMessages(activeConversationId, clerkUserId);
+      previousResponseId = conversation.responseId;
+    } catch (error) {
+      // If conversation doesn't exist but ID provided (client generated), create it
+      if (
+        error instanceof AppError &&
+        error.errorCode === ErrorCode.CONVERSATION_NOT_FOUND
+      ) {
+        // Generate a meaningful title using AI instead of simple slicing
+        const generatedTitle = await generateConversationTitle(initialMessage);
+
+        const conversation = await createConversation({
+          clerkUserId,
+          id: activeConversationId,
+          title: generatedTitle,
+        });
+        activeConversationId = conversation.id;
+      } else {
+        throw error;
+      }
+    }
+  } else {
+    // Fallback: No ID provided, create new (shouldn't happen with updated frontend)
     const conversation = await createConversation({
       clerkUserId,
       title: initialMessage.slice(0, 100),
     });
     activeConversationId = conversation.id;
-  } else {
-    const conversation = await getConversationWithMessages(activeConversationId, clerkUserId);
-    previousResponseId = conversation.responseId;
   }
 
   return { activeConversationId, previousResponseId };

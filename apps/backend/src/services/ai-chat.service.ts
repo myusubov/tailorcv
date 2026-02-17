@@ -64,7 +64,7 @@ export async function streamChatResponse(
     // However, we can only continue from text responses, not tool calls.
     // Tool calls require us to submit the tool's output to continue, which we don't do
     // since edits are executed client-side. So we exclude those IDs to avoid errors.
-    const canContinueConversation = previousResponseId && 
+    const canContinueConversation = previousResponseId &&
         !previousResponseId.startsWith('edit-') && // Legacy edit placeholders
         !previousResponseId.startsWith('fc_');     // Function call IDs
 
@@ -89,4 +89,44 @@ export async function streamChatResponse(
         getResponseId: () => responseIdPromise,
         controller,
     };
+}
+/**
+ * Generates a concise title for a conversation based on the initial message.
+ * Uses gpt-4o-mini for fast, low-cost generation.
+ * 
+ * @param input - The initial user message
+ * @returns A title of 3-5 words
+ */
+export async function generateConversationTitle(input: string): Promise<string> {
+    try {
+        const response = await openaiApiPolicy.execute(() =>
+            openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Generate a concise, 3-5 word title for a conversation starting with the provided message. Return ONLY the title text, no quotes or punctuation.',
+                    },
+                    {
+                        role: 'user',
+                        content: input,
+                    },
+                ],
+                max_tokens: 20,
+                temperature: 0.7,
+            }),
+        );
+
+        const title = response.choices[0]?.message?.content?.trim();
+
+        if (!title) {
+            return input.slice(0, 50);
+        }
+
+        return title;
+    } catch (error) {
+        logger.error({ error, input }, 'Failed to generate conversation title');
+        // Fallback to slice
+        return input.slice(0, 50);
+    }
 }

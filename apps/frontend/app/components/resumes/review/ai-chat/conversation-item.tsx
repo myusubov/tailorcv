@@ -23,7 +23,7 @@ export function ConversationItem({
       onClick={onSelect}
       onKeyDown={(e) => e.key === 'Enter' && onSelect()}
       className={cn(
-        'group relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 transition-all',
+        'group relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 transition-colors',
         'hover:bg-default/50',
         isActive && 'bg-primary/10 border-primary/20 border',
       )}
@@ -31,7 +31,7 @@ export function ConversationItem({
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn(
-            'line-clamp-2 flex-1 text-sm font-medium',
+            'line-clamp-2 block flex-1 text-sm font-medium',
             !conversation.title && 'text-muted-foreground italic',
             isActive && 'text-foreground',
             !isActive && 'text-muted-foreground group-hover:text-foreground',

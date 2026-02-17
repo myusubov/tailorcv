@@ -3,6 +3,7 @@
  */
 export interface CreateConversationInput {
   clerkUserId: string;
+  id?: string;
   title?: string;
   responseId?: string;
 }

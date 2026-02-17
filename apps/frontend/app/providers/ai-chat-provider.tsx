@@ -187,7 +187,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       const previous = conversationsCache.getData();
 
       // 3. Optimistically remove from list
-      conversationsCache.list.remove((c) => c.id === id);
+      conversationsCache.list.remove((c: ConversationListItem) => c.id === id);
 
       // 4. Handle internal state instantly
       if (conversationId === id) {
@@ -214,11 +214,11 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         await detailsCache.cancel();
         const previous = detailsCache.getData();
 
-        detailsCache.setData((old) => {
+        detailsCache.setData((old: ConversationDetails | undefined) => {
           if (!old) return old;
           return {
             ...old,
-            messages: old.messages.map((msg) =>
+            messages: old.messages.map((msg: ConversationMessage) =>
               msg.id === messageId ? { ...msg, status } : msg,
             ),
           };
@@ -254,7 +254,8 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
    * Create new conversation wrapper (fire-and-forget)
    */
   const createNewConversation = useCallback(() => {
-    createConv({});
+    setConversationId(null);
+    setIsTyping(false);
   }, [createConv]);
 
   /**
@@ -303,22 +304,65 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
     async (content: string) => {
       if (!content.trim()) return;
 
-      if (conversationId) {
-        await detailsCache.cancel();
+      let activeConversationId = conversationId;
+      let isNewConversation = false;
+      const previousDetailsKey = useConversationDetailsQuery.getKey({
+        id: conversationId || '',
+      });
+
+      // 1. Setup ID and optimistic state
+      if (activeConversationId) {
+        await queryClient.cancelQueries({ queryKey: previousDetailsKey });
+      } else {
+        activeConversationId = uuidv4();
+        isNewConversation = true;
+        setConversationId(activeConversationId);
+        // Prevent refetch loop since we set data manually
+        conversationJustCreated.current = true;
       }
 
+      // New key for the active conversation
+      const currentDetailsKey = useConversationDetailsQuery.getKey({
+        id: activeConversationId!,
+      });
+
+      // 2. Optimistic Update (Details)
       const userMsg: ConversationMessage = {
         id: uuidv4(),
-        conversationId: conversationId || '',
+        conversationId: activeConversationId!,
         role: 'user',
         content: content,
         createdAt: new Date().toISOString(),
       };
 
-      if (conversationId) {
-        detailsCache.setData((old) => {
-          if (!old) return old;
+      queryClient.setQueryData<ConversationDetails>(
+        currentDetailsKey,
+        (old: ConversationDetails | undefined) => {
+          if (!old) {
+            // Initialize new conversation structure
+            return {
+              id: activeConversationId!,
+              userId: '', // Placeholder
+              title: content.slice(0, 100),
+              responseId: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              messages: [userMsg],
+            };
+          }
           return { ...old, messages: [...old.messages, userMsg] };
+        },
+      );
+
+      // 3. Optimistic Update (List)
+      if (isNewConversation) {
+        conversationsCache.list.add({
+          id: activeConversationId!,
+          title: content.slice(0, 100),
+          responseId: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          _count: { messages: 1 },
         });
       }
 
@@ -327,18 +371,17 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       setIsTyping(true);
 
       const idempotencyKey = uuidv4();
-      const assistantMsgId = uuidv4(); // Generate ID upfront
+      const assistantMsgId = uuidv4();
       let accumulatedContent = '';
       const abortController = new AbortController();
 
-      // Store reference for stopResponse function
       currentAbortController.current = abortController;
 
       const requestBody: AIChatRequest = {
-        conversationId: conversationId || '', // Backend will create if empty
+        conversationId: activeConversationId!,
         message: content,
         resumeContext: currentResume,
-        assistantMessageId: assistantMsgId, // Tell backend what ID to use
+        assistantMessageId: assistantMsgId,
       };
 
       try {
@@ -359,10 +402,9 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                 .get('content-type')
                 ?.includes('text/event-stream')
             ) {
-              return; // smooth sailing
+              return;
             }
 
-            // If we got an error (like 429), parse the JSON message
             const data = await response.json().catch(() => ({}));
             const errorMessage =
               data.message ||
@@ -378,8 +420,9 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
               if (event.type === 'text') {
                 accumulatedContent += event.content;
 
-                if (conversationId) {
-                  detailsCache.setData((old) => {
+                queryClient.setQueryData<ConversationDetails>(
+                  currentDetailsKey,
+                  (old: ConversationDetails | undefined) => {
                     if (!old) return old;
                     const hasMsg = old.messages.some(
                       (m) => m.id === assistantMsgId,
@@ -387,7 +430,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                     if (!hasMsg) {
                       const newAssistantMsg: ConversationMessage = {
                         id: assistantMsgId,
-                        conversationId: conversationId || '',
+                        conversationId: activeConversationId!,
                         role: 'assistant',
                         content: accumulatedContent,
                         createdAt: new Date().toISOString(),
@@ -399,19 +442,20 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                     }
                     return {
                       ...old,
-                      messages: old.messages.map((msg) =>
+                      messages: old.messages.map((msg: ConversationMessage) =>
                         msg.id === assistantMsgId
                           ? { ...msg, content: accumulatedContent }
                           : msg,
                       ),
                     };
-                  });
-                }
+                  },
+                );
               } else if (event.type === 'proposal') {
                 const proposalContent = event.explanation;
 
-                if (conversationId) {
-                  detailsCache.setData((old) => {
+                queryClient.setQueryData<ConversationDetails>(
+                  currentDetailsKey,
+                  (old: ConversationDetails | undefined) => {
                     if (!old) return old;
                     const hasMsg = old.messages.some(
                       (m) => m.id === assistantMsgId,
@@ -419,7 +463,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                     if (!hasMsg) {
                       const newAssistantMsg: ConversationMessage = {
                         id: assistantMsgId,
-                        conversationId: conversationId || '',
+                        conversationId: activeConversationId!,
                         role: 'assistant',
                         content: proposalContent,
                         createdAt: new Date().toISOString(),
@@ -434,7 +478,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                     }
                     return {
                       ...old,
-                      messages: old.messages.map((msg) =>
+                      messages: old.messages.map((msg: ConversationMessage) =>
                         msg.id === assistantMsgId
                           ? {
                               ...msg,
@@ -445,29 +489,29 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                           : msg,
                       ),
                     };
-                  });
-                }
+                  },
+                );
               } else if (event.type === 'done') {
                 setIsTyping(false);
                 abortController.abort();
 
-                // If backend created a new conversation, update our state
+                // If backend returned a different ID for some reason
                 if (
                   event.conversationId &&
-                  event.conversationId !== conversationId
+                  event.conversationId !== activeConversationId
                 ) {
-                  // Mark that we just created this conversation (don't refetch)
                   conversationJustCreated.current = true;
                   setConversationId(event.conversationId);
+                  conversationsCache.invalidate();
+                } else if (isNewConversation) {
+                  // Re-validate list to ensure accurate server data (e.g. title)
+                  conversationsCache.invalidate();
                 }
-
-                // Refresh conversation list to show the new title
-                conversationsCache.invalidate();
               } else if (event.type === 'error') {
                 throw new Error(event.message);
               }
             } catch {
-              // Skip malformed JSON
+              // Skip malformed
             }
           },
           onerror(err) {
@@ -479,22 +523,26 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                 ? err.message
                 : 'Sorry, something went wrong. Please try again.';
 
-            if (assistantMsgId && conversationId) {
-              detailsCache.setData((old) => {
-                if (!old) return old;
-                return {
-                  ...old,
-                  messages: old.messages.map((msg) =>
-                    msg.id === assistantMsgId
-                      ? {
-                          ...msg,
-                          content:
-                            accumulatedContent + `\n\n[Error: ${errorMessage}]`,
-                        }
-                      : msg,
-                  ),
-                };
-              });
+            if (assistantMsgId) {
+              queryClient.setQueryData<ConversationDetails>(
+                currentDetailsKey,
+                (old: ConversationDetails | undefined) => {
+                  if (!old) return old;
+                  return {
+                    ...old,
+                    messages: old.messages.map((msg: ConversationMessage) =>
+                      msg.id === assistantMsgId
+                        ? {
+                            ...msg,
+                            content:
+                              accumulatedContent +
+                              `\n\n[Error: ${errorMessage}]`,
+                          }
+                        : msg,
+                    ),
+                  };
+                },
+              );
             }
             throw err;
           },
@@ -508,11 +556,10 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         }
         setIsTyping(false);
       } finally {
-        // Clear the abort controller reference
         currentAbortController.current = null;
       }
     },
-    [conversationId, currentResume],
+    [conversationId, currentResume, queryClient, conversationsCache],
   );
 
   const handleQuickAction = useCallback(

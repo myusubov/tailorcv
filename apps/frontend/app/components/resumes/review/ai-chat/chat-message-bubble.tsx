@@ -64,10 +64,10 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       {(!message.proposal || isUser) && (
         <div
           className={cn(
-            'wrap-break-words relative max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed transition-all',
+            'wrap-break-words relative max-w-[85%] rounded-2xl text-sm leading-relaxed transition-all',
             isUser
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-content2 text-foreground pb-8',
+              ? 'bg-primary text-primary-foreground px-3 py-2'
+              : 'text-foreground pb-8',
           )}
         >
           <ReactMarkdown
@@ -170,7 +170,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
           </ReactMarkdown>
 
           {!isUser && (
-            <div className="absolute right-2 bottom-1.5 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="flex items-center gap-1">
               <Tooltip delay={300}>
                 <Tooltip.Trigger>
                   <Button
@@ -214,6 +214,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       {message.proposal && proposalStatus === 'pending' && (
         <ProposalCard
           proposal={message.proposal}
+          originalData={resumeContext?.form.getValues()}
           explanation={message.explanation || message.content}
           onApply={handleApply}
           onDiscard={handleDiscard}

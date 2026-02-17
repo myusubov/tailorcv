@@ -123,7 +123,6 @@ export function ChatSidebar() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <DeleteDialog
         isOpen={!!deleteId}
         onOpenChange={(isOpen) => !isOpen && setDeleteId(null)}
