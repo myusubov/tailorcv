@@ -12,6 +12,7 @@ export interface ChatMessage {
   proposal?: Partial<BaseResumeData> | null;
   explanation?: string | null;
   status?: 'pending' | 'applied' | 'discarded' | null;
+  isThinking?: boolean;
 }
 
 /**
@@ -31,6 +32,7 @@ export interface AIChatRequest {
 export type AIChatStreamEvent =
   | { type: 'text'; content: string }
   | { type: 'proposal'; data: Partial<BaseResumeData>; explanation: string }
+  | { type: 'thinking'; content: string }
   | { type: 'done'; responseId: string; conversationId?: string }
   | { type: 'error'; message: string };
 
@@ -59,6 +61,7 @@ export interface ConversationMessage {
   proposal?: Partial<BaseResumeData> | null;
   explanation?: string | null;
   status?: 'pending' | 'applied' | 'discarded' | null;
+  isThinking?: boolean;
 }
 
 /**

@@ -77,8 +77,8 @@ export function ContactProposal({
   )
 }
 
-// Define specific types for items to avoid 'any'
-type ListItem = 
+/** Union type for list-based resume sections (experiences, projects, education) */
+export type ListItem =
   | NonNullable<BaseResumeData['experiences']>[number]
   | NonNullable<BaseResumeData['projects']>[number]
   | NonNullable<BaseResumeData['education']>[number];

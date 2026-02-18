@@ -27,7 +27,8 @@ export type AIChatStreamEvent =
   | { type: 'text'; content: string }
   | { type: 'proposal'; data: Partial<BaseResumeData>; explanation: string }
   | { type: 'done'; responseId: string; conversationId?: string }
-  | { type: 'error'; message: string; code?: string };
+  | { type: 'error'; message: string; code?: string }
+  | { type: 'thinking'; content: string };
 
 /**
  * Result of a streamed chat response

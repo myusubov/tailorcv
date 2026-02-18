@@ -7,9 +7,6 @@ import remarkGfm from 'remark-gfm';
 import { ChatMessage } from '@/lib/types/ai-chat';
 import { CodeBlock } from './code-block';
 import { ProposalCard } from '@/app/components/ai-chat/proposal-card';
-import { ResumeFormContext } from '@/app/components/resumes/review/resume-form-context';
-import { useContext } from 'react';
-
 import { useAIChat } from '@/app/providers/ai-chat-provider';
 
 interface ChatMessageBubbleProps {
@@ -19,10 +16,11 @@ interface ChatMessageBubbleProps {
 export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   const isUser = message.role === 'user';
   const [isCopied, setIsCopied] = useState(false);
+  // Check if this is a "Thinking" state
+  const isThinkingState = !isUser && message.isThinking;
 
-  const resumeContext = useContext(ResumeFormContext);
-  const { updateMessageStatus } = useAIChat();
-  const applyUpdate = resumeContext?.applyUpdate;
+  const { updateMessageStatus, applyUpdate, canApplyUpdate, currentResume } =
+    useAIChat();
 
   // State to track if proposal was already applied or discarded
   const [proposalStatus, setProposalStatus] = useState<
@@ -36,8 +34,9 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  /** Applies the AI proposal to the resume form and updates message status */
   const handleApply = () => {
-    if (message.proposal && applyUpdate) {
+    if (message.proposal && canApplyUpdate) {
       applyUpdate(message.proposal);
       setProposalStatus('applied');
       updateMessageStatus(message.id, 'applied');
@@ -48,6 +47,20 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
     setProposalStatus('discarded');
     updateMessageStatus(message.id, 'discarded');
   };
+
+  if (isThinkingState) {
+    return (
+      <div className="w-full max-w-[85%] self-start pb-8">
+        <div className="text-muted-foreground flex items-center gap-2">
+          <Icon
+            icon="solar:magic-stick-3-linear"
+            className="size-4 animate-pulse"
+          />
+          <span className="text-sm">Drafting changes...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -214,11 +227,11 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       {message.proposal && proposalStatus === 'pending' && (
         <ProposalCard
           proposal={message.proposal}
-          originalData={resumeContext?.form.getValues()}
+          originalData={currentResume || undefined}
           explanation={message.explanation || message.content}
           onApply={handleApply}
           onDiscard={handleDiscard}
-          canApply={!!applyUpdate}
+          canApply={canApplyUpdate}
         />
       )}
 

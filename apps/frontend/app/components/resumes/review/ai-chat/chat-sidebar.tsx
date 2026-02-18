@@ -20,8 +20,8 @@ export function ChatSidebar() {
     selectConversation,
     createNewConversation,
     deleteConversation,
+    prefetchConversationDetails,
   } = useAIChat();
-
   // State for delete confirmation
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -30,6 +30,10 @@ export function ChatSidebar() {
       deleteConversation(deleteId);
       setDeleteId(null);
     }
+  };
+
+  const handleMouseEnter = (id: string) => {
+    prefetchConversationDetails(id);
   };
 
   return (
@@ -112,6 +116,7 @@ export function ChatSidebar() {
                 conversations.map((conv) => (
                   <ConversationItem
                     key={conv.id}
+                    onMouseEnter={() => handleMouseEnter(conv.id)}
                     conversation={conv}
                     isActive={conv.id === conversationId}
                     onSelect={() => selectConversation(conv.id)}

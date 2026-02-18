@@ -51,6 +51,7 @@ export type DefinedQueryHook<TParams, TResponse> = ((
   options?: DefineQueryOptions<TResponse>,
 ) => UseQueryResult<TResponse, ApiRequestError>) & {
   getKey: (params: TParams, keyParts?: unknown[]) => Array<string | number>;
+  fetcher: (params: TParams) => Promise<TResponse>;
 };
 
 /**
@@ -107,6 +108,51 @@ export function defineQuery<TParams, TResponse>(
     }
   };
 
+  /**
+   * The actual fetch function, decoupled from the hook
+   */
+  const fetcher = async (params: TParams): Promise<TResponse> => {
+    if (isClientFn) {
+      // Legacy API: unwrap ClientGetFn
+      const clientFn = configOrFn as ClientGetFn<TParams, TResponse>;
+      const result = await clientFn(params);
+      
+      if (!result) {
+        throw new Error('No result returned from client function');
+      }
+      if (!result.ok) {
+        throw new ApiRequestError(
+          result.status,
+          result.error.code,
+          result.error.message,
+          result.error.details,
+        );
+      }
+      return result.data;
+    } else {
+      // New API: use config directly
+      const config = configOrFn as DefineQueryConfig<TParams, TResponse>;
+      const path =
+        typeof config.path === 'function'
+          ? config.path(params as TParams)
+          : config.path;
+
+      const result = await clientGet<TResponse>(path, config.defaults ?? {});
+      if (!result) {
+        throw new Error('No result returned from client function');
+      }
+      if (!result.ok) {
+        throw new ApiRequestError(
+          result.status,
+          result.error.code,
+          result.error.message,
+          result.error.details,
+        );
+      }
+      return result.data;
+    }
+  };
+
   function useGeneratedQuery(
     params: TParams,
     options?: DefineQueryOptions<TResponse>,
@@ -114,52 +160,9 @@ export function defineQuery<TParams, TResponse>(
     const { keyParts, ...queryOptions } = options ?? {};
 
     const queryKey = getKey(params, keyParts);
-    let queryFn: () => Promise<TResponse>;
+    // Reuse the external fetcher
+    const queryFn = () => fetcher(params);
 
-    if (isClientFn) {
-      // Legacy API: unwrap ClientGetFn
-      const clientFn = configOrFn as ClientGetFn<TParams, TResponse>;
-
-      queryFn = async () => {
-        const result = await clientFn(params);
-        if (!result) {
-          throw new Error('No result returned from client function');
-        }
-        if (!result.ok) {
-          throw new ApiRequestError(
-            result.status,
-            result.error.code,
-            result.error.message,
-            result.error.details,
-          );
-        }
-        return result.data;
-      };
-    } else {
-      // New API: use config directly
-      const config = configOrFn as DefineQueryConfig<TParams, TResponse>;
-
-      queryFn = async () => {
-        const path =
-          typeof config.path === 'function'
-            ? config.path(params as TParams)
-            : config.path;
-
-        const result = await clientGet<TResponse>(path, config.defaults ?? {});
-        if (!result) {
-          throw new Error('No result returned from client function');
-        }
-        if (!result.ok) {
-          throw new ApiRequestError(
-            result.status,
-            result.error.code,
-            result.error.message,
-            result.error.details,
-          );
-        }
-        return result.data;
-      };
-    }
 
     // Merge defaults from config with options from the call site
     const mergedOptions = {
@@ -177,6 +180,7 @@ export function defineQuery<TParams, TResponse>(
   }
 
   useGeneratedQuery.getKey = getKey;
+  useGeneratedQuery.fetcher = fetcher;
 
   return useGeneratedQuery as DefinedQueryHook<TParams, TResponse>;
 }

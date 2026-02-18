@@ -12,6 +12,7 @@ import {
 import { useForm, FormProvider, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type BaseResumeData, baseResumeDataSchema, deepMerge } from 'shared';
+import { hydrateProposalIds } from '@/lib/utils/hydrateProposalIds';
 
 /**
  * Context value for the resume form state.
@@ -35,6 +36,10 @@ interface ResumeFormContextValue {
   undo: () => void;
   /** Whether undo is available */
   canUndo: boolean;
+  /** Redo the last undone change */
+  redo: () => void;
+  /** Whether redo is available */
+  canRedo: boolean;
 }
 
 export const ResumeFormContext = createContext<ResumeFormContextValue | null>(
@@ -51,6 +56,14 @@ export function useResumeForm(): ResumeFormContextValue {
     throw new Error('useResumeForm must be used within a ResumeFormProvider');
   }
   return context;
+}
+
+/**
+ * Optional variant that returns null when outside ResumeFormProvider.
+ * Use in components that may render both inside and outside the review page.
+ */
+export function useResumeFormOptional(): ResumeFormContextValue | null {
+  return useContext(ResumeFormContext);
 }
 
 interface ResumeFormProviderProps {
@@ -108,16 +121,17 @@ export function ResumeFormProvider({
 
   // Debounced auto-save: save 1 second after last change
   /*   useEffect(() => {
-    if (!isDirty) return;
+  if (!isDirty) return;
 
-    const timeout = setTimeout(() => {
-      saveNow();
-    }, 1000);
+  const timeout = setTimeout(() => {
+    saveNow();
+  }, 1000);
 
-    return () => clearTimeout(timeout);
-  }, [isDirty, saveNow, form.formState]);
- */
+  return () => clearTimeout(timeout);
+}, [isDirty, saveNow, form.formState]);
+*/
   const [history, setHistory] = useState<BaseResumeData[]>([]);
+  const [future, setFuture] = useState<BaseResumeData[]>([]);
 
   /**
    * Applies a partial update to the resume data.
@@ -130,8 +144,16 @@ export function ResumeFormProvider({
       // Push current state to history (limit to last 10)
       setHistory((prev) => [...prev.slice(-9), currentData]);
 
-      // Merge new data
-      const newData = deepMerge(currentData, partialData);
+      // Clear future stack on new changes (standard undo/redo behavior)
+      setFuture([]);
+
+      // Inject IDs into AI proposal arrays before merging.
+      // AI proposals omit IDs to save tokens, but the form schema requires them.
+      const hydrated = hydrateProposalIds({
+        proposal: partialData,
+        currentData,
+      });
+      const newData = deepMerge(currentData, hydrated);
 
       // Update form
       form.reset(newData, { keepDirty: true });
@@ -146,16 +168,49 @@ export function ResumeFormProvider({
    * Reverts the last update from history.
    */
   const undo = useCallback(() => {
-    setHistory((prev) => {
-      const newHistory = [...prev];
-      const lastState = newHistory.pop();
-      if (lastState) {
-        form.reset(lastState, { keepDirty: true });
-        saveNow();
-      }
-      return newHistory;
-    });
-  }, [form, saveNow]);
+    // 1. Check if we can undo
+    if (history.length === 0) return;
+
+    // 2. Capture current state
+    const currentState = form.getValues();
+    const newHistory = [...history];
+    const previousState = newHistory.pop();
+
+    if (previousState) {
+      // 3. Update generic state (Future)
+      setFuture((prev) => [currentState, ...prev]);
+
+      // 4. Update History
+      setHistory(newHistory);
+
+      // 5. Update Form
+      form.reset(previousState, { keepDirty: true });
+    }
+  }, [form, history]);
+
+  /**
+   * Redoes the last undone change.
+   */
+  const redo = useCallback(() => {
+    // 1. Check if we can redo
+    if (future.length === 0) return;
+
+    // 2. Capture current state
+    const newFuture = [...future];
+    const nextState = newFuture.shift();
+
+    if (nextState) {
+      // 3. Update specific state (History)
+      const currentState = form.getValues();
+      setHistory((prev) => [...prev, currentState]);
+
+      // 4. Update Future
+      setFuture(newFuture);
+
+      // 5. Update Form
+      form.reset(nextState, { keepDirty: true });
+    }
+  }, [form, future]);
 
   const value = useMemo<ResumeFormContextValue>(
     () => ({
@@ -167,6 +222,8 @@ export function ResumeFormProvider({
       applyUpdate,
       undo,
       canUndo: history.length > 0,
+      redo,
+      canRedo: future.length > 0,
     }),
     [
       form,
@@ -177,6 +234,8 @@ export function ResumeFormProvider({
       applyUpdate,
       undo,
       history.length,
+      redo,
+      future.length,
     ],
   );
 

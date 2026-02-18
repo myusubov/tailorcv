@@ -8,6 +8,7 @@ type ConversationItemProps = {
   isActive: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onMouseEnter: () => void;
 };
 
 export function ConversationItem({
@@ -15,12 +16,14 @@ export function ConversationItem({
   isActive,
   onSelect,
   onDelete,
+  onMouseEnter,
 }: ConversationItemProps) {
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={onSelect}
+      onMouseEnter={onMouseEnter}
       onKeyDown={(e) => e.key === 'Enter' && onSelect()}
       className={cn(
         'group relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 transition-colors',

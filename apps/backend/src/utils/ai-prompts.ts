@@ -46,6 +46,13 @@ CRITICAL INSTRUCTIONS FOR USING CONTEXT:
 2. Specificity: If specific projects, skills, or experiences are listed in the JSON, reference them directly by name.
 3. Troubleshooting: If a user says "I have projects" but the array above is empty, politely inform them that your current view of the resume shows no projects and ask them to ensure they've added them in the editor.
 4. Completeness: Use the full details provided (bullets, dates, tech stacks) to give actionable advice avoiding generic responses.`;
+    } else {
+        instructions += `
+
+NO CONTEXT AVAILABLE:
+You currently do not have access to any resume data.
+- If the user asks to edit, review, or asks questions about "my resume", you MUST politely inform them that they need to open/view a specific resume first so you can see it.
+- You can still answer general questions about resume writing best practices.`;
     }
 
     return instructions;

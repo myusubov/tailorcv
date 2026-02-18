@@ -25,7 +25,7 @@ export function ProposalCard({
 
       <div className="mx-3 my-2 h-px bg-default-200" />
 
-      <div className="max-h-[300px] overflow-y-auto px-4 py-1">
+      <div className="max-h-75 overflow-y-auto px-4 py-1">
         <ProposalContent proposal={proposal} originalData={originalData} />
       </div>
 

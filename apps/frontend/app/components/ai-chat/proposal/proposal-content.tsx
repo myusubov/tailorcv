@@ -4,6 +4,7 @@ import {
   ContactProposal,
   ListProposal,
   TextProposal,
+  type ListItem,
 } from './proposal-fields';
 
 export function ProposalContent({ 
@@ -49,8 +50,8 @@ export function ProposalContent({
             <ListProposal 
               key={key} 
               label={key} 
-              items={value as any[]} 
-              originalItems={originalValue as any[]}
+              items={value as ListItem[]}
+              originalItems={originalValue as ListItem[]}
             />
           );
         }
