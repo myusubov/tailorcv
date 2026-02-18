@@ -8,20 +8,61 @@ interface StreamHandlerOptions {
 
 /**
  * Attempts to parse JSON with automatic closure for truncated responses.
- * OpenAI's streaming can sometimes cut off mid-JSON due to network conditions.
+ * Uses a stack-based approach to close open braces, brackets, and quotes.
  */
 function parseToolCallArguments(jsonString: string): any {
-  const closureSuffixes = ['', '}', ']}', ']}']; // Try in order of likelihood
+  // 1. Try strict parse first
+  try {
+    return JSON.parse(jsonString);
+  } catch {
+    // Continue to repair
+  }
 
-  for (const suffix of closureSuffixes) {
-    try {
-      return JSON.parse(jsonString + suffix);
-    } catch {
-      continue; // Try next suffix
+  // 2. Build closure state
+  const stack: string[] = [];
+  let inString = false;
+  let isEscaped = false;
+
+  for (const char of jsonString) {
+    if (inString) {
+      if (isEscaped) {
+        isEscaped = false;
+      } else if (char === '\\') {
+        isEscaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+    } else {
+      if (char === '"') {
+        inString = true;
+      } else if (char === '{') {
+        stack.push('}');
+      } else if (char === '[') {
+        stack.push(']');
+      } else if (char === '}' || char === ']') {
+        // Pop matching closer if it matches top of stack
+        if (stack.length > 0 && stack[stack.length - 1] === char) {
+          stack.pop();
+        }
+      }
     }
   }
 
-  throw new Error('Unable to parse tool call arguments even with auto-closure');
+  // 3. Construct suffix
+  let suffix = '';
+  if (inString) suffix += '"';
+  while (stack.length > 0) {
+    suffix += stack.pop();
+  }
+
+  // 4. Parse with suffix
+  try {
+    return JSON.parse(jsonString + suffix);
+  } catch (err) {
+    // If simple closure fails, it might be cut off in a key or strictly invalid syntax
+    // fallback to original behavior (or just fail)
+    throw new Error('Unable to parse tool call arguments even with auto-closure');
+  }
 }
 
 /**

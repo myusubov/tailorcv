@@ -220,7 +220,7 @@ describe('Onboarding Service', () => {
 
       expect(mockOpenAI.chat.completions.parse).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           temperature: 0,
         })
       );
