@@ -20,6 +20,7 @@ export function ChatHeader({
     setIsSidebarOpen,
     createNewConversation,
     conversationId,
+    isCreatingConv,
   } = useAIChat();
 
   return (
@@ -71,26 +72,25 @@ export function ChatHeader({
 
       <div className="flex items-center gap-1">
         {/* New conversation - Only show if we're in an existing conversation */}
-        {/* {conversationId && (
-          <Tooltip delay={300}>
-            <Tooltip.Trigger>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="ghost"
-                onPress={() => createNewConversation()}
-                className={cn('text-muted-foreground hover:text-foreground')}
-                aria-label="New conversation"
-              >
-                <Icon icon="solar:add-circle-linear" className="size-4" />
-              </Button>
-            </Tooltip.Trigger>
-            <Tooltip.Content showArrow>
-              <Tooltip.Arrow />
-              <p className="text-xs font-medium">New conversation</p>
-            </Tooltip.Content>
-          </Tooltip>
-        )} */}
+        <Tooltip delay={300}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={() => createNewConversation()}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="New conversation"
+              isDisabled={isCreatingConv}
+            >
+              <Icon icon="solar:add-circle-linear" className="size-4" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content showArrow>
+            <Tooltip.Arrow />
+            <p className="text-xs font-medium">New conversation</p>
+          </Tooltip.Content>
+        </Tooltip>
 
         <Tooltip delay={300}>
           <Tooltip.Trigger>

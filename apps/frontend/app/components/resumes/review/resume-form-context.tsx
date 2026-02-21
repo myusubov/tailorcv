@@ -13,6 +13,7 @@ import { useForm, FormProvider, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type BaseResumeData, baseResumeDataSchema, deepMerge } from 'shared';
 import { hydrateProposalIds } from '@/lib/utils/hydrateProposalIds';
+import { updateResumeAction } from '@/lib/actions/resumes.actions';
 
 /**
  * Context value for the resume form state.
@@ -99,37 +100,46 @@ export function ResumeFormProvider({
   const isDirty = form.formState.isDirty;
 
   /**
-   * Saves the current form data to the backend.
-   * TODO: Implement actual PATCH request when endpoint is ready.
+   * Saves the current form data to the backend via server action.
    */
   const saveNow = useCallback(async () => {
+    // If we're already saving, don't trigger another identical save
+    if (isSaving) return;
+
+    // Check validation state
+    const isValid = await form.trigger();
+    if (!isValid) {
+      console.warn('[ResumeFormProvider] Save aborted: Form is invalid');
+      return;
+    }
+
     const data = form.getValues();
     setIsSaving(true);
     try {
-      // TODO: Replace with actual API call
-      // await patchResume(resumeId, data);
-      console.log('[ResumeFormProvider] Would save:', { resumeId, data });
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network
+      await updateResumeAction({ id: resumeId, data });
       setLastSaved(new Date());
-      form.reset(data); // Clear dirty state
+      form.reset(data, { keepDirty: false }); // Clear dirty state
     } catch (error) {
       console.error('[ResumeFormProvider] Save failed:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [form, resumeId]);
+  }, [form, resumeId, isSaving]); // isSaving added to deps
 
-  // Debounced auto-save: save 1 second after last change
-  /*   useEffect(() => {
-  if (!isDirty) return;
+  // Debounced auto-save: save 1.5 seconds after last valid change
+  useEffect(() => {
+    const isDirty = form.formState.isDirty;
+    const isValid = form.formState.isValid;
 
-  const timeout = setTimeout(() => {
-    saveNow();
-  }, 1000);
+    if (!isDirty || !isValid) return;
 
-  return () => clearTimeout(timeout);
-}, [isDirty, saveNow, form.formState]);
-*/
+    const timeout = setTimeout(() => {
+      saveNow();
+    }, 1500);
+
+    return () => clearTimeout(timeout);
+  }, [form.formState.isDirty, form.formState.isValid, saveNow]);
+
   const [history, setHistory] = useState<BaseResumeData[]>([]);
   const [future, setFuture] = useState<BaseResumeData[]>([]);
 
@@ -158,8 +168,10 @@ export function ResumeFormProvider({
       // Update form
       form.reset(newData, { keepDirty: true });
 
-      // Trigger save
-      // saveNow();
+      // Trigger immediate save for AI apply
+      setTimeout(() => {
+        saveNow();
+      }, 0);
     },
     [form, saveNow],
   );
@@ -185,8 +197,13 @@ export function ResumeFormProvider({
 
       // 5. Update Form
       form.reset(previousState, { keepDirty: true });
+
+      // Trigger immediate save
+      setTimeout(() => {
+        saveNow();
+      }, 0);
     }
-  }, [form, history]);
+  }, [form, history, saveNow]);
 
   /**
    * Redoes the last undone change.
@@ -209,8 +226,13 @@ export function ResumeFormProvider({
 
       // 5. Update Form
       form.reset(nextState, { keepDirty: true });
+
+      // Trigger immediate save
+      setTimeout(() => {
+        saveNow();
+      }, 0);
     }
-  }, [form, future]);
+  }, [form, future, saveNow]);
 
   const value = useMemo<ResumeFormContextValue>(
     () => ({

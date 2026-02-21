@@ -30,7 +30,7 @@ const envSchema = z.object({
 
   // After auth redirect URLs
   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z.string().default('/dashboard'),
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string().default('/dashboard'),
+  NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string().default('/onboarding'),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: z.string().default('/login'),
 
   // Backend API URL

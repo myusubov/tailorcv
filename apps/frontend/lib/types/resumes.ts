@@ -36,8 +36,12 @@ export interface ResumeAnalysisResult {
   items: AnalysisItem[];
   /** Number of complete sections */
   completeCount: number;
-  /** Total number of sections analyzed */
-  totalCount: number;
   /** Completion percentage (0-100) */
   progressPct: number;
+}
+
+export interface UpdateResumeInput {
+  id: string;
+  name?: string;
+  data: BaseResumeData;
 }

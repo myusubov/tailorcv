@@ -7,7 +7,10 @@ import type {
   UpdateConversationResponseIdInput,
   DeleteConversationInput,
 } from '../types/chat-conversations';
-import { InputJsonValue, JsonValue } from 'prisma/generated/client/runtime/client';
+import {
+  InputJsonValue,
+  JsonValue,
+} from 'prisma/generated/client/runtime/client';
 import { generateConversationTitle } from './ai-chat.service';
 
 /**
@@ -78,7 +81,11 @@ export async function getConversationWithMessages(
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   // Map messages to include proposal fields from metadata
@@ -92,7 +99,8 @@ export async function getConversationWithMessages(
       createdAt: msg.createdAt,
       proposal: metadata?.proposal ?? null,
       explanation: metadata?.explanation ?? null,
-      status: (metadata?.status as string) || (metadata?.proposal ? 'pending' : null),
+      status:
+        (metadata?.status as string) || (metadata?.proposal ? 'pending' : null),
     };
   });
 
@@ -115,7 +123,11 @@ export async function addMessage(input: AddMessageInput & { id?: string }) {
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   // If this is the first user message and no title, set it
@@ -158,7 +170,11 @@ export async function updateConversationResponseId(
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   return prisma.chatConversation.update({
@@ -182,7 +198,11 @@ export async function deleteConversation({
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   await prisma.chatConversation.delete({ where: { id } });
@@ -200,7 +220,6 @@ export async function updateMessageStatus({
   clerkUserId: string;
   status: 'pending' | 'applied' | 'discarded';
 }) {
-
   logger.info({ messageId, clerkUserId, status }, 'Updating message status');
 
   // Verify the message belongs to the user
@@ -214,7 +233,11 @@ export async function updateMessageStatus({
   });
 
   if (!message) {
-    throw new AppError('Message not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Message not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   const currentMetadata = (message.metadata as Record<string, unknown>) || {};
@@ -251,7 +274,10 @@ export async function ensureChatSession({
 
   if (activeConversationId) {
     try {
-      const conversation = await getConversationWithMessages(activeConversationId, clerkUserId);
+      const conversation = await getConversationWithMessages(
+        activeConversationId,
+        clerkUserId,
+      );
       previousResponseId = conversation.responseId;
     } catch (error) {
       // If conversation doesn't exist but ID provided (client generated), create it
@@ -315,12 +341,15 @@ export async function saveAssistantResponse({
     }),
   ];
 
-
   // Only update the conversation's responseId if:
   // 1. We have a valid responseId (not null/empty)
   // 2. It's not an edit-* placeholder
   // 3. It's not a proposal/tool call (which would cause "No tool output found" errors)
-  const isProposal = metadata && typeof metadata === 'object' && 'type' in metadata && metadata.type === 'proposal';
+  const isProposal =
+    metadata &&
+    typeof metadata === 'object' &&
+    'type' in metadata &&
+    metadata.type === 'proposal';
 
   if (responseId && !responseId.startsWith('edit-') && !isProposal) {
     savePromises.push(

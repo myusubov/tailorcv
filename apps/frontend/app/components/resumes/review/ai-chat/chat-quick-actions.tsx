@@ -3,19 +3,30 @@
 import { Chip } from '@heroui/react';
 import { HorizontalScroll } from '../../../ui/horizontal-scroll';
 
-const QUICK_ACTIONS = [
-  'Add Python to skills',
-  'Improve my summary',
-  'Add a new project',
-  'Add a work experience',
-  'Check for grammar',
-];
-
 interface ChatQuickActionsProps {
   onActionClick: (action: string) => void;
+  hasResumeContext: boolean;
 }
 
-export function ChatQuickActions({ onActionClick }: ChatQuickActionsProps) {
+export function ChatQuickActions({
+  onActionClick,
+  hasResumeContext,
+}: ChatQuickActionsProps) {
+  // Dynamically render quick actions based on whether the context contains the user's resume
+  const QUICK_ACTIONS = hasResumeContext
+    ? [
+        'Add Python to skills',
+        'Improve my summary',
+        'Add a new project',
+        'Add a work experience',
+        'Check for grammar',
+      ]
+    : [
+        'How to write a great summary?',
+        'What skills make a resume stand out?',
+        'How to describe my projects?',
+        'General resume tips',
+      ];
   return (
     <div className="border-separator shrink-0 border-t">
       <HorizontalScroll scrollClassName="px-4 py-3" className="w-full">

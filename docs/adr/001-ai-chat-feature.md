@@ -53,6 +53,12 @@ The AI Chat feature provides a continuously accessible drawer interface with the
 - **Strategy**: The `ResumeFormProvider` implements a stack-based state machine (`history` and `future` stacks) storing full snapshots of `BaseResumeData`.
 - **Integration**: When AI applies a change via `applyUpdate`, it pushes the *current* state to `history`, clears `future`, and resets the form with the new data. This allows users to undo AI changes exactly like manual edits.
 
+### 7. Auto-Save Architecture
+
+- **Strategy**: Instead of a manual save button, the application relies on debounced auto-saving combined with immediate saves for AI actions.
+- **Implementation**: The `ResumeFormProvider` uses a `useEffect` hooked into React Hook Form's `isDirty` and `isValid` states. A 1.5-second debounce timeout fires the `updateResumeAction` server action only if the form is dirty and valid.
+- **AI Action Optimization**: Applying AI proposals or using the Undo/Redo stack invokes `saveNow()` directly (bypassing the debounce) utilizing a concurrency guard (`if (isSaving) return;`) to prevent race conditions. 
+
 ---
 
 ## Technical Architecture

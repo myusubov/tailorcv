@@ -101,6 +101,9 @@ export function OnboardingJobProvider({
       jobData?.status !== 'SUCCEEDED' &&
       jobData?.status !== 'FAILED',
     onData: setLiveJobData,
+    onError: (error) => {
+      console.error('Stream error:', error);
+    },
   });
 
   // Early persistence cleanup: Clear localStorage as soon as the job is terminal.

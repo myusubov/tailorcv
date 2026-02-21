@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { DateInputGroup } from '@heroui/react';
+import { DateField } from '@heroui/react';
 
 /**
  * The segment type extracted from DateInputGroup.Segment props to ensure
  * 100% compatibility with HeroUI's internal types without using 'any'.
  */
 export type DateSegment = React.ComponentProps<
-  typeof DateInputGroup.Segment
+  typeof DateField.Segment
 >['segment'];
 
 interface DateSegmentFilterProps {
@@ -22,11 +22,11 @@ interface DateSegmentFilterProps {
  *
  * @example
  * <DateField ...>
- *   <DateInputGroup>
- *     <DateInputGroup.Input>
+ *   <DateField.Group>
+ *     <DateField.Input>
  *       {(segment) => <DateSegmentFilter segment={segment as any} />}
- *     </DateInputGroup.Input>
- *   </DateInputGroup>
+ *     </DateField.Input>
+ *   </DateField.Group>
  * </DateField>
  */
 export function DateSegmentFilter({ segment }: DateSegmentFilterProps) {
@@ -35,5 +35,5 @@ export function DateSegmentFilter({ segment }: DateSegmentFilterProps) {
     return <React.Fragment />;
   }
 
-  return <DateInputGroup.Segment segment={segment} />;
+  return <DateField.Segment segment={segment} />;
 }

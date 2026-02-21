@@ -54,7 +54,7 @@ const ResumeReview = () => {
  */
 function ReviewPageContent() {
   const { control } = useFormContext<BaseResumeData>();
-  const { applyUpdate, isSaving, lastSaved, undo, redo, canUndo, canRedo } =
+  const { applyUpdate, isSaving, lastSaved, undo, redo, canUndo, canRedo, isDirty } =
     useResumeForm();
   const { setCurrentResume, registerApplyUpdate } = useAIChat();
 
@@ -164,9 +164,11 @@ function ReviewPageContent() {
               <span className="text-muted text-xs">
                 {isSaving
                   ? 'Saving...'
-                  : lastSaved
-                    ? `Saved ${lastSaved.toLocaleTimeString()}`
-                    : ''}
+                  : isDirty
+                    ? 'Unsaved changes'
+                    : lastSaved
+                      ? `Saved ${lastSaved.toLocaleTimeString()}`
+                      : ''}
               </span>
             </div>
           </div>

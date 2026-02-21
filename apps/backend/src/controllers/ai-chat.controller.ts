@@ -3,10 +3,7 @@ import type { ClerkLocals } from '../types/locals';
 import type { ChatRequestBody, AIChatStreamEvent } from '../types/ai-chat';
 import { streamChatResponse } from '../services/ai-chat.service';
 import {
-  getConversationWithMessages,
   addMessage,
-  updateConversationResponseId,
-  createConversation,
   ensureChatSession,
   saveAssistantResponse,
 } from '../services/chat-conversations.service';

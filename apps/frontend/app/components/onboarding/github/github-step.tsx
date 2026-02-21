@@ -58,7 +58,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     refetch: refetchRepos,
   } = useGithubReposQuery(undefined, {
     enabled: !!githubConnection && !connectionError,
-    retry: 1, // Retry once automatically before showing error
+    retry: 1,
   });
 
   // Show toasts and clear params immediately after mount
