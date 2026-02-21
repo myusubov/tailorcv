@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type BaseResumeData, baseResumeDataSchema, deepMerge } from 'shared';
 import { hydrateProposalIds } from '@/lib/utils/hydrateProposalIds';
 import { updateResumeAction } from '@/lib/actions/resumes.actions';
+import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 
 /**
  * Context value for the resume form state.
@@ -97,6 +98,20 @@ export function ResumeFormProvider({
     mode: 'onChange',
   });
 
+  const { mutateAsync: updateResume } = useActionMutation(updateResumeAction, {
+    onSuccess: () => {
+      setLastSaved(new Date());
+      form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
+      setIsSaving(false);
+    },
+    onError: (error) => {
+      console.error('[ResumeFormProvider] Save failed:', error);
+      setIsSaving(false);
+      form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
+    },
+    showErrorToast: false,
+  });
+
   const isDirty = form.formState.isDirty;
 
   /**
@@ -115,15 +130,7 @@ export function ResumeFormProvider({
 
     const data = form.getValues();
     setIsSaving(true);
-    try {
-      await updateResumeAction({ id: resumeId, data });
-      setLastSaved(new Date());
-      form.reset(data, { keepDirty: false }); // Clear dirty state
-    } catch (error) {
-      console.error('[ResumeFormProvider] Save failed:', error);
-    } finally {
-      setIsSaving(false);
-    }
+    updateResume({ id: resumeId, data });
   }, [form, resumeId, isSaving]); // isSaving added to deps
 
   // Debounced auto-save: save 1.5 seconds after last valid change
@@ -131,6 +138,34 @@ export function ResumeFormProvider({
     const isDirty = form.formState.isDirty;
     const isValid = form.formState.isValid;
 
+    console.log({ isDirty });
+
+    console.log({ dirtyFields: form.formState.dirtyFields });
+    const original = form.control._defaultValues;
+    const current = form.getValues();
+    
+    const findDiff = (obj1: any, obj2: any, path = 'root') => {
+      if (obj1 === obj2) return;
+      if (typeof obj1 !== typeof obj2) {
+        console.log(`🚨 Type diff at ${path}: original is ${typeof obj1}, current is ${typeof obj2}`);
+        return;
+      }
+      if (obj1 instanceof Date || obj2 instanceof Date) {
+         if (obj1?.getTime() !== obj2?.getTime()) console.log(`🚨 Date diff at ${path}`, obj1, obj2);
+         return;
+      }
+      if (typeof obj1 === 'object' && obj1 !== null && obj2 !== null) {
+        const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+        keys.forEach(key => {
+          if (!(key in obj1)) console.log(`🚨 Missing in original at ${path}.${key} (current has:`, obj2[key], `)`);
+          else if (!(key in obj2)) console.log(`🚨 Missing in current at ${path}.${key} (original has:`, obj1[key], `)`);
+          else findDiff(obj1[key], obj2[key], `${path}.${key}`);
+        });
+      } else if (obj1 !== obj2) {
+        console.log(`🚨 Value diff at ${path}: original is`, obj1, `current is`, obj2);
+      }
+    };
+    findDiff(original, current);
     if (!isDirty || !isValid) return;
 
     const timeout = setTimeout(() => {

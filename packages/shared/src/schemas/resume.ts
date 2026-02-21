@@ -22,7 +22,7 @@ const optionalStringSchema = (message: string) =>
     .min(1, message)
     .or(z.literal(''))
     .transform((val) => val || null)
-    .nullable();
+    .nullish();
 
 /**
  * AI-FRIENDLY SCHEMAS (No transforms, no refinements)
@@ -145,7 +145,7 @@ export const baseResumeDataSchema = z.object({
         })
         .or(z.literal(''))
         .transform((val) => val || null)
-        .nullable(),
+        .nullish(),
       linkedinUrl: z
         .url({ message: 'Invalid LinkedIn URL' })
         .regex(/(?:https?:\/\/)?(?:www\.)?linkedin\.com/, {
@@ -153,7 +153,7 @@ export const baseResumeDataSchema = z.object({
         })
         .or(z.literal(''))
         .transform((val) => val || null)
-        .nullable(),
+        .nullish(),
       githubUrl: z
         .url({ message: 'Invalid GitHub URL' })
         .regex(/(?:https?:\/\/)?(?:www\.)?github\.com/, {
@@ -161,7 +161,7 @@ export const baseResumeDataSchema = z.object({
         })
         .or(z.literal(''))
         .transform((val) => val || null)
-        .nullable(),
+        .nullish(),
     })
     .strict(),
   summary: optionalStringSchema('Summary cannot be empty'),
@@ -171,7 +171,7 @@ export const baseResumeDataSchema = z.object({
         id: idSchema,
         name: z.string().trim().min(1, 'Skill name is required'),
         category: optionalStringSchema('Category cannot be empty'),
-        level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).nullable(),
+        level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).nullish(),
       })
       .strict(),
   ),
@@ -183,11 +183,11 @@ export const baseResumeDataSchema = z.object({
         title: z.string().trim().min(1, 'Job title is required'),
         location: optionalStringSchema('Location cannot be empty'),
         startDate: dateSchema,
-        endDate: dateSchema.nullable(),
-        isCurrent: z.boolean().nullable(),
+        endDate: dateSchema.nullish(),
+        isCurrent: z.boolean().nullish(),
         tech: z
           .array(z.string().trim().min(1, 'Tech name is required'))
-          .nullable(),
+          .nullish(),
         bullets: z.array(
           z
             .object({
@@ -241,9 +241,9 @@ export const baseResumeDataSchema = z.object({
         id: idSchema,
         name: z.string().trim().min(1, 'Project name is required'),
         role: optionalStringSchema('Project role cannot be empty'),
-        startDate: dateSchema.nullable(),
-        endDate: dateSchema.nullable(),
-        isCurrent: z.boolean().nullable(),
+        startDate: dateSchema.nullish(),
+        endDate: dateSchema.nullish(),
+        isCurrent: z.boolean().nullish(),
         url: z
           .url({ message: 'Invalid project URL' })
           .regex(
@@ -254,7 +254,7 @@ export const baseResumeDataSchema = z.object({
           )
           .or(z.literal(''))
           .transform((val) => val || null)
-          .nullable(),
+          .nullish(),
         repoUrl: z
           .url({ message: 'Invalid repository URL' })
           .regex(/(?:https?:\/\/)?(?:www\.)?github\.com/, {
@@ -262,10 +262,10 @@ export const baseResumeDataSchema = z.object({
           })
           .or(z.literal(''))
           .transform((val) => val || null)
-          .nullable(),
+          .nullish(),
         tech: z
           .array(z.string().trim().min(1, 'Tech name is required'))
-          .nullable(),
+          .nullish(),
         bullets: z.array(
           z
             .object({
@@ -326,11 +326,11 @@ export const baseResumeDataSchema = z.object({
           degree: optionalStringSchema('Degree cannot be empty'),
           field: optionalStringSchema('Field of study cannot be empty'),
           location: optionalStringSchema('Location cannot be empty'),
-          startDate: dateSchema.nullable(),
-          endDate: dateSchema.nullable(),
+          startDate: dateSchema.nullish(),
+          endDate: dateSchema.nullish(),
           grade: optionalStringSchema('Grade cannot be empty'),
           notes: z.string().trim().nullish(),
-          isCurrent: z.boolean().nullable(),
+          isCurrent: z.boolean().nullish(),
         })
         .strict()
         .superRefine((data, ctx) => {
@@ -371,7 +371,7 @@ export const baseResumeDataSchema = z.object({
           }
         }),
     )
-    .nullable(),
+    .nullish(),
   certifications: z
     .array(
       z
@@ -379,7 +379,7 @@ export const baseResumeDataSchema = z.object({
           id: idSchema,
           name: z.string().trim().min(1, 'Certification name is required'),
           issuer: optionalStringSchema('Issuer cannot be empty'),
-          date: dateSchema.nullable(),
+          date: dateSchema.nullish(),
           url: urlSchema,
         })
         .strict(),

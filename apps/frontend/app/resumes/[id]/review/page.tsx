@@ -34,6 +34,8 @@ const ResumeReview = () => {
     isLoading,
   } = useBaseResumeQuery({ id }, { enabled: !!id });
 
+  console.log({ resumeData });
+
   if (error?.status === 404) {
     notFound();
   }
