@@ -36,7 +36,6 @@ export type AIChatStreamEvent =
   | { type: 'done'; responseId: string; conversationId?: string }
   | { type: 'error'; message: string };
 
-
 /**
  * Conversation list item (from list endpoint)
  */

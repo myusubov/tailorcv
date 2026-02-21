@@ -10,7 +10,7 @@ import {
 
 import { logger } from '../lib/logger';
 import { handleResilienceError } from '../lib/resilience';
-import { initSseResponse, setupStreamTermination, writeSseEvent } from 'src/utils/ai-stream-sse';
+import { initSseResponse, setupStreamTermination, writeSseEvent } from '../utils/ai-stream-sse';
 
 /**
  * Handles POST /api/v1/ai/chat
@@ -40,7 +40,6 @@ export const postChatMessage = async (
       conversationId: requestedId,
       initialMessage: message
     });
-
     await addMessage({
       conversationId: activeConversationId,
       clerkUserId,

@@ -84,7 +84,6 @@ export function useQueryCache<
     },
     [queryClient, queryKey],
   );
-
   /**
    * Get current data.
    */

@@ -27,7 +27,7 @@ Respond ONLY with 'edit', 'simple', or 'complex'.`
         });
 
         const classification = completion.choices[0]?.message?.content?.toLowerCase().trim();
-        return (classification === 'edit' || classification === 'complex') ? classification : 'simple';
+        return (classification === 'edit' || classification === 'complex') ? (classification as 'edit' | 'complex') : 'simple';
     } catch (error) {
         // Fallback to simple model on router failure to be safe/cheap
         console.error('Intent classification failed:', error);

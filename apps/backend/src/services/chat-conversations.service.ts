@@ -207,7 +207,6 @@ export async function deleteConversation({
 
   await prisma.chatConversation.delete({ where: { id } });
 }
-
 /**
  * Updates the status of a message (e.g., for AI proposals)
  */

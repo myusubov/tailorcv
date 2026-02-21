@@ -41,7 +41,6 @@ export function useConversationsCache() {
     useConversationsQuery.getKey(undefined),
   );
 }
-
 /**
  * Hook for managing the cache of a specific conversation's details.
  */

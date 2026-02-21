@@ -247,7 +247,7 @@ export function EducationCard({
               <Label>Start Date</Label>
               <DateField.Group>
                 <DateField.Input>
-                  {(segment) => <DateField.Segment segment={segment} />}
+                  {(segment) => <DateSegmentFilter segment={segment as any} />}
                 </DateField.Input>
                   <DateField.Suffix>
                     <DatePicker.Trigger>
@@ -297,12 +297,11 @@ export function EducationCard({
               onChange={(date) =>
                 field.onChange(date ? date.toString().slice(0, 7) : '')
               }
-              
             >
               <Label>End Date / Expected</Label>
               <DateField.Group>
                 <DateField.Input>
-                  {(segment) => <DateField.Segment segment={segment} />}
+                  {(segment) => <DateSegmentFilter segment={segment as any} />}
                 </DateField.Input>
                   <DateField.Suffix>
                     <DatePicker.Trigger>

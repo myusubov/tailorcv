@@ -100,7 +100,7 @@ export function ProjectItemContent({
             render={({ field }) => (
               <ArrayInput
                 label="Tech Stack"
-                value={field.value}
+                value={field.value ?? null}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 placeholder="e.g. React, Node.js, TypeScript"

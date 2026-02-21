@@ -28,6 +28,13 @@ vi.mock('../utils/ai-stream', () => ({
   handleOpenAIStream: vi.fn(() => (async function* () {})()),
 }));
 
+// Mock intent classification
+vi.mock('../utils/ai-intent', () => ({
+  classifyIntent: vi.fn(),
+}));
+
+import { classifyIntent } from '../utils/ai-intent';
+
 describe('AI Chat Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,6 +45,7 @@ describe('AI Chat Service', () => {
       const input = 'Hello AI';
       const resumeContext = { contact: { firstName: 'Test' } };
       
+      (classifyIntent as any).mockResolvedValue('complex');
       await streamChatResponse({ input, resumeContext } as any);
 
       expect(openai.responses.stream).toHaveBeenCalledWith(

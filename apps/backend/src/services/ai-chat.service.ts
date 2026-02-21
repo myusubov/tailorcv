@@ -5,6 +5,7 @@ import { cleanResumeContext } from '../utils/ai-context';
 import { buildInstructions } from '../utils/ai-prompts';
 import { handleOpenAIStream } from '../utils/ai-stream';
 import { AI_TOOLS } from '../utils/ai-tools';
+import { classifyIntent } from '../utils/ai-intent';
 import { logger } from '../lib/logger';
 
 /**
@@ -36,7 +37,13 @@ export async function streamChatResponse(
   const { input, previousResponseId, resumeContext } = params;
   const controller = new AbortController();
 
-  // 1. Prepare Content & Instructions
+  // 1. Determine Model based on Intent
+  const intent = await classifyIntent(input);
+  const model = intent === 'complex' || intent === 'edit' ? 'gpt-4o' : 'gpt-4o-mini';
+
+  logger.info({ intent, model }, 'AI Chat model selection');
+
+  // 2. Prepare Content & Instructions
   const cleaned = resumeContext ? cleanResumeContext(resumeContext) : null;
   const instructions = buildInstructions(cleaned, !!resumeContext);
 
@@ -50,7 +57,7 @@ export async function streamChatResponse(
     );
   }
 
-  // 2. Setup IDs
+  // 3. Setup IDs
   let resolveResponseId: (id: string) => void;
   let rejectResponseId: (err: Error) => void;
   const responseIdPromise = new Promise<string>((resolve, reject) => {
@@ -62,20 +69,16 @@ export async function streamChatResponse(
     rejectResponseId(new Error('Stream aborted'));
   });
 
-  // 3. Initialize OpenAI Stream
-  // The Responses API supports conversation continuity via `previous_response_id`.
-  // However, we can only continue from text responses, not tool calls.
-  // Tool calls require us to submit the tool's output to continue, which we don't do
-  // since edits are executed client-side. So we exclude those IDs to avoid errors.
+  // 4. Initialize OpenAI Stream
   const canContinueConversation =
     previousResponseId &&
-    !previousResponseId.startsWith('edit-') && // Legacy edit placeholders
-    !previousResponseId.startsWith('fc_'); // Function call IDs
+    !previousResponseId.startsWith('edit-') &&
+    !previousResponseId.startsWith('fc_');
 
   const openaiStream = await openaiApiPolicy.execute(() =>
     openai.responses.stream(
       {
-        model: 'gpt-4o',
+        model,
         instructions,
         input,
         ...(resumeContext ? { tools: AI_TOOLS as any } : {}),
@@ -89,7 +92,7 @@ export async function streamChatResponse(
     ),
   );
 
-  // 4. Transform and Return Stream
+  // 5. Transform and Return Stream
   return {
     stream: handleOpenAIStream(openaiStream, {
       onResponseId: (id) => resolveResponseId(id),
@@ -141,4 +144,5 @@ export async function generateConversationTitle(
     // Fallback to slice
     return input.slice(0, 50);
   }
+
 }

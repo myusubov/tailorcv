@@ -30,7 +30,6 @@ interface ResumeFormContextValue {
   /** Timestamp of last successful save */
   lastSaved: Date | null;
   /** Trigger a manual save (bypasses debounce) */
-
   saveNow: () => Promise<void>;
   /** Apply a partial update from AI */
   applyUpdate: (data: unknown) => void;
@@ -67,7 +66,6 @@ export function useResumeForm(): ResumeFormContextValue {
 export function useResumeFormOptional(): ResumeFormContextValue | null {
   return useContext(ResumeFormContext);
 }
-
 interface ResumeFormProviderProps {
   /** Initial resume data from server */
   initialData: BaseResumeData;
@@ -89,7 +87,6 @@ export function ResumeFormProvider({
   resumeId,
   children,
 }: ResumeFormProviderProps) {
-  const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const form = useForm<BaseResumeData>({
@@ -98,15 +95,13 @@ export function ResumeFormProvider({
     mode: 'onChange',
   });
 
-  const { mutateAsync: updateResume } = useActionMutation(updateResumeAction, {
+  const { mutateAsync: updateResume, isPending: isSaving } = useActionMutation(updateResumeAction, {
     onSuccess: () => {
       setLastSaved(new Date());
       form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
-      setIsSaving(false);
     },
     onError: (error) => {
       console.error('[ResumeFormProvider] Save failed:', error);
-      setIsSaving(false);
       form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
     },
     showErrorToast: false,
@@ -129,9 +124,8 @@ export function ResumeFormProvider({
     }
 
     const data = form.getValues();
-    setIsSaving(true);
     updateResume({ id: resumeId, data });
-  }, [form, resumeId, isSaving]); // isSaving added to deps
+  }, [form, resumeId, isSaving, updateResume]);
 
   // Debounced auto-save: save 1.5 seconds after last valid change
   useEffect(() => {
@@ -173,7 +167,7 @@ export function ResumeFormProvider({
     }, 1500);
 
     return () => clearTimeout(timeout);
-  }, [form.formState.isDirty, form.formState.isValid, saveNow]);
+  }, [form, form.formState.isDirty, form.formState.isValid, saveNow]);
 
   const [history, setHistory] = useState<BaseResumeData[]>([]);
   const [future, setFuture] = useState<BaseResumeData[]>([]);
@@ -268,7 +262,6 @@ export function ResumeFormProvider({
       }, 0);
     }
   }, [form, future, saveNow]);
-
   const value = useMemo<ResumeFormContextValue>(
     () => ({
       form,

@@ -5,12 +5,6 @@ import { BaseResumeData } from 'shared';
  * @param resumeContext - Optional resume data to include in context
  * @returns System instruction string
  */
-/**
- * Builds the system instructions for the AI assistant
- * @param resumeContext - Optional resume data to include in context
- * @param includeToolRules - Whether to include rules for using resume edit tools
- * @returns System instruction string
- */
 export function buildInstructions(
     resumeContext?: Partial<BaseResumeData> | null,
     includeToolRules = false

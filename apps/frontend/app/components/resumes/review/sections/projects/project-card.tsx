@@ -227,7 +227,7 @@ export function ProjectCard({
               <Label>Start Date</Label>
               <DateField.Group>
                 <DateField.Input>
-                  {(segment) => <DateField.Segment segment={segment} />}
+                  {(segment) => <DateSegmentFilter segment={segment as any} />}
                 </DateField.Input>
                   <DateField.Suffix>
                     <DatePicker.Trigger>
@@ -277,12 +277,11 @@ export function ProjectCard({
               onChange={(date) =>
                 field.onChange(date ? date.toString().slice(0, 7) : '')
               }
-              
             >
               <Label>End Date</Label>
               <DateField.Group>
                 <DateField.Input>
-                  {(segment) => <DateField.Segment segment={segment} />}
+                  {(segment) => <DateSegmentFilter segment={segment as any} />}
                 </DateField.Input>
                   <DateField.Suffix>
                     <DatePicker.Trigger>

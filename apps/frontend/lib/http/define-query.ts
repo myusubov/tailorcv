@@ -152,7 +152,6 @@ export function defineQuery<TParams, TResponse>(
       return result.data;
     }
   };
-
   function useGeneratedQuery(
     params: TParams,
     options?: DefineQueryOptions<TResponse>,
@@ -160,9 +159,7 @@ export function defineQuery<TParams, TResponse>(
     const { keyParts, ...queryOptions } = options ?? {};
 
     const queryKey = getKey(params, keyParts);
-    // Reuse the external fetcher
     const queryFn = () => fetcher(params);
-
 
     // Merge defaults from config with options from the call site
     const mergedOptions = {

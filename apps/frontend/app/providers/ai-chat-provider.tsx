@@ -72,6 +72,7 @@ interface AIChatContextType {
   toggleExpand: () => void;
   closeChat: () => void;
 
+
   // Stop response
   canStopResponse: boolean;
   stopResponse: () => void;
@@ -80,7 +81,6 @@ interface AIChatContextType {
   applyUpdate: (data: unknown) => void;
   canApplyUpdate: boolean;
   registerApplyUpdate: (fn: ((data: unknown) => void) | null) => void;
-
   // Conversation actions
   loadConversations: () => Promise<void>;
   createNewConversation: () => void;
@@ -118,7 +118,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   // Form integration ref
   const applyUpdateRef = useRef<((data: unknown) => void) | null>(null);
   const [canApplyUpdate, setCanApplyUpdate] = useState(false);
-
   // Resume context
   const [currentResume, setCurrentResume] = useState<BaseResumeData | null>(
     null,
@@ -142,7 +141,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       },
     );
 
-  // Derive UI messages from query cache
   // Derive UI messages from query cache, including transient flags like isThinking
   const messages: ChatMessage[] =
     conversationDetails?.messages.map((msg) => ({
@@ -173,6 +171,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       },
       onSuccess: (data, _variables, ctx) => {
         setConversationId(data.id);
+
         conversationsCache.list.add(data);
         toast.dismiss(ctx?.toastId);
       },
@@ -204,6 +203,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       // 4. Handle internal state instantly
       if (conversationId === id) {
         setConversationId(null);
+
       }
 
       return { previous };
@@ -246,7 +246,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       },
     },
   );
-
   const toggleExpand = () => setIsExpanded((prev) => !prev);
 
   const closeChat = () => {
@@ -268,7 +267,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   const createNewConversation = useCallback(() => {
     setConversationId(null);
     setIsTyping(false);
-  }, [createConv]);
+  }, []);
 
   /**
    * Select conversation wrapper
@@ -278,6 +277,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       if (conversationId === id) return;
       conversationJustCreated.current = false; // Reset flag when switching conversations
       setConversationId(id);
+
       // Query will trigger automatically
     },
     [conversationId],
@@ -289,7 +289,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
     },
     [detailsCache],
   );
-
   /**
    * Delete conversation wrapper (fire-and-forget)
    */
@@ -310,6 +309,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       currentAbortController.current = null;
     }
   }, []);
+
 
   /**
    * Can stop response if we're currently streaming
@@ -358,7 +358,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         currentDetailsKey,
         (old: ConversationDetails | undefined) => {
           if (!old) {
-            // Initialize new conversation structure
+          // Initialize new conversation structure
             return {
               id: activeConversationId!,
               userId: '', // Placeholder
@@ -407,7 +407,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
           return [updatedConv, ...others]; // Add new version at top
         });
       }
-
       setInput('');
       setIsInputFullscreen(false);
       setIsTyping(true);
@@ -446,7 +445,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
             ) {
               return;
             }
-
             const data = await response.json().catch(() => ({}));
             const errorMessage =
               data.message ||
@@ -697,9 +695,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
-   * Update message status (applied/discarded)
-   */
-  /**
    * Register or unregister a function to apply updates to the resume form
    */
   const registerApplyUpdate = useCallback(
@@ -732,7 +727,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
     },
     [mutateMessageStatus],
   );
-
   return (
     <AIChatContext.Provider
       value={{

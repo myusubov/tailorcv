@@ -34,7 +34,6 @@ const ResumeReview = () => {
     isLoading,
   } = useBaseResumeQuery({ id }, { enabled: !!id });
 
-  console.log({ resumeData });
 
   if (error?.status === 404) {
     notFound();
@@ -74,7 +73,6 @@ function ReviewPageContent() {
     registerApplyUpdate(applyUpdate);
     return () => registerApplyUpdate(null);
   }, [applyUpdate, registerApplyUpdate]);
-
   // Accordion expanded state
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 

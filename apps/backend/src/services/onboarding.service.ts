@@ -451,6 +451,7 @@ CRITICAL INSTRUCTION:
     'Successfully generated resume draft from GitHub data',
   );
 
+
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,

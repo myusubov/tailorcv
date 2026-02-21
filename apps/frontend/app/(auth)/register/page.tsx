@@ -1,7 +1,7 @@
 'use client';
 
 import { useSignUp } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import NextLink from 'next/link';
 import {
   Form,
@@ -16,7 +16,7 @@ import {
   Spinner,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
@@ -34,6 +34,7 @@ export default function RegisterPage() {
   const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+
 
   const {
     control,
@@ -78,6 +79,7 @@ export default function RegisterPage() {
       setGlobalError(clerkError || 'Something went wrong');
     }
   };
+
 
   const handleGoBack = () => {
     setVerifying(false);

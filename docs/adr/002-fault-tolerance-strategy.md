@@ -54,7 +54,6 @@ The `/health` endpoint was upgraded from a static response to a dependency-aware
 To prevent data loss during network jitter or OpenAI timeouts:
 - **Auto-Closure Logic**: The parsing logic handles truncated JSON blocks by automatically appending missing delimiters (`}` / `]`) if the stream ends abruptly.
 - **Resilient Persistence**: The frontend attempts to parse every partial "done" or "error" signal, ensuring any generated resume edit is recovered and saved locally even if the socket closes prematurely.
-
 ## Consequences
 
 ### Positive
