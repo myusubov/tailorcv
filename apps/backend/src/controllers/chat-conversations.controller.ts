@@ -6,6 +6,7 @@ import {
     getConversationWithMessages,
     createConversation,
     deleteConversation,
+    updateMessageStatus,
 } from '../services/chat-conversations.service';
 
 /**
@@ -81,6 +82,28 @@ export const deleteConversationController = async (
         const { clerkUserId } = res.locals;
         await deleteConversation({ id: req.params.id, clerkUserId });
         return successResponse(res, null, 204);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * PATCH /api/v1/ai/chat/messages/:id/status
+ * Updates the status of a message
+ */
+export const patchMessageStatusController = async (
+    req: Request<{ id: string }, unknown, { status: 'applied' | 'discarded' }>,
+    res: Response<unknown, ClerkLocals>,
+    next: NextFunction,
+) => {
+    try {
+        const { clerkUserId } = res.locals;
+        await updateMessageStatus({
+            messageId: req.params.id,
+            clerkUserId,
+            status: req.body.status,
+        });
+        return successResponse(res, { success: true }, 200);
     } catch (err) {
         next(err);
     }

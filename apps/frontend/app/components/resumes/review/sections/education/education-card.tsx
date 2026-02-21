@@ -8,7 +8,8 @@ import {
   Input,
   FieldError,
   DateField,
-  DateInputGroup,
+  DatePicker,
+  Calendar,
   Tooltip,
   Checkbox,
 } from '@heroui/react';
@@ -59,6 +60,11 @@ export function EducationCard({
     control,
     name: `${basePath}.isCurrent`,
   });
+  const startDate = useWatch({
+    control,
+    name: `${basePath}.startDate`,
+  });
+  const endDate = useWatch({ control, name: `${basePath}.endDate` });
 
   return (
     <div className="border-default-200 space-y-3 rounded-lg border p-4">
@@ -230,7 +236,7 @@ export function EducationCard({
           name={`${basePath}.startDate`}
           control={control}
           render={({ field, fieldState }) => (
-            <DateField
+            <DatePicker
               className="w-full"
               isInvalid={!!fieldState.error}
               value={field.value ? parseDate(`${field.value}-01`) : null}
@@ -239,15 +245,43 @@ export function EducationCard({
               }
             >
               <Label>Start Date</Label>
-              <DateInputGroup>
-                <DateInputGroup.Input>
-                  {(segment) => <DateInputGroup.Segment segment={segment} />}
-                </DateInputGroup.Input>
-              </DateInputGroup>
+              <DateField.Group>
+                <DateField.Input>
+                  {(segment) => <DateSegmentFilter segment={segment as any} />}
+                </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <Calendar maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}>
+                    <Calendar.Header>
+                      <Calendar.YearPickerTrigger>
+                        <Calendar.YearPickerTriggerHeading />
+                        <Calendar.YearPickerTriggerIndicator />
+                      </Calendar.YearPickerTrigger>
+                      <Calendar.NavButton slot="previous" />
+                      <Calendar.NavButton slot="next" />
+                    </Calendar.Header>
+                    <Calendar.Grid>
+                      <Calendar.GridHeader>
+                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                      </Calendar.GridHeader>
+                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                    </Calendar.Grid>
+                    <Calendar.YearPickerGrid>
+                      <Calendar.YearPickerGridBody>
+                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                      </Calendar.YearPickerGridBody>
+                    </Calendar.YearPickerGrid>
+                  </Calendar>
+                </DatePicker.Popover>
               {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
-            </DateField>
+            </DatePicker>
           )}
         />
 
@@ -255,7 +289,7 @@ export function EducationCard({
           name={`${basePath}.endDate`}
           control={control}
           render={({ field, fieldState }) => (
-            <DateField
+            <DatePicker
               className="w-full"
               isInvalid={!!fieldState.error}
               isDisabled={!!isCurrent}
@@ -265,15 +299,43 @@ export function EducationCard({
               }
             >
               <Label>End Date / Expected</Label>
-              <DateInputGroup>
-                <DateInputGroup.Input>
-                  {(segment) => <DateInputGroup.Segment segment={segment} />}
-                </DateInputGroup.Input>
-              </DateInputGroup>
+              <DateField.Group>
+                <DateField.Input>
+                  {(segment) => <DateSegmentFilter segment={segment as any} />}
+                </DateField.Input>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
+                    <Calendar.Header>
+                      <Calendar.YearPickerTrigger>
+                        <Calendar.YearPickerTriggerHeading />
+                        <Calendar.YearPickerTriggerIndicator />
+                      </Calendar.YearPickerTrigger>
+                      <Calendar.NavButton slot="previous" />
+                      <Calendar.NavButton slot="next" />
+                    </Calendar.Header>
+                    <Calendar.Grid>
+                      <Calendar.GridHeader>
+                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                      </Calendar.GridHeader>
+                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                    </Calendar.Grid>
+                    <Calendar.YearPickerGrid>
+                      <Calendar.YearPickerGridBody>
+                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                      </Calendar.YearPickerGridBody>
+                    </Calendar.YearPickerGrid>
+                  </Calendar>
+                </DatePicker.Popover>
               {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
-            </DateField>
+            </DatePicker>
           )}
         />
 

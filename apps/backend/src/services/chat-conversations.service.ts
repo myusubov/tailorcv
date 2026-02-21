@@ -1,4 +1,4 @@
-import { prisma } from '../lib';
+import { logger, prisma } from '../lib';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import type {
@@ -7,6 +7,11 @@ import type {
   UpdateConversationResponseIdInput,
   DeleteConversationInput,
 } from '../types/chat-conversations';
+import {
+  InputJsonValue,
+  JsonValue,
+} from 'prisma/generated/client/runtime/client';
+import { generateConversationTitle } from './ai-chat.service';
 
 /**
  * Creates a new chat conversation for a user
@@ -16,6 +21,7 @@ import type {
 export async function createConversation(input: CreateConversationInput) {
   return prisma.chatConversation.create({
     data: {
+      ...(input.id ? { id: input.id } : {}),
       userId: input.clerkUserId,
       title: input.title,
       responseId: input.responseId,
@@ -75,10 +81,33 @@ export async function getConversationWithMessages(
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
-  return conversation;
+  // Map messages to include proposal fields from metadata
+  const mappedMessages = conversation.messages.map((msg) => {
+    const metadata = msg.metadata as Record<string, unknown> | null;
+
+    return {
+      id: msg.id,
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+      createdAt: msg.createdAt,
+      proposal: metadata?.proposal ?? null,
+      explanation: metadata?.explanation ?? null,
+      status:
+        (metadata?.status as string) || (metadata?.proposal ? 'pending' : null),
+    };
+  });
+
+  return {
+    ...conversation,
+    messages: mappedMessages,
+  };
 }
 
 /**
@@ -86,7 +115,7 @@ export async function getConversationWithMessages(
  * @param input - Conversation ID, role, and content
  * @returns Created message
  */
-export async function addMessage(input: AddMessageInput) {
+export async function addMessage(input: AddMessageInput & { id?: string }) {
   // Verify ownership
   const conversation = await prisma.chatConversation.findFirst({
     where: { id: input.conversationId, userId: input.clerkUserId },
@@ -94,7 +123,11 @@ export async function addMessage(input: AddMessageInput) {
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   // If this is the first user message and no title, set it
@@ -103,9 +136,11 @@ export async function addMessage(input: AddMessageInput) {
   const [message] = await prisma.$transaction([
     prisma.chatMessage.create({
       data: {
+        ...(input.id ? { id: input.id } : {}),
         conversationId: input.conversationId,
         role: input.role,
         content: input.content,
+        metadata: input.metadata as InputJsonValue,
       },
     }),
     prisma.chatConversation.update({
@@ -135,7 +170,11 @@ export async function updateConversationResponseId(
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   return prisma.chatConversation.update({
@@ -159,8 +198,171 @@ export async function deleteConversation({
   });
 
   if (!conversation) {
-    throw new AppError('Conversation not found', ErrorCode.CONVERSATION_NOT_FOUND, 404);
+    throw new AppError(
+      'Conversation not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
   }
 
   await prisma.chatConversation.delete({ where: { id } });
+}
+/**
+ * Updates the status of a message (e.g., for AI proposals)
+ */
+export async function updateMessageStatus({
+  messageId,
+  clerkUserId,
+  status,
+}: {
+  messageId: string;
+  clerkUserId: string;
+  status: 'pending' | 'applied' | 'discarded';
+}) {
+  logger.info({ messageId, clerkUserId, status }, 'Updating message status');
+
+  // Verify the message belongs to the user
+  const message = await prisma.chatMessage.findFirst({
+    where: {
+      id: messageId,
+      conversation: {
+        userId: clerkUserId,
+      },
+    },
+  });
+
+  if (!message) {
+    throw new AppError(
+      'Message not found',
+      ErrorCode.CONVERSATION_NOT_FOUND,
+      404,
+    );
+  }
+
+  const currentMetadata = (message.metadata as Record<string, unknown>) || {};
+
+  await prisma.chatMessage.update({
+    where: { id: messageId },
+    data: {
+      metadata: {
+        ...currentMetadata,
+        status,
+      } as InputJsonValue,
+    },
+  });
+}
+
+/**
+ * Ensures a chat session exists and returns the conversation ID and last response ID
+ *
+ * If conversationId is provided:
+ * 1. Tries to find existing conversation
+ * 2. If not found, creates a new one with that ID (client-side generation support)
+ */
+export async function ensureChatSession({
+  clerkUserId,
+  conversationId,
+  initialMessage,
+}: {
+  clerkUserId: string;
+  conversationId?: string;
+  initialMessage: string;
+}) {
+  let activeConversationId = conversationId;
+  let previousResponseId: string | null = null;
+
+  if (activeConversationId) {
+    try {
+      const conversation = await getConversationWithMessages(
+        activeConversationId,
+        clerkUserId,
+      );
+      previousResponseId = conversation.responseId;
+    } catch (error) {
+      // If conversation doesn't exist but ID provided (client generated), create it
+      if (
+        error instanceof AppError &&
+        error.errorCode === ErrorCode.CONVERSATION_NOT_FOUND
+      ) {
+        // Generate a meaningful title using AI instead of simple slicing
+        const generatedTitle = await generateConversationTitle(initialMessage);
+
+        const conversation = await createConversation({
+          clerkUserId,
+          id: activeConversationId,
+          title: generatedTitle,
+        });
+        activeConversationId = conversation.id;
+      } else {
+        throw error;
+      }
+    }
+  } else {
+    // Fallback: No ID provided, create new (shouldn't happen with updated frontend)
+    const conversation = await createConversation({
+      clerkUserId,
+      title: initialMessage.slice(0, 100),
+    });
+    activeConversationId = conversation.id;
+  }
+
+  return { activeConversationId, previousResponseId };
+}
+
+/**
+ * Persists the assistant's response and updates conversation context
+ */
+export async function saveAssistantResponse({
+  conversationId,
+  clerkUserId,
+  responseId,
+  content,
+  metadata,
+  id,
+  markIdempotentCompleted,
+}: {
+  conversationId: string;
+  clerkUserId: string;
+  responseId: string | null;
+  content: string;
+  metadata?: JsonValue;
+  id?: string;
+  markIdempotentCompleted?: () => Promise<void>;
+}) {
+  const savePromises: Promise<unknown>[] = [
+    addMessage({
+      ...(id ? { id } : {}),
+      conversationId,
+      clerkUserId,
+      role: 'assistant',
+      content,
+      metadata: metadata as Record<string, unknown>, // Cast for matching prisma input
+    }),
+  ];
+
+  // Only update the conversation's responseId if:
+  // 1. We have a valid responseId (not null/empty)
+  // 2. It's not an edit-* placeholder
+  // 3. It's not a proposal/tool call (which would cause "No tool output found" errors)
+  const isProposal =
+    metadata &&
+    typeof metadata === 'object' &&
+    'type' in metadata &&
+    metadata.type === 'proposal';
+
+  if (responseId && !responseId.startsWith('edit-') && !isProposal) {
+    savePromises.push(
+      updateConversationResponseId({
+        conversationId,
+        clerkUserId,
+        responseId,
+      }),
+    );
+  }
+
+  if (markIdempotentCompleted) {
+    savePromises.push(markIdempotentCompleted());
+  }
+
+  await Promise.all(savePromises);
 }

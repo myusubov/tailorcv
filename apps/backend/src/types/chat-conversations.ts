@@ -3,6 +3,7 @@
  */
 export interface CreateConversationInput {
   clerkUserId: string;
+  id?: string;
   title?: string;
   responseId?: string;
 }
@@ -15,6 +16,7 @@ export interface AddMessageInput {
   clerkUserId: string;
   role: 'user' | 'assistant';
   content: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**

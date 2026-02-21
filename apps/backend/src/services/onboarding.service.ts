@@ -124,21 +124,21 @@ export async function generateFromAboutMe(
     'Successfully extracted resume data draft from raw text',
   );
 
-  // Apply strict validation and transforms before saving
-  const validatedData = baseResumeDataSchema.parse(parsedResponse.data);
+  // Apply validation to check structure, but keep raw data to preserve null/empty keys
+  baseResumeDataSchema.parse(parsedResponse.data);
 
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
       name: 'Initial Resume (Draft)',
-      data: validatedData,
+      data: parsedResponse.data,
       status: 'DRAFT',
     },
   });
 
   return {
     baseResumeId: baseResume.id,
-    data: validatedData,
+    data: parsedResponse.data,
     rawAiResponse: parsedResponse,
     meta: { model, finishReason: response.choices[0].finish_reason },
   };
@@ -220,14 +220,14 @@ export async function generateOnboarding(
     select: { firstName: true, lastName: true, email: true },
   });
 
-  // Enrich the AI data with the actual user profile
+  // Enrich the raw AI data with the actual user profile to preserve null/empty keys
   const enrichedData = {
-    ...validation.data,
+    ...rawData,
     contact: {
-      ...validation.data.contact,
-      firstName: user?.firstName || validation.data.contact?.firstName || '',
-      lastName: user?.lastName || validation.data.contact?.lastName || '',
-      email: user?.email || validation.data.contact?.email || '',
+      ...rawData.contact,
+      firstName: user?.firstName || rawData.contact?.firstName || '',
+      lastName: user?.lastName || rawData.contact?.lastName || '',
+      email: user?.email || rawData.contact?.email || '',
     },
   };
 
@@ -357,16 +357,17 @@ export async function generateFromGithub(
   const currentDate = new Date().toISOString().split('T')[0];
 
   // Build structured context for each repository
-  const repoContexts = githubData.map((d) => {
-    const readmeSnippet = d.readme
-      ? d.readme.replace(/\n/g, ' ').substring(0, 1000) + '...'
-      : 'No README found';
-    const recentActivity = d.commits
-      .slice(0, 10)
-      .map((c) => `[${c.commit.author.date}] ${c.commit.message}`)
-      .join('; ');
+  const repoContexts = githubData
+    .map((d) => {
+      const readmeSnippet = d.readme
+        ? d.readme.replace(/\n/g, ' ').substring(0, 1000) + '...'
+        : 'No README found';
+      const recentActivity = d.commits
+        .slice(0, 10)
+        .map((c) => `[${c.commit.author.date}] ${c.commit.message}`)
+        .join('; ');
 
-    return `
+      return `
 REPOSITORY: ${d.repository.name}
 - DESCRIPTION: ${d.repository.description || 'No description provided'}
 - URL: ${d.repository.html_url}
@@ -375,7 +376,8 @@ REPOSITORY: ${d.repository.name}
 - README SNIPPET: ${readmeSnippet}
 - RECENT ACTIVITY: ${recentActivity}
     `.trim();
-  }).join('\n\n----------------\n\n');
+    })
+    .join('\n\n----------------\n\n');
 
   // Create prompt from GitHub data
   const prompt = `Today's Date: ${currentDate}
@@ -449,21 +451,19 @@ CRITICAL INSTRUCTION:
     'Successfully generated resume draft from GitHub data',
   );
 
-  // Apply strict validation and transforms before saving
-  const validatedData = baseResumeDataSchema.parse(parsedResponse.data);
 
   const baseResume = await prisma.baseResume.create({
     data: {
       userId: clerkUserId,
       name: 'GitHub Resume (Draft)',
-      data: validatedData,
+      data: parsedResponse.data,
       status: 'DRAFT',
     },
   });
 
   return {
     baseResumeId: baseResume.id,
-    data: validatedData,
+    data: parsedResponse.data,
     rawAiResponse: parsedResponse,
     meta: { model, finishReason: response.choices[0].finish_reason },
   };

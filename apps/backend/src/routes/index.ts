@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { healthRouter } from './health';
-import { authRouter } from './auth';
-import { webhooksRouter } from './webhooks';
-import { resumesRouter } from './resumes';
-import { onboardingRouter } from './onboarding';
-import { githubRouter } from './github';
-import { aiChatRouter } from './ai-chat';
+import { healthRouter } from './health.router';
+import { authRouter } from './auth.router';
+import { webhooksRouter } from './webhooks.router';
+import { resumesRouter } from './resumes.router';
+import { onboardingRouter } from './onboarding.router';
+import { githubRouter } from './github.router';
+import { aiChatRouter } from './ai-chat.router';
 import {
   aiChatRateLimiter,
   githubAuthRateLimiter,

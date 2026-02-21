@@ -122,7 +122,7 @@ export function GitHubConnectView({
               icon={
                 isConnecting ? 'line-md:loading-twotone-loop' : 'mdi:github'
               }
-              className="mr-2 size-5"
+              className="size-5"
             />
             {isConnecting ? 'Connecting...' : 'Connect GitHub Account'}
           </Button>

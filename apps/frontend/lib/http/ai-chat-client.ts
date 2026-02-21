@@ -41,3 +41,24 @@ export function useConversationsCache() {
     useConversationsQuery.getKey(undefined),
   );
 }
+/**
+ * Hook for managing the cache of a specific conversation's details.
+ */
+export function useConversationDetailsCache(id: string) {
+  const cache = useQueryCache<ConversationDetails>(
+    useConversationDetailsQuery.getKey({ id }),
+  );
+
+  return {
+    ...cache,
+    prefetch: (params: { conversationId: string }) =>
+      cache.queryClient.prefetchQuery({
+        queryKey: useConversationDetailsQuery.getKey({
+          id: params.conversationId,
+        }),
+        queryFn: () =>
+          useConversationDetailsQuery.fetcher({ id: params.conversationId }),
+        staleTime: 1000 * 60 * 5, // 5 minutes
+      }),
+  };
+}

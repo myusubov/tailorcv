@@ -34,6 +34,10 @@ const [conversation, userMessage] = await Promise.all([
 
 All response and request bodies should be typed in dedicated files (e.g., `src/types/chat-conversations.ts`) to ensure consistency.
 
+### 2.4 Client-Driven Identity Pattern
+
+To avoid race conditions in asynchronous or streaming flows, the **Client** should generate primary IDs (UUIDs) and send them to the backend (e.g., `assistantMessageId`).
+- **Rule**: The Backend must respect the client-provided ID if it exists, rather than auto-generating a new one. This ensures the frontend UI and backend database are synchronized from $T=0$.
 ---
 
 ## 3. Frontend Patterns (Next.js)
@@ -116,6 +120,11 @@ export async function POST(req: Request) {
 }
 ```
 
+#### 3.5.1 Cache-Direct Streaming
+
+For high-interactivity streams (like AI Chat), avoid local component state (`useState`) for message history.
+- **Pattern**: Write streamed chunks directly into the TanStack Query cache (`queryClient.setQueryData`) using the detail query's key.
+- **Benefit**: Ensures that switching views/conversations does not wipe the active stream's progress or history. Component state should only be used for transient UI flags (e.g., `isTyping`).
 
 ### 3.6 Component State
 

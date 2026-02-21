@@ -73,6 +73,18 @@ export function useQueryCache<
   }, [queryClient, queryKey]);
 
   /**
+   * Prefetch the query.
+   */
+  const prefetch = useCallback(
+    (queryFn: () => Promise<TData>) => {
+      return queryClient.prefetchQuery({
+        queryKey,
+        queryFn,
+      });
+    },
+    [queryClient, queryKey],
+  );
+  /**
    * Get current data.
    */
   const getData = useCallback(
@@ -86,10 +98,12 @@ export function useQueryCache<
     list,
     invalidate,
     cancel,
+    prefetch,
     /**
      * Restore previous data (rollback).
      */
     rollback: (previousData: TData | undefined) =>
       queryClient.setQueryData(queryKey, previousData),
+    queryClient,
   };
 }

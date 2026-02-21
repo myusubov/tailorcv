@@ -25,3 +25,13 @@ export const deleteConversationAction = defineAction<{ id: string }, null>({
   keyPrefix: 'ai-conversations', // This revalidates the list
   revalidate: { fromKey: false },
 });
+
+export const updateMessageStatusAction = defineAction<
+  { messageId: string; status: 'applied' | 'discarded' },
+  { success: boolean }
+>({
+  method: 'PATCH',
+  path: ({ messageId }) => `ai/chat/messages/${messageId}/status`,
+  keyPrefix: 'ai-conversation-details',
+  revalidate: { fromKey: true },
+});

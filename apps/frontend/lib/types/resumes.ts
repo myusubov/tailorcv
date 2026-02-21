@@ -41,3 +41,9 @@ export interface ResumeAnalysisResult {
   /** Completion percentage (0-100) */
   progressPct: number;
 }
+
+export interface UpdateResumeInput {
+  id: string;
+  name?: string;
+  data: BaseResumeData;
+}

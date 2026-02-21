@@ -49,6 +49,11 @@ The Express server now handles `SIGTERM` and `SIGINT` signals. It stops acceptin
 
 The `/health` endpoint was upgraded from a static response to a dependency-aware check. It now pings the Database and Redis, returning a `503 Service Unavailable` if critical dependencies are unreachable.
 
+### 5. Streaming Recovery & Auto-Closure (Added Feb 14)
+
+To prevent data loss during network jitter or OpenAI timeouts:
+- **Auto-Closure Logic**: The parsing logic handles truncated JSON blocks by automatically appending missing delimiters (`}` / `]`) if the stream ends abruptly.
+- **Resilient Persistence**: The frontend attempts to parse every partial "done" or "error" signal, ensuring any generated resume edit is recovered and saved locally even if the socket closes prematurely.
 ## Consequences
 
 ### Positive

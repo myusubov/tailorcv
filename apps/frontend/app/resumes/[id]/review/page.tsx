@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { ResumePreview } from '@/app/components/resumes/review/resume-preview';
 import { DataAnalysisPanel } from '@/app/components/resumes/review/data-analysis-panel';
 import { SmallScreenWarning } from '@/app/components/resumes/review/small-screen-warning';
+import { Button, Tooltip } from '@heroui/react';
+import { Icon } from '@iconify/react';
 import {
   ReviewAccordion,
   type SectionKey,
@@ -32,6 +34,7 @@ const ResumeReview = () => {
     isLoading,
   } = useBaseResumeQuery({ id }, { enabled: !!id });
 
+
   if (error?.status === 404) {
     notFound();
   }
@@ -52,8 +55,9 @@ const ResumeReview = () => {
  */
 function ReviewPageContent() {
   const { control } = useFormContext<BaseResumeData>();
-  const { isSaving, lastSaved } = useResumeForm();
-  const { setCurrentResume } = useAIChat();
+  const { applyUpdate, isSaving, lastSaved, undo, redo, canUndo, canRedo, isDirty } =
+    useResumeForm();
+  const { setCurrentResume, registerApplyUpdate } = useAIChat();
 
   // Use useWatch for reliable updates to the feedback panel and preview
   const formData = useWatch({ control }) as BaseResumeData;
@@ -64,6 +68,11 @@ function ReviewPageContent() {
     return () => setCurrentResume(null);
   }, [formData, setCurrentResume]);
 
+  // Register form update function into AI Chat
+  useEffect(() => {
+    registerApplyUpdate(applyUpdate);
+    return () => registerApplyUpdate(null);
+  }, [applyUpdate, registerApplyUpdate]);
   // Accordion expanded state
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
@@ -108,13 +117,60 @@ function ReviewPageContent() {
               Review Your Resume
             </h1>
             {/* Save status indicator */}
-            <span className="text-muted text-xs">
-              {isSaving
-                ? 'Saving...'
-                : lastSaved
-                  ? `Saved ${lastSaved.toLocaleTimeString()}`
-                  : ''}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Tooltip delay={0}>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="ghost"
+                      isDisabled={!canUndo}
+                      onPress={undo}
+                      aria-label="Undo"
+                    >
+                      <Icon
+                        icon="solar:undo-left-round-linear"
+                        className="text-default-500 size-5"
+                      />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <p className="text-xs font-medium">Undo AI change</p>
+                  </Tooltip.Content>
+                </Tooltip>
+                
+                <Tooltip delay={0}>
+                  <Tooltip.Trigger>
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="ghost"
+                      isDisabled={!canRedo}
+                      onPress={redo}
+                      aria-label="Redo"
+                    >
+                      <Icon
+                        icon="solar:undo-right-round-linear"
+                        className="text-default-500 size-5"
+                      />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <p className="text-xs font-medium">Redo AI change</p>
+                  </Tooltip.Content>
+                </Tooltip>
+              </div>
+              <span className="text-muted text-xs">
+                {isSaving
+                  ? 'Saving...'
+                  : isDirty
+                    ? 'Unsaved changes'
+                    : lastSaved
+                      ? `Saved ${lastSaved.toLocaleTimeString()}`
+                      : ''}
+              </span>
+            </div>
           </div>
           <p className="text-muted text-sm">
             Make sure everything looks good before finalizing.

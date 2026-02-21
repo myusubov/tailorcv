@@ -100,3 +100,14 @@ The AI Chat implementation follows a **robust, modern architecture** with clear 
 ---
 
 **Conclusion**: The code is production-ready, clean, and uses modern patterns effectively. You are building on a very solid foundation.
+
+---
+
+## 7. Sync & Resilience Audit (Feb 14 Update)
+
+The system has achieved a high level of maturity with the following fixes:
+
+1.  **Client-Driven Identity**: Resolved all race conditions by shifting message ID generation to the frontend. This ensures immediate actionability (Apply/Discard) for streamed messages.
+2.  **Cache-Directed Streaming**: Abandoned local `useState` in favor of direct TanStack Query cache manipulation. This solved the "vanishing message" bug during conversation switches.
+3.  **Fault-Tolerant Parsing**: Implemented "auto-closure" logic for truncated JSON streams, ensuring resume edits are recovered even during network failures.
+4.  **Implicit Consistency**: Derived all UI state from the global query cache, ensuring "one source of truth" across the entire application.
