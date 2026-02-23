@@ -30,10 +30,6 @@ interface DateSegmentFilterProps {
  * </DateField>
  */
 export function DateSegmentFilter({ segment }: DateSegmentFilterProps) {
-  // Hide the day selector to create a month/year picker
-  if (segment.type === 'day') {
-    return <React.Fragment />;
-  }
 
   return <DateField.Segment segment={segment} />;
 }
