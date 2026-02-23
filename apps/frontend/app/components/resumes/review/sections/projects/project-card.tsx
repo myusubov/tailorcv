@@ -67,47 +67,16 @@ export function ProjectCard({
   const endDate = useWatch({ control, name: `${basePath}.endDate` });
 
   return (
-    <div className="border-default-200 space-y-3 rounded-lg border p-4">
-      {/* Header with reorder and remove buttons */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="grid flex-1 gap-3 sm:grid-cols-2">
-          <Controller
-            name={`${basePath}.name`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Project Name *</Label>
-                <Input {...field} placeholder="e.g. Personal Portfolio" />
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </TextField>
-            )}
-          />
-
-          <Controller
-            name={`${basePath}.role`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Your Role</Label>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  placeholder="e.g. Full Stack Developer"
-                />
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </TextField>
-            )}
-          />
-        </div>
-
+    <div className="border-default-200 space-y-4 rounded-lg border p-4">
+      {/* Action toolbar — decoupled from form fields so inputs get full width */}
+      <div className="flex items-center justify-between">
+        <span className="text-default-400 text-xs font-medium uppercase tracking-wide">
+          Project {index + 1}
+        </span>
         <div className="flex items-center gap-1">
-          {/* Move up/down buttons */}
           <Tooltip delay={500}>
             <Button
+              aria-label="Move project up"
               onPress={onMoveUp}
               isDisabled={isFirst}
               isIconOnly
@@ -123,6 +92,7 @@ export function ProjectCard({
           </Tooltip>
           <Tooltip delay={500}>
             <Button
+              aria-label="Move project down"
               onPress={onMoveDown}
               isDisabled={isLast}
               isIconOnly
@@ -136,10 +106,9 @@ export function ProjectCard({
               <p>Move down</p>
             </Tooltip.Content>
           </Tooltip>
-
-          {/* Duplicate button */}
           <Tooltip delay={500}>
             <Button
+              aria-label="Duplicate project"
               onPress={onDuplicate}
               isIconOnly
               variant="ghost"
@@ -152,10 +121,9 @@ export function ProjectCard({
               <p>Duplicate</p>
             </Tooltip.Content>
           </Tooltip>
-
-          {/* Remove button */}
           <Tooltip delay={500}>
             <Button
+              aria-label="Remove project"
               variant="ghost"
               size="sm"
               onPress={onRemove}
@@ -169,6 +137,40 @@ export function ProjectCard({
             </Tooltip.Content>
           </Tooltip>
         </div>
+      </div>
+
+      {/* Primary identity fields — full width now that toolbar is a separate row */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Controller
+          name={`${basePath}.name`}
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
+              <Label>Project Name *</Label>
+              <Input {...field} placeholder="e.g. Personal Portfolio" />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
+            </TextField>
+          )}
+        />
+        <Controller
+          name={`${basePath}.role`}
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField className="w-full" isInvalid={!!fieldState.error}>
+              <Label>Your Role</Label>
+              <Input
+                {...field}
+                value={field.value || ''}
+                placeholder="e.g. Full Stack Developer"
+              />
+              {fieldState.error && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
+            </TextField>
+          )}
+        />
       </div>
 
       {/* URLs */}
@@ -210,8 +212,8 @@ export function ProjectCard({
         />
       </div>
 
-      {/* Dates */}
-      <div className="grid items-end gap-3 sm:grid-cols-3">
+      {/* Dates — 2-col grid; "Active project" sits below End Date so pickers have room */}
+      <div className="grid gap-3 sm:grid-cols-2">
         <Controller
           name={`${basePath}.startDate`}
           control={control}
@@ -265,84 +267,85 @@ export function ProjectCard({
           )}
         />
 
-        <Controller
-          name={`${basePath}.endDate`}
-          control={control}
-          render={({ field, fieldState }) => (
-            <DatePicker
-              className="w-full"
-              isInvalid={!!fieldState.error}
-              isDisabled={!!isCurrent}
-              value={field.value ? parseDate(`${field.value}-01`) : null}
-              onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : '')
-              }
-            >
-              <Label>End Date</Label>
-              <DateField.Group>
-                <DateField.Input>
-                  {(segment) => <DateSegmentFilter segment={segment as any} />}
-                </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger>
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover>
-                  <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
-                    <Calendar.Header>
-                      <Calendar.YearPickerTrigger>
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <Calendar.NavButton slot="previous" />
-                      <Calendar.NavButton slot="next" />
-                    </Calendar.Header>
-                    <Calendar.Grid>
-                      <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
-                    </Calendar.Grid>
-                    <Calendar.YearPickerGrid>
-                      <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
-                      </Calendar.YearPickerGridBody>
-                    </Calendar.YearPickerGrid>
-                  </Calendar>
-                </DatePicker.Popover>
-              {fieldState.error && (
-                <FieldError>{fieldState.error.message}</FieldError>
-              )}
-            </DatePicker>
-          )}
-        />
-
-        <Controller
-          name={`${basePath}.isCurrent`}
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              isSelected={!!field.value}
-              onChange={(isChecked) => {
-                field.onChange(isChecked);
-                if (isChecked) {
-                  setValue(`${basePath}.endDate`, null);
-                  clearErrors(`${basePath}.endDate`);
+        {/* End Date + "Active project" grouped — checkbox below the picker it controls */}
+        <div className="flex flex-col gap-2">
+          <Controller
+            name={`${basePath}.endDate`}
+            control={control}
+            render={({ field, fieldState }) => (
+              <DatePicker
+                className="w-full"
+                isInvalid={!!fieldState.error}
+                isDisabled={!!isCurrent}
+                value={field.value ? parseDate(`${field.value}-01`) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
-              }}
-              className="pb-2"
-            >
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <Label className="text-sm font-normal">Active project</Label>
-              </Checkbox.Content>
-            </Checkbox>
-          )}
-        />
+              >
+                <Label>End Date</Label>
+                <DateField.Group>
+                  <DateField.Input>
+                    {(segment) => <DateSegmentFilter segment={segment as any} />}
+                  </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
+                      <Calendar.Header>
+                        <Calendar.YearPickerTrigger>
+                          <Calendar.YearPickerTriggerHeading />
+                          <Calendar.YearPickerTriggerIndicator />
+                        </Calendar.YearPickerTrigger>
+                        <Calendar.NavButton slot="previous" />
+                        <Calendar.NavButton slot="next" />
+                      </Calendar.Header>
+                      <Calendar.Grid>
+                        <Calendar.GridHeader>
+                          {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        </Calendar.GridHeader>
+                        <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      </Calendar.Grid>
+                      <Calendar.YearPickerGrid>
+                        <Calendar.YearPickerGridBody>
+                          {({year}) => <Calendar.YearPickerCell year={year} />}
+                        </Calendar.YearPickerGridBody>
+                      </Calendar.YearPickerGrid>
+                    </Calendar>
+                  </DatePicker.Popover>
+                {fieldState.error && (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                )}
+              </DatePicker>
+            )}
+          />
+          <Controller
+            name={`${basePath}.isCurrent`}
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                isSelected={!!field.value}
+                onChange={(isChecked) => {
+                  field.onChange(isChecked);
+                  if (isChecked) {
+                    setValue(`${basePath}.endDate`, null);
+                    clearErrors(`${basePath}.endDate`);
+                  }
+                }}
+              >
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Content>
+                  <Label className="text-sm font-normal">Active project</Label>
+                </Checkbox.Content>
+              </Checkbox>
+            )}
+          />
+        </div>
       </div>
 
       {/* Bullets */}
