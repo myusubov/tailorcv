@@ -24,7 +24,8 @@ Guidelines:
 CORE RULES:
 1. If the user request implies a specific change (e.g., "Change name to Murad", "Add React skill"), you MUST call the "update_resume" tool.
 2. Do NOT just describe the change in text.
-3. ONLY respond with plain text if the request is impossible or requires clarification.`;
+3. ONLY respond with plain text if the request is impossible or requires clarification.
+4. ARRAY FIELDS (skills, experiences, projects, education, certifications, languages): When you modify ANY array field, you MUST return the COMPLETE array — all existing items plus any additions. The system uses replace semantics, so omitting an item DELETES it. For example, if the resume has 5 skills and the user asks to add 1, return all 6 skills.`;
     }
 
     if (resumeContext) {

@@ -37,7 +37,6 @@ export function RegistrationVerification({
   const [isVerifying, setIsVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [globalError, setGlobalError] = useState('');
-  const router = useRouter();
 
   // Handle re-sending the verification code
   const handleResend = async () => {
@@ -72,7 +71,10 @@ export function RegistrationVerification({
 
       if (completeSignUp.status === 'complete') {
         if (setActive) {
-          await setActive({ session: completeSignUp.createdSessionId, redirectUrl: config.auth.afterSignUpUrl });
+          await setActive({
+            session: completeSignUp.createdSessionId,
+            redirectUrl: config.auth.afterSignUpUrl,
+          });
         }
         setIsVerifying(false);
         setCode('');
@@ -88,14 +90,14 @@ export function RegistrationVerification({
   };
 
   return (
-    <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
+    <div className="flex flex-col items-center justify-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full max-w-[400px]"
+        className="w-full"
       >
-        <Card className="w-full max-w-[400px]">
+        <Card className="w-full">
           <Card.Header className="flex flex-col gap-1 text-center">
             <Card.Title className="text-2xl">Check your email</Card.Title>
             <Card.Description>
@@ -108,9 +110,9 @@ export function RegistrationVerification({
                     className="text-muted hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
                     onClick={onGoBack}
                   >
-                    <Icon icon="lucide:undo-2" className="h-3 w-3" />
+                    <Icon icon="lucide:undo-2" className="size-3" />
                   </Button>
-                  <Tooltip.Content>
+                  <Tooltip.Content className="bg-secondary text-secondary-foreground shadow-2xl">
                     Wrong email address ? Change it back
                   </Tooltip.Content>
                 </Tooltip>
@@ -123,7 +125,7 @@ export function RegistrationVerification({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
-                className="flex justify-center py-4"
+                className="flex justify-center pt-4"
               >
                 <InputOTP
                   maxLength={6}
@@ -137,7 +139,6 @@ export function RegistrationVerification({
                     <InputOTP.Slot index={1} />
                     <InputOTP.Slot index={2} />
                   </InputOTP.Group>
-                  <InputOTP.Separator />
                   <InputOTP.Group>
                     <InputOTP.Slot index={3} />
                     <InputOTP.Slot index={4} />
@@ -150,7 +151,7 @@ export function RegistrationVerification({
 
               <Button
                 type="submit"
-                isDisabled={code.length !== 6 || isVerifying}
+                isDisabled={code.length !== 6 || isVerifying || resending}
                 className="group w-full shadow-sm"
               >
                 {isVerifying ? (
@@ -163,7 +164,7 @@ export function RegistrationVerification({
                     Verify Email
                     <Icon
                       icon="lucide:arrow-right"
-                      className="ml-2 size-4 transition-all group-hover:translate-x-1"
+                      className="size-4 transition-all group-hover:translate-x-1"
                     />
                   </>
                 )}
@@ -177,7 +178,7 @@ export function RegistrationVerification({
                 type="button"
                 className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={handleResend}
-                disabled={resending}
+                disabled={resending || isVerifying}
               >
                 {resending ? 'Resending...' : 'Resend code'}
               </button>
