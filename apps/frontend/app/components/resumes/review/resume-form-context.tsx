@@ -7,6 +7,7 @@ import {
   useCallback,
   useState,
   useEffect,
+  useRef,
   type ReactNode,
 } from 'react';
 import { useForm, FormProvider, type UseFormReturn } from 'react-hook-form';
@@ -95,29 +96,43 @@ export function ResumeFormProvider({
     mode: 'onChange',
   });
 
-  const { mutateAsync: updateResume, isPending: isSaving } = useActionMutation(updateResumeAction, {
-    onSuccess: () => {
-      setLastSaved(new Date());
-      form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
+  const { mutateAsync: updateResume, isPending: isSaving } = useActionMutation(
+    updateResumeAction,
+    {
+      onSuccess: () => {
+        setLastSaved(new Date());
+        form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
+      },
+      onError: (error) => {
+        console.error('[ResumeFormProvider] Save failed:', error);
+        // Keep dirty state on error so the watch subscription retries the save.
+      },
+      showErrorToast: false,
     },
-    onError: (error) => {
-      console.error('[ResumeFormProvider] Save failed:', error);
-      form.reset(form.getValues(), { keepDirty: false }); // Clear dirty state
-    },
-    showErrorToast: false,
-  });
+  );
 
   const isDirty = form.formState.isDirty;
 
+  // Ref for isSaving so saveNow stays referentially stable across save cycles.
+  // Without this, saveNow would recreate on every isSaving toggle, destabilizing
+  // every callback that depends on it (applyUpdate, undo, redo, the watch effect).
+  const isSavingRef = useRef(isSaving);
+  isSavingRef.current = isSaving;
+
   /**
    * Saves the current form data to the backend via server action.
+   * Uses isSavingRef instead of isSaving in deps to keep a stable reference.
    */
   const saveNow = useCallback(async () => {
-    // If we're already saving, don't trigger another identical save
-    if (isSaving) return;
+    console.log({ isSavingRef: isSavingRef.current, isDirty: form.formState.isDirty })
+    if (isSavingRef.current) return;
+    // After onSuccess resets dirty state, this prevents the watch-triggered
+    // callback from re-saving. For real changes (typing, append, remove),
+    // isDirty is true so the save proceeds.
+    if (!form.formState.isDirty) return;
 
-    // Check validation state
     const isValid = await form.trigger();
+    console.log({ isValid, errors: form.formState.errors })
     if (!isValid) {
       console.warn('[ResumeFormProvider] Save aborted: Form is invalid');
       return;
@@ -125,49 +140,26 @@ export function ResumeFormProvider({
 
     const data = form.getValues();
     updateResume({ id: resumeId, data });
-  }, [form, resumeId, isSaving, updateResume]);
+  }, [form, resumeId, updateResume]);
 
-  // Debounced auto-save: save 1.5 seconds after last valid change
+  // Debounced auto-save using form.watch() for reliable change detection.
+  // form.formState.isDirty in useEffect deps doesn't reliably trigger re-runs
+  // because RHF's Proxy-based subscriptions only work during render, not in deps.
   useEffect(() => {
-    const isDirty = form.formState.isDirty;
-    const isValid = form.formState.isValid;
+    let timeout: ReturnType<typeof setTimeout>;
 
-    console.log({ isDirty });
+    const subscription = form.watch(() => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        saveNow();
+      }, 1500);
+    });
 
-    console.log({ dirtyFields: form.formState.dirtyFields });
-    const original = form.control._defaultValues;
-    const current = form.getValues();
-    
-    const findDiff = (obj1: any, obj2: any, path = 'root') => {
-      if (obj1 === obj2) return;
-      if (typeof obj1 !== typeof obj2) {
-        console.log(`🚨 Type diff at ${path}: original is ${typeof obj1}, current is ${typeof obj2}`);
-        return;
-      }
-      if (obj1 instanceof Date || obj2 instanceof Date) {
-         if (obj1?.getTime() !== obj2?.getTime()) console.log(`🚨 Date diff at ${path}`, obj1, obj2);
-         return;
-      }
-      if (typeof obj1 === 'object' && obj1 !== null && obj2 !== null) {
-        const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
-        keys.forEach(key => {
-          if (!(key in obj1)) console.log(`🚨 Missing in original at ${path}.${key} (current has:`, obj2[key], `)`);
-          else if (!(key in obj2)) console.log(`🚨 Missing in current at ${path}.${key} (original has:`, obj1[key], `)`);
-          else findDiff(obj1[key], obj2[key], `${path}.${key}`);
-        });
-      } else if (obj1 !== obj2) {
-        console.log(`🚨 Value diff at ${path}: original is`, obj1, `current is`, obj2);
-      }
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
     };
-    findDiff(original, current);
-    if (!isDirty || !isValid) return;
-
-    const timeout = setTimeout(() => {
-      saveNow();
-    }, 1500);
-
-    return () => clearTimeout(timeout);
-  }, [form, form.formState.isDirty, form.formState.isValid, saveNow]);
+  }, [form, saveNow]);
 
   const [history, setHistory] = useState<BaseResumeData[]>([]);
   const [future, setFuture] = useState<BaseResumeData[]>([]);
