@@ -53,7 +53,6 @@ export function VerificationView({
                     <InputOTP.Slot index={1} />
                     <InputOTP.Slot index={2} />
                   </InputOTP.Group>
-                  <InputOTP.Separator />
                   <InputOTP.Group>
                     <InputOTP.Slot index={3} />
                     <InputOTP.Slot index={4} />

@@ -68,14 +68,6 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.div
-          className="mx-auto mb-6 flex size-20 items-center justify-center rounded-3xl bg-linear-to-br from-indigo-500/20 to-blue-500/20"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-        >
-          <Icon icon="lucide:sparkles" className="text-primary size-10" />
-        </motion.div>
         <h1 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
           Welcome to TailorCV!
         </h1>
@@ -107,8 +99,10 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
               >
                 {method.recommended && (
                   <Chip
-                    className="border-primary/30 bg-primary/10 text-primary absolute top-3 right-3 text-xs"
+                    className="absolute top-3 right-3"
                     size="md"
+                    variant="primary"
+                    color="accent"
                   >
                     Recommended
                   </Chip>
