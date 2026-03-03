@@ -36,6 +36,7 @@ export function LoginFormView({
   onGoogleSignIn,
   onAppleSignIn,
 }: LoginFormViewProps) {
+  const isAnyAuthActionInProgress = isSubmitting || googleLoading || appleLoading;
   return (
     <div className="bg-background flex w-full flex-col justify-center p-6 lg:w-[55%] lg:px-24 lg:py-12">
       <motion.div
@@ -142,7 +143,7 @@ export function LoginFormView({
           >
             <Button
               type="submit"
-              isDisabled={isSubmitting || googleLoading || appleLoading}
+              isDisabled={isAnyAuthActionInProgress}
               className="group w-full font-semibold shadow-sm"
             >
               {isSubmitting ? (
@@ -186,7 +187,7 @@ export function LoginFormView({
             <Button
               type="button"
               variant="secondary"
-              isDisabled={googleLoading || isSubmitting || appleLoading}
+              isDisabled={isAnyAuthActionInProgress}
               className="w-full font-medium"
               onPress={onGoogleSignIn}
             >
@@ -211,7 +212,7 @@ export function LoginFormView({
             <Button
               type="button"
               variant="tertiary"
-              isDisabled={appleLoading || isSubmitting || googleLoading}
+              isDisabled={isAnyAuthActionInProgress}
               className="w-full font-medium"
               onPress={onAppleSignIn}
             >
