@@ -142,7 +142,7 @@ export function LoginFormView({
           >
             <Button
               type="submit"
-              isDisabled={isSubmitting || googleLoading}
+              isDisabled={isSubmitting || googleLoading || appleLoading}
               className="group w-full font-semibold shadow-sm"
             >
               {isSubmitting ? (
@@ -186,7 +186,7 @@ export function LoginFormView({
             <Button
               type="button"
               variant="secondary"
-              isDisabled={googleLoading || isSubmitting}
+              isDisabled={googleLoading || isSubmitting || appleLoading}
               className="w-full font-medium"
               onPress={onGoogleSignIn}
             >
