@@ -148,6 +148,7 @@ export function ResumeFormProvider({
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = form.watch(() => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {

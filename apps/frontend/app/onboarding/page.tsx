@@ -19,7 +19,7 @@ const methodParser = parseAsStringLiteral([
   'manual',
 ] as const);
 
-function OnboardingContent() {
+export default function OnboardingPage() {
   const [selectedMethod, setSelectedMethod] = useQueryState(
     'method',
     methodParser,
@@ -55,30 +55,24 @@ function OnboardingContent() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={isMethodSelected ? selectedMethod : 'selection'}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-      <OnboardingJobUI />
-    </div>
-  );
-}
-
-export default function OnboardingPage() {
-  return (
     <OnboardingJobProvider>
-      <OnboardingContent />
+      <div className="bg-background min-h-screen">
+        {/* Main Content */}
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isMethodSelected ? selectedMethod : 'selection'}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+        <OnboardingJobUI />
+      </div>
     </OnboardingJobProvider>
   );
 }
