@@ -2,11 +2,11 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
-  useRef,
 } from 'react';
 
 import type {
@@ -24,6 +24,9 @@ import { useRouter } from 'next/navigation';
 import { ErrorCode } from 'shared';
 
 const STORAGE_KEY = 'onboardingJobId';
+// If a job hasn't reached a terminal status within this window, treat it as
+// hung and clear it so the UI doesn't poll/stream forever.
+const JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 type OnboardingJobContextValue = {
   jobId: string | null;
@@ -114,10 +117,13 @@ export function OnboardingJobProvider({
     }
   }, [jobData?.status]);
 
-  const clearJob = () => {
+  // Reset all job-related state so liveJobData doesn't suppress TanStack polling
+  // on the next job if clearJob is called externally (e.g. from a UI action).
+  const clearJob = useCallback(() => {
     setJobId(null);
+    setLiveJobData(null);
     clearStoredJobId();
-  };
+  }, []);
 
   useEffect(() => {
     if (jobError?.status === 404) {
@@ -126,35 +132,37 @@ export function OnboardingJobProvider({
   }, [jobError]);
 
   const resumeId = jobData?.resultBaseResumeId;
+  // Only fetch resume data once the job has definitively succeeded — avoids a
+  // premature request if the backend sets resultBaseResumeId before status is SUCCEEDED.
   const { data: resumeData } = useBaseResumeQuery(
     { id: resumeId! },
-    { enabled: !!resumeId },
+    { enabled: !!resumeId && jobData?.status === 'SUCCEEDED' },
   );
 
-  const beginJob = (nextJobId: string) => {
+  const beginJob = useCallback((nextJobId: string) => {
     setGeneratedData(null);
     setShowSuccessModal(false);
     setJobId(nextJobId);
     storeJobId(nextJobId);
-  };
+  }, []);
 
   useEffect(() => {
     if (jobData?.status === 'FAILED') {
       showErrorToast(jobData.error);
-      setTimeout(() => {
-        clearJob();
-        setLiveJobData(null);
-      }, 0);
+      // clearJob already resets liveJobData, jobId, and localStorage.
+      setTimeout(() => clearJob(), 0);
     }
-  }, [jobData?.status, jobData?.error]);
+  }, [jobData?.status, jobData?.error, clearJob]);
 
-  // Prefetch resume review page
-
-  /*   useEffect(() => {
-    if (resumeId) {
-      router.prefetch(`/resumes/${resumeId}/review`);
-    }
-  }, [resumeId, router]); */
+  // Safety timeout: if a job is still active after JOB_TIMEOUT_MS, clear it.
+  // Prevents infinite polling/streaming when the server goes silent.
+  useEffect(() => {
+    if (!jobId) return;
+    const timer = setTimeout(() => {
+      clearJob();
+    }, JOB_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [jobId, clearJob]);
 
   useEffect(() => {
     if (resumeData && jobData?.status === 'SUCCEEDED') {
@@ -180,7 +188,6 @@ export function OnboardingJobProvider({
           data: resumeData.data,
           meta: { model: 'worker', finishReason: 'STOP' },
         });
-        /* setShowSuccessModal(true); */
         router.push(`/resumes/${resumeData.id}/review`);
         setLiveJobData(null);
         clearJob();
@@ -206,6 +213,8 @@ export function OnboardingJobProvider({
       jobId,
       generatedData,
       showSuccessModal,
+      beginJob,
+      clearJob,
     ],
   );
 
