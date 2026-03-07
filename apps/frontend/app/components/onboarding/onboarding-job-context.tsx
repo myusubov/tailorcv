@@ -129,7 +129,7 @@ export function OnboardingJobProvider({
     if (jobError?.status === 404) {
       setTimeout(() => clearJob(), 0);
     }
-  }, [jobError]);
+  }, [jobError, clearJob]);
 
   const resumeId = jobData?.resultBaseResumeId;
   // Only fetch resume data once the job has definitively succeeded — avoids a
@@ -193,7 +193,7 @@ export function OnboardingJobProvider({
         clearJob();
       }, 0);
     }
-  }, [resumeData, jobData?.status, jobData?.rawAiResponse, router]);
+  }, [resumeData, jobData?.status, jobData?.rawAiResponse, router, clearJob]);
 
   const value = useMemo<OnboardingJobContextValue>(
     () => ({
