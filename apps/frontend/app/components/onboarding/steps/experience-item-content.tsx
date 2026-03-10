@@ -209,7 +209,9 @@ export function ExperienceItemContent({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}>
+                  <Calendar
+                    maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}
+                  >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -220,13 +222,17 @@ export function ExperienceItemContent({
                     </Calendar.Header>
                     <Calendar.Grid>
                       <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
                       </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
                     </Calendar.Grid>
                     <Calendar.YearPickerGrid>
                       <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
                       </Calendar.YearPickerGridBody>
                     </Calendar.YearPickerGrid>
                   </Calendar>
@@ -249,7 +255,6 @@ export function ExperienceItemContent({
                 }
                 isDisabled={!!isCurrent}
                 isInvalid={!!fieldState.error}
-                
               >
                 <Label>End Date</Label>
                 <DateField.Group>
@@ -263,7 +268,11 @@ export function ExperienceItemContent({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
+                  <Calendar
+                    minValue={
+                      startDate ? parseDate(`${startDate}-01`) : undefined
+                    }
+                  >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -274,13 +283,17 @@ export function ExperienceItemContent({
                     </Calendar.Header>
                     <Calendar.Grid>
                       <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
                       </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
                     </Calendar.Grid>
                     <Calendar.YearPickerGrid>
                       <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
                       </Calendar.YearPickerGridBody>
                     </Calendar.YearPickerGrid>
                   </Calendar>

@@ -13,6 +13,7 @@ import { DeleteExperienceModal } from '@/app/components/experience/delete-experi
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 import { ExperienceItemContent } from './experience-item-content';
 import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ExperienceStepProps {
   onNext: () => void;
@@ -90,9 +91,9 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
     const newItem = {
       ...itemToDuplicate,
-      id: nanoid(),
+      id: uuidv4(),
       bullets:
-        itemToDuplicate.bullets?.map((b) => ({ ...b, id: nanoid() })) || [],
+        itemToDuplicate.bullets?.map((b) => ({ ...b, id: uuidv4() })) || [],
     };
 
     const newExperiences = [
