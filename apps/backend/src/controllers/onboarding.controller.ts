@@ -13,6 +13,11 @@ import { logger } from '../lib/logger';
 import { addConnection as addJobConnection } from '../services/job-notifier.service';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
+import {
+  initSseResponse,
+  setupStreamTermination,
+  writeSseEvent,
+} from 'src/utils/ai-stream-sse';
 
 export const getOnboardingStatusController = async (
   _req: Request,
@@ -142,11 +147,7 @@ export const streamOnboardingJobController = async (
   const { clerkUserId } = res.locals;
 
   // Set SSE headers
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  });
+  initSseResponse(res);
 
   // Keep connection alive with retry instruction
   res.write('retry: 10000\n\n');
@@ -154,7 +155,7 @@ export const streamOnboardingJobController = async (
   // Immediately send the current status if possible
   try {
     const job = await getOnboardingJob({ jobId, clerkUserId });
-    res.write(`data: ${JSON.stringify(job)}\n\n`);
+    writeSseEvent(res, job);
   } catch (err) {
     logger.warn(
       { jobId, clerkUserId, err },
@@ -164,11 +165,12 @@ export const streamOnboardingJobController = async (
 
   // Subscribe to updates
   const unsubscribe = addJobConnection(jobId, (data) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    writeSseEvent(res, data);
   });
 
-  // Cleanup on close
-  req.on('close', () => {
-    unsubscribe();
+  setupStreamTermination(req, {
+    clerkUserId,
+    conversationId: jobId, // Passing jobId here for the logger
+    onTerminate: () => unsubscribe(),
   });
 };
