@@ -293,9 +293,6 @@ export async function generateFromGithub(
 
   const accessToken = githubConnection.accessToken;
 
-  // Since we don't have a Repository table, we'll fetch metadata from GitHub
-  // or use the repositoryIds to fetch specific repo details.
-  // For now, we'll fetch all user repos and filter to match the requested IDs.
   const allUserRepos = await fetchGithubRepos(accessToken);
   const repositories = allUserRepos.filter((repo: GitHubRepo) =>
     repositoryIds.includes(String(repo.id)),
