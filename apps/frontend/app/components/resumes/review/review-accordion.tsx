@@ -22,7 +22,7 @@ import {
  * Section configuration for the accordion.
  * Maps section keys to their display properties and editor components.
  */
-const SECTIONS = [
+export const SECTIONS = [
   {
     key: 'contact',
     label: 'Contact',
