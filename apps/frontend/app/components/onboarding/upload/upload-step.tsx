@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { UploadAboutMeView } from './upload-about-me-view';
 import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 import { startOnboardingAboutMeJobAction } from '@/lib/actions/onboarding.actions';
@@ -11,14 +13,17 @@ interface UploadStepProps {
 
 export function UploadStep({ onBack }: UploadStepProps) {
   const { beginJob } = useOnboardingJob();
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+
   const { mutateAsync, isPending } = useActionMutation(
-    startOnboardingAboutMeJobAction,
+    (formData: FormData) => startOnboardingAboutMeJobAction(formData, idempotencyKey),
     {
       successMessage: 'Resume uploaded successfully!',
       onSuccess: ({ jobId }) => {
         beginJob(jobId);
       },
       showErrorToast: true,
+      onSettled: () => setIdempotencyKey(crypto.randomUUID()),
     },
   );
 

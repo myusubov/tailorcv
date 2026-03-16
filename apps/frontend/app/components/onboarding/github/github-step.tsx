@@ -23,6 +23,7 @@ interface GitHubStepProps {
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const { beginJob } = useOnboardingJob();
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   // Handle OAuth search params using nuqs
   const [oauthParams, setOauthParams] = useQueryStates(
@@ -37,11 +38,12 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   );
 
   const { mutate: analyze, isPending: isAnalyzing } = useActionMutation(
-    startOnboardingGithubJobAction,
+    (input: { repositoryIds: string[] }) => startOnboardingGithubJobAction(input, idempotencyKey),
     {
       onSuccess: (res) => {
         beginJob(res.jobId);
       },
+      onSettled: () => setIdempotencyKey(crypto.randomUUID()),
     },
   );
 

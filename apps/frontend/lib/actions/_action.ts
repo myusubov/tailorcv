@@ -10,6 +10,7 @@ export type DefineActionConfig<TInput> = {
   keyPrefix?: string;
   staticParts?: CacheKeyPart[];
   dynamicParts?: (input: TInput) => CacheKeyPart[];
+  headers?: (input: TInput) => Record<string, string>;
   revalidate?: {
     fromKey?: boolean;
     tags?: string[];
@@ -20,7 +21,7 @@ export type DefineActionConfig<TInput> = {
 export function defineAction<TInput, TOutput>(
   config: DefineActionConfig<TInput>,
 ) {
-  return async (input: TInput): Promise<ApiResult<TOutput>> => {
+  return async (input: TInput, customHeaders?: Record<string, string>): Promise<ApiResult<TOutput>> => {
     const path =
       typeof config.path === 'function' ? config.path(input) : config.path;
 
@@ -36,6 +37,7 @@ export function defineAction<TInput, TOutput>(
       method: config.method,
       auth: config.auth ?? 'required',
       body: input,
+      headers: { ...(config.headers ? config.headers(input) : {}), ...customHeaders },
     });
 
     if (result.ok) {

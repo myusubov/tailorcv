@@ -18,8 +18,8 @@ const _startOnboardingJobImpl = defineAction<
   revalidate: { fromKey: true },
 });
 
-export async function startOnboardingJobAction(input: GenerateOnboardingInput) {
-  return _startOnboardingJobImpl(input);
+export async function startOnboardingJobAction(input: GenerateOnboardingInput, idempotencyKey?: string) {
+  return _startOnboardingJobImpl(input, idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : undefined);
 }
 
 const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>(
@@ -37,8 +37,8 @@ const _startOnAboutMeJobImpl = defineAction<FormData, StartOnboardingJobOutput>(
  * Starts an onboarding job by parsing a resume file (About Me / Resume Upload).
  * @param formData - FormData containing the 'file' entry.
  */
-export async function startOnboardingAboutMeJobAction(formData: FormData) {
-  return _startOnAboutMeJobImpl(formData);
+export async function startOnboardingAboutMeJobAction(formData: FormData, idempotencyKey?: string) {
+  return _startOnAboutMeJobImpl(formData, idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : undefined);
 }
 
 const _startOnboardingGithubJobImpl = defineAction<
@@ -59,6 +59,6 @@ const _startOnboardingGithubJobImpl = defineAction<
  */
 export async function startOnboardingGithubJobAction(input: {
   repositoryIds: string[];
-}) {
-  return _startOnboardingGithubJobImpl(input);
+}, idempotencyKey?: string) {
+  return _startOnboardingGithubJobImpl(input, idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : undefined);
 }

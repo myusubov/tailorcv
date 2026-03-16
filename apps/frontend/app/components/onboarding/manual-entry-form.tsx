@@ -37,6 +37,7 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
   const [direction, setDirection] = useState<1 | -1>(1);
   const { beginJob, isActive } = useOnboardingJob();
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   const form = useForm<OnboardingFormInput>({
     resolver: zodResolver(onboardingSchema),
@@ -65,12 +66,13 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   });
 
   const { mutate: startJob, isPending } = useActionMutation(
-    startOnboardingJobAction,
+    (data: OnboardingFormInput) => startOnboardingJobAction(data, idempotencyKey),
     {
       successMessage: 'Generating your resume…',
       onSuccess: (res) => {
         beginJob(res.jobId);
       },
+      onSettled: () => setIdempotencyKey(crypto.randomUUID()),
       form,
     },
   );
