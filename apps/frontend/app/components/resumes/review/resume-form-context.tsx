@@ -80,7 +80,7 @@ interface ResumeFormProviderProps {
  * Provider component that wraps the review page and manages form state.
  * Handles:
  * - React Hook Form initialization with BaseResumeData
- * - Debounced auto-save to backend (TODO: implement when endpoint ready)
+ * - Debounced auto-save to backend
  * - Save status tracking
  */
 export function ResumeFormProvider({

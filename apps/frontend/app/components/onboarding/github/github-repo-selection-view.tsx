@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input } from '@heroui/react';
+import { Button, Input, Spinner, Card } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
@@ -148,34 +148,32 @@ export function GitHubRepoSelectionView({
 
         {/* Repository List */}
         <motion.div
-          className="mb-6 space-y-2"
+          className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <AnimatePresence mode="popLayout">
+          <>
             {filteredRepos.map((repo, index) => {
               const isSelected = selectedRepos.has(repo.id);
               const isDisabled = !isSelected && selectedRepos.size >= MAX_REPOS;
 
               return (
-                <motion.div
+                <Card
                   key={repo.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: index * 0.03 }}
                   onClick={() => !isDisabled && toggleRepo(repo.id)}
-                  className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
+                  role="button"
+                  aria-pressed={isSelected}
+                  aria-disabled={isDisabled}
+                  className={`group relative cursor-pointer transition-all ${
                     isSelected
                       ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
                       : isDisabled
-                        ? 'border-border bg-surface cursor-not-allowed opacity-50'
-                        : 'border-border bg-surface hover:border-primary/50 hover:bg-surface-secondary'
+                        ? 'cursor-not-allowed opacity-50'
+                        : 'hover:border-primary/50 hover:bg-surface-secondary'
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <Card.Content className="flex flex-row items-start gap-4">
                     {/* Repo Info */}
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex items-center gap-2">
@@ -244,14 +242,14 @@ export function GitHubRepoSelectionView({
                         />
                       </motion.div>
                     )}
-                  </div>
-                </motion.div>
+                  </Card.Content>
+                </Card>
               );
             })}
-          </AnimatePresence>
+          </>
 
           {filteredRepos.length === 0 && (
-            <div className="py-12 text-center">
+            <div className="col-span-full py-12 text-center">
               <Icon
                 icon="lucide:search-x"
                 className="text-muted mx-auto mb-3 size-12"
@@ -281,9 +279,13 @@ export function GitHubRepoSelectionView({
             onPress={handleAnalyze}
             isPending={isLoading}
           >
-            <Icon icon="lucide:sparkles" className="size-5" />
-            Analyze {selectedRepos.size}{' '}
-            {selectedRepos.size === 1 ? 'Repository' : 'Repositories'}
+            {({ isPending }) => (
+              <>
+                {isPending && <Spinner color="current" size="sm" />}
+                Analyze {selectedRepos.size}{' '}
+                {selectedRepos.size === 1 ? 'Repository' : 'Repositories'}
+              </>
+            )}
           </Button>
         </motion.div>
       </motion.div>
