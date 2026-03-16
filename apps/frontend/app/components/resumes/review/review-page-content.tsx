@@ -9,6 +9,7 @@ import { Icon } from '@iconify/react';
 import {
   ReviewAccordion,
   type SectionKey,
+  SECTIONS,
 } from '@/app/components/resumes/review/review-accordion';
 import { useResumeForm } from '@/app/components/resumes/review/resume-form-context';
 import { useAIChat } from '@/app/providers/ai-chat-provider';
@@ -46,16 +47,8 @@ export function ReviewPageContent() {
    * Expands the corresponding accordion section.
    */
   const handleSectionClick = (section: string) => {
-    // Map analysis section names to accordion keys
-    const keyMap: Record<string, SectionKey> = {
-      contact: 'contact',
-      summary: 'summary',
-      skills: 'skills',
-      experience: 'experience',
-      projects: 'projects',
-      education: 'education',
-    };
-    const key = keyMap[section.toLowerCase()];
+    // Determine section key using the single source of truth from SECTIONS
+    const key = SECTIONS.find((s) => s.key === section.toLowerCase())?.key;
 
     if (key) {
       // Toggle: if already expanded, collapse it; otherwise expand it
