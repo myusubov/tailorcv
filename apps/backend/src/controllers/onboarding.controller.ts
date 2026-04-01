@@ -19,6 +19,22 @@ import {
   writeSseEvent,
 } from 'src/utils/ai-stream-sse';
 
+async function safeMarkIdempotentCompleted(
+  req: Request,
+  res: Response,
+  clerkUserId: string,
+) {
+  if (!res.markIdempotentCompleted) return;
+  try {
+    await res.markIdempotentCompleted();
+  } catch (err) {
+    logger.error(
+      { err, clerkUserId, key: req.headers['x-idempotency-key'] },
+      'Failed to mark idempotent request as completed',
+    );
+  }
+}
+
 export const getOnboardingStatusController = async (
   _req: Request,
   res: Response<unknown, ClerkLocals>,
@@ -63,9 +79,7 @@ export const generateOnboardingController = async (
     const result = await startOnboardingJob({ clerkUserId, body });
     logger.info({ clerkUserId, jobId: result.jobId }, 'onboarding job queued');
 
-    if (res.markIdempotentCompleted) {
-      await res.markIdempotentCompleted();
-    }
+    await safeMarkIdempotentCompleted(req, res, clerkUserId);
 
     return successResponse(res, result, 202);
   } catch (err) {
@@ -121,9 +135,7 @@ export const generateFromAboutMeController = async (
     logger.info({ clerkUserId }, 'onboarding about-me enqueue start');
     const result = await startOnboardingAboutMeJob({ clerkUserId, text });
 
-    if (res.markIdempotentCompleted) {
-      await res.markIdempotentCompleted();
-    }
+    await safeMarkIdempotentCompleted(req, res, clerkUserId);
 
     return successResponse(res, result, 202);
   } catch (err) {
@@ -153,9 +165,7 @@ export const generateFromGithubController = async (
       repositoryIds,
     });
 
-    if (res.markIdempotentCompleted) {
-      await res.markIdempotentCompleted();
-    }
+    await safeMarkIdempotentCompleted(req, res, clerkUserId);
 
     return successResponse(res, result, 202);
   } catch (err) {
