@@ -19,6 +19,22 @@ import {
   writeSseEvent,
 } from 'src/utils/ai-stream-sse';
 
+async function safeMarkIdempotentCompleted(
+  req: Request,
+  res: Response,
+  clerkUserId: string,
+) {
+  if (!res.markIdempotentCompleted) return;
+  try {
+    await res.markIdempotentCompleted();
+  } catch (err) {
+    logger.error(
+      { err, clerkUserId, key: req.headers['x-idempotency-key'] },
+      'Failed to mark idempotent request as completed',
+    );
+  }
+}
+
 export const getOnboardingStatusController = async (
   _req: Request,
   res: Response<unknown, ClerkLocals>,
@@ -36,11 +52,15 @@ export const getOnboardingStatusController = async (
 };
 
 export const generateOnboardingController = async (
-  _req: Request,
+  req: Request,
   res: Response<unknown, GenerateOnboardingLocals>,
   next: NextFunction,
 ) => {
   try {
+    if (req.isIdempotentReplay) {
+      return successResponse(res, { status: 'replayed' }, 202);
+    }
+
     const { body, clerkUserId } = res.locals;
     logger.info(
       { clerkUserId, model: body.model ?? null },
@@ -58,6 +78,9 @@ export const generateOnboardingController = async (
     );
     const result = await startOnboardingJob({ clerkUserId, body });
     logger.info({ clerkUserId, jobId: result.jobId }, 'onboarding job queued');
+
+    await safeMarkIdempotentCompleted(req, res, clerkUserId);
+
     return successResponse(res, result, 202);
   } catch (err) {
     next(err);
@@ -84,6 +107,10 @@ export const generateFromAboutMeController = async (
   next: NextFunction,
 ) => {
   try {
+    if (req.isIdempotentReplay) {
+      return successResponse(res, { status: 'replayed' }, 202);
+    }
+
     const { clerkUserId } = res.locals;
     const file = req.file;
 
@@ -108,6 +135,8 @@ export const generateFromAboutMeController = async (
     logger.info({ clerkUserId }, 'onboarding about-me enqueue start');
     const result = await startOnboardingAboutMeJob({ clerkUserId, text });
 
+    await safeMarkIdempotentCompleted(req, res, clerkUserId);
+
     return successResponse(res, result, 202);
   } catch (err) {
     next(err);
@@ -120,6 +149,10 @@ export const generateFromGithubController = async (
   next: NextFunction,
 ) => {
   try {
+    if (req.isIdempotentReplay) {
+      return successResponse(res, { status: 'replayed' }, 202);
+    }
+
     const { clerkUserId } = res.locals as ClerkLocals;
     const { repositoryIds } = req.body as { repositoryIds: string[] };
 
@@ -131,6 +164,8 @@ export const generateFromGithubController = async (
       clerkUserId,
       repositoryIds,
     });
+
+    await safeMarkIdempotentCompleted(req, res, clerkUserId);
 
     return successResponse(res, result, 202);
   } catch (err) {
