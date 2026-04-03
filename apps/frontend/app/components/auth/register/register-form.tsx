@@ -13,7 +13,7 @@ import {
   Spinner,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
@@ -27,7 +27,7 @@ const RegisterForm = () => {
   const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
-  const { isLoaded, signUp, setActive } = useSignUp();
+  const { signUp, fetchStatus } = useSignUp();
   const [verifying, setVerifying] = useState(false);
 
   const handleGoBack = () => {
@@ -56,23 +56,35 @@ const RegisterForm = () => {
   const email = useWatch({ control, name: 'email' });
   // Handle submission of the sign-up form
   const onSubmit = async (data: RegisterFormValues) => {
-    if (!isLoaded || !signUp) return;
+    if (fetchStatus === 'fetching' || !signUp) return;
     setGlobalError('');
 
     try {
-      await signUp.create({
+      const { error } = await signUp.password({
         emailAddress: data.email,
-        password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
+        password: data.password,
       });
 
       // Send the user an email with the verification code
-      await signUp.prepareEmailAddressVerification({
-        strategy: 'email_code',
-      });
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        const clerkError = getClerkErrorMessage(error);
+        setGlobalError(clerkError || 'Verification failed');
+        return;
+      }
 
-      setVerifying(true);
+      await signUp.verifications.sendEmailCode();
+
+      if (
+        signUp.status === 'missing_requirements' &&
+        signUp.unverifiedFields.includes('email_address') &&
+        signUp.missingFields.length === 0
+      ) {
+        setVerifying(true)
+        return
+      }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
@@ -81,13 +93,13 @@ const RegisterForm = () => {
   };
 
   const handleGoogleSignUp = async () => {
-    if (!isLoaded || !signUp) return;
+    if (fetchStatus === 'fetching' || !signUp) return;
     try {
       setGoogleLoading(true);
-      await signUp.authenticateWithRedirect({
+      await signUp.sso({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: config.auth.afterSignUpUrl,
+        redirectCallbackUrl: config.auth.afterSignUpUrl,
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -99,13 +111,13 @@ const RegisterForm = () => {
   };
 
   const handleAppleSignUp = async () => {
-    if (!isLoaded || !signUp) return;
+    if (fetchStatus === 'fetching' || !signUp) return;
     try {
       setAppleLoading(true);
-      await signUp.authenticateWithRedirect({
+      await signUp.sso({
         strategy: 'oauth_apple',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: config.auth.afterSignUpUrl,
+        redirectCallbackUrl: config.auth.afterSignUpUrl,
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -119,9 +131,7 @@ const RegisterForm = () => {
   return verifying ? (
     <RegistrationVerification
       resetForm={reset}
-      setActive={setActive}
       onGoBack={handleGoBack}
-      isLoaded={isLoaded}
       signUp={signUp}
       email={email}
     />

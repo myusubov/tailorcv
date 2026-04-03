@@ -27,15 +27,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      afterSignOutUrl="/login"
-      signInUrl="/login"
-      signUpUrl="/register"
-    >
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${inter.variable} antialiased`}
-          suppressHydrationWarning
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} antialiased`}
+        suppressHydrationWarning
+      >
+        {/* ClerkProvider must be inside <body> in Clerk v7 for Next.js cache/PPR support */}
+        <ClerkProvider
+          afterSignOutUrl="/login"
+          signInUrl="/login"
+          signUpUrl="/register"
         >
           <NuqsAdapter>
             <ThemeProvider>
@@ -57,8 +58,8 @@ export default function RootLayout({
               </QueryProvider>
             </ThemeProvider>
           </NuqsAdapter>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

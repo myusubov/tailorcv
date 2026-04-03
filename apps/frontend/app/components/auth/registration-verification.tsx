@@ -1,6 +1,6 @@
 'use client';
 
-import { useSignUp } from '@clerk/nextjs';
+import { useClerk, useSignUp } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Button, InputOTP, Card, Tooltip, Spinner } from '@heroui/react';
 import { toast } from 'sonner';
@@ -19,8 +19,6 @@ export interface RegistrationVerificationProps {
   onGoBack: () => void;
   /** Passed from the parent's useSignUp to keep state in sync */
   signUp: ReturnType<typeof useSignUp>['signUp'];
-  isLoaded: boolean;
-  setActive: ReturnType<typeof useSignUp>['setActive'];
   /** Hook form reset */
   resetForm: () => void;
 }
@@ -29,10 +27,9 @@ export function RegistrationVerification({
   email,
   onGoBack,
   signUp,
-  isLoaded,
-  setActive,
   resetForm,
 }: RegistrationVerificationProps) {
+  const router = useRouter();
   const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -40,14 +37,12 @@ export function RegistrationVerification({
 
   // Handle re-sending the verification code
   const handleResend = async () => {
-    if (!isLoaded || !signUp) return;
+    if (!signUp) return;
     setResending(true);
     setGlobalError('');
 
     try {
-      await signUp.prepareEmailAddressVerification({
-        strategy: 'email_code',
-      });
+      await signUp.verifications.sendEmailCode();
       toast.success('Verification code resent');
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -61,24 +56,35 @@ export function RegistrationVerification({
   // Handle the submission of the verification form
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || !signUp) return;
+    if (!signUp) return;
     setIsVerifying(true);
 
     try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-
-      if (completeSignUp.status === 'complete') {
-        if (setActive) {
-          await setActive({
-            session: completeSignUp.createdSessionId,
-            redirectUrl: config.auth.afterSignUpUrl,
-          });
-        }
+      const { error } = await signUp.verifications.verifyEmailCode({ code });
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        const clerkError = getClerkErrorMessage(error);
+        setGlobalError(clerkError || 'Verification failed');
         setIsVerifying(false);
-        setCode('');
-        resetForm();
+        return;
+      }
+
+      if (signUp.status === 'complete') {
+        await signUp.finalize({
+          navigate: async ({ session, decorateUrl }) => {
+            if (session.currentTask) {
+              console.log("Session task triggered", session.currentTask)
+              return
+            }
+
+            const url = decorateUrl(config.auth.afterSignUpUrl);
+            if (url.startsWith('http')) {
+              window.location.href = url;
+            } else {
+              router.push(url);
+            }
+          }
+        })
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));

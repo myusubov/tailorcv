@@ -28,9 +28,9 @@ const envSchema = z.object({
     .string()
     .default('/dashboard'),
 
-  // After auth redirect URLs
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z.string().default('/dashboard'),
-  NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string().default('/onboarding'),
+  // After auth redirect URLs (app-owned, not auto-consumed by Clerk v7)
+  NEXT_PUBLIC_AFTER_SIGN_IN_URL: z.string().default('/dashboard'),
+  NEXT_PUBLIC_AFTER_SIGN_UP_URL: z.string().default('/onboarding'),
   NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: z.string().default('/login'),
 
   // Backend API URL
@@ -64,10 +64,10 @@ const parseEnv = (): Env => {
       process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:
       process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,
-    NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL:
-      process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL,
-    NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL:
-      process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL,
+    NEXT_PUBLIC_AFTER_SIGN_IN_URL:
+      process.env.NEXT_PUBLIC_AFTER_SIGN_IN_URL,
+    NEXT_PUBLIC_AFTER_SIGN_UP_URL:
+      process.env.NEXT_PUBLIC_AFTER_SIGN_UP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
@@ -108,8 +108,8 @@ export const config = {
   auth: {
     signInUrl: env.NEXT_PUBLIC_CLERK_SIGN_IN_URL as Route,
     signUpUrl: env.NEXT_PUBLIC_CLERK_SIGN_UP_URL as Route,
-    afterSignInUrl: env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL as Route,
-    afterSignUpUrl: env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL as Route,
+    afterSignInUrl: env.NEXT_PUBLIC_AFTER_SIGN_IN_URL as Route,
+    afterSignUpUrl: env.NEXT_PUBLIC_AFTER_SIGN_UP_URL as Route,
     afterSignOutUrl: env.NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL as Route,
     signInFallbackUrl:
       env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL as Route,

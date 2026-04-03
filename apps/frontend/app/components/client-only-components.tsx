@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import dynamic from 'next/dynamic';
 
 const AIChatBox = dynamic(
@@ -13,9 +14,10 @@ const ThemeToggle = dynamic(
 );
 
 export function ClientOnlyComponents() {
+  const { isLoaded, isSignedIn } = useAuth()
   return (
     <>
-      <AIChatBox />
+      {isLoaded && isSignedIn && <AIChatBox />}
       <ThemeToggle />
     </>
   );

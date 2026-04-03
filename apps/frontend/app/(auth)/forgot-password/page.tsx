@@ -12,7 +12,7 @@ import { getClerkErrorMessage } from '@/lib/utils/utils';
 import { config } from '@/lib/config';
 
 export default function ForgotPasswordPage() {
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { signIn, fetchStatus } = useSignIn();
   const router = useRouter();
 
   const [step, setStep] = useState<'email' | 'reset'>('email');
@@ -23,14 +23,12 @@ export default function ForgotPasswordPage() {
 
   // Send password reset code to email
   const handleEmailSubmit = async (emailAddress: string) => {
-    if (!isLoaded) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     setGlobalError('');
 
     try {
-      await signIn.create({
-        strategy: 'reset_password_email_code',
-        identifier: emailAddress,
-      });
+      await signIn.create({ identifier: emailAddress });
+      await signIn.resetPasswordEmailCode.sendCode();
       setEmail(emailAddress);
       setStep('reset');
     } catch (err: unknown) {
@@ -42,15 +40,13 @@ export default function ForgotPasswordPage() {
 
   // Resend the reset code
   const handleResend = async () => {
-    if (!isLoaded || !email) return;
+    if (fetchStatus === 'fetching' || !signIn || !email) return;
     setIsResending(true);
     setGlobalError('');
 
     try {
-      await signIn.create({
-        strategy: 'reset_password_email_code',
-        identifier: email,
-      });
+      await signIn.create({ identifier: email });
+      await signIn.resetPasswordEmailCode.sendCode();
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
@@ -62,23 +58,20 @@ export default function ForgotPasswordPage() {
 
   // Reset password with code
   const handleResetSubmit = async (password: string) => {
-    if (!isLoaded) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     setGlobalError('');
 
     try {
-      const result = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
-        code,
-        password,
-      });
+      await signIn.resetPasswordEmailCode.verifyCode({ code });
+      await signIn.resetPasswordEmailCode.submitPassword({ password });
 
-      if (result.status === 'needs_second_factor') {
+      if (signIn.status === 'needs_second_factor') {
         setGlobalError('Two-factor authentication is required');
-      } else if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
+      } else if (signIn.status === 'complete') {
+        await signIn.finalize();
         router.push(config.auth.afterSignInUrl);
       } else {
-        console.log(JSON.stringify(result, null, 2));
+        console.log(JSON.stringify({ status: signIn.status }, null, 2));
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));

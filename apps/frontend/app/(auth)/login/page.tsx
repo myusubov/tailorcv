@@ -17,7 +17,7 @@ import {
 } from '@/app/components/auth/login';
 
 export default function LoginPage() {
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { signIn, fetchStatus } = useSignIn();
   const [globalError, setGlobalError] = useState('');
   const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -41,41 +41,37 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    if (!isLoaded) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     setGlobalError('');
 
     try {
-      const result = await signIn.create({
-        identifier: data.email,
-        password: data.password,
-      });
+      await signIn.create({ identifier: data.email });
+      await signIn.password({ password: data.password });
 
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
+      if (signIn.status === 'complete') {
+        await signIn.finalize();
         router.push(config.auth.afterSignInUrl);
-      } else if (result.status === 'needs_second_factor') {
-        const factor = result.supportedSecondFactors?.find(
-          (f) => f.strategy === 'email_code',
+      } else if (signIn.status === 'needs_second_factor') {
+        const factor = signIn.supportedSecondFactors?.find(
+          (f: { strategy: string }) => f.strategy === 'email_code',
         );
         if (factor) {
-          await signIn.prepareSecondFactor({
-            strategy: 'email_code',
-          });
+          await signIn.emailCode.sendCode({});
           setVerifying(true);
         } else {
           setGlobalError(
             'Unsupported verification method. Please contact support.',
           );
         }
-      } else if (result.status === 'needs_new_password') {
+      } else if (signIn.status === 'needs_new_password') {
         // Handle leaked password / forced reset
         toast.error('For your security, you must reset your password.');
         router.push('/forgot-password');
       } else {
         // Handling unexpected statuses (e.g., missing_requirements) to prevent getting stuck
-        console.error('Unhandled sign-in status:', result.status);
+        console.error('Unhandled sign-in status:', signIn.status);
         setGlobalError(
-          `Sign in status: ${result.status?.replace(/_/g, ' ') || 'Unknown'}. Please contact support.`,
+          `Sign in status: ${signIn.status?.replace(/_/g, ' ') || 'Unknown'}. Please contact support.`,
         );
       }
     } catch (err: unknown) {
@@ -88,13 +84,13 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!isLoaded) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     try {
       setGoogleLoading(true);
-      await signIn.authenticateWithRedirect({
+      await signIn.sso({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: config.auth.afterSignInUrl,
+        redirectCallbackUrl: config.auth.afterSignInUrl,
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -106,13 +102,13 @@ export default function LoginPage() {
   };
 
   const handleAppleSignIn = async () => {
-    if (!isLoaded) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     try {
       setAppleLoading(true);
-      await signIn.authenticateWithRedirect({
+      await signIn.sso({
         strategy: 'oauth_apple',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: config.auth.afterSignInUrl,
+        redirectCallbackUrl: config.auth.afterSignInUrl,
       });
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -124,13 +120,11 @@ export default function LoginPage() {
   };
 
   const handleResend = async () => {
-    if (!isLoaded || !signIn) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     setResending(true);
     setGlobalError('');
     try {
-      await signIn.prepareSecondFactor({
-        strategy: 'email_code',
-      });
+      await signIn.emailCode.sendCode({});
       toast.success('Verification code resent');
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
@@ -143,17 +137,14 @@ export default function LoginPage() {
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
+    if (fetchStatus === 'fetching' || !signIn) return;
     setIsVerifying(true);
     setGlobalError('');
     try {
-      const result = await signIn.attemptSecondFactor({
-        strategy: 'email_code',
-        code,
-      });
+      await signIn.emailCode.verifyCode({ code });
 
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
+      if (signIn.status === 'complete') {
+        await signIn.finalize();
         router.push(config.auth.afterSignInUrl);
       }
     } catch (err: unknown) {

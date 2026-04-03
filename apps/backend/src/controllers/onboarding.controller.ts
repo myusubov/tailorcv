@@ -17,7 +17,7 @@ import {
   initSseResponse,
   setupStreamTermination,
   writeSseEvent,
-} from 'src/utils/ai-stream-sse';
+} from '../utils/ai-stream-sse';
 
 async function safeMarkIdempotentCompleted(
   req: Request,

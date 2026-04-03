@@ -39,7 +39,7 @@ COPY packages/shared/package.json packages/shared/
 RUN npm ci --omit=dev
 
 # Copy built artifacts
-COPY --from=build /app/apps/backend/prisma apps/backend/prisma
+COPY --from=build /app/apps/backend/prisma apps/backend/dist/prisma
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 COPY --from=build /app/apps/backend/dist apps/backend/dist
 
