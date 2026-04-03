@@ -6,10 +6,10 @@ import {
   ArrowRight,
   Play,
   Sparkles,
-  Github,
   FileText,
   Download,
 } from 'lucide-react';
+import { GithubIcon } from '../icons/brand-icons';
 
 // Animation variants
 const containerVariants = {
@@ -96,7 +96,7 @@ function AnimatedMockup() {
             {/* Step indicators */}
             <div className="mb-6 flex items-center justify-center gap-4">
               {[
-                { icon: Github, label: 'GitHub', active: true },
+                { icon: GithubIcon, label: 'GitHub', active: true },
                 { icon: FileText, label: 'Job', active: true },
                 { icon: Sparkles, label: 'AI', active: true },
                 { icon: Download, label: 'PDF', active: false },

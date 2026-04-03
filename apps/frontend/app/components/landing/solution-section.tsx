@@ -3,7 +3,6 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import {
-  Github,
   FileText,
   Sparkles,
   Download,
@@ -11,11 +10,12 @@ import {
   CheckCircle2,
   ArrowRight,
 } from 'lucide-react';
+import { GithubIcon } from '../icons/brand-icons';
 import Link from 'next/link';
 
 const steps = [
   {
-    icon: Github,
+    icon: GithubIcon,
     number: '01',
     title: 'Connect GitHub',
     description:

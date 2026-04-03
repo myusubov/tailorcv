@@ -6,11 +6,11 @@ import {
   Sparkles,
   FileCheck2,
   History,
-  Github,
   ListTodo,
   Download,
   Zap,
 } from 'lucide-react';
+import { GithubIcon } from '../icons/brand-icons';
 
 const features = [
   {
@@ -41,7 +41,7 @@ const features = [
     iconColor: 'text-blue-400',
   },
   {
-    icon: Github,
+    icon: GithubIcon,
     title: 'GitHub Integration',
     description:
       'Auto-import your work. Connect once and we pull your projects, languages, and contributions.',

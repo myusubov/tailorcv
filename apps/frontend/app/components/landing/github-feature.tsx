@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import {
-  Github,
   FolderGit2,
   Code2,
   Sparkles,
@@ -11,6 +10,7 @@ import {
   GitBranch,
   Terminal,
 } from 'lucide-react';
+import { GithubIcon } from '../icons/brand-icons';
 
 const benefits = [
   {
@@ -231,7 +231,7 @@ export function GithubFeature() {
                 transition={{ duration: 0.6, delay: 0.1, type: 'spring' }}
                 className="border-landing-border-muted from-card-gradient-dark-from to-card-gradient-dark-to mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border bg-gradient-to-br shadow-2xl"
               >
-                <Github className="text-landing-text h-10 w-10" />
+                <GithubIcon className="text-landing-text h-10 w-10" />
               </motion.div>
 
               {/* Headline */}

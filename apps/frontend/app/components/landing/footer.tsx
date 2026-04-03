@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Github, Twitter, Linkedin, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
+import { GithubIcon, TwitterIcon, LinkedinIcon } from '../icons/brand-icons';
 
 const footerLinks = {
   product: {
@@ -35,11 +36,11 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { name: 'Twitter', icon: Twitter, href: 'https://twitter.com/tailorcv' },
-  { name: 'GitHub', icon: Github, href: 'https://github.com/tailorcv' },
+  { name: 'Twitter', icon: TwitterIcon, href: 'https://twitter.com/tailorcv' },
+  { name: 'GitHub', icon: GithubIcon, href: 'https://github.com/tailorcv' },
   {
     name: 'LinkedIn',
-    icon: Linkedin,
+    icon: LinkedinIcon,
     href: 'https://linkedin.com/company/tailorcv',
   },
 ];
