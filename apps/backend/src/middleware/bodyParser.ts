@@ -7,17 +7,22 @@ const RAW_BODY_ROUTES = ['/api/v1/webhooks'];
 const shouldSkipParsing = (path: string): boolean =>
   RAW_BODY_ROUTES.some((route) => path.startsWith(route));
 
+// Pre-instantiate middleware once to avoid per-request allocation
+const rawParser = express.raw({ type: 'application/json' });
+const standardJsonParser = express.json();
+const standardUrlencodedParser = express.urlencoded({ extended: true });
+
 /** JSON body parser that skips raw-body routes */
 export const jsonParser: RequestHandler = (req, res, next) => {
   if (shouldSkipParsing(req.path)) {
     // Preserve raw body as Buffer for webhook signature verification
-    return express.raw({ type: 'application/json' })(req, res, next);
+    return rawParser(req, res, next);
   }
-  express.json()(req, res, next);
+  standardJsonParser(req, res, next);
 };
 
 /** URL-encoded body parser that skips raw-body routes */
 export const urlencodedParser: RequestHandler = (req, res, next) => {
   if (shouldSkipParsing(req.path)) return next();
-  express.urlencoded({ extended: true })(req, res, next);
+  standardUrlencodedParser(req, res, next);
 };
