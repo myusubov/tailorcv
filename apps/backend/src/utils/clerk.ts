@@ -1,6 +1,7 @@
 import type { WebhookEvent } from '@clerk/express/webhooks';
 
 import { prisma } from '../lib';
+import { logger } from '../lib/logger';
 
 const getPrimaryEmailFromClerkUser = (user: any): string => {
   if (!user?.email_addresses || !Array.isArray(user.email_addresses)) {
@@ -29,7 +30,7 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
         where: { clerkUserId },
       });
     } catch (error) {
-      console.error(`Error deleting user ${clerkUserId}:`, error);
+      logger.error({ clerkUserId, error }, 'Clerk webhook: failed to delete user');
     }
     return;
   }
@@ -40,18 +41,24 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
 
   const email = getPrimaryEmailFromClerkUser(user);
 
-  await prisma.user.upsert({
-    where: { clerkUserId },
-    create: {
-      clerkUserId,
-      email,
-      firstName: user.first_name ?? '',
-      lastName: user.last_name ?? '',
-    },
-    update: {
-      email,
-      firstName: user.first_name ?? '',
-      lastName: user.last_name ?? '',
-    },
-  });
+  try {
+    await prisma.user.upsert({
+      where: { clerkUserId },
+      create: {
+        clerkUserId,
+        email,
+        firstName: user.first_name ?? '',
+        lastName: user.last_name ?? '',
+      },
+      update: {
+        email,
+        firstName: user.first_name ?? '',
+        lastName: user.last_name ?? '',
+      },
+    });
+    logger.info({ clerkUserId }, 'Clerk webhook: upserted user');
+  } catch (error) {
+    logger.error({ clerkUserId, error }, 'Clerk webhook: failed to upsert user');
+    throw error;
+  }
 };

@@ -17,16 +17,19 @@ import { requireAdmin } from './middleware/admin';
 import { prisma } from './lib/prisma';
 import { redisPublisher, redisSubscriber } from './lib/redis';
 import { globalRateLimiter } from './middleware/rateLimiter';
+import { jsonParser, urlencodedParser } from './middleware/bodyParser';
 
 dotenv.config();
 
 const app = express();
+// Trust first proxy (Fly.io load balancer) so X-Forwarded-For is used for client IP
+app.set('trust proxy', 1);
 const PORT = env.PORT;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(jsonParser);
+app.use(urlencodedParser);
 app.use(clerkMiddleware());
 app.use(requestLogger);
 
