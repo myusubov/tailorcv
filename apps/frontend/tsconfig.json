@@ -33,5 +33,5 @@
     "../../packages/shared/src/**/*.ts",
     "../../packages/shared/src/**/*.tsx"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "vitest.config.ts", "vitest.setup.ts"]
 }
