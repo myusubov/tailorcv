@@ -8,7 +8,7 @@
 | ----- | ---------- | ------- |
 | Runtime | Node.js | 20.x |
 | Frontend | Next.js (App Router) | 16.x |
-| Backend | Express.js | 5.x |
+| Backend | Express.js | 4.x |
 | Database | PostgreSQL + Prisma | Prisma 7.x |
 | Auth | Clerk | v7 (frontend), v1 (backend) |
 | UI | HeroUI v3 Beta + Tailwind CSS 4 | - |
@@ -28,8 +28,7 @@ tailorcv/
 ├── apps/backend/          # Express API server (services, controllers, routes, workers)
 ├── apps/frontend/         # Next.js app (App Router, Server Actions, React Query)
 ├── packages/shared/       # Shared types, Zod schemas, utilities
-├── docs/architecture/     # Architecture documentation (domain docs)
-└── PROJECT_PATTERNS.md    # High-level pattern reference
+└── docs/architecture/     # Architecture documentation (domain docs)
 ```
 
 ## Commands
