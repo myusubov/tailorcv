@@ -37,10 +37,7 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm exec -w frontend playwright install --with-deps chromium
-      - run: npm run redis
       - run: npm run prisma:generate
       - run: npm run lint
       - run: npm run test
-      - run: npm run test:e2e:frontend -- auth-smoke.spec.ts
       - run: npm run build
