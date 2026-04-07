@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
+import { config } from '@/lib/config';
+
 // Public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -8,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   '/register(.*)',
   '/forgot-password(.*)',
   '/sso-callback(.*)',
+  '/sso-continue(.*)',
   '/api/webhooks(.*)',
   '/terms(.*)',
   '/privacy(.*)',
@@ -39,7 +42,7 @@ export const proxy = clerkMiddleware(async (auth, req) => {
   // 1. If user is logged in and trying to access auth routes (including root '/'), redirect to dashboard
   // CRITICAL: Explicitly skip /sso-callback to prevent loops during OAuth finalization
   if (userId && isAuthRoute(req) && pathname !== '/sso-callback') {
-    return NextResponse.redirect(new URL('/test', req.url));
+    return NextResponse.redirect(new URL(config.auth.afterSignInUrl, req.url));
   }
 
   // 2. If user is not logged in and trying to access protected routes or onboarding, redirect to login

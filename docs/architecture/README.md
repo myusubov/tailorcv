@@ -8,7 +8,11 @@
 
 | **Use Case** | **Primary Doc** | **Supporting Docs** |
 | ------------ | --------------- | ------------------- |
-| _Domain documentation will be added here as features are implemented._ | - | - |
+| SSO / OAuth login or signup changes | [auth/README.md](auth/README.md) | [auth/sso.md](auth/sso.md), `proxy.ts`, `lib/config.ts` |
+| Email/password auth changes | [auth/README.md](auth/README.md) | [auth/flows.md](auth/flows.md), `lib/schemas/auth.ts` |
+| Auth browser automation / E2E | [auth/README.md](auth/README.md) | [auth/testing.md](auth/testing.md), `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/` |
+| Real forgot-password E2E setup | [auth/testing.md](auth/testing.md) | `apps/frontend/e2e/helpers/mail/`, `apps/frontend/.env.e2e.local.example` |
+| Route protection / middleware | [auth/README.md](auth/README.md) | [auth/sso.md](auth/sso.md), `proxy.ts` |
 
 ---
 
@@ -16,7 +20,10 @@
 
 ### Core Architecture
 
-_No domain docs yet. Domain documentation will be created as features are built or modified._
+- [auth/README.md](auth/README.md) — Hub for Clerk v7 custom auth documentation
+- [auth/flows.md](auth/flows.md) — Email/password login, register, verification, and forgot-password flow details
+- [auth/sso.md](auth/sso.md) — OAuth callback, continuation, transfer, and guard behavior
+- [auth/testing.md](auth/testing.md) — Auth smoke, real Clerk forgot-password E2E, and Gmail helper setup
 
 ---
 
@@ -74,8 +81,8 @@ _No domain docs yet. Domain documentation will be created as features are built 
 
 | Metric | Status |
 | ------ | ------ |
-| **Total domain docs** | 0 |
-| **Last full review** | 2026-04-04 |
+| **Total domain docs** | 4 |
+| **Last full review** | 2026-04-07 |
 | **Docs needing split** | None |
 
 <!--

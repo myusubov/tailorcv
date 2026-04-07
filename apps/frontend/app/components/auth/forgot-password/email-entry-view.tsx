@@ -11,39 +11,25 @@ import {
   Spinner,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Control, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
 
 import { AnimatedError } from '@/app/components/ui';
-
-import {
-  forgotPasswordSchema,
-  ForgotPasswordFormValues,
-} from '@/lib/schemas/auth';
+import { ForgotPasswordFormValues } from '@/lib/schemas/auth';
 
 interface EmailEntryViewProps {
-  onSubmit: (email: string) => Promise<void>;
+  control: Control<ForgotPasswordFormValues>;
+  isSubmitting: boolean;
+  onSubmit: () => void;
   globalError: string;
 }
 
-export function EmailEntryView({ onSubmit, globalError }: EmailEntryViewProps) {
-  const {
-    control,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm<ForgotPasswordFormValues>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: {
-      email: '',
-    },
-    mode: 'onSubmit',
-  });
-
-  const handleFormSubmit = async (data: ForgotPasswordFormValues) => {
-    await onSubmit(data.email);
-  };
-
+export function EmailEntryView({
+  control,
+  isSubmitting,
+  onSubmit,
+  globalError,
+}: EmailEntryViewProps) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {/* Left Panel - Branding (Desktop Only) */}
@@ -152,7 +138,7 @@ export function EmailEntryView({ onSubmit, globalError }: EmailEntryViewProps) {
             </p>
           </motion.div>
 
-          <Form className="space-y-6" onSubmit={handleSubmit(handleFormSubmit)}>
+          <Form className="space-y-6" onSubmit={onSubmit}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -199,7 +185,7 @@ export function EmailEntryView({ onSubmit, globalError }: EmailEntryViewProps) {
                     Send Reset Code
                     <Icon
                       icon="lucide:arrow-right"
-                      className="ml-2 size-4 transition-all group-hover:translate-x-1"
+                      className="size-4 transition-all group-hover:translate-x-1"
                     />
                   </>
                 )}

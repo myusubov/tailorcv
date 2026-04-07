@@ -13,6 +13,7 @@ import {
 import { Icon } from '@iconify/react';
 import { Control, Controller } from 'react-hook-form';
 import { AnimatedError } from '@/app/components/ui';
+import type { LoginAuthNotice } from '@/lib/auth/login-auth-reason';
 import { LoginFormValues } from '@/lib/schemas/auth';
 
 interface LoginFormViewProps {
@@ -20,6 +21,7 @@ interface LoginFormViewProps {
   isSubmitting: boolean;
   googleLoading: boolean;
   appleLoading: boolean;
+  authNotice: LoginAuthNotice | null;
   globalError: string;
   onSubmit: () => void;
   onGoogleSignIn: () => void;
@@ -31,6 +33,7 @@ export function LoginFormView({
   isSubmitting,
   googleLoading,
   appleLoading,
+  authNotice,
   globalError,
   onSubmit,
   onGoogleSignIn,
@@ -76,6 +79,42 @@ export function LoginFormView({
             Enter your email to sign in to your account
           </p>
         </motion.div>
+
+        {authNotice ? (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="border-primary/20 bg-primary/5 space-y-3 rounded-2xl border px-4 py-4"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-start gap-3">
+              <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+                <Icon icon="lucide:shield-alert" className="size-5" />
+              </div>
+              <div className="space-y-1 text-left">
+                <p className="text-foreground font-semibold">{authNotice.title}</p>
+                <p className="text-muted text-sm">{authNotice.description}</p>
+              </div>
+            </div>
+
+            {/* Why: Recovery actions are blocking next steps, so they need button treatment
+            instead of looking like secondary inline help text under the banner copy. */}
+            {authNotice.actionHref && authNotice.actionLabel ? (
+              <div className="flex pt-1">
+                <NextLink
+                  href={authNotice.actionHref}
+                  className="bg-primary text-primary-foreground inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-transform hover:-translate-y-0.5 hover:opacity-95"
+                >
+                  <Icon icon="lucide:key-round" className="size-4" />
+                  {authNotice.actionLabel}
+                  <Icon icon="lucide:arrow-right" className="size-4" />
+                </NextLink>
+              </div>
+            ) : null}
+          </motion.div>
+        ) : null}
 
         <Form className="space-y-6" onSubmit={onSubmit}>
           <motion.div

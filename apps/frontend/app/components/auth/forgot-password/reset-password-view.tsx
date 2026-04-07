@@ -13,54 +13,51 @@ import {
   Card,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Control, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
 
 import { AnimatedError } from '@/app/components/ui';
+import { ResetPasswordFormValues } from '@/lib/schemas/auth';
 
-import {
-  resetPasswordSchema,
-  ResetPasswordFormValues,
-} from '@/lib/schemas/auth';
+type ResetPasswordStep = 'verify-code' | 'set-password';
 
 interface ResetPasswordViewProps {
+  control: Control<ResetPasswordFormValues>;
+  isSubmitting: boolean;
   email: string;
+  step: ResetPasswordStep;
   code: string;
   onCodeChange: (code: string) => void;
-  onSubmit: (password: string) => Promise<void>;
+  onVerifyCode: () => Promise<void>;
+  onSetPassword: () => void;
   onResend: () => Promise<void>;
   onBack: () => void;
   globalError: string;
   isResending: boolean;
+  isVerifyingCode: boolean;
 }
 
 export function ResetPasswordView({
+  control,
+  isSubmitting,
   email,
+  step,
   code,
   onCodeChange,
-  onSubmit,
+  onVerifyCode,
+  onSetPassword,
   onResend,
   onBack,
   globalError,
   isResending,
+  isVerifyingCode,
 }: ResetPasswordViewProps) {
-  const {
-    control,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
-    defaultValues: {
-      password: '',
-      confirmPassword: '',
-    },
-    mode: 'onSubmit',
-  });
-
-  const handleFormSubmit = async (data: ResetPasswordFormValues) => {
-    await onSubmit(data.password);
-  };
+  const isVerifyStep = step === 'verify-code';
+  const description = isVerifyStep
+    ? `We sent a 6-digit code to ${email}`
+    : email
+      ? `Enter a new password for ${email}`
+      : 'Enter your new password to finish resetting your account';
 
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
@@ -89,142 +86,184 @@ export function ResetPasswordView({
         <Card className="w-full">
           <Card.Header className="flex flex-col gap-1 text-center">
             <Card.Title className="text-2xl">Reset your password</Card.Title>
-            <Card.Description>
-              We sent a 6-digit code to{' '}
-              <span className="text-foreground font-medium">{email}</span>
-            </Card.Description>
+            <Card.Description>{description}</Card.Description>
           </Card.Header>
           <Card.Content>
-            <Form
-              onSubmit={handleSubmit(handleFormSubmit)}
-              className="flex flex-col gap-6"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="flex justify-center py-4"
+            {isVerifyStep ? (
+              <Form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void onVerifyCode();
+                }}
+                className="flex flex-col gap-6"
               >
-                <InputOTP
-                  maxLength={6}
-                  value={code}
-                  onChange={onCodeChange}
-                  pattern="^[0-9]*$"
-                  inputMode="numeric"
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className="flex justify-center pt-4"
                 >
-                  <InputOTP.Group>
-                    <InputOTP.Slot index={0} />
-                    <InputOTP.Slot index={1} />
-                    <InputOTP.Slot index={2} />
-                  </InputOTP.Group>
-                  <InputOTP.Separator />
-                  <InputOTP.Group>
-                    <InputOTP.Slot index={3} />
-                    <InputOTP.Slot index={4} />
-                    <InputOTP.Slot index={5} />
-                  </InputOTP.Group>
-                </InputOTP>
-              </motion.div>
+                  <InputOTP
+                    aria-label="Reset code"
+                    maxLength={6}
+                    value={code}
+                    onChange={onCodeChange}
+                    pattern="^[0-9]*$"
+                    inputMode="numeric"
+                  >
+                    <InputOTP.Group>
+                      <InputOTP.Slot index={0} />
+                      <InputOTP.Slot index={1} />
+                      <InputOTP.Slot index={2} />
+                    </InputOTP.Group>
+                    <InputOTP.Group>
+                      <InputOTP.Slot index={3} />
+                      <InputOTP.Slot index={4} />
+                      <InputOTP.Slot index={5} />
+                    </InputOTP.Group>
+                  </InputOTP>
+                </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-              >
-                <Controller
-                  name="password"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      className="w-full"
-                      isInvalid={!!fieldState.error}
-                    >
-                      <Label className="text-base">New Password</Label>
-                      <Input
-                        {...field}
-                        type="password"
-                        placeholder="Min. 8 characters"
-                      />
-                      {fieldState.error && (
-                        <FieldError>{fieldState.error.message}</FieldError>
-                      )}
-                    </TextField>
-                  )}
-                />
-              </motion.div>
+                <AnimatedError message={globalError} />
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                <Controller
-                  name="confirmPassword"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      className="w-full"
-                      isInvalid={!!fieldState.error}
-                    >
-                      <Label className="text-base">Confirm Password</Label>
-                      <Input
-                        {...field}
-                        type="password"
-                        placeholder="Confirm your password"
-                      />
-                      {fieldState.error && (
-                        <FieldError>{fieldState.error.message}</FieldError>
-                      )}
-                    </TextField>
-                  )}
-                />
-              </motion.div>
-
-              <AnimatedError message={globalError} />
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.5 }}
-              >
-                <Button
-                  type="submit"
-                  isDisabled={code.length !== 6 || isSubmitting}
-                  className="group w-full shadow-sm"
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Spinner color="current" size="sm" />
-                      Resetting Password...
-                    </>
-                  ) : (
-                    <>
-                      Reset Password
-                      <Icon
-                        icon="lucide:arrow-right"
-                        className="ml-2 size-4 transition-all group-hover:translate-x-1"
-                      />
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            </Form>
+                  <Button
+                    type="submit"
+                    isDisabled={code.length !== 6 || isVerifyingCode}
+                    className="group w-full shadow-sm"
+                  >
+                    {isVerifyingCode ? (
+                      <>
+                        <Spinner color="current" size="sm" />
+                        Verifying Code...
+                      </>
+                    ) : (
+                      <>
+                        Verify Code
+                        <Icon
+                          icon="lucide:arrow-right"
+                          className="size-4 transition-all group-hover:translate-x-1"
+                        />
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              </Form>
+            ) : (
+              <Form
+                onSubmit={onSetPassword}
+                className="flex flex-col gap-6"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                >
+                  <Controller
+                    name="password"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <TextField
+                        className="w-full"
+                        isInvalid={!!fieldState.error}
+                      >
+                        <Label className="text-base">New Password</Label>
+                        <Input
+                          {...field}
+                          aria-label="New password"
+                          type="password"
+                          placeholder="Min. 8 characters"
+                        />
+                        {fieldState.error && (
+                          <FieldError>{fieldState.error.message}</FieldError>
+                        )}
+                      </TextField>
+                    )}
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
+                  <Controller
+                    name="confirmPassword"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <TextField
+                        className="w-full"
+                        isInvalid={!!fieldState.error}
+                      >
+                        <Label className="text-base">Confirm Password</Label>
+                        <Input
+                          {...field}
+                          aria-label="Confirm password"
+                          type="password"
+                          placeholder="Confirm your password"
+                        />
+                        {fieldState.error && (
+                          <FieldError>{fieldState.error.message}</FieldError>
+                        )}
+                      </TextField>
+                    )}
+                  />
+                </motion.div>
+
+                <AnimatedError message={globalError} />
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                >
+                  <Button
+                    type="submit"
+                    isDisabled={isSubmitting}
+                    className="group w-full shadow-sm"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Spinner color="current" size="sm" />
+                        Resetting Password...
+                      </>
+                    ) : (
+                      <>
+                        Reset Password
+                        <Icon
+                          icon="lucide:arrow-right"
+                          className="size-4 transition-all group-hover:translate-x-1"
+                        />
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              </Form>
+            )}
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
+            {isVerifyStep ? (
+              <p className="text-muted text-center text-sm">
+                Didn&apos;t receive the code?{' '}
+                <button
+                  type="button"
+                  aria-label="Resend reset code"
+                  className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={onResend}
+                  disabled={isResending}
+                >
+                  {isResending ? 'Resending...' : 'Resend code'}
+                </button>
+              </p>
+            ) : null}
             <p className="text-muted text-center text-sm">
-              Didn&apos;t receive the code?{' '}
               <button
                 type="button"
-                className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={onResend}
-                disabled={isResending}
-              >
-                {isResending ? 'Resending...' : 'Resend code'}
-              </button>
-            </p>
-            <p className="text-muted text-center text-sm">
-              <button
-                type="button"
+                aria-label="Use a different email address"
                 className="text-primary cursor-pointer font-medium hover:underline"
                 onClick={onBack}
               >

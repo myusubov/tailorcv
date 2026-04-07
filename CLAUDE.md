@@ -50,9 +50,16 @@ npm run lint
 # Typecheck
 npx tsc --noEmit              # from app directory
 npm run build -w shared        # shared must build first
+npm run typecheck:frontend     # from repo root
+npm run typecheck:backend      # from repo root
 
 # Test
 npm run test
+npm run test:frontend
+npm run test:backend
+npm run test:e2e:frontend
+npm run test:e2e:frontend:headed
+npm run test:e2e:frontend:real-auth
 
 # Format
 npm run format
@@ -62,6 +69,12 @@ npm run prisma:generate        # generate client
 npm run prisma:migrate         # run migrations
 npm run prisma:studio          # visual DB browser
 ```
+
+## Planning Convention
+
+- Use chat-based planning and the platform's plan mode by default for multi-step work.
+- Do not create a repo-local `PLAN.md` unless a human explicitly asks for a file-based plan artifact.
+- When a reusable implementation pattern changes, update this `CLAUDE.md`; when feature architecture changes, update the relevant doc under `docs/architecture/`.
 
 ---
 
@@ -260,6 +273,52 @@ showErrorToast(error);
 
 ---
 
+### Pattern: Frontend Flow Controllers
+
+**When:** Building or refactoring stateful frontend flows such as auth, onboarding, or multi-step forms
+**Canonical examples:** `apps/frontend/app/components/auth/register/use-register-flow.ts`, `apps/frontend/app/components/auth/login/use-login-flow.ts`
+
+```typescript
+// Route or container component: thin orchestration only
+export default function FeaturePage() {
+  const flow = useFeatureFlow();
+
+  if (flow.mode === 'verification') {
+    return <VerificationView {...flow.verificationViewProps} />;
+  }
+
+  return <FeatureFormView {...flow.formViewProps} />;
+}
+
+// Flow hook: owns RHF, async handlers, routing, and state transitions
+export function useFeatureFlow(): UseFeatureFlowResult {
+  const form = useForm<FormValues>({ /* ... */ });
+  const [globalError, setGlobalError] = useState('');
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    // async orchestration lives here
+  });
+
+  return {
+    mode: 'form',
+    formViewProps: {
+      control: form.control,
+      onSubmit: handleSubmit,
+      globalError,
+    },
+  };
+}
+```
+
+**Key rules:**
+- Route components and top-level feature containers should stay thin and only choose which view to render.
+- Flow hooks own `react-hook-form`, async orchestration, router/search-param handling, and state-machine transitions.
+- Presentational view components receive render-safe props only -- no Clerk resources, router instances, or search-param objects.
+- Keep flow hooks feature-local inside the same directory as the views they coordinate.
+- Add focused colocated Vitest files for the flow hook and thin controller boundary when behavior is stateful enough to regress.
+
+---
+
 ## Key Utilities & Shared Functions
 
 | Utility | Location | Purpose |
@@ -312,6 +371,8 @@ showErrorToast(error);
 | Frontend type files | `{entity}.ts` in `lib/types/` | `ai-chat.ts` |
 | Components | PascalCase, feature-grouped | `ChatSidebar`, `OnboardingForm` |
 | Hooks | `use-{name}.ts` (kebab-case file) | `use-action-mutation.ts` |
+| Feature flow hooks | `use-{feature}-flow.ts` | `use-login-flow.ts` |
+| Frontend colocated tests | `{name}.test.ts(x)` beside feature code | `use-login-flow.test.tsx` |
 | API routes | kebab-case paths | `/api/ai/chat/conversations` |
 
 ## Project-Specific Rules
