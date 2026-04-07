@@ -79,13 +79,13 @@ const parseEnv = (): Env => {
       console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
     });
 
-    // In development, throw error. In production, you might want different behavior
-    if (process.env.NODE_ENV === 'development') {
-      throw new Error('Invalid environment variables');
-    }
+    // Why: Returning `parsed.data` after a failed safeParse leaves `env`
+    // undefined and crashes later during module evaluation with a misleading
+    // property-access error instead of the actual env validation failure.
+    throw new Error('Invalid environment variables');
   }
 
-  return parsed.data as Env;
+  return parsed.data;
 };
 
 // Export the validated config
