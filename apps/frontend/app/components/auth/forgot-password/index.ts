@@ -1,2 +1,2 @@
-export { EmailEntryView } from './email-entry-view';
-export { ResetPasswordView } from './reset-password-view';
+export { ForgotPasswordEmailEntry } from './forgot-password-email-entry';
+export { ForgotPasswordReset } from './forgot-password-reset';

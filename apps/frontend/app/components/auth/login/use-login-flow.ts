@@ -1,0 +1,300 @@
+'use client';
+
+import { useSignIn } from '@clerk/nextjs';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import {
+  getLoginAuthNotice,
+  type LoginAuthNotice,
+  LOGIN_AUTH_REASON_QUERY_PARAM,
+} from '@/lib/auth/login-auth-reason';
+import { resolveLoginAttemptOutcome } from '@/lib/auth/clerk-flow';
+import { beginSSOFlow } from '@/lib/auth/sso-flow';
+import { config } from '@/lib/config';
+import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth';
+import { getClerkErrorMessage } from '@/lib/utils/utils';
+
+export interface UseLoginFlowResult {
+  control: ReturnType<typeof useForm<LoginFormValues>>['control'];
+  isSubmitting: boolean;
+  googleLoading: boolean;
+  appleLoading: boolean;
+  authNotice: LoginAuthNotice | null;
+  globalError: string;
+  verifying: boolean;
+  code: string;
+  isVerifying: boolean;
+  resending: boolean;
+  isClientReady: boolean;
+  setCode: (code: string) => void;
+  handleSubmit: () => Promise<void>;
+  handleGoogleSignIn: () => Promise<void>;
+  handleAppleSignIn: () => Promise<void>;
+  handleResend: () => Promise<void>;
+  handleVerification: (event: React.FormEvent) => Promise<void>;
+  handleBackToLogin: () => void;
+}
+
+export function useLoginFlow(): UseLoginFlowResult {
+  const { signIn, fetchStatus } = useSignIn();
+  const [globalError, setGlobalError] = useState('');
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [code, setCode] = useState('');
+  const [resending, setResending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [authNotice, setAuthNotice] = useState<LoginAuthNotice | null>(null);
+  const [isClientReady, setIsClientReady] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+    mode: 'onSubmit',
+  });
+
+  // Why: E2E auth flows need a reliable signal that the React submit handler
+  // has mounted, otherwise the browser can briefly fall back to native form submission.
+  useEffect(() => {
+    setIsClientReady(true);
+  }, []);
+
+  useEffect(() => {
+    const authReason = searchParams.get(LOGIN_AUTH_REASON_QUERY_PARAM);
+    const nextNotice = getLoginAuthNotice({ reason: authReason });
+
+    if (!nextNotice) return;
+
+    setAuthNotice(nextNotice);
+
+    // Why: The login page only needs the recovery reason once. Clearing it
+    // prevents stale shareable URLs and duplicate banners on refresh.
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete(LOGIN_AUTH_REASON_QUERY_PARAM);
+    const nextQuery = nextSearchParams.toString();
+    router.replace(nextQuery ? `/login?${nextQuery}` : '/login');
+  }, [router, searchParams]);
+
+  // Why: Clerk v7 requires finalize navigation to pass through `decorateUrl`
+  // so Safari ITP and session-task redirects stay aligned with the rest of auth.
+  const finalizeSignIn = async () => {
+    if (!signIn) return false;
+
+    const { error } = await signIn.finalize({
+      navigate: async ({ session, decorateUrl }) => {
+        if (session?.currentTask) return;
+
+        const url = decorateUrl(config.auth.afterSignInUrl);
+        if (url.startsWith('http')) {
+          window.location.href = url;
+        } else {
+          router.push(url);
+        }
+      },
+    });
+
+    if (error) {
+      const clerkError = getClerkErrorMessage(error);
+      setGlobalError(clerkError || 'Failed to complete sign in');
+      return false;
+    }
+
+    return true;
+  };
+
+  const submitPasswordSignIn = async ({ email, password }: LoginFormValues) => {
+    if (fetchStatus === 'fetching' || !signIn) return;
+    setGlobalError('');
+
+    try {
+      await signIn.create({ identifier: email });
+      await signIn.password({ password });
+
+      // Why: Client Trust and account MFA are distinct Clerk v7 states. Keeping
+      // them separate uses the documented email-code API without implying full MFA support.
+      const outcome = resolveLoginAttemptOutcome({
+        status: signIn.status,
+        supportedSecondFactors: signIn.supportedSecondFactors,
+      });
+
+      if (outcome.type === 'finalize') {
+        await finalizeSignIn();
+        return;
+      }
+
+      if (outcome.type === 'client_trust_email_code') {
+        const { error } = await signIn.mfa.sendEmailCode();
+
+        if (error) {
+          const clerkError = getClerkErrorMessage(error);
+          setGlobalError(clerkError || 'Failed to send verification code');
+          return;
+        }
+
+        setCode('');
+        setVerifying(true);
+        return;
+      }
+
+      if (outcome.type === 'needs_second_factor') {
+        setGlobalError(
+          'Your account requires a second verification method after password sign-in. This login form does not support that MFA step yet.',
+        );
+        return;
+      }
+
+      if (outcome.type === 'needs_new_password') {
+        toast.error('For your security, you must reset your password.');
+        router.push('/forgot-password');
+        return;
+      }
+
+      if (outcome.type === 'unsupported_second_factor') {
+        setGlobalError(
+          'Trusted-device verification is required, but email code verification is not available for this account.',
+        );
+        return;
+      }
+
+      console.error('Unhandled sign-in status:', outcome.status);
+      setGlobalError(
+        `Sign in status: ${outcome.status?.replace(/_/g, ' ') || 'Unknown'}. Please contact support.`,
+      );
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Invalid email or password');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (fetchStatus === 'fetching' || !signIn) return;
+    try {
+      setGoogleLoading(true);
+      beginSSOFlow('sign-in');
+      await signIn.sso({
+        strategy: 'oauth_google',
+        redirectUrl: config.auth.afterSignInUrl,
+        redirectCallbackUrl: '/sso-callback',
+      });
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'OAuth failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (fetchStatus === 'fetching' || !signIn) return;
+    try {
+      setAppleLoading(true);
+      beginSSOFlow('sign-in');
+      await signIn.sso({
+        strategy: 'oauth_apple',
+        redirectUrl: config.auth.afterSignInUrl,
+        redirectCallbackUrl: '/sso-callback',
+      });
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'OAuth failed');
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (fetchStatus === 'fetching' || !signIn) return;
+    setResending(true);
+    setGlobalError('');
+    try {
+      const { error } = await signIn.mfa.sendEmailCode();
+
+      if (error) {
+        const clerkError = getClerkErrorMessage(error);
+        setGlobalError(clerkError || 'Failed to resend code');
+        return;
+      }
+
+      toast.success('Verification code resent');
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Failed to resend code');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleVerification = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (fetchStatus === 'fetching' || !signIn) return;
+    setIsVerifying(true);
+    setGlobalError('');
+    try {
+      const { error } = await signIn.mfa.verifyEmailCode({ code });
+
+      if (error) {
+        const clerkError = getClerkErrorMessage(error);
+        setGlobalError(clerkError || 'Verification failed');
+        return;
+      }
+
+      if (signIn.status === 'complete') {
+        await finalizeSignIn();
+        return;
+      }
+
+      console.error('Unhandled sign-in verification status:', signIn.status);
+      setGlobalError(
+        `Verification status: ${signIn.status?.replace(/_/g, ' ') || 'Unknown'}. Please contact support.`,
+      );
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setGlobalError(clerkError || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setVerifying(false);
+  };
+
+  return {
+    control,
+    isSubmitting,
+    googleLoading,
+    appleLoading,
+    authNotice,
+    globalError,
+    verifying,
+    code,
+    isVerifying,
+    resending,
+    isClientReady,
+    setCode,
+    handleSubmit: handleSubmit(submitPasswordSignIn),
+    handleGoogleSignIn,
+    handleAppleSignIn,
+    handleResend,
+    handleVerification,
+    handleBackToLogin,
+  };
+}

@@ -16,6 +16,8 @@ packages/*/node_modules
 
 # testing
 /coverage
+apps/frontend/playwright-report/
+apps/frontend/test-results/
 
 # next.js
 /.next/

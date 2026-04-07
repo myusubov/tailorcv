@@ -8,6 +8,10 @@ primary_region = 'iad'
 
 [build]
 
+[env]
+  # Cap Node.js heap at 75% of container RAM (512MB) so V8 GCs before the OS OOM-killer fires
+  NODE_OPTIONS = "--max-old-space-size=384"
+
 [processes]
   app = ""
   worker = "node dist/src/worker-runner.js"
@@ -21,6 +25,6 @@ primary_region = 'iad'
   processes = ['app']
 
 [[vm]]
-  memory_mb = 256
+  memory_mb = 512
   cpu_kind = 'shared'
   cpus = 1

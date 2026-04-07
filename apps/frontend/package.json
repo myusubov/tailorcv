@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:real-auth": "playwright test --workers=1 forgot-password.real.spec.ts forgot-password-policy.real.spec.ts login.real.spec.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -44,6 +47,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -52,7 +56,9 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
     "eslint-config-next": "16.2.2",
+    "imapflow": "^1.2.18",
     "jsdom": "^27.4.0",
+    "mailparser": "^3.9.6",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.0.4"
   }

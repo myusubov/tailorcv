@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
 import { AuthMarketingPanel } from '@/app/components/auth/auth-marketing-panel';
-import RegisterForm from '@/app/components/auth/register/register-form';
+import { RegisterForm } from '@/app/components/auth/register';
 
 export default function RegisterPage() {
   return (
