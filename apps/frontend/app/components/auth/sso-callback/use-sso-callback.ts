@@ -24,13 +24,14 @@ export function useSSOCallback() {
 
   useEffect(() => {
     (async () => {
-      if (!clerk.loaded || hasRun.current) return;
-
       if (!hasActiveSSOFlow()) {
         hasRun.current = true;
+        clearSSOFlowState();
         router.replace('/login');
         return;
       }
+
+      if (!clerk.loaded || hasRun.current) return;
 
       if (!signIn || !signUp) return;
       hasRun.current = true;

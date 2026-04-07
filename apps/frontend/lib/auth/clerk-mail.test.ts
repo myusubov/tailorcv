@@ -34,7 +34,7 @@ describe('pollForResetCode', () => {
       expect.objectContaining({
         subject: 'reset password code',
         graceWindowMs: 0,
-        timeoutMs: 10_000,
+        timeoutMs: 25_000,
       }),
     );
     expect(pollForEmailCodeMock).toHaveBeenNthCalledWith(

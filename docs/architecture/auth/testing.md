@@ -115,7 +115,12 @@ npm run test:e2e:frontend -- login.real.spec.ts
 npm run test:e2e:frontend:real-auth
 ```
 
-### 6.3 Social Auth Testing Policy
+### 6.3 CI Policy
+
+- Run the auth smoke Playwright suite in CI on every push and pull request.
+- Keep real Clerk login and forgot-password coverage out of the default CI path because those specs depend on external auth state and dedicated secrets.
+
+### 6.4 Social Auth Testing Policy
 
 - Keep Google and Apple auth automation at the app-owned boundary only:
   - `useSSOCallback`
@@ -163,6 +168,15 @@ npm run test:e2e:frontend:real-auth
 ---
 
 ## 10. Development Log
+
+### [2026-04-07] - CI Auth Smoke Coverage
+
+- **Decision:** Add the auth smoke Playwright spec to the default GitHub Actions CI workflow.
+- **Problem:** The repo already had smoke E2E coverage for signed-out auth pages and route guards, but CI only ran Vitest and build checks, so browser-level auth regressions could still merge unnoticed.
+- **Solution:**
+  1. **`.github/workflows/ci.yml`**: Installed Playwright Chromium in CI and added `npm run test:e2e:frontend -- auth-smoke.spec.ts` to the default check job.
+  2. **`docs/architecture/auth/testing.md`**: Documented the policy that auth smoke runs in CI while real Clerk specs remain out of the default CI path.
+- **Outcome:** Every push and PR now validates the app-owned auth smoke journey in GitHub Actions before merge.
 
 ### [2026-04-07] - Clerk Test-Mail Reset OTP
 

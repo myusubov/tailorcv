@@ -55,14 +55,18 @@ export function useSSOContinueFlow(): UseSSOContinueFlowResult {
   // Why: This page is only valid for an in-progress OAuth sign-up with verified
   // external account data and missing required fields. Any other state is stale or direct access.
   useEffect(() => {
+    if (!hasActiveSSOFlow()) {
+      clearSSOFlowState();
+      router.replace('/register');
+      return;
+    }
+
     const hasVerifiedExternalAccount =
       signUp?.verifications.externalAccount.status === 'verified';
 
     if (
       fetchStatus === 'idle' &&
-      (!hasActiveSSOFlow() ||
-        signUp?.status !== 'missing_requirements' ||
-        !hasVerifiedExternalAccount)
+      (signUp?.status !== 'missing_requirements' || !hasVerifiedExternalAccount)
     ) {
       clearSSOFlowState();
       router.replace('/register');
