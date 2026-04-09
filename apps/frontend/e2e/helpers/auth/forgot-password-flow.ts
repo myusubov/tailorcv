@@ -2,6 +2,10 @@ import { expect, Page } from '@playwright/test';
 
 import { verifyForgotPasswordResetCode } from './otp';
 
+const EMAIL_TYPE_MAX_ATTEMPTS = 3;
+const EMAIL_TYPE_KEY_DELAY_MS = 30;
+const EMAIL_TYPE_RETRY_DELAY_MS = 250;
+
 interface SubmitForgotPasswordEmailArgs {
   page: Page;
   email: string;
@@ -44,8 +48,26 @@ export async function submitForgotPasswordEmail({
   });
 
   await expect(emailInput).toBeVisible();
+  await expect(emailInput).toBeEditable();
   await expect(sendResetCodeButton).toBeVisible();
-  await emailInput.fill(email);
+  // Why: The email field can be re-bound during app hydration, so we type and
+  // verify the value in a short retry loop before submitting the form.
+  for (let attempt = 0; attempt < EMAIL_TYPE_MAX_ATTEMPTS; attempt += 1) {
+    await emailInput.click();
+    await emailInput.fill('');
+    await emailInput.pressSequentially(email, {
+      delay: EMAIL_TYPE_KEY_DELAY_MS,
+    });
+
+    if ((await emailInput.inputValue()) === email) {
+      break;
+    }
+
+    if (attempt < EMAIL_TYPE_MAX_ATTEMPTS - 1) {
+      await page.waitForTimeout(EMAIL_TYPE_RETRY_DELAY_MS);
+    }
+  }
+
   await expect(emailInput).toHaveValue(email);
   await sendResetCodeButton.click();
 
