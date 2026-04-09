@@ -26,10 +26,12 @@ Browser smoke
 Real Clerk reset coverage
   -> dedicated login Clerk user
   -> shared Clerk reset user
+  -> unique Clerk sign-up test email per run
   -> serial real-auth execution
   -> apps/frontend/e2e/login.real.spec.ts
   -> apps/frontend/e2e/forgot-password.real.spec.ts
   -> apps/frontend/e2e/forgot-password-policy.real.spec.ts
+  -> apps/frontend/e2e/signup.real.spec.ts
   -> Clerk test-email OTP
   -> password rotation helpers
 ```
@@ -45,6 +47,7 @@ Real Clerk reset coverage
 | `apps/frontend/e2e/login.real.spec.ts` | Real Clerk login browser coverage for a dedicated fixed-password Clerk test user and optional Client Trust completion | Real login-flow changes |
 | `apps/frontend/e2e/forgot-password.real.spec.ts` | Real Clerk forgot-password browser coverage for the single `A -> B -> A` happy-path cycle | Real reset-flow changes |
 | `apps/frontend/e2e/forgot-password-policy.real.spec.ts` | Real Clerk forgot-password password-policy coverage | Real reset-policy changes |
+| `apps/frontend/e2e/signup.real.spec.ts` | Real Clerk sign-up browser coverage for a unique `+clerk_test` email and fixed OTP verification | Real sign-up flow changes |
 | `apps/frontend/e2e/helpers/auth/otp.ts` | Shared OTP interaction helper for Clerk auth challenges | OTP UI changes in auth E2E |
 | `apps/frontend/e2e/helpers/auth/login-recovery.ts` | Login/session recovery helpers, public login outcomes, and password rotation detection | Real auth login-state setup changes |
 | `apps/frontend/e2e/helpers/auth/forgot-password-flow.ts` | Forgot-password page orchestration helpers | Real forgot-password browser-flow changes |
@@ -71,7 +74,9 @@ Real Clerk reset coverage
   - login happy path with a dedicated fixed-password Clerk test user
   - Client Trust-aware login completion through the shared email-code helper
   - forgot-password happy path
+  - sign-up happy path with a unique Clerk test email per run
   - Clerk test-email reset-code entry via the fixed OTP
+  - Clerk test-email sign-up verification via the fixed OTP
   - Clerk password-policy failure path in a dedicated separate spec
 
 ---
@@ -83,6 +88,7 @@ apps/frontend/e2e/
 ├── auth-smoke.spec.ts
 ├── forgot-password.real.spec.ts
 ├── login.real.spec.ts
+├── signup.real.spec.ts
 ├── helpers/
 │   ├── auth/
 │   ├── env.ts
@@ -105,7 +111,14 @@ E2E_CLERK_TEST_PASSWORD_B=
 E2E_CLERK_INVALID_RESET_PASSWORD="Password123!"
 ```
 
-### 6.2 Verification Commands
+### 6.2 Real Sign-Up E2E Inputs
+
+```bash
+# No dedicated sign-up email env var is required.
+# The sign-up spec generates a fresh `+clerk_test` email for each run.
+```
+
+### 6.3 Verification Commands
 
 ```bash
 npm run typecheck:frontend
@@ -114,15 +127,17 @@ npm run test:e2e:frontend -- auth-smoke.spec.ts
 npm run test:e2e:frontend -- login.real.spec.ts
 npm run test:e2e:frontend:forgot-password
 npm run test:e2e:frontend:headed:forgot-password
+npm run test:e2e:frontend:signup
+npm run test:e2e:frontend:headed:signup
 npm run test:e2e:frontend:real-auth
 ```
 
-### 6.3 CI Policy
+### 6.4 CI Policy
 
 - Run the auth smoke Playwright suite in CI on every push and pull request.
 - Keep real Clerk login and forgot-password coverage out of the default CI path because those specs depend on external auth state and dedicated secrets.
 
-### 6.4 Social Auth Testing Policy
+### 6.5 Social Auth Testing Policy
 
 - Keep Google and Apple auth automation at the app-owned boundary only:
   - `useSSOCallback`
@@ -145,7 +160,7 @@ npm run test:e2e:frontend:real-auth
 | Domain | Relationship | Key Interface |
 | ------ | ------------ | ------------- |
 | Frontend app | Playwright boots the local auth UI and route guards | `apps/frontend/playwright.config.ts` |
-| Clerk test users | Login and reset coverage use separate test accounts so the login flow stays fixed while reset flow can still rotate passwords | `.env.e2e.local` |
+| Clerk test users | Login and reset coverage use separate test accounts so the login flow stays fixed while reset flow can still rotate passwords, while sign-up uses a fresh `+clerk_test` email each run | `.env.e2e.local`, `apps/frontend/e2e/helpers/env.ts` |
 
 ---
 
@@ -154,6 +169,7 @@ npm run test:e2e:frontend:real-auth
 - [x] Auth smoke suite
 - [x] Real Clerk login E2E
 - [x] Real Clerk forgot-password E2E
+- [x] Real Clerk sign-up E2E
 - [x] Focused helper unit coverage for reset email and password rotation logic
 
 ---
@@ -165,11 +181,22 @@ npm run test:e2e:frontend:real-auth
 | OTP UI interactions diverge between flows | Reuse the shared OTP helper for reset and verification steps |
 | External services slow down the suite | Keep real auth tests separate from fast Vitest and smoke runs |
 | Shared real-auth user collides across specs | Run the combined real-auth command with one Playwright worker so password rotation and reset state stay serial |
+| Sign-up coverage becomes non-repeatable because the test email already exists | Generate a fresh Clerk test email per run instead of reusing a fixed sign-up account |
 | Google/Apple provider automation becomes brittle | Keep OAuth coverage at the app-owned hook/guard layer and verify provider-controlled flows manually |
 
 ---
 
 ## 10. Development Log
+
+### [2026-04-09] - Real Clerk Sign-Up E2E Coverage
+
+- **Decision:** Add one browser-level sign-up happy-path spec that generates a fresh Clerk test email per run and uses Clerk's fixed OTP instead of introducing a reusable sign-up account or mailbox polling.
+- **Problem:** Login and forgot-password already had real Clerk browser coverage, but sign-up still relied on smoke and unit-level tests only, which left the create-account plus OTP verification journey without the same end-to-end proof.
+- **Solution:**
+  1. **`apps/frontend/e2e/signup.real.spec.ts` + `apps/frontend/e2e/helpers/env.ts`**: Added a real sign-up spec and a unique Clerk test email generator so each run can create a brand-new account and verify it with OTP `424242`.
+  2. **`apps/frontend/package.json` + `package.json`**: Added dedicated headless and headed sign-up commands and extended the combined real-auth wrapper to include sign-up coverage.
+  3. **`docs/architecture/auth/testing.md`**: Documented the unique-email sign-up strategy, the new real sign-up spec, and the updated verification commands.
+- **Outcome:** The auth browser test stack now covers all three real email/password journeys end to end: sign-up, login, and forgot-password.
 
 ### [2026-04-08] - Forgot-Password Real Auth Serialization And Input Hardening
 
