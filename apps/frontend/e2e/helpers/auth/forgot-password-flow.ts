@@ -63,7 +63,9 @@ export async function submitForgotPasswordEmail({
       break;
     }
 
-    await page.waitForTimeout(EMAIL_TYPE_RETRY_DELAY_MS);
+    if (attempt < EMAIL_TYPE_MAX_ATTEMPTS - 1) {
+      await page.waitForTimeout(EMAIL_TYPE_RETRY_DELAY_MS);
+    }
   }
 
   await expect(emailInput).toHaveValue(email);
