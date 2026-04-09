@@ -44,8 +44,22 @@ export async function submitForgotPasswordEmail({
   });
 
   await expect(emailInput).toBeVisible();
+  await expect(emailInput).toBeEditable();
   await expect(sendResetCodeButton).toBeVisible();
-  await emailInput.fill(email);
+  // Why: The email field can be re-bound during app hydration, so we type and
+  // verify the value in a short retry loop before submitting the form.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await emailInput.click();
+    await emailInput.fill('');
+    await emailInput.pressSequentially(email, { delay: 30 });
+
+    if ((await emailInput.inputValue()) === email) {
+      break;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
   await expect(emailInput).toHaveValue(email);
   await sendResetCodeButton.click();
 

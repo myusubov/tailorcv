@@ -112,6 +112,8 @@ npm run typecheck:frontend
 npm test --workspace frontend
 npm run test:e2e:frontend -- auth-smoke.spec.ts
 npm run test:e2e:frontend -- login.real.spec.ts
+npm run test:e2e:frontend:forgot-password
+npm run test:e2e:frontend:headed:forgot-password
 npm run test:e2e:frontend:real-auth
 ```
 
@@ -168,6 +170,16 @@ npm run test:e2e:frontend:real-auth
 ---
 
 ## 10. Development Log
+
+### [2026-04-08] - Forgot-Password Real Auth Serialization And Input Hardening
+
+- **Decision:** Run the dedicated forgot-password real-auth suite with one Playwright worker and harden the email-entry helper against hydration-time input resets.
+- **Problem:** Invoking the forgot-password happy-path spec and password-policy spec together used Playwright's default local worker count, so both specs drove the same Clerk reset account concurrently, while the forgot-password email field could also lose its value before submit and leave the suite stuck on the first step.
+- **Solution:**
+  1. **`package.json`**: Added a dedicated headless forgot-password wrapper and forced both headless and headed forgot-password suite commands to pass `--workers=1`.
+  2. **`apps/frontend/e2e/helpers/auth/forgot-password-flow.ts`**: Switched the email-entry helper to wait for editability, type with `pressSequentially()`, and retry until the value is stable before clicking `Send Reset Code`.
+  3. **`docs/architecture/auth/testing.md`**: Updated the verification commands so the serial forgot-password suite entry points are documented.
+- **Outcome:** The forgot-password real-auth suite now has a dedicated serial command surface and a more reliable first-step submission path before the reset-code UI is expected.
 
 ### [2026-04-07] - CI Auth Smoke Coverage
 
