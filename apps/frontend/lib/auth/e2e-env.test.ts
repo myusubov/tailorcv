@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  generateSignUpTestEmail,
   getForgotPasswordE2EEnv,
   getLoginE2EEnv,
   getMissingForgotPasswordEnvKeys,
@@ -67,5 +68,18 @@ describe('forgot-password E2E env', () => {
       clerkPasswordA: 'PasswordA123!',
       clerkPasswordB: 'PasswordB123!',
     });
+  });
+});
+
+describe('sign-up E2E email generation', () => {
+  it('generates unique Clerk test emails for repeatable sign-up runs', () => {
+    const firstEmail = generateSignUpTestEmail();
+    const secondEmail = generateSignUpTestEmail();
+
+    expect(firstEmail).toContain('+clerk_test@');
+    expect(secondEmail).toContain('+clerk_test@');
+    expect(firstEmail).not.toBe(secondEmail);
+    expect(firstEmail.startsWith('e2e-signup-')).toBe(true);
+    expect(secondEmail.startsWith('e2e-signup-')).toBe(true);
   });
 });

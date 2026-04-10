@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 type RequiredEnv = {
   clerkForgotPasswordTestEmail: string;
   clerkPasswordA: string;
@@ -17,6 +19,7 @@ export type LoginE2EEnv = LoginRequiredEnv;
 
 const CLERK_TEST_EMAIL_MARKER = '+clerk_test';
 const CLERK_TEST_VERIFICATION_CODE = '424242';
+const SIGNUP_TEST_EMAIL_PREFIX = 'e2e-signup';
 
 const requiredEnvKeys = {
   clerkForgotPasswordTestEmail: 'E2E_CLERK_FORGOT_PASSWORD_TEST_EMAIL',
@@ -47,6 +50,15 @@ export function isClerkTestEmail({
 
 export function getClerkTestVerificationCode() {
   return CLERK_TEST_VERIFICATION_CODE;
+}
+
+/**
+ * Why: Real sign-up E2E must create a fresh Clerk test email on every run so
+ * the spec stays repeatable without account cleanup or reuse collisions.
+ */
+export function generateSignUpTestEmail() {
+  const uniqueSuffix = `${Date.now()}-${randomUUID().slice(0, 8)}`;
+  return `${SIGNUP_TEST_EMAIL_PREFIX}-${uniqueSuffix}${CLERK_TEST_EMAIL_MARKER}@example.com`;
 }
 
 export function hasForgotPasswordE2EEnv() {
