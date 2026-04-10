@@ -135,7 +135,7 @@ npm run test:e2e:frontend:real-auth
 ### 6.4 CI Policy
 
 - Run the auth smoke Playwright suite in CI on every push and pull request.
-- Keep real Clerk login and forgot-password coverage out of the default CI path because those specs depend on external auth state and dedicated secrets.
+- Keep real Clerk login, sign-up, and forgot-password coverage out of the default CI path because those specs depend on external auth state and dedicated secrets.
 
 ### 6.5 Social Auth Testing Policy
 

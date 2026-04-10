@@ -23,7 +23,13 @@ test.describe.serial('Real Clerk sign-up flow', () => {
     const lastNameInput = page.getByLabel('Last name');
     const emailInput = page.getByLabel('Email');
     const passwordInput = page.getByLabel('Password');
-    const termsCheckboxInput = page.locator('input[type="checkbox"]').first();
+    const termsCheckboxInput = page.getByRole('checkbox', {
+      name: /terms|agree/i,
+    });
+    const termsCheckboxControl = page
+      .locator('label[data-slot="checkbox"]')
+      .filter({ hasText: /terms|agree/i })
+      .locator('[data-slot="checkbox-control"]');
     const createAccountButton = page.getByRole('button', {
       name: 'Create Account',
     });
@@ -36,7 +42,11 @@ test.describe.serial('Real Clerk sign-up flow', () => {
     await expect(emailInput).toHaveValue(signUpEmail);
     await passwordInput.fill(signUpPassword);
     await expect(passwordInput).toHaveValue(signUpPassword);
-    await termsCheckboxInput.setChecked(true, { force: true });
+    await termsCheckboxControl.click();
+    if (!(await termsCheckboxInput.isChecked())) {
+      await termsCheckboxInput.focus();
+      await page.keyboard.press('Space');
+    }
     await expect(termsCheckboxInput).toBeChecked();
     await expect(createAccountButton).toBeEnabled();
     await createAccountButton.click();
