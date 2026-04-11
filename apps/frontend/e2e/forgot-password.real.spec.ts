@@ -12,6 +12,11 @@ import {
   hasForgotPasswordE2EEnv,
 } from './helpers/env';
 
+/**
+ * Real browser proof for the forgot-password happy path using Clerk test credentials.
+ * The suite resets from the baseline password to the alternate password and then restores
+ * the original password so the dedicated reset account stays reusable across runs.
+ */
 const isConfigured = hasForgotPasswordE2EEnv();
 
 test.describe.serial('Real Clerk forgot-password flow', () => {
@@ -43,9 +48,6 @@ test.describe.serial('Real Clerk forgot-password flow', () => {
       email: e2eEnv.clerkForgotPasswordTestEmail,
     });
 
-    // Why: Clerk development test emails always use the fixed OTP, so the real
-    // reset suite should drive the reset step directly instead of depending on
-    // Gmail polling or external mailbox timing.
     const resetCode = getClerkTestVerificationCode();
 
     await completeForgotPasswordReset({

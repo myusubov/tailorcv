@@ -2,72 +2,17 @@ import { expect, Page } from '@playwright/test';
 
 import { pollForEmailCode } from '../mail/gmail-imap';
 import { fillOtpCode } from './otp';
-
-interface ResolvePasswordRotationArgs {
-  page: Page;
-  email: string;
-  passwordA: string;
-  passwordB: string;
-  gmailImapUser: string;
-  gmailImapPassword: string;
-  mailTimeoutMs: number;
-  mailPollIntervalMs: number;
-}
-
-type LoginAttemptResult =
-  | 'success'
-  | 'failure'
-  | 'reset_required'
-  | 'unsupported_second_factor'
-  | 'retry';
-
-export type RealLoginOutcome =
-  | 'signed_in'
-  | 'signed_in_after_client_trust'
-  | 'reset_required'
-  | 'invalid_credentials'
-  | 'unsupported_second_factor'
-  | 'retry';
-
-interface ResolveLoginOutcomeArgs {
-  attempt: LoginAttemptResult;
-  usedEmailCodeVerification: boolean;
-}
+import type {
+  AttemptRealLoginArgs,
+  AttemptRealLoginResult,
+  LoginAttemptResult,
+  RealLoginOutcome,
+  ResolveLoginOutcomeArgs,
+} from './login-recovery.types';
 
 interface LoginAttemptState {
   attempt: LoginAttemptResult;
   usedEmailCodeVerification: boolean;
-}
-
-interface AttemptRealLoginArgs {
-  page: Page;
-  email: string;
-  password: string;
-  gmailImapUser: string;
-  gmailImapPassword: string;
-  mailTimeoutMs: number;
-  mailPollIntervalMs: number;
-}
-
-interface AttemptRealLoginResult {
-  outcome: RealLoginOutcome;
-  usedEmailCodeVerification: boolean;
-}
-
-interface ActivePasswordPair {
-  currentPassword: string;
-  nextPassword: string;
-  currentPasswordOutcome:
-    | 'signed_in'
-    | 'signed_in_after_client_trust'
-    | 'reset_required';
-}
-
-interface ResolveNextPasswordFromAttemptsArgs {
-  passwordA: string;
-  passwordB: string;
-  attemptA: LoginAttemptResult;
-  attemptB: LoginAttemptResult;
 }
 
 async function sleep({
@@ -86,9 +31,11 @@ async function waitForLoginFormReady({ page }: { page: Page }) {
   await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
 }
 
-// Why: Real Clerk login automation needs a stable public result model so specs
-// can distinguish direct success, Client Trust completion, and forced reset
-// redirects without re-parsing raw browser state in each test.
+/**
+ * Maps the internal browser-attempt result to the public outcome exposed to login specs.
+ * The result distinguishes direct sign-in, Client Trust completion, reset-required redirects,
+ * invalid credentials, and unsupported second-factor branches.
+ */
 export function resolveLoginOutcome({
   attempt,
   usedEmailCodeVerification,
@@ -110,18 +57,10 @@ async function loginWithPassword({
   page,
   email,
   password,
-  gmailImapUser,
-  gmailImapPassword,
-  mailTimeoutMs,
-  mailPollIntervalMs,
 }: {
   page: Page;
   email: string;
   password: string;
-  gmailImapUser: string;
-  gmailImapPassword: string;
-  mailTimeoutMs: number;
-  mailPollIntervalMs: number;
 }): Promise<LoginAttemptState> {
   await waitForLoginFormReady({ page });
   await page.getByLabel('Email').fill(email);
@@ -179,30 +118,18 @@ async function loginWithPassword({
     };
   }
 
-  // Why: On this Clerk setup, the correct password can still trigger an email
-  // verification step, so the helper must finish that flow before deciding the
-  // password pair is invalid.
   if (navigationResult === 'second_factor_email_code') {
     const verificationButton = page.getByRole('button', {
       name: 'Complete Sign In',
     });
     const challengeStartedAt = Date.now();
 
-    // Why: This account can land on Clerk's second-factor screen with a still
-    // pending verification email, so the helper retries the newest code that
-    // arrived after this specific challenge started instead of reusing older
-    // verification emails from prior sign-in attempts.
     for (const waitMs of [5_000, 20_000, 35_000]) {
       await sleep({ ms: waitMs });
 
       const verificationCode = await pollForEmailCode({
         emailAddress: email,
-        imapUser: gmailImapUser,
-        imapPassword: gmailImapPassword,
         subject: 'verification code',
-        startedAt: challengeStartedAt - 60_000,
-        timeoutMs: Math.min(mailTimeoutMs, 10_000),
-        pollIntervalMs: mailPollIntervalMs,
       });
 
       await fillOtpCode({
@@ -267,43 +194,18 @@ async function loginWithPassword({
   };
 }
 
-export function resolveNextPasswordFromAttempts({
-  passwordA,
-  passwordB,
-  attemptA,
-  attemptB,
-}: ResolveNextPasswordFromAttemptsArgs) {
-  // Why: Password rotation selection is a pure decision derived from the two
-  // attempt results, so keeping it isolated makes the login-recovery module
-  // easier to test without replaying the full browser and IMAP flow.
-  if (attemptA === 'success' || attemptA === 'reset_required') {
-    return { currentPassword: passwordA, nextPassword: passwordB };
-  }
-
-  if (attemptB === 'success' || attemptB === 'reset_required') {
-    return { currentPassword: passwordB, nextPassword: passwordA };
-  }
-
-  return null;
-}
-
+/**
+ * Executes a real password login attempt and returns the stable public outcome used by specs.
+ */
 export async function attemptRealLogin({
   page,
   email,
   password,
-  gmailImapUser,
-  gmailImapPassword,
-  mailTimeoutMs,
-  mailPollIntervalMs,
 }: AttemptRealLoginArgs): Promise<AttemptRealLoginResult> {
   const attemptState = await loginWithPassword({
     page,
     email,
     password,
-    gmailImapUser,
-    gmailImapPassword,
-    mailTimeoutMs,
-    mailPollIntervalMs,
   });
 
   return {
@@ -315,170 +217,9 @@ export async function attemptRealLogin({
   };
 }
 
-function resolveActivePasswordOutcome({
-  attempt,
-  usedEmailCodeVerification,
-}: ResolveLoginOutcomeArgs): ActivePasswordPair['currentPasswordOutcome'] {
-  if (attempt === 'reset_required') {
-    return 'reset_required';
-  }
-
-  return usedEmailCodeVerification
-    ? 'signed_in_after_client_trust'
-    : 'signed_in';
-}
-
-export async function resolvePasswordRotation({
-  page,
-  email,
-  passwordA,
-  passwordB,
-  gmailImapUser,
-  gmailImapPassword,
-  mailTimeoutMs,
-  mailPollIntervalMs,
-}: ResolvePasswordRotationArgs) {
-  const attemptA = await loginWithPassword({
-    page,
-    email,
-    password: passwordA,
-    gmailImapUser,
-    gmailImapPassword,
-    mailTimeoutMs,
-    mailPollIntervalMs,
-  });
-
-  if (attemptA.attempt === 'retry') {
-    const retryAttemptA = await loginWithPassword({
-      page,
-      email,
-      password: passwordA,
-      gmailImapUser,
-      gmailImapPassword,
-      mailTimeoutMs,
-      mailPollIntervalMs,
-    });
-
-    const resolvedPasswordPair = resolveNextPasswordFromAttempts({
-      passwordA,
-      passwordB,
-      attemptA: retryAttemptA.attempt,
-      attemptB: 'failure',
-    });
-
-    if (resolvedPasswordPair) {
-      return {
-        ...resolvedPasswordPair,
-        currentPasswordOutcome: resolveActivePasswordOutcome({
-          attempt: retryAttemptA.attempt,
-          usedEmailCodeVerification: retryAttemptA.usedEmailCodeVerification,
-        }),
-      } satisfies ActivePasswordPair;
-    }
-
-    if (retryAttemptA.attempt === 'unsupported_second_factor') {
-      throw new Error(
-        'The E2E Clerk test account requires a second-factor strategy that this suite does not automate.',
-      );
-    }
-  }
-
-  const resolvedPasswordA = resolveNextPasswordFromAttempts({
-    passwordA,
-    passwordB,
-    attemptA: attemptA.attempt,
-    attemptB: 'failure',
-  });
-
-  if (resolvedPasswordA) {
-    return {
-      ...resolvedPasswordA,
-      currentPasswordOutcome: resolveActivePasswordOutcome({
-        attempt: attemptA.attempt,
-        usedEmailCodeVerification: attemptA.usedEmailCodeVerification,
-      }),
-    } satisfies ActivePasswordPair;
-  }
-
-  if (attemptA.attempt === 'unsupported_second_factor') {
-    throw new Error(
-      'The E2E Clerk test account requires a second-factor strategy that this suite does not automate.',
-    );
-  }
-
-  const attemptB = await loginWithPassword({
-    page,
-    email,
-    password: passwordB,
-    gmailImapUser,
-    gmailImapPassword,
-    mailTimeoutMs,
-    mailPollIntervalMs,
-  });
-
-  if (attemptB.attempt === 'retry') {
-    const retryAttemptB = await loginWithPassword({
-      page,
-      email,
-      password: passwordB,
-      gmailImapUser,
-      gmailImapPassword,
-      mailTimeoutMs,
-      mailPollIntervalMs,
-    });
-
-    const resolvedPasswordPair = resolveNextPasswordFromAttempts({
-      passwordA,
-      passwordB,
-      attemptA: 'failure',
-      attemptB: retryAttemptB.attempt,
-    });
-
-    if (resolvedPasswordPair) {
-      return {
-        ...resolvedPasswordPair,
-        currentPasswordOutcome: resolveActivePasswordOutcome({
-          attempt: retryAttemptB.attempt,
-          usedEmailCodeVerification: retryAttemptB.usedEmailCodeVerification,
-        }),
-      } satisfies ActivePasswordPair;
-    }
-
-    if (retryAttemptB.attempt === 'unsupported_second_factor') {
-      throw new Error(
-        'The E2E Clerk test account requires a second-factor strategy that this suite does not automate.',
-      );
-    }
-  }
-
-  const resolvedPasswordB = resolveNextPasswordFromAttempts({
-    passwordA,
-    passwordB,
-    attemptA: 'failure',
-    attemptB: attemptB.attempt,
-  });
-
-  if (resolvedPasswordB) {
-    return {
-      ...resolvedPasswordB,
-      currentPasswordOutcome: resolveActivePasswordOutcome({
-        attempt: attemptB.attempt,
-        usedEmailCodeVerification: attemptB.usedEmailCodeVerification,
-      }),
-    } satisfies ActivePasswordPair;
-  }
-
-  if (attemptB.attempt === 'unsupported_second_factor') {
-    throw new Error(
-      'The E2E Clerk test account requires a second-factor strategy that this suite does not automate.',
-    );
-  }
-
-  throw new Error(
-    'Could not determine the active E2E Clerk test password using the configured password pair.',
-  );
-}
-
+/**
+ * Signs out through the app's development-only logout button when it is present.
+ */
 export async function signOutFromDevButton({ page }: { page: Page }) {
   const signOutButton = page.getByRole('button', {
     name: 'Sign out current session',

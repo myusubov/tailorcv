@@ -13,10 +13,12 @@ import {
   LOGIN_AUTH_REASON_QUERY_PARAM,
 } from '@/lib/auth/login-auth-reason';
 import { resolveLoginAttemptOutcome } from '@/lib/auth/clerk-flow';
-import { beginSSOFlow } from '@/lib/auth/sso-flow';
+import { beginSSOFlow, clearSSOFlowState } from '@/lib/auth/sso-flow';
 import { config } from '@/lib/config';
 import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
+
+type OAuthSignInStrategy = 'oauth_google' | 'oauth_apple';
 
 export interface UseLoginFlowResult {
   control: ReturnType<typeof useForm<LoginFormValues>>['control'];
@@ -39,6 +41,11 @@ export interface UseLoginFlowResult {
   handleBackToLogin: () => void;
 }
 
+/**
+ * Orchestrates the custom login page across password sign-in, Client Trust email verification,
+ * OAuth entry points, and SSO recovery notices. The hook owns form state, Clerk interactions,
+ * URL cleanup, and post-auth navigation.
+ */
 export function useLoginFlow(): UseLoginFlowResult {
   const { signIn, fetchStatus } = useSignIn();
   const [globalError, setGlobalError] = useState('');
@@ -66,8 +73,6 @@ export function useLoginFlow(): UseLoginFlowResult {
     mode: 'onSubmit',
   });
 
-  // Why: E2E auth flows need a reliable signal that the React submit handler
-  // has mounted, otherwise the browser can briefly fall back to native form submission.
   useEffect(() => {
     setIsClientReady(true);
   }, []);
@@ -80,16 +85,12 @@ export function useLoginFlow(): UseLoginFlowResult {
 
     setAuthNotice(nextNotice);
 
-    // Why: The login page only needs the recovery reason once. Clearing it
-    // prevents stale shareable URLs and duplicate banners on refresh.
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete(LOGIN_AUTH_REASON_QUERY_PARAM);
     const nextQuery = nextSearchParams.toString();
     router.replace(nextQuery ? `/login?${nextQuery}` : '/login');
   }, [router, searchParams]);
 
-  // Why: Clerk v7 requires finalize navigation to pass through `decorateUrl`
-  // so Safari ITP and session-task redirects stay aligned with the rest of auth.
   const finalizeSignIn = async () => {
     if (!signIn) return false;
 
@@ -120,11 +121,22 @@ export function useLoginFlow(): UseLoginFlowResult {
     setGlobalError('');
 
     try {
-      await signIn.create({ identifier: email });
-      await signIn.password({ password });
+      const { error: signInCreateError } = await signIn.create({ identifier: email });
 
-      // Why: Client Trust and account MFA are distinct Clerk v7 states. Keeping
-      // them separate uses the documented email-code API without implying full MFA support.
+      if (signInCreateError) {
+        const clerkError = getClerkErrorMessage(signInCreateError);
+        setGlobalError(clerkError || 'Failed to start sign in');
+        return;
+      }
+
+      const { error: signInPasswordError } = await signIn.password({ password });
+
+      if (signInPasswordError) {
+        const clerkError = getClerkErrorMessage(signInPasswordError);
+        setGlobalError(clerkError || 'Invalid email or password');
+        return;
+      }
+
       const outcome = resolveLoginAttemptOutcome({
         status: signIn.status,
         supportedSecondFactors: signIn.supportedSecondFactors,
@@ -180,42 +192,51 @@ export function useLoginFlow(): UseLoginFlowResult {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const performOAuthSignIn = async ({
+    strategy,
+    setLoading,
+  }: {
+    strategy: OAuthSignInStrategy;
+    setLoading: (loading: boolean) => void;
+  }) => {
     if (fetchStatus === 'fetching' || !signIn) return;
+
     try {
-      setGoogleLoading(true);
+      setLoading(true);
       beginSSOFlow('sign-in');
-      await signIn.sso({
-        strategy: 'oauth_google',
+      const { error } = await signIn.sso({
+        strategy,
         redirectUrl: config.auth.afterSignInUrl,
         redirectCallbackUrl: '/sso-callback',
       });
+
+      if (error) {
+        clearSSOFlowState();
+        const clerkError = getClerkErrorMessage(error);
+        setGlobalError(clerkError || 'OAuth failed');
+      }
     } catch (err: unknown) {
+      clearSSOFlowState();
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
       setGlobalError(clerkError || 'OAuth failed');
     } finally {
-      setGoogleLoading(false);
+      setLoading(false);
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    await performOAuthSignIn({
+      strategy: 'oauth_google',
+      setLoading: setGoogleLoading,
+    });
+  };
+
   const handleAppleSignIn = async () => {
-    if (fetchStatus === 'fetching' || !signIn) return;
-    try {
-      setAppleLoading(true);
-      beginSSOFlow('sign-in');
-      await signIn.sso({
-        strategy: 'oauth_apple',
-        redirectUrl: config.auth.afterSignInUrl,
-        redirectCallbackUrl: '/sso-callback',
-      });
-    } catch (err: unknown) {
-      console.error(JSON.stringify(err, null, 2));
-      const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'OAuth failed');
-    } finally {
-      setAppleLoading(false);
-    }
+    await performOAuthSignIn({
+      strategy: 'oauth_apple',
+      setLoading: setAppleLoading,
+    });
   };
 
   const handleResend = async () => {

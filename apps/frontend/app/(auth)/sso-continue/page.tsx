@@ -5,6 +5,11 @@ import {
   useSSOContinueFlow,
 } from '@/app/components/auth/sso-continue';
 
+/**
+ * Renders the OAuth sign-up continuation form for providers that did not supply
+ * all required profile fields. The page also mounts Clerk's captcha container so
+ * bot protection continues to work for the custom continuation flow.
+ */
 export default function SSOContinuePage() {
   const {
     control,
@@ -25,7 +30,6 @@ export default function SSOContinuePage() {
           globalError={globalError}
           onSubmit={handleSubmit}
         />
-        {/* Why: Clerk's bot protection still applies to custom sign-up continuation flows. */}
         <div id="clerk-captcha" />
       </div>
     </div>

@@ -22,6 +22,12 @@ export interface UseSSOContinueFlowResult {
   handleSubmit: () => Promise<void>;
 }
 
+/**
+ * Controls the OAuth sign-up continuation form used when required profile fields are missing.
+ * The hook keeps the form aligned with Clerk's current sign-up snapshot, rejects direct access
+ * without a verified external account, updates the sign-up through Clerk's client API, and
+ * finalizes navigation after completion.
+ */
 export function useSSOContinueFlow(): UseSSOContinueFlowResult {
   const clerk = useClerk();
   const { signUp, fetchStatus } = useSignUp();
@@ -41,8 +47,6 @@ export function useSSOContinueFlow(): UseSSOContinueFlowResult {
     },
   });
 
-  // Why: OAuth providers can pre-populate profile fields, so the continuation
-  // form should stay in sync with Clerk's current sign-up snapshot.
   useEffect(() => {
     if (!signUp) return;
 
@@ -52,8 +56,6 @@ export function useSSOContinueFlow(): UseSSOContinueFlowResult {
     });
   }, [reset, signUp]);
 
-  // Why: This page is only valid for an in-progress OAuth sign-up with verified
-  // external account data and missing required fields. Any other state is stale or direct access.
   useEffect(() => {
     if (!hasActiveSSOFlow()) {
       clearSSOFlowState();
@@ -82,8 +84,6 @@ export function useSSOContinueFlow(): UseSSOContinueFlowResult {
     setGlobalError('');
 
     try {
-      // Why: SignUpFutureResource.update() still targets the wrong Clerk endpoint,
-      // so the continuation flow must update through clerk.client.signUp.
       await clerk.client!.signUp.update({ firstName, lastName });
 
       if (signUp.status === 'complete') {

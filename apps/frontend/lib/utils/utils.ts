@@ -22,7 +22,7 @@ export function getClerkErrorMessage(error: unknown): string {
   if (isClerkAPIResponseError(error)) {
     // Access the first error message from the errors array
     if (error.errors && error.errors.length > 0) {
-      return error.errors[0].message;
+      return error.errors[0].longMessage || error.errors[0].message;
     }
   }
 

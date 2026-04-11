@@ -10,6 +10,11 @@ interface VerifyForgotPasswordResetCodeArgs {
   code: string;
 }
 
+/**
+ * Enters a six-digit auth code into the current OTP UI.
+ * The helper supports both HeroUI's single-textbox OTP control and fallback
+ * multi-input numeric OTP layouts used by auth verification screens.
+ */
 export async function fillOtpCode({
   page,
   code,
@@ -17,9 +22,6 @@ export async function fillOtpCode({
   const textboxes = page.getByRole('textbox');
   const textboxCount = await textboxes.count();
 
-  // Why: HeroUI's OTP control exposes a single textbox in the browser tree even
-  // though the UI renders six visual slots, so the test should fill the actual
-  // textbox when only one exists.
   if (textboxCount === 1) {
     await textboxes.first().click();
     await textboxes.first().fill('');
@@ -36,13 +38,13 @@ export async function fillOtpCode({
   }
 }
 
+/**
+ * Completes the forgot-password reset-code step using the shared OTP interaction helper.
+ */
 export async function verifyForgotPasswordResetCode({
   page,
   code,
 }: VerifyForgotPasswordResetCodeArgs) {
-  // Why: Clerk renders the reset-code step through the same OTP control
-  // pattern as the passing happy-path flow, so both tests need the same
-  // browser interaction instead of mixing `.fill()` with OTP keypresses.
   await fillOtpCode({
     page,
     code,

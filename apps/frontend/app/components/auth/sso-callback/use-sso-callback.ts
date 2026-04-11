@@ -9,9 +9,12 @@ import { clearSSOFlowState, hasActiveSSOFlow } from '@/lib/auth/sso-flow';
 import { config } from '@/lib/config';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 
-// Implements the Clerk v7 SSO callback flow per:
-// https://clerk.com/docs/guides/development/custom-flows/authentication/oauth-connections
-// Handles sign-in/sign-up transfers, finalization, and the existing-session edge case.
+/**
+ * Finalizes the Clerk v7 SSO callback state machine for both sign-in and sign-up flows.
+ * The hook validates the tab-scoped SSO marker, handles transfer cases, redirects incomplete
+ * flows back into login or `/sso-continue`, and surfaces a persistent page-level error when
+ * the blocking callback transition cannot finish.
+ */
 export function useSSOCallback() {
   const clerk = useClerk();
   const { signIn } = useSignIn();
@@ -36,8 +39,6 @@ export function useSSOCallback() {
       if (!signIn || !signUp) return;
       hasRun.current = true;
 
-      // Why: Clerk can send the user back to the primary sign-in flow with extra requirements,
-      // so we preserve a stable reason code in the login URL instead of dropping them on a blank form.
       const redirectToLogin = ({
         reason,
       }: {
@@ -47,8 +48,6 @@ export function useSSOCallback() {
         router.push(buildLoginUrl({ reason }));
       };
 
-      // Why: The callback page is a blocking full-page auth transition, so
-      // finalize failures need a persistent inline error instead of a transient toast.
       const finalizeSignIn = async () => {
         const { error } = await signIn.finalize({
           navigate: async ({ session, decorateUrl }) => {
