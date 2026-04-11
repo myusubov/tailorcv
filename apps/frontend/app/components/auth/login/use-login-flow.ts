@@ -18,6 +18,8 @@ import { config } from '@/lib/config';
 import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 
+type OAuthSignInStrategy = 'oauth_google' | 'oauth_apple';
+
 export interface UseLoginFlowResult {
   control: ReturnType<typeof useForm<LoginFormValues>>['control'];
   isSubmitting: boolean;
@@ -190,16 +192,24 @@ export function useLoginFlow(): UseLoginFlowResult {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const performOAuthSignIn = async ({
+    strategy,
+    setLoading,
+  }: {
+    strategy: OAuthSignInStrategy;
+    setLoading: (loading: boolean) => void;
+  }) => {
     if (fetchStatus === 'fetching' || !signIn) return;
+
     try {
-      setGoogleLoading(true);
+      setLoading(true);
       beginSSOFlow('sign-in');
       const { error } = await signIn.sso({
-        strategy: 'oauth_google',
+        strategy,
         redirectUrl: config.auth.afterSignInUrl,
         redirectCallbackUrl: '/sso-callback',
       });
+
       if (error) {
         clearSSOFlowState();
         const clerkError = getClerkErrorMessage(error);
@@ -211,33 +221,22 @@ export function useLoginFlow(): UseLoginFlowResult {
       const clerkError = getClerkErrorMessage(err);
       setGlobalError(clerkError || 'OAuth failed');
     } finally {
-      setGoogleLoading(false);
+      setLoading(false);
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    await performOAuthSignIn({
+      strategy: 'oauth_google',
+      setLoading: setGoogleLoading,
+    });
+  };
+
   const handleAppleSignIn = async () => {
-    if (fetchStatus === 'fetching' || !signIn) return;
-    try {
-      setAppleLoading(true);
-      beginSSOFlow('sign-in');
-      const { error } = await signIn.sso({
-        strategy: 'oauth_apple',
-        redirectUrl: config.auth.afterSignInUrl,
-        redirectCallbackUrl: '/sso-callback',
-      });
-      if (error) {
-        clearSSOFlowState();
-        const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'OAuth failed');
-      }
-    } catch (err: unknown) {
-      clearSSOFlowState();
-      console.error(JSON.stringify(err, null, 2));
-      const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'OAuth failed');
-    } finally {
-      setAppleLoading(false);
-    }
+    await performOAuthSignIn({
+      strategy: 'oauth_apple',
+      setLoading: setAppleLoading,
+    });
   };
 
   const handleResend = async () => {

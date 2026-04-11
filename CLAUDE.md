@@ -325,8 +325,9 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 **Canonical examples:** auth flow hooks, E2E helpers, and query/action modules
 
 **Key rules:**
-- Keep private single-file types colocated with the function or module that uses them.
-- Move types into a sibling `types.ts` or `*.types.ts` file only when they are reused across multiple files or form part of an exported contract.
+- Keep private single-file types colocated with the function or module that uses them unless a more specific frontend rule applies.
+- Frontend shared UI/domain types follow the existing frontend rule: place them under `lib/types/`, never inside component directories.
+- Move non-UI helper or module types into a sibling `types.ts` or `*.types.ts` file only when they are reused across multiple files or form part of an exported contract.
 - Prefer separating pure decision/result models from browser-automation or side-effectful helpers when a file starts mixing both concerns heavily.
 - Do not extract types into separate files by default if they are only used once; unnecessary type splitting harms readability more than it helps.
 

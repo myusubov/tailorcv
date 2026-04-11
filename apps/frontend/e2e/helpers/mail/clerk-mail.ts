@@ -11,7 +11,7 @@ const RESET_PASSWORD_EMAIL_SUBJECT_FRAGMENT = 'reset password code';
 export async function pollForResetCode({
   emailAddress,
 }: PollForResetCodeArgs) {
-  return pollForEmailCode({
+  return await pollForEmailCode({
     emailAddress,
     subject: RESET_PASSWORD_EMAIL_SUBJECT_FRAGMENT,
   });
