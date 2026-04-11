@@ -319,6 +319,19 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 
 ---
 
+### Pattern: Type Placement
+
+**When:** Adding or refactoring TypeScript types, interfaces, or result models
+**Canonical examples:** auth flow hooks, E2E helpers, and query/action modules
+
+**Key rules:**
+- Keep private single-file types colocated with the function or module that uses them.
+- Move types into a sibling `types.ts` or `*.types.ts` file only when they are reused across multiple files or form part of an exported contract.
+- Prefer separating pure decision/result models from browser-automation or side-effectful helpers when a file starts mixing both concerns heavily.
+- Do not extract types into separate files by default if they are only used once; unnecessary type splitting harms readability more than it helps.
+
+---
+
 ## Key Utilities & Shared Functions
 
 | Utility | Location | Purpose |

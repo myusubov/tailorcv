@@ -32,6 +32,11 @@ const loginAuthReasonNotices: Record<LoginAuthReason, LoginAuthNotice> = {
   },
 };
 
+/**
+ * Builds the canonical login URL for auth recovery redirects coming from SSO callback handling.
+ * When a reason is provided it is encoded as the `auth_reason` query param so the login page can
+ * show a contextual inline notice before cleaning the param from the URL.
+ */
 export function buildLoginUrl({
   reason,
 }: {
@@ -46,6 +51,10 @@ export function buildLoginUrl({
   return `/login?${searchParams.toString()}`;
 }
 
+/**
+ * Returns the inline notice content for a login recovery reason encoded in the URL.
+ * Unknown or absent reasons resolve to `null` so the login page can render normally.
+ */
 export function getLoginAuthNotice({
   reason,
 }: {

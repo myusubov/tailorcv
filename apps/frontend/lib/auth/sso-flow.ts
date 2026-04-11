@@ -1,7 +1,5 @@
 'use client';
 
-// Why: OAuth callback pages are public routes, so we keep a short-lived tab-scoped
-// marker in sessionStorage to distinguish a real provider round-trip from direct navigation.
 const SSO_FLOW_STORAGE_KEY = 'tailorcv:sso-flow';
 const SSO_FLOW_TTL_MS = 10 * 60 * 1000;
 
@@ -21,8 +19,6 @@ function readSSOFlowState(): SSOFlowState | null {
   try {
     const parsedValue = JSON.parse(rawValue) as Partial<SSOFlowState>;
 
-    // Why: The callback guard should fail closed if storage is malformed or tampered with,
-    // otherwise stale/manual values could incorrectly reopen the SSO continuation flow.
     if (
       (parsedValue.intent !== 'sign-in' && parsedValue.intent !== 'sign-up') ||
       typeof parsedValue.startedAt !== 'number'
@@ -31,8 +27,6 @@ function readSSOFlowState(): SSOFlowState | null {
       return null;
     }
 
-    // Why: The marker only needs to survive the provider redirect. Expiring it prevents an old
-    // successful OAuth start from authorizing a later direct visit to callback pages.
     if (Date.now() - parsedValue.startedAt > SSO_FLOW_TTL_MS) {
       clearSSOFlowState();
       return null;
@@ -48,6 +42,11 @@ function readSSOFlowState(): SSOFlowState | null {
   }
 }
 
+/**
+ * Records a short-lived tab-scoped SSO marker before redirecting to an OAuth provider.
+ * The callback and continuation routes use this marker to reject direct navigation and
+ * stale browser state that did not originate from a real sign-in or sign-up redirect.
+ */
 export function beginSSOFlow(intent: SSOFlowIntent) {
   if (typeof window === 'undefined') return;
 
@@ -59,12 +58,18 @@ export function beginSSOFlow(intent: SSOFlowIntent) {
   window.sessionStorage.setItem(SSO_FLOW_STORAGE_KEY, JSON.stringify(value));
 }
 
+/**
+ * Returns whether the current tab has a valid in-progress SSO marker.
+ * Validation includes shape checks and TTL enforcement so callback guards can use
+ * a simple boolean gate without re-implementing storage parsing rules.
+ */
 export function hasActiveSSOFlow() {
-  // Why: `readSSOFlowState()` already validates shape and TTL, so the callback code only needs
-  // a boolean gate when it does not care whether the flow began as sign-in or sign-up.
   return !!readSSOFlowState();
 }
 
+/**
+ * Clears the tab-scoped SSO marker after a callback completes, fails, or expires.
+ */
 export function clearSSOFlowState() {
   if (typeof window === 'undefined') return;
   window.sessionStorage.removeItem(SSO_FLOW_STORAGE_KEY);

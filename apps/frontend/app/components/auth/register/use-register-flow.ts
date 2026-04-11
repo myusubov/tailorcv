@@ -25,6 +25,11 @@ export interface UseRegisterFlowResult {
   handleAppleSignUp: () => Promise<void>;
 }
 
+/**
+ * Orchestrates custom email/password registration and OAuth sign-up entry points.
+ * The hook owns form state, Clerk password sign-up, email-code dispatch, and the transition
+ * into the verification screen once Clerk reports the expected pending-email state.
+ */
 export function useRegisterFlow(): UseRegisterFlowResult {
   const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -85,8 +90,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
         return;
       }
 
-      // Why: a successful email-code send should move the sign-up flow into the
-      // documented verification state, otherwise the page is out of sync with Clerk.
       if (
         signUp.status === 'missing_requirements' &&
         signUp.unverifiedFields.includes('email_address') &&

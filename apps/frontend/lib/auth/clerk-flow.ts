@@ -44,6 +44,11 @@ type ForgotPasswordCompletionOutcome =
       status: string | null | undefined;
     };
 
+/**
+ * Normalizes Clerk sign-in statuses into the app's explicit password-login outcomes.
+ * The login flow uses this helper to separate direct completion, Client Trust email
+ * verification, unsupported MFA, forced password reset, and unexpected states.
+ */
 export function resolveLoginAttemptOutcome({
   status,
   supportedSecondFactors,
@@ -75,6 +80,11 @@ export function resolveLoginAttemptOutcome({
   };
 }
 
+/**
+ * Maps Clerk's post-reset sign-in status to the forgot-password flow's supported outcomes.
+ * This keeps the reset controller from assuming every successful password write can finalize
+ * immediately when Clerk may still require an additional MFA step.
+ */
 export function resolveForgotPasswordCompletion({
   status,
 }: ResolveForgotPasswordCompletionArgs): ForgotPasswordCompletionOutcome {

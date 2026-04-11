@@ -14,6 +14,11 @@ interface SetPasswordArgs {
   password: string;
 }
 
+/**
+ * Controls the custom forgot-password flow across email entry, code verification,
+ * and new-password submission. The hook owns Clerk reset state, transitions between
+ * local steps, and finalizes sign-in when the reset completes successfully.
+ */
 export function useForgotPasswordFlow() {
   const { signIn, fetchStatus } = useSignIn();
   const router = useRouter();
@@ -97,9 +102,6 @@ export function useForgotPasswordFlow() {
     setGlobalError('');
 
     try {
-      // Why: Clerk's reset flow reports verification failures through the
-      // returned error object, so the UI can advance on success without reading
-      // a stale `signIn.status` snapshot in the same tick.
       const { error } = await signIn.resetPasswordEmailCode.verifyCode({
         code,
       });
@@ -126,9 +128,6 @@ export function useForgotPasswordFlow() {
     setGlobalError('');
 
     try {
-      // Why: Clerk completes the reset flow when `submitPassword()` succeeds, so
-      // the page should branch on Clerk's documented post-submit sign-in states
-      // instead of assuming every successful password write can finalize immediately.
       const { error } = await signIn.resetPasswordEmailCode.submitPassword({
         password,
       });

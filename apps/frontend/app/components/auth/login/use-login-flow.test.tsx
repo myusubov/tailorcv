@@ -6,6 +6,7 @@ const mockReplace = vi.hoisted(() => vi.fn());
 const mockToastError = vi.hoisted(() => vi.fn());
 const mockToastSuccess = vi.hoisted(() => vi.fn());
 const mockBeginSSOFlow = vi.hoisted(() => vi.fn());
+const mockClearSSOFlowState = vi.hoisted(() => vi.fn());
 const mockGetSearchParam = vi.hoisted(() => vi.fn());
 const mockSearchParamsToString = vi.hoisted(() => vi.fn(() => 'auth_reason=reset_password_required'));
 const mockSignInState = vi.hoisted(() => ({
@@ -74,6 +75,7 @@ vi.mock('react-hook-form', () => ({
 
 vi.mock('@/lib/auth/sso-flow', () => ({
   beginSSOFlow: mockBeginSSOFlow,
+  clearSSOFlowState: mockClearSSOFlowState,
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -94,8 +96,8 @@ const createFlowError = ({ message }: { message: string }): MockClerkFlowError =
 const createSignInMock = (): MockSignIn => ({
   status: 'needs_identifier',
   supportedSecondFactors: [],
-  create: vi.fn().mockResolvedValue(undefined),
-  password: vi.fn().mockResolvedValue(undefined),
+  create: vi.fn().mockResolvedValue({ error: null }),
+  password: vi.fn().mockResolvedValue({ error: null }),
   finalize: vi.fn().mockResolvedValue({ error: null }),
   mfa: {
     sendEmailCode: vi.fn().mockResolvedValue({ error: null }),
@@ -111,6 +113,7 @@ describe('useLoginFlow', () => {
     mockToastError.mockReset();
     mockToastSuccess.mockReset();
     mockBeginSSOFlow.mockReset();
+    mockClearSSOFlowState.mockReset();
     mockGetSearchParam.mockReset();
     mockSearchParamsToString.mockClear();
     mockFormState.data = {
@@ -136,6 +139,39 @@ describe('useLoginFlow', () => {
     expect(signIn.create).toHaveBeenCalledWith({ identifier: 'user@example.com' });
     expect(signIn.password).toHaveBeenCalledWith({ password: 'Password123!' });
     expect(signIn.finalize).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces create-step Clerk errors and skips the password step', async () => {
+    const signIn = createSignInMock();
+    signIn.create.mockResolvedValue({
+      error: createFlowError({ message: 'Unknown identifier' }),
+    });
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(result.current.globalError).toBe('Unknown identifier');
+    expect(signIn.password).not.toHaveBeenCalled();
+  });
+
+  it('surfaces password-step Clerk errors after a successful create step', async () => {
+    const signIn = createSignInMock();
+    signIn.password.mockResolvedValue({
+      error: createFlowError({ message: 'Password is incorrect' }),
+    });
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(result.current.globalError).toBe('Password is incorrect');
   });
 
   it('enters verification mode when Clerk requires Client Trust email verification', async () => {
@@ -265,5 +301,39 @@ describe('useLoginFlow', () => {
     });
 
     expect(mockReplace).toHaveBeenCalledWith('/login');
+  });
+
+  it('clears the SSO marker when Google sign-in returns an immediate Clerk error', async () => {
+    const signIn = createSignInMock();
+    signIn.sso.mockResolvedValue({
+      error: createFlowError({ message: 'OAuth popup was closed' }),
+    });
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleGoogleSignIn();
+    });
+
+    expect(mockBeginSSOFlow).toHaveBeenCalledWith('sign-in');
+    expect(mockClearSSOFlowState).toHaveBeenCalledTimes(1);
+    expect(result.current.globalError).toBe('OAuth popup was closed');
+  });
+
+  it('clears the SSO marker when Apple sign-in throws before redirect', async () => {
+    const signIn = createSignInMock();
+    signIn.sso.mockRejectedValue(createFlowError({ message: 'Network failure' }));
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleAppleSignIn();
+    });
+
+    expect(mockBeginSSOFlow).toHaveBeenCalledWith('sign-in');
+    expect(mockClearSSOFlowState).toHaveBeenCalledTimes(1);
+    expect(result.current.globalError).toBe('Network failure');
   });
 });

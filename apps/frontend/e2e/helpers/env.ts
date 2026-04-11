@@ -32,14 +32,23 @@ const loginRequiredEnvKeys = {
   clerkPassword: 'E2E_CLERK_TEST_PASSWORD_A',
 } as const;
 
+/**
+ * Returns the missing env keys required by the real forgot-password suite.
+ */
 export function getMissingForgotPasswordEnvKeys() {
   return Object.values(requiredEnvKeys).filter((key) => !process.env[key]);
 }
 
+/**
+ * Returns the missing env keys required by the dedicated real login suite.
+ */
 export function getMissingLoginE2EEnvKeys() {
   return Object.values(loginRequiredEnvKeys).filter((key) => !process.env[key]);
 }
 
+/**
+ * Detects whether an email address uses Clerk's fixed-OTP test email convention.
+ */
 export function isClerkTestEmail({
   emailAddress,
 }: {
@@ -48,30 +57,41 @@ export function isClerkTestEmail({
   return emailAddress.toLowerCase().includes(CLERK_TEST_EMAIL_MARKER);
 }
 
+/**
+ * Returns Clerk's fixed development verification code for test-email flows.
+ */
 export function getClerkTestVerificationCode() {
   return CLERK_TEST_VERIFICATION_CODE;
 }
 
 /**
- * Why: Real sign-up E2E must create a fresh Clerk test email on every run so
- * the spec stays repeatable without account cleanup or reuse collisions.
+ * Generates a unique Clerk test email for the real sign-up suite.
+ * A fresh address keeps the spec repeatable without account cleanup or reuse collisions.
  */
 export function generateSignUpTestEmail() {
   const uniqueSuffix = `${Date.now()}-${randomUUID().slice(0, 8)}`;
   return `${SIGNUP_TEST_EMAIL_PREFIX}-${uniqueSuffix}${CLERK_TEST_EMAIL_MARKER}@example.com`;
 }
 
+/**
+ * Returns whether the real forgot-password suite has all required env vars.
+ */
 export function hasForgotPasswordE2EEnv() {
   return getMissingForgotPasswordEnvKeys().length === 0;
 }
 
+/**
+ * Returns whether the dedicated real login suite has all required env vars.
+ */
 export function hasLoginE2EEnv() {
   return getMissingLoginE2EEnvKeys().length === 0;
 }
 
-// Why: The login-only real auth spec must be isolated from the shared
-// forgot-password account so it can use one fixed Clerk test user without
-// triggering password-rotation or mailbox-recovery setup.
+/**
+ * Reads the dedicated login-only E2E credentials.
+ * Login uses an isolated fixed-password Clerk test user so the spec does not depend
+ * on password rotation or reset recovery state from the forgot-password suite.
+ */
 export function getLoginE2EEnv(): LoginE2EEnv {
   const missingKeys = getMissingLoginE2EEnvKeys();
 
@@ -85,6 +105,10 @@ export function getLoginE2EEnv(): LoginE2EEnv {
   };
 }
 
+/**
+ * Reads the env contract for the real forgot-password suite, including the
+ * rotating password pair and the configured invalid-reset-password case.
+ */
 export function getForgotPasswordE2EEnv(): ForgotPasswordE2EEnv {
   const missingKeys = getMissingForgotPasswordEnvKeys();
 

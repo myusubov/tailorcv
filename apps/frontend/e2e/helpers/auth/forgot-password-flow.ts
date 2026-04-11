@@ -33,15 +33,16 @@ interface ResolveForgotPasswordCycleArgs {
   passwordB: string;
 }
 
+/**
+ * Opens the forgot-password page, enters the target email, and waits for the reset-code UI.
+ * The helper stabilizes the email field before submit so hydration does not race the first step.
+ */
 export async function submitForgotPasswordEmail({
   page,
   email,
 }: SubmitForgotPasswordEmailArgs) {
   await page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
 
-  // Why: Clerk's forgot-password page can still be hydrating when Playwright
-  // arrives, so we wait for the form controls and verify the email field value
-  // before clicking to avoid submitting an empty identifier by race.
   const emailInput = page.getByLabel('Email');
   const sendResetCodeButton = page.getByRole('button', {
     name: 'Send Reset Code',
@@ -50,8 +51,6 @@ export async function submitForgotPasswordEmail({
   await expect(emailInput).toBeVisible();
   await expect(emailInput).toBeEditable();
   await expect(sendResetCodeButton).toBeVisible();
-  // Why: The email field can be re-bound during app hydration, so we type and
-  // verify the value in a short retry loop before submitting the form.
   for (let attempt = 0; attempt < EMAIL_TYPE_MAX_ATTEMPTS; attempt += 1) {
     await emailInput.click();
     await emailInput.fill('');
@@ -71,13 +70,13 @@ export async function submitForgotPasswordEmail({
   await expect(emailInput).toHaveValue(email);
   await sendResetCodeButton.click();
 
-  // Why: The real Clerk reset flow can take a moment to advance from the email
-  // entry step to the OTP verification step. Waiting for the reset-code UI
-  // prevents later helpers from typing the OTP into the original email field.
   await expect(page.getByRole('textbox', { name: 'Reset code' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Verify Code' })).toBeVisible();
 }
 
+/**
+ * Completes the happy-path forgot-password reset using one known new password.
+ */
 export async function completeForgotPasswordReset({
   page,
   code,
@@ -95,9 +94,10 @@ export async function completeForgotPasswordReset({
   await page.getByRole('button', { name: 'Reset Password' }).click();
 }
 
-// Why: The dedicated forgot-password test account keeps password A as the
-// steady-state baseline, so the reset suite should always flip to B and then
-// restore back to A instead of probing for whichever password happens to work.
+/**
+ * Returns the deterministic password rotation used by the dedicated forgot-password account.
+ * The suite always resets from password A to B and then restores back to A.
+ */
 export function resolveForgotPasswordCycle({
   passwordA,
   passwordB,
@@ -108,6 +108,10 @@ export function resolveForgotPasswordCycle({
   };
 }
 
+/**
+ * Attempts the forgot-password reset with multiple candidate passwords and returns
+ * the first password that successfully completes the flow.
+ */
 export async function completeForgotPasswordResetWithCandidates({
   page,
   code,
@@ -157,6 +161,9 @@ export async function completeForgotPasswordResetWithCandidates({
   );
 }
 
+/**
+ * Submits a password known to be invalid so the policy-error path can be asserted.
+ */
 export async function submitInvalidResetPassword({
   page,
   password,

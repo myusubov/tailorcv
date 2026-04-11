@@ -28,6 +28,11 @@ interface LoginFormViewProps {
   onAppleSignIn: () => void;
 }
 
+/**
+ * Renders the password-login screen, inline recovery notice, and OAuth entry buttons.
+ * When the login page receives an auth notice with a recovery action, this view presents
+ * that action as a primary CTA because it blocks the user's next sign-in step.
+ */
 export function LoginFormView({
   control,
   isSubmitting,
@@ -99,8 +104,6 @@ export function LoginFormView({
               </div>
             </div>
 
-            {/* Why: Recovery actions are blocking next steps, so they need button treatment
-            instead of looking like secondary inline help text under the banner copy. */}
             {authNotice.actionHref && authNotice.actionLabel ? (
               <div className="flex pt-1">
                 <NextLink

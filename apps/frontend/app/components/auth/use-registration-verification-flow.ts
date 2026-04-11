@@ -22,6 +22,11 @@ export interface UseRegistrationVerificationFlowResult {
   handleVerification: (event: React.FormEvent) => Promise<void>;
 }
 
+/**
+ * Handles email-code verification for the custom sign-up flow.
+ * The hook owns OTP state, resend behavior, and finalizes sign-up when Clerk reports
+ * completion after verification; otherwise it surfaces an explicit unexpected-state error.
+ */
 export function useRegistrationVerificationFlow({
   signUp,
 }: UseRegistrationVerificationFlowArgs): UseRegistrationVerificationFlowResult {
@@ -69,8 +74,6 @@ export function useRegistrationVerificationFlow({
         return;
       }
 
-      // Why: successful email verification should either finalize sign-up or surface
-      // an explicit unexpected state, otherwise the custom flow can stall silently.
       if (signUp.status === 'complete') {
         const { error: finalizeError } = await signUp.finalize({
           navigate: async ({ session, decorateUrl }) => {
