@@ -313,6 +313,8 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 **Key rules:**
 - Route components and top-level feature containers should stay thin and only choose which view to render.
 - Flow hooks own `react-hook-form`, async orchestration, router/search-param handling, and state-machine transitions.
+- When a container would pass several values from the same flow hook into one view, return a grouped view-props object from the hook (for example `formViewProps` or `verificationViewProps`) and spread that object intentionally into the matching view.
+- Do not spread an entire flow hook result into a view; expose only the render-safe props for that specific view so internals stay private and prop changes remain localized.
 - Presentational view components receive render-safe props only -- no Clerk resources, router instances, or search-param objects.
 - Keep flow hooks feature-local inside the same directory as the views they coordinate.
 - Add focused colocated Vitest files for the flow hook and thin controller boundary when behavior is stateful enough to regress.

@@ -10,25 +10,36 @@ import { getClerkErrorMessage } from '@/lib/utils/utils';
 
 interface UseRegistrationVerificationFlowArgs {
   signUp: ReturnType<typeof useSignUp>['signUp'];
+  email: string;
+  onGoBack: () => void;
 }
 
-export interface UseRegistrationVerificationFlowResult {
+interface RegistrationVerificationViewProps {
   code: string;
+  email: string;
   globalError: string;
   isResending: boolean;
   isVerifying: boolean;
-  handleCodeChange: (code: string) => void;
-  handleResend: () => Promise<void>;
-  handleVerification: (event: React.FormEvent) => Promise<void>;
+  onCodeChange: (code: string) => void;
+  onGoBack: () => void;
+  onResend: () => Promise<void>;
+  onSubmit: (event: React.FormEvent) => Promise<void>;
+}
+
+export interface UseRegistrationVerificationFlowResult {
+  viewProps: RegistrationVerificationViewProps;
 }
 
 /**
  * Handles email-code verification for the custom sign-up flow.
  * The hook owns OTP state, resend behavior, and finalizes sign-up when Clerk reports
  * completion after verification; otherwise it surfaces an explicit unexpected-state error.
+ * It returns the complete view-props object consumed by RegistrationVerificationView.
  */
 export function useRegistrationVerificationFlow({
   signUp,
+  email,
+  onGoBack,
 }: UseRegistrationVerificationFlowArgs): UseRegistrationVerificationFlowResult {
   const router = useRouter();
   const [code, setCode] = useState('');
@@ -114,12 +125,16 @@ export function useRegistrationVerificationFlow({
   };
 
   return {
-    code,
-    globalError,
-    isResending: resending,
-    isVerifying,
-    handleCodeChange: setCode,
-    handleResend,
-    handleVerification,
+    viewProps: {
+      code,
+      email,
+      globalError,
+      isResending: resending,
+      isVerifying,
+      onCodeChange: setCode,
+      onGoBack,
+      onResend: handleResend,
+      onSubmit: handleVerification,
+    },
   };
 }

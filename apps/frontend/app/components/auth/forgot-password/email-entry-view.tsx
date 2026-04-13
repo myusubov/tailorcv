@@ -148,7 +148,7 @@ export function EmailEntryView({
                 name="email"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <TextField className="w-full" isInvalid={!!fieldState.error}>
+                  <TextField isRequired className="w-full" isInvalid={!!fieldState.error}>
                     <Label className="text-base">Email</Label>
                     <Input
                       {...field}

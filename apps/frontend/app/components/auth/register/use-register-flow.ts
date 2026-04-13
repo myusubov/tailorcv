@@ -8,27 +8,40 @@ import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 
-export interface UseRegisterFlowResult {
+interface RegisterFormViewProps {
   control: ReturnType<typeof useForm<RegisterFormValues>>['control'];
-  email: string;
   globalError: string;
   googleLoading: boolean;
   appleLoading: boolean;
   isSubmitting: boolean;
   isAnyAuthActionInProgress: boolean;
-  verifying: boolean;
-  signUp: ReturnType<typeof useSignUp>['signUp'];
-  resetForm: ReturnType<typeof useForm<RegisterFormValues>>['reset'];
-  handleGoBack: () => void;
-  handleSubmit: () => void;
-  handleGoogleSignUp: () => Promise<void>;
-  handleAppleSignUp: () => Promise<void>;
+  onSubmit: () => void;
+  onGoogleSignUp: () => Promise<void>;
+  onAppleSignUp: () => Promise<void>;
 }
+
+interface RegistrationVerificationViewProps {
+  signUp: ReturnType<typeof useSignUp>['signUp'];
+  email: string;
+  resetForm: ReturnType<typeof useForm<RegisterFormValues>>['reset'];
+  onGoBack: () => void;
+}
+
+export type UseRegisterFlowResult =
+  | {
+      mode: 'form';
+      formViewProps: RegisterFormViewProps;
+    }
+  | {
+      mode: 'verification';
+      verificationViewProps: RegistrationVerificationViewProps;
+    };
 
 /**
  * Orchestrates custom email/password registration and OAuth sign-up entry points.
  * The hook owns form state, Clerk password sign-up, email-code dispatch, and the transition
- * into the verification screen once Clerk reports the expected pending-email state.
+ * into the verification screen once Clerk reports the expected pending-email state. It returns
+ * view-specific props so the controller can switch screens without knowing each field mapping.
  */
 export function useRegisterFlow(): UseRegisterFlowResult {
   const [globalError, setGlobalError] = useState('');
@@ -161,20 +174,30 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     }
   };
 
+  if (verifying) {
+    return {
+      mode: 'verification',
+      verificationViewProps: {
+        email,
+        signUp,
+        resetForm: reset,
+        onGoBack: handleGoBack,
+      },
+    };
+  }
+
   return {
-    control,
-    email,
-    globalError,
-    googleLoading,
-    appleLoading,
-    isSubmitting,
-    isAnyAuthActionInProgress: isSubmitting || googleLoading || appleLoading,
-    verifying,
-    signUp,
-    resetForm: reset,
-    handleGoBack,
-    handleSubmit: handleSubmit(submitRegistration),
-    handleGoogleSignUp,
-    handleAppleSignUp,
+    mode: 'form',
+    formViewProps: {
+      control,
+      globalError,
+      googleLoading,
+      appleLoading,
+      isSubmitting,
+      isAnyAuthActionInProgress: isSubmitting || googleLoading || appleLoading,
+      onSubmit: handleSubmit(submitRegistration),
+      onGoogleSignUp: handleGoogleSignUp,
+      onAppleSignUp: handleAppleSignUp,
+    },
   };
 }

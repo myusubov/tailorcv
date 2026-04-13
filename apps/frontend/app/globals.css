@@ -347,6 +347,29 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * HEROUI COMPONENT OVERRIDES
+ * HeroUI's default secondary and tertiary buttons share the same background.
+ * Keep secondary as the soft brand action, and make tertiary neutral/surface-led.
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  .button--tertiary {
+    --button-bg: var(--color-surface-secondary);
+    --button-bg-hover: color-mix(
+      in oklab,
+      var(--color-surface-secondary) 72%,
+      var(--color-default)
+    );
+    --button-bg-pressed: color-mix(
+      in oklab,
+      var(--color-surface-secondary) 56%,
+      var(--color-default)
+    );
+    --button-fg: var(--color-default-foreground);
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * GLOBAL STYLES
  * ═══════════════════════════════════════════════════════════════════════════════ */
 body {
