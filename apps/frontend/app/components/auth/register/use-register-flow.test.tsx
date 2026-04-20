@@ -21,6 +21,7 @@ interface MockSignUp {
   unverifiedFields: string[];
   missingFields: string[];
   password: ReturnType<typeof vi.fn>;
+  reset: ReturnType<typeof vi.fn>;
   verifications: {
     sendEmailCode: ReturnType<typeof vi.fn>;
   };
@@ -67,6 +68,7 @@ const createSignUpMock = (): MockSignUp => ({
   unverifiedFields: ['email_address'],
   missingFields: [],
   password: vi.fn().mockResolvedValue({ error: null }),
+  reset: vi.fn().mockResolvedValue({ error: null }),
   verifications: {
     sendEmailCode: vi.fn().mockResolvedValue({ error: null }),
   },
@@ -130,5 +132,37 @@ describe('useRegisterFlow', () => {
       redirectUrl: '/onboarding',
     });
     expect(window.sessionStorage.getItem('tailorcv:sso-flow')).toBeNull();
+  });
+
+  it('resets stale OAuth sign-up state before starting a new provider', async () => {
+    const signUp = createSignUpMock();
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useRegisterFlow());
+    const current = result.current;
+
+    if (current.mode !== 'form') {
+      throw new Error('Expected register flow to start in form mode');
+    }
+
+    await act(async () => {
+      await current.formViewProps.onGoogleSignUp();
+    });
+
+    await act(async () => {
+      await current.formViewProps.onAppleSignUp();
+    });
+
+    expect(signUp.reset).toHaveBeenCalledTimes(2);
+    expect(signUp.sso).toHaveBeenNthCalledWith(1, {
+      strategy: 'oauth_google',
+      redirectCallbackUrl: '/sso-callback',
+      redirectUrl: '/onboarding',
+    });
+    expect(signUp.sso).toHaveBeenNthCalledWith(2, {
+      strategy: 'oauth_apple',
+      redirectCallbackUrl: '/sso-callback',
+      redirectUrl: '/onboarding',
+    });
   });
 });

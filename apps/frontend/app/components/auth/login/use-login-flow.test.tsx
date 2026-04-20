@@ -30,6 +30,7 @@ interface MockSignIn {
   create: ReturnType<typeof vi.fn>;
   password: ReturnType<typeof vi.fn>;
   finalize: ReturnType<typeof vi.fn>;
+  reset: ReturnType<typeof vi.fn>;
   mfa: {
     sendEmailCode: ReturnType<typeof vi.fn>;
     verifyEmailCode: ReturnType<typeof vi.fn>;
@@ -92,6 +93,7 @@ const createSignInMock = (): MockSignIn => ({
   create: vi.fn().mockResolvedValue({ error: null }),
   password: vi.fn().mockResolvedValue({ error: null }),
   finalize: vi.fn().mockResolvedValue({ error: null }),
+  reset: vi.fn().mockResolvedValue({ error: null }),
   mfa: {
     sendEmailCode: vi.fn().mockResolvedValue({ error: null }),
     verifyEmailCode: vi.fn().mockResolvedValue({ error: null }),
@@ -311,6 +313,33 @@ describe('useLoginFlow', () => {
       redirectCallbackUrl: '/sso-callback',
     });
     expect(window.sessionStorage.getItem('tailorcv:sso-flow')).toBeNull();
+  });
+
+  it('resets stale OAuth sign-in state before starting a new provider', async () => {
+    const signIn = createSignInMock();
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleGoogleSignIn();
+    });
+
+    await act(async () => {
+      await result.current.handleAppleSignIn();
+    });
+
+    expect(signIn.reset).toHaveBeenCalledTimes(2);
+    expect(signIn.sso).toHaveBeenNthCalledWith(1, {
+      strategy: 'oauth_google',
+      redirectUrl: '/dashboard',
+      redirectCallbackUrl: '/sso-callback',
+    });
+    expect(signIn.sso).toHaveBeenNthCalledWith(2, {
+      strategy: 'oauth_apple',
+      redirectUrl: '/dashboard',
+      redirectCallbackUrl: '/sso-callback',
+    });
   });
 
   it('surfaces Google sign-in immediate Clerk errors', async () => {

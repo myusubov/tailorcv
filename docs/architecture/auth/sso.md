@@ -39,6 +39,7 @@ User clicks "Continue with Google/Apple"
 | `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts` | Core v7 SSO callback hook — all OAuth finalization logic | Any SSO flow change |
 | `apps/frontend/app/sso-callback/page.tsx` | SSO callback page — delegates to `useSSOCallback` | SSO flow changes |
 | `apps/frontend/app/(auth)/sso-continue/page.tsx` | Retired continuation route that redirects to registration | Defensive route behavior changes |
+| `apps/frontend/lib/auth/reset-clerk-auth-resource.ts` | Runtime-compatible reset helper for clearing stale Clerk sign-in/sign-up attempts before OAuth | OAuth provider switching or cancellation issues |
 | `apps/frontend/lib/auth/login-auth-reason.ts` | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in | OAuth fallback UX changes |
 | `apps/frontend/proxy.ts` | Clerk middleware — public/auth/protected route matchers | Route protection changes |
 
@@ -89,6 +90,7 @@ app/components/auth/
 ### 6.1 SSO Initiation (Sign-In)
 
 ```typescript
+await resetClerkAuthResource({ resource: signIn });
 await signIn.sso({
   strategy: 'oauth_google',
   redirectCallbackUrl: '/sso-callback',
@@ -99,6 +101,7 @@ await signIn.sso({
 ### 6.2 SSO Initiation (Sign-Up)
 
 ```typescript
+await resetClerkAuthResource({ resource: signUp });
 await signUp.sso({
   strategy: 'oauth_google',
   redirectCallbackUrl: '/sso-callback',
@@ -147,6 +150,7 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 | ---- | ---------- |
 | `redirectUrl`/`redirectCallbackUrl` swapped in `sso()` | Keep the param order from the examples above; never swap them |
 | Clerk still requires first/last name after app removal | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled |
+| Cancelled OAuth attempt reuses the previous provider on the next click | Call `resetClerkAuthResource({ resource })` before every `signIn.sso()` and `signUp.sso()` call |
 | React StrictMode double-execution on SSO callback | `hasRun = useRef(false)` guard in `useSSOCallback` |
 | Direct navigation to `/sso-callback` with no usable Clerk callback state | Fall through to `/login` instead of relying on a local sessionStorage marker |
 | Direct navigation to `/sso-continue` | Redirect to `/register`; the continuation form has been retired |
@@ -154,6 +158,17 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 ---
 
 ## 10. Development Log
+
+### [2026-04-20] - Reset OAuth Resource Before Provider Redirect
+
+- **Decision:** Reset the active Clerk sign-in/sign-up resource before each Google or Apple SSO start.
+- **Problem:** If a user cancelled one OAuth provider and then clicked the other provider, Clerk could reuse the stale provider attempt from the cancelled flow, sending Apple clicks to Google or Google clicks to Apple until browser storage was cleared.
+- **Solution:**
+  1. **`apps/frontend/lib/auth/reset-clerk-auth-resource.ts`**: Added a typed helper for Clerk's runtime `reset()` method, which is exposed on the resource proxy but not present in the installed future-resource typings.
+  2. **`apps/frontend/app/components/auth/login/use-login-flow.ts`**: Reset the `signIn` resource immediately before `signIn.sso()`.
+  3. **`apps/frontend/app/components/auth/register/use-register-flow.ts`**: Reset the `signUp` resource immediately before each social sign-up `signUp.sso()` call.
+  4. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Added provider-switching regressions that click Google then Apple and assert the requested provider is used after each reset.
+- **Outcome:** Cancelled OAuth attempts no longer leak provider choice into the next social-login click.
 
 ### [2026-04-20] - Account Name Removal And SSO Continue Retirement
 

@@ -13,6 +13,7 @@ import {
   LOGIN_AUTH_REASON_QUERY_PARAM,
 } from '@/lib/auth/login-auth-reason';
 import { resolveLoginAttemptOutcome } from '@/lib/auth/clerk-flow';
+import { resetClerkAuthResource } from '@/lib/auth/reset-clerk-auth-resource';
 import { config } from '@/lib/config';
 import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
@@ -202,6 +203,7 @@ export function useLoginFlow(): UseLoginFlowResult {
 
     try {
       setLoading(true);
+      await resetClerkAuthResource({ resource: signIn });
       const { error } = await signIn.sso({
         strategy,
         redirectUrl: config.auth.afterSignInUrl,

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { resetClerkAuthResource } from '@/lib/auth/reset-clerk-auth-resource';
 import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
@@ -194,6 +195,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     if (fetchStatus === 'fetching' || !signUp) return;
     try {
       setGoogleLoading(true);
+      await resetClerkAuthResource({ resource: signUp });
       const { error } = await signUp.sso({
         strategy: 'oauth_google',
         redirectCallbackUrl: '/sso-callback',
@@ -219,6 +221,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     if (fetchStatus === 'fetching' || !signUp) return;
     try {
       setAppleLoading(true);
+      await resetClerkAuthResource({ resource: signUp });
       const { error } = await signUp.sso({
         strategy: 'oauth_apple',
         redirectCallbackUrl: '/sso-callback',
