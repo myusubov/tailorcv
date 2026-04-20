@@ -28,7 +28,7 @@
   page.tsx -> use-login-flow.ts -> LoginFormView / VerificationView
 
 /register
-  page.tsx -> RegisterForm -> use-register-flow.ts -> RegistrationVerification
+  page.tsx -> RegisterForm -> use-register-flow.ts -> RegistrationVerificationView
 
 /forgot-password
   page.tsx -> use-forgot-password-flow.ts
@@ -45,7 +45,8 @@
 | `apps/frontend/app/(auth)/login/page.tsx` | Thin login route controller that switches between password sign-in and Client Trust verification views | Any login page composition change |
 | `apps/frontend/app/components/auth/login/use-login-flow.ts` | Login controller hook — Clerk sign-in orchestration, auth notices, Client Trust, and SSO start handlers | Any login behavior or redirect change |
 | `apps/frontend/app/components/auth/register/register-form.tsx` | Register form — email/password + Google/Apple SSO handlers | Any register change |
-| `apps/frontend/app/components/auth/register/use-register-flow.ts` | Register controller hook for email/password sign-up and SSO initiation | Register controller changes |
+| `apps/frontend/app/components/auth/register/use-register-flow.ts` | Register controller hook for email/password sign-up, SSO initiation, and OTP verification | Register controller changes |
+| `apps/frontend/app/components/auth/registration-verification-view.tsx` | Render-only email OTP verification view | Email verification UI changes |
 | `apps/frontend/app/components/auth/registration-verification.tsx` | Thin registration verification controller | Email verification composition changes |
 | `apps/frontend/app/components/auth/use-registration-verification-flow.ts` | Email OTP verification flow hook | Verification behavior changes |
 | `apps/frontend/app/(auth)/forgot-password/page.tsx` | Thin forgot-password route controller | Forgot-password page composition changes |
@@ -225,6 +226,16 @@ router.push(buildLoginUrl({ reason: 'second_factor_required' }));
 ---
 
 ## 10. Development Log
+
+### [2026-04-20] - Register-Owned Verification Callbacks
+
+- **Decision:** Keep Clerk's `signUp` resource inside `useRegisterFlow()` for the active register journey and return only render-safe OTP view props from `verificationViewProps`.
+- **Problem:** `verificationViewProps` still included the Clerk `signUp` resource, so the register controller boundary exposed implementation details even though the rendered verification view only needed state and callbacks.
+- **Solution:**
+  1. **`apps/frontend/app/components/auth/register/use-register-flow.ts`**: Added OTP code/error/loading state plus resend and submit callbacks that call Clerk internally and finalize navigation.
+  2. **`apps/frontend/app/components/auth/register/register-form.tsx`**: Renders `RegistrationVerificationView` directly from render-safe `verificationViewProps`.
+  3. **`apps/frontend/app/components/auth/registration-verification-view.tsx` + register boundary tests**: Exported the view prop contract and updated coverage so no Clerk resource is required by the register verification branch.
+- **Outcome:** The register flow now keeps Clerk orchestration inside the flow hook while the verification view receives only primitives and event handlers.
 
 ### [2026-04-13] - Registration Verification View Prop Contract
 

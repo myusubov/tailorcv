@@ -23,8 +23,8 @@ vi.mock('@/lib/config', () => ({
   },
 }));
 
-vi.mock('@/app/components/auth/registration-verification', () => ({
-  RegistrationVerification: ({ email }: { email: string }) => (
+vi.mock('@/app/components/auth/registration-verification-view', () => ({
+  RegistrationVerificationView: ({ email }: { email: string }) => (
     <div data-testid="registration-verification">{email}</div>
   ),
 }));
@@ -57,10 +57,15 @@ describe('RegisterForm', () => {
     mockUseRegisterFlow.mockReturnValue({
       mode: 'verification',
       verificationViewProps: {
-        resetForm: vi.fn(),
-        onGoBack: vi.fn(),
-        signUp: { id: 'sign_up_123' },
+        code: '',
         email: 'user@example.com',
+        globalError: '',
+        isResending: false,
+        isVerifying: false,
+        onCodeChange: vi.fn(),
+        onGoBack: vi.fn(),
+        onResend: vi.fn(),
+        onSubmit: vi.fn(),
       },
     });
 
