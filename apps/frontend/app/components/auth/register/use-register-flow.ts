@@ -8,17 +8,7 @@ import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 
-interface RegisterFormViewProps {
-  control: ReturnType<typeof useForm<RegisterFormValues>>['control'];
-  globalError: string;
-  googleLoading: boolean;
-  appleLoading: boolean;
-  isSubmitting: boolean;
-  isAnyAuthActionInProgress: boolean;
-  onSubmit: () => void;
-  onGoogleSignUp: () => Promise<void>;
-  onAppleSignUp: () => Promise<void>;
-}
+import type { RegisterFormViewProps } from './register-form-view';
 
 interface RegistrationVerificationViewProps {
   signUp: ReturnType<typeof useSignUp>['signUp'];
