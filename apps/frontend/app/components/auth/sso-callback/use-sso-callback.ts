@@ -133,8 +133,14 @@ export function useSSOCallback() {
             await finalizeSignUp();
             return;
           }
-          if (signUp.status === 'missing_requirements') {
+          if (
+            signUp.status === 'missing_requirements' &&
+            signUp.verifications.externalAccount.status === 'verified'
+          ) {
             showMissingRequirementsError();
+            return;
+          }
+          if (signUp.status === 'missing_requirements') {
             return;
           }
         }

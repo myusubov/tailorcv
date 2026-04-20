@@ -151,6 +151,7 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 | `redirectUrl`/`redirectCallbackUrl` swapped in `sso()` | Keep the param order from the examples above; never swap them |
 | Clerk still requires first/last name after app removal | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled |
 | Cancelled OAuth attempt reuses the previous provider on the next click | Call `resetClerkAuthResource({ resource })` before every `signIn.sso()` and `signUp.sso()` call |
+| Transferred sign-up reports `missing_requirements` while the external account is still verifying | Defer the configuration-drift error until `signUp.verifications.externalAccount.status === 'verified'` |
 | React StrictMode double-execution on SSO callback | `hasRun = useRef(false)` guard in `useSSOCallback` |
 | Direct navigation to `/sso-callback` with no usable Clerk callback state | Fall through to `/login` instead of relying on a local sessionStorage marker |
 | Direct navigation to `/sso-continue` | Redirect to `/register`; the continuation form has been retired |
@@ -158,6 +159,15 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 ---
 
 ## 10. Development Log
+
+### [2026-04-20] - Defer Missing Requirements Until External Verification
+
+- **Decision:** Only surface OAuth `missing_requirements` configuration drift after Clerk reports the external account as verified.
+- **Problem:** During sign-in to sign-up transfer, Clerk can temporarily report `signUp.status === 'missing_requirements'` while `signUp.verifications.externalAccount.status` is still pending. Showing the missing-fields error at that point incorrectly interrupts a valid OAuth verification.
+- **Solution:**
+  1. **`apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts`**: Mirrored the later Case 6 gate in the transfer branch so `showMissingRequirementsError()` only runs when `externalAccount.status === 'verified'`.
+  2. **`apps/frontend/app/components/auth/sso-callback/use-sso-callback.test.tsx`**: Added coverage that transfers a sign-in to sign-up with an unverified external account and confirms the callback does not show the configuration-drift error or redirect.
+- **Outcome:** OAuth transfers now wait for Clerk's external-account verification state before deciding that remaining missing requirements are app configuration drift.
 
 ### [2026-04-20] - Reset OAuth Resource Before Provider Redirect
 

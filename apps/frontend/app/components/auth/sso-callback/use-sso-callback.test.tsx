@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockPush = vi.hoisted(() => vi.fn());
@@ -129,6 +129,30 @@ describe('useSSOCallback', () => {
       expect(result.current.error).toContain('Clerk still requires additional sign-up fields');
     });
 
+    expect(mockPush).not.toHaveBeenCalledWith('/sso-continue');
+  });
+
+  it('defers missing-requirements errors while transferred external accounts are still verifying', async () => {
+    const signIn = createSignInMock();
+    const signUp = createSignUpMock();
+    signIn.isTransferable = true;
+    signUp.verifications.externalAccount.status = 'unverified';
+    signUp.create.mockImplementation(async () => {
+      signUp.status = 'missing_requirements';
+      return { error: null };
+    });
+    mockSignInState.signIn = signIn;
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useSSOCallback());
+
+    await waitFor(() => {
+      expect(signUp.create).toHaveBeenCalledWith({ transfer: true });
+    });
+    await act(async () => {});
+
+    expect(result.current.error).toBeNull();
+    expect(mockPush).not.toHaveBeenCalledWith('/login');
     expect(mockPush).not.toHaveBeenCalledWith('/sso-continue');
   });
 
