@@ -11,7 +11,7 @@ import { RegisterFields } from './register-fields';
 import { RegisterSocialActions } from './register-social-actions';
 import { RegisterTermsField } from './register-terms-field';
 
-interface RegisterFormViewProps {
+export interface RegisterFormViewProps {
   control: Control<RegisterFormValues>;
   globalError: string;
   googleLoading: boolean;

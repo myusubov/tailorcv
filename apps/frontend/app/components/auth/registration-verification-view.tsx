@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 import { AnimatedError } from '@/app/components/ui';
 
-interface RegistrationVerificationViewProps {
+export interface RegistrationVerificationViewProps {
   code: string;
   email: string;
   globalError: string;

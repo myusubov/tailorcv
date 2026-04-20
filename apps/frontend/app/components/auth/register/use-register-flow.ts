@@ -1,40 +1,44 @@
 import { useSignUp } from '@clerk/nextjs';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { beginSSOFlow } from '@/lib/auth/sso-flow';
 import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
+import type { RegistrationVerificationViewProps } from '@/app/components/auth/registration-verification-view';
 
-export interface UseRegisterFlowResult {
-  control: ReturnType<typeof useForm<RegisterFormValues>>['control'];
-  email: string;
-  globalError: string;
-  googleLoading: boolean;
-  appleLoading: boolean;
-  isSubmitting: boolean;
-  isAnyAuthActionInProgress: boolean;
-  verifying: boolean;
-  signUp: ReturnType<typeof useSignUp>['signUp'];
-  resetForm: ReturnType<typeof useForm<RegisterFormValues>>['reset'];
-  handleGoBack: () => void;
-  handleSubmit: () => void;
-  handleGoogleSignUp: () => Promise<void>;
-  handleAppleSignUp: () => Promise<void>;
-}
+import type { RegisterFormViewProps } from './register-form-view';
+
+export type UseRegisterFlowResult =
+  | {
+      mode: 'form';
+      formViewProps: RegisterFormViewProps;
+    }
+  | {
+      mode: 'verification';
+      verificationViewProps: RegistrationVerificationViewProps;
+    };
 
 /**
  * Orchestrates custom email/password registration and OAuth sign-up entry points.
  * The hook owns form state, Clerk password sign-up, email-code dispatch, and the transition
- * into the verification screen once Clerk reports the expected pending-email state.
+ * into the verification screen once Clerk reports the expected pending-email state. It returns
+ * view-specific props so the controller can switch screens without knowing each field mapping.
  */
 export function useRegisterFlow(): UseRegisterFlowResult {
+  const router = useRouter();
   const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { signUp, fetchStatus } = useSignUp();
 
   const {
@@ -42,7 +46,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     handleSubmit,
     formState: { isSubmitting },
     setValue,
-    reset,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -59,7 +62,89 @@ export function useRegisterFlow(): UseRegisterFlowResult {
 
   const handleGoBack = () => {
     setVerifying(false);
+    setVerificationCode('');
+    setVerificationError('');
     setValue('email', '');
+  };
+
+  const handleResendVerification = async () => {
+    if (!signUp) return;
+    setIsResending(true);
+    setVerificationError('');
+
+    try {
+      const { error } = await signUp.verifications.sendEmailCode();
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        const clerkError = getClerkErrorMessage(error);
+        setVerificationError(clerkError || 'Verification failed');
+        return;
+      }
+
+      toast.success('Verification code resent');
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setVerificationError(clerkError || 'Failed to resend code');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleSubmitVerification = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!signUp) return;
+    setIsVerifying(true);
+    setVerificationError('');
+
+    try {
+      const { error } = await signUp.verifications.verifyEmailCode({
+        code: verificationCode,
+      });
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        const clerkError = getClerkErrorMessage(error);
+        setVerificationError(clerkError || 'Verification failed');
+        return;
+      }
+
+      if (signUp.status === 'complete') {
+        const { error: finalizeError } = await signUp.finalize({
+          navigate: async ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              console.log('Session task triggered', session.currentTask);
+              return;
+            }
+
+            const url = decorateUrl(config.auth.afterSignUpUrl);
+            if (url.startsWith('http')) {
+              window.location.href = url;
+            } else {
+              router.push(url);
+            }
+          },
+        });
+
+        if (finalizeError) {
+          console.error(JSON.stringify(finalizeError, null, 2));
+          const clerkError = getClerkErrorMessage(finalizeError);
+          setVerificationError(clerkError || 'Failed to complete sign up');
+          return;
+        }
+
+        return;
+      }
+
+      setVerificationError(
+        `Unexpected verification status: ${signUp.status?.replace(/_/g, ' ') || 'unknown'}. Please try again.`,
+      );
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setVerificationError(clerkError || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const submitRegistration = async (data: RegisterFormValues) => {
@@ -161,20 +246,35 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     }
   };
 
+  if (verifying) {
+    return {
+      mode: 'verification',
+      verificationViewProps: {
+        code: verificationCode,
+        email,
+        globalError: verificationError,
+        isResending,
+        isVerifying,
+        onCodeChange: setVerificationCode,
+        onGoBack: handleGoBack,
+        onResend: handleResendVerification,
+        onSubmit: handleSubmitVerification,
+      },
+    };
+  }
+
   return {
-    control,
-    email,
-    globalError,
-    googleLoading,
-    appleLoading,
-    isSubmitting,
-    isAnyAuthActionInProgress: isSubmitting || googleLoading || appleLoading,
-    verifying,
-    signUp,
-    resetForm: reset,
-    handleGoBack,
-    handleSubmit: handleSubmit(submitRegistration),
-    handleGoogleSignUp,
-    handleAppleSignUp,
+    mode: 'form',
+    formViewProps: {
+      control,
+      globalError,
+      googleLoading,
+      appleLoading,
+      isSubmitting,
+      isAnyAuthActionInProgress: isSubmitting || googleLoading || appleLoading,
+      onSubmit: handleSubmit(submitRegistration),
+      onGoogleSignUp: handleGoogleSignUp,
+      onAppleSignUp: handleAppleSignUp,
+    },
   };
 }

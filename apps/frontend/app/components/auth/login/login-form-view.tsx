@@ -129,7 +129,7 @@ export function LoginFormView({
               name="email"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
+                <TextField isRequired className="w-full" isInvalid={!!fieldState.error}>
                   <Label className="text-base">Email</Label>
                   <Input
                     {...field}
@@ -153,25 +153,29 @@ export function LoginFormView({
               name="password"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <div className="flex items-center justify-between">
+                <div className="relative">
+                  <TextField
+                    isRequired
+                    className="w-full"
+                    isInvalid={!!fieldState.error}
+                  >
                     <Label className="text-base">Password</Label>
-                    <NextLink
-                      href="/forgot-password"
-                      className="text-primary text-sm font-medium hover:underline"
-                    >
-                      Forgot password?
-                    </NextLink>
-                  </div>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Enter your password"
-                  />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Enter your password"
+                    />
+                    {fieldState.error && (
+                      <FieldError>{fieldState.error.message}</FieldError>
+                    )}
+                  </TextField>
+                  <NextLink
+                    href="/forgot-password"
+                    className="text-primary absolute top-0 right-0 text-sm font-medium hover:underline"
+                  >
+                    Forgot password?
+                  </NextLink>
+                </div>
               )}
             />
           </motion.div>

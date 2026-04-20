@@ -10,7 +10,9 @@ vi.mock('./use-register-flow', () => ({
 }));
 
 vi.mock('./register-form-view', () => ({
-  RegisterFormView: () => <div data-testid="register-form-view" />,
+  RegisterFormView: ({ globalError }: { globalError: string }) => (
+    <div data-testid="register-form-view">{globalError}</div>
+  ),
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -21,34 +23,56 @@ vi.mock('@/lib/config', () => ({
   },
 }));
 
-vi.mock('@/app/components/auth/registration-verification', () => ({
-  RegistrationVerification: () => <div data-testid="registration-verification" />,
+vi.mock('@/app/components/auth/registration-verification-view', () => ({
+  RegistrationVerificationView: ({ email }: { email: string }) => (
+    <div data-testid="registration-verification">{email}</div>
+  ),
 }));
 
 describe('RegisterForm', () => {
   it('renders the register form view while verification is inactive', () => {
     mockUseRegisterFlow.mockReturnValue({
-      verifying: false,
+      mode: 'form',
+      formViewProps: {
+        control: {},
+        globalError: 'Create account failed',
+        googleLoading: false,
+        appleLoading: false,
+        isSubmitting: false,
+        isAnyAuthActionInProgress: false,
+        onSubmit: vi.fn(),
+        onGoogleSignUp: vi.fn(),
+        onAppleSignUp: vi.fn(),
+      },
     });
 
     render(<RegisterForm />);
 
     expect(screen.getByTestId('register-form-view')).toBeTruthy();
+    expect(screen.getByText('Create account failed')).toBeTruthy();
     expect(screen.queryByTestId('registration-verification')).toBeNull();
   });
 
   it('renders the verification view when the register flow enters verification', () => {
     mockUseRegisterFlow.mockReturnValue({
-      verifying: true,
-      resetForm: vi.fn(),
-      handleGoBack: vi.fn(),
-      signUp: { id: 'sign_up_123' },
-      email: 'user@example.com',
+      mode: 'verification',
+      verificationViewProps: {
+        code: '',
+        email: 'user@example.com',
+        globalError: '',
+        isResending: false,
+        isVerifying: false,
+        onCodeChange: vi.fn(),
+        onGoBack: vi.fn(),
+        onResend: vi.fn(),
+        onSubmit: vi.fn(),
+      },
     });
 
     render(<RegisterForm />);
 
     expect(screen.getByTestId('registration-verification')).toBeTruthy();
+    expect(screen.getByText('user@example.com')).toBeTruthy();
     expect(screen.queryByTestId('register-form-view')).toBeNull();
   });
 });
