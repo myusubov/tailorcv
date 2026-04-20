@@ -5,15 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { buildLoginUrl, type LoginAuthReason } from '@/lib/auth/login-auth-reason';
-import { clearSSOFlowState, hasActiveSSOFlow } from '@/lib/auth/sso-flow';
 import { config } from '@/lib/config';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 
 /**
  * Finalizes the Clerk v7 SSO callback state machine for both sign-in and sign-up flows.
- * The hook validates the tab-scoped SSO marker, handles transfer cases, redirects incomplete
- * flows back into login or `/sso-continue`, and surfaces a persistent page-level error when
- * the blocking callback transition cannot finish.
+ * The hook handles transfer cases, redirects incomplete sign-ins back into login, finalizes
+ * completed OAuth sign-ups/sign-ins, and surfaces a persistent page-level error when the
+ * blocking callback transition cannot finish.
  */
 export function useSSOCallback() {
   const clerk = useClerk();
@@ -27,16 +26,14 @@ export function useSSOCallback() {
 
   useEffect(() => {
     (async () => {
-      if (!hasActiveSSOFlow()) {
+      if (!clerk.loaded || hasRun.current) return;
+
+      if (!signIn || !signUp) {
         hasRun.current = true;
-        clearSSOFlowState();
-        router.replace('/login');
+        router.push('/login');
         return;
       }
 
-      if (!clerk.loaded || hasRun.current) return;
-
-      if (!signIn || !signUp) return;
       hasRun.current = true;
 
       const redirectToLogin = ({
@@ -44,15 +41,20 @@ export function useSSOCallback() {
       }: {
         reason?: LoginAuthReason;
       }) => {
-        clearSSOFlowState();
         router.push(buildLoginUrl({ reason }));
+      };
+
+      const showMissingRequirementsError = () => {
+        setError(
+          'Clerk still requires additional sign-up fields. Confirm first and last name are optional or disabled in the Clerk dashboard, then restart sign-up.',
+        );
+        setIsLoading(false);
       };
 
       const finalizeSignIn = async () => {
         const { error } = await signIn.finalize({
           navigate: async ({ session, decorateUrl }) => {
             if (session?.currentTask) return;
-            clearSSOFlowState();
             const url = decorateUrl(config.auth.afterSignInUrl);
             if (url.startsWith('http')) {
               window.location.href = url;
@@ -63,7 +65,6 @@ export function useSSOCallback() {
         });
 
         if (error) {
-          clearSSOFlowState();
           setError(getClerkErrorMessage(error));
           setIsLoading(false);
           return false;
@@ -76,7 +77,6 @@ export function useSSOCallback() {
         const { error } = await signUp.finalize({
           navigate: async ({ session, decorateUrl }) => {
             if (session?.currentTask) return;
-            clearSSOFlowState();
             const url = decorateUrl(config.auth.afterSignUpUrl);
             if (url.startsWith('http')) {
               window.location.href = url;
@@ -87,7 +87,6 @@ export function useSSOCallback() {
         });
 
         if (error) {
-          clearSSOFlowState();
           setError(getClerkErrorMessage(error));
           setIsLoading(false);
           return false;
@@ -134,8 +133,10 @@ export function useSSOCallback() {
             await finalizeSignUp();
             return;
           }
-          // Sign-up is incomplete (e.g. missing required fields) — collect them on /sso-continue.
-          return router.push('/sso-continue');
+          if (signUp.status === 'missing_requirements') {
+            showMissingRequirementsError();
+            return;
+          }
         }
 
         // Case 5: New user signed up via OAuth and all required fields were provided.
@@ -144,13 +145,14 @@ export function useSSOCallback() {
           return;
         }
 
-        // Case 6: OAuth provider didn't supply all required fields (e.g. Apple omitting last name).
-        // Redirect to /sso-continue to collect the missing fields before finalizing.
+        // Case 6: Clerk still requires fields this app no longer collects.
+        // Surface this as configuration drift instead of routing to a retired continuation page.
         if (
           signUp.status === 'missing_requirements' &&
           signUp.verifications.externalAccount.status === 'verified'
         ) {
-          return router.push('/sso-continue');
+          showMissingRequirementsError();
+          return;
         }
 
         // Case 7: Sign-in requires MFA or a password reset — redirect to login to handle it.
@@ -181,17 +183,14 @@ export function useSSOCallback() {
                 }
               },
             });
-            clearSSOFlowState();
             return;
           }
         }
 
         // Fallback: no recognized SSO state — direct navigation with no active OAuth flow,
         // or an unexpected Clerk state. Redirect rather than hanging on the spinner.
-        clearSSOFlowState();
-        router.replace('/login');
+        router.push('/login');
       } catch (err: unknown) {
-        clearSSOFlowState();
         setError(getClerkErrorMessage(err));
         setIsLoading(false);
       }

@@ -54,7 +54,7 @@
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step | Forgot-password form-structure changes |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx` | Local reset-step form controller that owns RHF wiring for code verification / password reset UI | Forgot-password form-structure changes |
 | `apps/frontend/lib/auth/clerk-flow.ts` | Small Clerk-status decision helpers for login and forgot-password custom flows | Auditing or changing Clerk state handling |
-| `apps/frontend/lib/schemas/auth.ts` | Zod schemas: login, register, forgotPassword, ssoContinue | Adding/changing form fields |
+| `apps/frontend/lib/schemas/auth.ts` | Zod schemas: login, register, forgotPassword, and resetPassword | Adding/changing form fields |
 
 ---
 
@@ -192,6 +192,10 @@ router.push(buildLoginUrl({ reason: 'second_factor_required' }));
 - `second_factor_required`: Clerk requires MFA / email-code verification after password sign-in
 - `reset_password_required`: Clerk requires a password reset before sign-in can complete
 
+### 6.5 Register Password Confirmation
+
+Email/password registration validates `password` and `confirmPassword` locally in `registerSchema` before Clerk submission. `useRegisterFlow()` still sends only `emailAddress` and `password` to `signUp.password()`, so confirmation remains a local guard and is never sent to Clerk or the backend.
+
 ---
 
 ## 7. Integration Points
@@ -226,6 +230,16 @@ router.push(buildLoginUrl({ reason: 'second_factor_required' }));
 ---
 
 ## 10. Development Log
+
+### [2026-04-20] - Register Password Confirmation
+
+- **Decision:** Add local confirm-password validation to email/password registration while keeping Clerk sign-up payloads unchanged.
+- **Problem:** Register users could mistype a password without a local confirmation check, which pushed avoidable mistakes into the Clerk sign-up flow.
+- **Solution:**
+  1. **`apps/frontend/lib/schemas/auth.ts`**: Added `confirmPassword` to `registerSchema` and reused the reset-password `.refine(... path: ['confirmPassword'])` mismatch pattern.
+  2. **`apps/frontend/app/components/auth/register/use-register-flow.ts`**: Added a `confirmPassword` form default while continuing to call `signUp.password()` with only `emailAddress` and `password`.
+  3. **`apps/frontend/app/components/auth/register/register-fields.tsx`**: Rendered a required `Confirm password` field directly after `Password`.
+- **Outcome:** Email/password registration now catches mismatched passwords before Clerk submission without changing OAuth, backend, or stored account data.
 
 ### [2026-04-20] - Register-Owned Verification Callbacks
 

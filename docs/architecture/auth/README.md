@@ -18,10 +18,10 @@
 ### 1.2 Key Decisions
 
 - **`redirectCallbackUrl` vs `redirectUrl`**: `redirectCallbackUrl` = intermediate callback page (`/sso-callback`). `redirectUrl` = final destination after session is created. These are easy to swap — don't.
-- **`clerk.client!.signUp.update()` not `signUp.update()`**: `SignUpFutureResource.update()` in Clerk v7 constructs the wrong URL (hits collection endpoint `/v1/client/sign_ups` instead of `/v1/client/sign_ups/{id}`). Always use `clerk.client!.signUp.update()` for updating a sign-up in `missing_requirements` state.
 - **`signUp.finalize()` not `setActive()`**: Post-completion navigation uses `finalize()`. `setActive()` is only for the `existingSession` edge case.
 - **`hasRun` ref**: Prevents double-execution in React StrictMode on the SSO callback hook.
 - **`auth_reason` login redirects**: When OAuth cannot finish sign-in because Clerk requires the primary factor, a second factor, or a password reset, redirect to `/login` with a reason code so the login page can explain the next step inline.
+- **No account profile names**: TailorCV auth flows do not collect or submit account first/last name. If Clerk reports `missing_requirements` for names, treat it as dashboard configuration drift.
 
 ---
 
@@ -30,7 +30,7 @@
 ### 2.1 Read Order
 
 1. [flows.md](flows.md) for login, register, and forgot-password behavior
-2. [sso.md](sso.md) for OAuth callback and `/sso-continue`
+2. [sso.md](sso.md) for OAuth callback and retired `/sso-continue` guard behavior
 3. [testing.md](testing.md) for Playwright, Gmail IMAP, and real-auth setup
 
 ### 2.2 High-Level Map
@@ -40,7 +40,7 @@ Email/password login            -> flows.md
 Email/password sign-up          -> flows.md
 Forgot-password                 -> flows.md + testing.md
 Google/Apple OAuth              -> sso.md
-SSO callback / continuation     -> sso.md
+SSO callback / retired guard    -> sso.md
 Auth smoke / real auth testing  -> testing.md
 ```
 
@@ -61,7 +61,7 @@ Auth smoke / real auth testing  -> testing.md
 ### 4.1 Domain Split
 
 - `flows.md`: email/password sign-in, sign-up verification, forgot-password, Client Trust
-- `sso.md`: OAuth start, callback, transfer handling, `/sso-continue`
+- `sso.md`: OAuth start, callback, transfer handling, retired `/sso-continue`
 - `testing.md`: auth smoke, real forgot-password E2E, helper topology
 
 ---
@@ -114,7 +114,7 @@ docs/architecture/
 - [x] Google OAuth sign-up
 - [x] Apple OAuth sign-up
 - [x] SSO callback (v7 custom hook — `useSSOCallback`)
-- [x] SSO continue page (missing fields — e.g. Apple missing last name)
+- [x] Retired SSO continue route redirects to `/register`
 - [x] `decorateUrl` in all `finalize()` and `setActive()` calls
 - [x] Public/protected route middleware (`proxy.ts`)
 
@@ -122,6 +122,7 @@ docs/architecture/
 
 - [ ] Terms of Service acceptance enforced for SSO sign-up (currently bypassed — handle via Clerk dashboard "Legal acceptance" or onboarding)
 - [ ] Phone number collection if required by instance settings
+- [ ] Clerk first/last-name settings remain optional or disabled
 
 ---
 

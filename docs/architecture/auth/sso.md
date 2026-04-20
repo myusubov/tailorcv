@@ -1,13 +1,14 @@
 # AUTH SSO
 
-> Google and Apple OAuth start flows, Clerk callback handling, transfer logic, and the `/sso-continue` missing-requirements path.
+> Google and Apple OAuth start flows, Clerk callback handling, transfer logic, and retired `/sso-continue` guard behavior.
 
 ---
 
 ## 1. Core Philosophy
 
 - Treat OAuth as a separate state machine from password auth
-- Fail closed on public callback/continuation routes
+- Let Clerk state determine OAuth outcome instead of relying on local intent markers
+- Fail closed on public callback and retired continuation routes
 - Keep OAuth start pages thin and put Clerk orchestration in hooks
 
 ---
@@ -22,13 +23,11 @@ User clicks "Continue with Google/Apple"
      -> finalize sign-in
      -> transfer sign-in/sign-up
      -> redirect to /login with auth_reason
-     -> redirect to /sso-continue
+     -> surface configuration drift if Clerk still reports missing requirements
      -> setActive(existingSession)
 
 /sso-continue
-  -> use-sso-continue-flow.ts
-  -> clerk.client!.signUp.update()
-  -> signUp.finalize()
+  -> redirect('/register') defensive route only
 ```
 
 ---
@@ -39,10 +38,7 @@ User clicks "Continue with Google/Apple"
 | ---- | ------- | ------------ |
 | `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts` | Core v7 SSO callback hook — all OAuth finalization logic | Any SSO flow change |
 | `apps/frontend/app/sso-callback/page.tsx` | SSO callback page — delegates to `useSSOCallback` | SSO flow changes |
-| `apps/frontend/app/(auth)/sso-continue/page.tsx` | Thin SSO continuation route controller that renders the missing-fields form and Clerk captcha mount | Apple/Google missing fields |
-| `apps/frontend/app/components/auth/sso-continue/use-sso-continue-flow.ts` | SSO continuation controller hook — invalid-flow guards, prefill, Clerk update, and finalize navigation | Missing-requirements continuation changes |
-| `apps/frontend/app/components/auth/sso-continue/sso-continue-form.tsx` | View — first/last name form for missing OAuth fields | UI changes to continue form |
-| `apps/frontend/lib/auth/sso-flow.ts` | Tab-scoped SSO flow markers and cleanup helpers | Direct-navigation guard changes |
+| `apps/frontend/app/(auth)/sso-continue/page.tsx` | Retired continuation route that redirects to registration | Defensive route behavior changes |
 | `apps/frontend/lib/auth/login-auth-reason.ts` | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in | OAuth fallback UX changes |
 | `apps/frontend/proxy.ts` | Clerk middleware — public/auth/protected route matchers | Route protection changes |
 
@@ -59,7 +55,6 @@ sequenceDiagram
     participant O as OAuth Provider
     participant CB as /sso-callback
     participant Hook as useSSOCallback
-    participant C as /sso-continue
 
     U->>L: Click "Sign in with Google"
     L->>O: signIn.sso({ redirectCallbackUrl: '/sso-callback', redirectUrl: '/dashboard' })
@@ -67,11 +62,11 @@ sequenceDiagram
     CB->>Hook: useSSOCallback()
     alt signIn complete
         Hook->>Hook: signIn.finalize({ navigate: decorateUrl })
+    else signIn transferable
+        Hook->>Hook: signUp.create({ transfer: true })
+        Hook->>Hook: signUp.finalize({ navigate: decorateUrl })
     else signUp missing_requirements
-        Hook->>C: router.push('/sso-continue')
-        U->>C: Submit first/last name
-        C->>C: clerk.client!.signUp.update({ firstName, lastName })
-        C->>C: signUp.finalize({ navigate: decorateUrl })
+        Hook-->>U: Show configuration-drift error
     else existingSession
         Hook->>Hook: clerk.setActive({ session, navigate: decorateUrl })
     end
@@ -83,12 +78,8 @@ sequenceDiagram
 
 ```
 app/components/auth/
-├── sso-callback/
-│   └── use-sso-callback.ts
-└── sso-continue/
-    ├── index.ts
-    ├── use-sso-continue-flow.ts
-    └── sso-continue-form.tsx
+└── sso-callback/
+    └── use-sso-callback.ts
 ```
 
 ---
@@ -115,16 +106,7 @@ await signUp.sso({
 });
 ```
 
-### 6.3 Updating Sign-Up in missing_requirements State
-
-```typescript
-await clerk.client!.signUp.update({ firstName, lastName });
-```
-
-- ALWAYS use `clerk.client!.signUp.update()` — NOT `signUp.update()`
-- `SignUpFutureResource.update()` hits the wrong endpoint (missing ID in URL → 405)
-
-### 6.4 OAuth Fallback Redirect Context
+### 6.3 OAuth Fallback Redirect Context
 
 ```typescript
 router.push(buildLoginUrl({ reason: 'primary_required' }));
@@ -143,7 +125,7 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 | Login | OAuth callback can send users back to `/login` with context | `buildLoginUrl()` |
 | Onboarding | OAuth sign-up finalization lands here | `config.auth.afterSignUpUrl` |
 | Dashboard | OAuth sign-in finalization lands here | `config.auth.afterSignInUrl` |
-| Middleware (`proxy.ts`) | `/sso-continue` is public but still guarded in-app | public route config + hook redirect |
+| Middleware (`proxy.ts`) | `/sso-continue` remains public only so the retired route can redirect defensively | public route config + `redirect('/register')` |
 
 ---
 
@@ -154,8 +136,8 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 - [x] Google OAuth sign-up
 - [x] Apple OAuth sign-up
 - [x] SSO callback hook
-- [x] SSO continuation hook
-- [x] Direct-navigation guards for `/sso-callback` and `/sso-continue`
+- [x] Retired `/sso-continue` redirect route
+- [x] Direct-navigation guard for `/sso-callback`
 
 ---
 
@@ -164,15 +146,25 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 | Risk | Mitigation |
 | ---- | ---------- |
 | `redirectUrl`/`redirectCallbackUrl` swapped in `sso()` | Keep the param order from the examples above; never swap them |
-| `SignUpFutureResource.update()` sends wrong URL (405) | Always use `clerk.client!.signUp.update()` for missing-requirements updates |
+| Clerk still requires first/last name after app removal | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled |
 | React StrictMode double-execution on SSO callback | `hasRun = useRef(false)` guard in `useSSOCallback` |
-| Direct navigation to `/sso-callback` with no active flow | Require a fresh tab-scoped SSO marker from the OAuth start page; otherwise redirect to `/login` |
-| Direct navigation to `/sso-continue` with no active flow | Require both the SSO marker and `signUp.verifications.externalAccount.status === 'verified'`; otherwise redirect to `/register` |
-| Stale Clerk `signUp` object causes false continuation access | Reject stale `missing_requirements` state unless the current tab has an active SSO marker and Clerk reports a verified external account |
+| Direct navigation to `/sso-callback` with no usable Clerk callback state | Fall through to `/login` instead of relying on a local sessionStorage marker |
+| Direct navigation to `/sso-continue` | Redirect to `/register`; the continuation form has been retired |
 
 ---
 
 ## 10. Development Log
+
+### [2026-04-20] - Account Name Removal And SSO Continue Retirement
+
+- **Decision:** Stop collecting account first/last name in auth flows and retire the SSO continuation form.
+- **Problem:** OAuth from `/login` can legitimately become sign-up when Clerk reports a transferable sign-in, but requiring profile names forced unknown users into `/sso-continue`; refreshing that page could leave stale local SSO marker state and send users back into registration with confusing Clerk state.
+- **Solution:**
+  1. **`apps/frontend/app/components/auth/register/*` + `apps/frontend/lib/schemas/auth.ts`**: Removed first/last-name fields from registration validation, UI, and the Clerk password sign-up payload.
+  2. **`apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts`**: Removed tab-scoped SSO marker checks and finalized transferable OAuth sign-ups directly when Clerk reports completion.
+  3. **`apps/frontend/app/(auth)/sso-continue/page.tsx`**: Replaced the name-collection continuation page with a defensive redirect to `/register`.
+  4. **`apps/backend/src/utils/clerk.ts`**: Stopped writing Clerk profile names into app users while leaving nullable database columns available for future reintroduction.
+- **Outcome:** OAuth sign-in/sign-up no longer depends on account profile names or sessionStorage intent markers; Clerk dashboard first/last-name requirements must remain optional or disabled.
 
 ### [2026-04-07] - SSO Continue Controller Hook Extraction
 

@@ -69,7 +69,7 @@ Real Clerk reset coverage
 - Playwright auth smoke:
   - signed-out pages render
   - protected routes redirect
-  - `/sso-callback` and `/sso-continue` reject direct navigation
+  - `/sso-callback` rejects direct navigation and retired `/sso-continue` redirects to registration
 - Playwright real auth:
   - login happy path with a dedicated fixed-password Clerk test user
   - Client Trust-aware login completion through the shared email-code helper
@@ -141,7 +141,7 @@ npm run test:e2e:frontend:real-auth
 
 - Keep Google and Apple auth automation at the app-owned boundary only:
   - `useSSOCallback`
-  - `use-sso-continue-flow`
+  - retired `/sso-continue` redirect
   - public-route guards and fallback redirects
 - Use auth smoke for page health and direct-navigation rejection.
 - Verify provider-controlled flows manually:
@@ -149,7 +149,7 @@ npm run test:e2e:frontend:real-auth
   - Google sign-up
   - Apple sign-in
   - Apple sign-up
-  - missing-requirements continuation
+  - missing-requirements configuration-drift error
   - existing-session callback behavior
 - Do not add full provider-browser automation by default; it is too flaky relative to the confidence gained over the current hook and smoke coverage.
 

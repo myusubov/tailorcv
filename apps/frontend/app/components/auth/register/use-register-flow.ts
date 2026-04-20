@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { beginSSOFlow } from '@/lib/auth/sso-flow';
 import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
@@ -51,8 +50,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     defaultValues: {
       email: '',
       password: '',
-      firstName: '',
-      lastName: '',
+      confirmPassword: '',
       terms: false,
     },
     mode: 'onSubmit',
@@ -154,8 +152,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     try {
       const { error } = await signUp.password({
         emailAddress: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
         password: data.password,
       });
 
@@ -198,7 +194,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     if (fetchStatus === 'fetching' || !signUp) return;
     try {
       setGoogleLoading(true);
-      beginSSOFlow('sign-up');
       const { error } = await signUp.sso({
         strategy: 'oauth_google',
         redirectCallbackUrl: '/sso-callback',
@@ -224,7 +219,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     if (fetchStatus === 'fetching' || !signUp) return;
     try {
       setAppleLoading(true);
-      beginSSOFlow('sign-up');
       const { error } = await signUp.sso({
         strategy: 'oauth_apple',
         redirectCallbackUrl: '/sso-callback',

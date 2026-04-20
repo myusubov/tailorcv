@@ -13,7 +13,6 @@ import {
   LOGIN_AUTH_REASON_QUERY_PARAM,
 } from '@/lib/auth/login-auth-reason';
 import { resolveLoginAttemptOutcome } from '@/lib/auth/clerk-flow';
-import { beginSSOFlow, clearSSOFlowState } from '@/lib/auth/sso-flow';
 import { config } from '@/lib/config';
 import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
@@ -203,7 +202,6 @@ export function useLoginFlow(): UseLoginFlowResult {
 
     try {
       setLoading(true);
-      beginSSOFlow('sign-in');
       const { error } = await signIn.sso({
         strategy,
         redirectUrl: config.auth.afterSignInUrl,
@@ -211,12 +209,10 @@ export function useLoginFlow(): UseLoginFlowResult {
       });
 
       if (error) {
-        clearSSOFlowState();
         const clerkError = getClerkErrorMessage(error);
         setGlobalError(clerkError || 'OAuth failed');
       }
     } catch (err: unknown) {
-      clearSSOFlowState();
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
       setGlobalError(clerkError || 'OAuth failed');

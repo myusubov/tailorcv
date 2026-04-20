@@ -1,37 +1,10 @@
-'use client';
-
-import {
-  SSOContinueForm,
-  useSSOContinueFlow,
-} from '@/app/components/auth/sso-continue';
+import { redirect } from 'next/navigation';
 
 /**
- * Renders the OAuth sign-up continuation form for providers that did not supply
- * all required profile fields. The page also mounts Clerk's captcha container so
- * bot protection continues to work for the custom continuation flow.
+ * Redirects retired SSO continuation visits back to registration.
+ * Account profile names are no longer collected by TailorCV auth flows, so
+ * OAuth callbacks should finalize directly or surface configuration drift there.
  */
 export default function SSOContinuePage() {
-  const {
-    control,
-    isSubmitting,
-    globalError,
-    signUp,
-    handleSubmit,
-  } = useSSOContinueFlow();
-
-  if (!signUp) return null;
-
-  return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-[440px]">
-        <SSOContinueForm
-          control={control}
-          isSubmitting={isSubmitting}
-          globalError={globalError}
-          onSubmit={handleSubmit}
-        />
-        <div id="clerk-captcha" />
-      </div>
-    </div>
-  );
+  return redirect('/register');
 }

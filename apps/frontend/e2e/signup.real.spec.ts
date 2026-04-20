@@ -15,14 +15,14 @@ test.describe.serial('Real Clerk sign-up flow', () => {
     await page.goto('/register', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible();
-    await expect(page.getByLabel('First name')).toBeVisible();
-    await expect(page.getByLabel('Last name')).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
-    await expect(page.getByLabel('Password')).toBeVisible();
-    const firstNameInput = page.getByLabel('First name');
-    const lastNameInput = page.getByLabel('Last name');
+    await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible();
     const emailInput = page.getByLabel('Email');
-    const passwordInput = page.getByLabel('Password');
+    const passwordInput = page.getByLabel('Password', { exact: true });
+    const confirmPasswordInput = page.getByLabel('Confirm password', {
+      exact: true,
+    });
     const termsCheckboxInput = page.getByRole('checkbox', {
       name: /terms|agree/i,
     });
@@ -34,14 +34,12 @@ test.describe.serial('Real Clerk sign-up flow', () => {
       name: 'Create Account',
     });
 
-    await firstNameInput.fill('E2E');
-    await expect(firstNameInput).toHaveValue('E2E');
-    await lastNameInput.fill('Signup');
-    await expect(lastNameInput).toHaveValue('Signup');
     await emailInput.fill(signUpEmail);
     await expect(emailInput).toHaveValue(signUpEmail);
     await passwordInput.fill(signUpPassword);
     await expect(passwordInput).toHaveValue(signUpPassword);
+    await confirmPasswordInput.fill(signUpPassword);
+    await expect(confirmPasswordInput).toHaveValue(signUpPassword);
     await termsCheckboxControl.click();
     if (!(await termsCheckboxInput.isChecked())) {
       await termsCheckboxInput.focus();
