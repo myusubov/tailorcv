@@ -160,6 +160,16 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 
 ## 10. Development Log
 
+### [2026-04-21] - Clear Stale OAuth Errors Before Retry
+
+- **Decision:** Clear the visible inline auth error before every Google or Apple OAuth start.
+- **Problem:** If an OAuth attempt failed and the user retried or switched providers, the previous `globalError` could remain visible during a fresh SSO attempt, making the UI look like the new provider flow had already failed.
+- **Solution:**
+  1. **`apps/frontend/app/components/auth/login/use-login-flow.ts`**: Clears `globalError` before setting provider loading state and resetting the Clerk sign-in resource.
+  2. **`apps/frontend/app/components/auth/register/use-register-flow.ts`**: Clears `globalError` before both Google and Apple sign-up SSO starts.
+  3. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Added stale-error retry coverage and invocation-order assertions proving Clerk resource reset runs before each `sso()` call.
+- **Outcome:** OAuth retries and provider switches now start with a clean inline-error state while still guarding against stale Clerk provider attempts.
+
 ### [2026-04-20] - Defer Missing Requirements Until External Verification
 
 - **Decision:** Only surface OAuth `missing_requirements` configuration drift after Clerk reports the external account as verified.

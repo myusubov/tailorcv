@@ -202,6 +202,7 @@ export function useLoginFlow(): UseLoginFlowResult {
     if (fetchStatus === 'fetching' || !signIn) return;
 
     try {
+      setGlobalError('');
       setLoading(true);
       await resetClerkAuthResource({ resource: signIn });
       const { error } = await signIn.sso({

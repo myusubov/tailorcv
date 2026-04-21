@@ -154,6 +154,12 @@ describe('useRegisterFlow', () => {
     });
 
     expect(signUp.reset).toHaveBeenCalledTimes(2);
+    expect(signUp.reset.mock.invocationCallOrder[0]).toBeLessThan(
+      signUp.sso.mock.invocationCallOrder[0],
+    );
+    expect(signUp.reset.mock.invocationCallOrder[1]).toBeLessThan(
+      signUp.sso.mock.invocationCallOrder[1],
+    );
     expect(signUp.sso).toHaveBeenNthCalledWith(1, {
       strategy: 'oauth_google',
       redirectCallbackUrl: '/sso-callback',
@@ -164,5 +170,50 @@ describe('useRegisterFlow', () => {
       redirectCallbackUrl: '/sso-callback',
       redirectUrl: '/onboarding',
     });
+  });
+
+  it('clears stale OAuth errors before starting a new provider', async () => {
+    const signUp = createSignUpMock();
+    signUp.sso
+      .mockResolvedValueOnce({
+        error: {
+          clerkError: true,
+          message: 'OAuth popup was closed',
+        },
+      })
+      .mockResolvedValueOnce({ error: null });
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useRegisterFlow());
+    const current = result.current;
+
+    if (current.mode !== 'form') {
+      throw new Error('Expected register flow to start in form mode');
+    }
+
+    await act(async () => {
+      await current.formViewProps.onGoogleSignUp();
+    });
+
+    expect(result.current.mode).toBe('form');
+    if (result.current.mode !== 'form') {
+      throw new Error('Expected register flow to remain in form mode');
+    }
+    expect(result.current.formViewProps.globalError).toBe('OAuth popup was closed');
+
+    const retryCurrent = result.current;
+    if (retryCurrent.mode !== 'form') {
+      throw new Error('Expected register flow to remain in form mode');
+    }
+
+    await act(async () => {
+      await retryCurrent.formViewProps.onAppleSignUp();
+    });
+
+    expect(result.current.mode).toBe('form');
+    if (result.current.mode !== 'form') {
+      throw new Error('Expected register flow to remain in form mode');
+    }
+    expect(result.current.formViewProps.globalError).toBe('');
   });
 });

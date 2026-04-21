@@ -194,6 +194,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
   const handleGoogleSignUp = async () => {
     if (fetchStatus === 'fetching' || !signUp) return;
     try {
+      setGlobalError('');
       setGoogleLoading(true);
       await resetClerkAuthResource({ resource: signUp });
       const { error } = await signUp.sso({
@@ -220,6 +221,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
   const handleAppleSignUp = async () => {
     if (fetchStatus === 'fetching' || !signUp) return;
     try {
+      setGlobalError('');
       setAppleLoading(true);
       await resetClerkAuthResource({ resource: signUp });
       const { error } = await signUp.sso({

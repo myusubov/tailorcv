@@ -330,6 +330,12 @@ describe('useLoginFlow', () => {
     });
 
     expect(signIn.reset).toHaveBeenCalledTimes(2);
+    expect(signIn.reset.mock.invocationCallOrder[0]).toBeLessThan(
+      signIn.sso.mock.invocationCallOrder[0],
+    );
+    expect(signIn.reset.mock.invocationCallOrder[1]).toBeLessThan(
+      signIn.sso.mock.invocationCallOrder[1],
+    );
     expect(signIn.sso).toHaveBeenNthCalledWith(1, {
       strategy: 'oauth_google',
       redirectUrl: '/dashboard',
@@ -340,6 +346,30 @@ describe('useLoginFlow', () => {
       redirectUrl: '/dashboard',
       redirectCallbackUrl: '/sso-callback',
     });
+  });
+
+  it('clears stale OAuth errors before starting a new provider', async () => {
+    const signIn = createSignInMock();
+    signIn.sso
+      .mockResolvedValueOnce({
+        error: createFlowError({ message: 'OAuth popup was closed' }),
+      })
+      .mockResolvedValueOnce({ error: null });
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleGoogleSignIn();
+    });
+
+    expect(result.current.globalError).toBe('OAuth popup was closed');
+
+    await act(async () => {
+      await result.current.handleAppleSignIn();
+    });
+
+    expect(result.current.globalError).toBe('');
   });
 
   it('surfaces Google sign-in immediate Clerk errors', async () => {
