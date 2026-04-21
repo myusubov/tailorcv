@@ -37,7 +37,7 @@ test.describe('Auth smoke flows', () => {
     });
 
     await expect(page.getByLabel('Email')).toBeVisible();
-    await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Continue with Google' }),
     ).toBeVisible();
@@ -51,8 +51,9 @@ test.describe('Auth smoke flows', () => {
       primaryButtonName: 'Create Account',
     });
 
-    await expect(page.getByLabel('First name')).toBeVisible();
-    await expect(page.getByLabel('Last name')).toBeVisible();
+    await expect(page.getByLabel('Email')).toBeVisible();
+    await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Continue with Apple' }),
     ).toBeVisible();
@@ -63,7 +64,7 @@ test.describe('Auth smoke flows', () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test('rejects direct navigation to the SSO continuation page', async ({ page }) => {
+  test('redirects retired SSO continuation visits to registration', async ({ page }) => {
     await page.goto('/sso-continue', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/register$/);
   });

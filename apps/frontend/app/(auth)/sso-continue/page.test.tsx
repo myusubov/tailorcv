@@ -1,11 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const mockUseSSOContinueFlow = vi.fn();
+const mockRedirect = vi.hoisted(() => vi.fn(() => {
+  throw new Error('NEXT_REDIRECT');
+}));
 
-vi.mock('@/app/components/auth/sso-continue', () => ({
-  SSOContinueForm: () => <div data-testid="sso-continue-form" />,
-  useSSOContinueFlow: () => mockUseSSOContinueFlow(),
+vi.mock('next/navigation', () => ({
+  redirect: mockRedirect,
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -19,28 +20,8 @@ vi.mock('@/lib/config', () => ({
 const { default: SSOContinuePage } = await import('./page');
 
 describe('SSOContinuePage', () => {
-  it('returns null when Clerk sign-up state is unavailable', () => {
-    mockUseSSOContinueFlow.mockReturnValue({
-      signUp: null,
-    });
-
-    const { container } = render(<SSOContinuePage />);
-
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('renders the continuation form and Clerk captcha when sign-up state exists', () => {
-    mockUseSSOContinueFlow.mockReturnValue({
-      signUp: { id: 'sign_up_123' },
-      control: {},
-      isSubmitting: false,
-      globalError: '',
-      handleSubmit: vi.fn(),
-    });
-
-    render(<SSOContinuePage />);
-
-    expect(screen.getByTestId('sso-continue-form')).toBeTruthy();
-    expect(document.querySelector('#clerk-captcha')).toBeTruthy();
+  it('redirects retired continuation visits back to registration', () => {
+    expect(() => render(<SSOContinuePage />)).toThrow('NEXT_REDIRECT');
+    expect(mockRedirect).toHaveBeenCalledWith('/register');
   });
 });

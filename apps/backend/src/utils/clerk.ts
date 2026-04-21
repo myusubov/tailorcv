@@ -47,13 +47,9 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
       create: {
         clerkUserId,
         email,
-        firstName: user.first_name ?? '',
-        lastName: user.last_name ?? '',
       },
       update: {
         email,
-        firstName: user.first_name ?? '',
-        lastName: user.last_name ?? '',
       },
     });
     logger.info({ clerkUserId }, 'Clerk webhook: upserted user');

@@ -22,7 +22,7 @@
 
 - [auth/README.md](auth/README.md) — Hub for Clerk v7 custom auth documentation
 - [auth/flows.md](auth/flows.md) — Email/password login, register, verification, and forgot-password flow details
-- [auth/sso.md](auth/sso.md) — OAuth callback, continuation, transfer, and guard behavior
+- [auth/sso.md](auth/sso.md) — OAuth callback, transfer, and retired continuation guard behavior
 - [auth/testing.md](auth/testing.md) — Auth smoke, real Clerk forgot-password E2E, and Gmail helper setup
 
 ---
