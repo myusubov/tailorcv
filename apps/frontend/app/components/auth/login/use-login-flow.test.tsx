@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockPush = vi.hoisted(() => vi.fn());
 const mockReplace = vi.hoisted(() => vi.fn());
@@ -8,6 +8,7 @@ const mockToastSuccess = vi.hoisted(() => vi.fn());
 const mockGetSearchParam = vi.hoisted(() => vi.fn());
 const mockSearchParamsToString = vi.hoisted(() => vi.fn(() => 'auth_reason=reset_password_required'));
 const mockLocationAssign = vi.hoisted(() => vi.fn());
+const originalLocation = window.location;
 const mockSignInState = vi.hoisted(() => ({
   signIn: null as null | MockSignIn,
   fetchStatus: 'idle',
@@ -132,6 +133,15 @@ describe('useLoginFlow', () => {
     mockFormState.isSubmitting = false;
     mockSignInState.fetchStatus = 'idle';
     mockSignInState.signIn = createSignInMock();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
+    mockLocationAssign.mockReset();
+    vi.clearAllMocks();
   });
 
   it('finalizes successful password sign-ins', async () => {
