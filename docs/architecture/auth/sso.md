@@ -161,7 +161,7 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| `redirectUrl`/`redirectCallbackUrl` swapped in `sso()` | Keep the param order from the examples above; never swap them |
+| Legacy `sso()` redirect params mixed into the current `signIn.create()` flow | Current social auth uses `signIn.create({ redirectUrl, actionCompleteRedirectUrl })`, then navigates to `firstFactorVerification.externalVerificationRedirectURL`; do not confuse `externalVerificationRedirectURL` with legacy `redirectCallbackUrl`, and keep the param order shown in the examples above |
 | Clerk still requires first/last name after app removal | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled |
 | Cancelled OAuth attempt reuses the previous provider on the next click | Start OAuth through `signIn.create()` and manually navigate to `firstFactorVerification.externalVerificationRedirectURL`; avoid `signIn.sso()` and `signUp.sso()` for social buttons |
 | Transferred sign-up reports `missing_requirements` while the external account is still verifying | Defer the configuration-drift error until `signUp.verifications.externalAccount.status === 'verified'` |

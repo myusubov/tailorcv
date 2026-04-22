@@ -213,7 +213,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
 
       if (error) {
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Verification failed');
+        setGlobalError(clerkError || 'OAuth failed');
         return;
       }
 
@@ -227,7 +227,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Oauth failed');
+      setGlobalError(clerkError || 'OAuth failed');
     } finally {
       setLoading(false);
     }

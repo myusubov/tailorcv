@@ -334,6 +334,22 @@ describe('useLoginFlow', () => {
     expect(window.sessionStorage.getItem('tailorcv:sso-flow')).toBeNull();
   });
 
+  it('surfaces an initialization error when Clerk does not provide a provider redirect URL', async () => {
+    const signIn = createSignInMock();
+    signIn.firstFactorVerification.externalVerificationRedirectURL = null;
+    mockSignInState.signIn = signIn;
+
+    const { result } = renderHook(() => useLoginFlow());
+
+    await act(async () => {
+      await result.current.handleGoogleSignIn();
+    });
+
+    expect(result.current.globalError).toBe('OAuth failed to initialize');
+    expect(mockLocationAssign).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem('tailorcv:sso-flow')).toBeNull();
+  });
+
   it('creates a fresh OAuth sign-in attempt before each provider redirect', async () => {
     const signIn = createSignInMock();
     mockSignInState.signIn = signIn;
