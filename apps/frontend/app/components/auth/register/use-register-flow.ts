@@ -1,17 +1,18 @@
-import { useSignUp } from '@clerk/nextjs';
+import { useSignIn, useSignUp } from '@clerk/nextjs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { resetClerkAuthResource } from '@/lib/auth/reset-clerk-auth-resource';
 import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 import type { RegistrationVerificationViewProps } from '@/app/components/auth/registration-verification-view';
 
 import type { RegisterFormViewProps } from './register-form-view';
+
+type OAuthSignUpStrategy = 'oauth_google' | 'oauth_apple';
 
 export type UseRegisterFlowResult =
   | {
@@ -39,6 +40,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
   const [verificationError, setVerificationError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, fetchStatus } = useSignUp();
 
   const {
@@ -191,58 +193,58 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    if (fetchStatus === 'fetching' || !signUp) return;
+  const performOAuthSignUp = async ({
+    strategy,
+    setLoading,
+  }: {
+    strategy: OAuthSignUpStrategy;
+    setLoading: (loading: boolean) => void;
+  }) => {
+    if (signInFetchStatus === 'fetching' || !signIn) return;
+
     try {
       setGlobalError('');
-      setGoogleLoading(true);
-      await resetClerkAuthResource({ resource: signUp });
-      const { error } = await signUp.sso({
-        strategy: 'oauth_google',
-        redirectCallbackUrl: '/sso-callback',
-        redirectUrl: config.auth.afterSignUpUrl,
+      setLoading(true);
+      const { error } = await signIn.create({
+        strategy,
+        redirectUrl: '/sso-callback',
+        actionCompleteRedirectUrl: config.auth.afterSignUpUrl,
       });
 
       if (error) {
-        console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
         setGlobalError(clerkError || 'Verification failed');
         return;
       }
+
+      const redirectUrl = signIn.firstFactorVerification.externalVerificationRedirectURL;
+      if (!redirectUrl) {
+        setGlobalError('OAuth failed to initialize');
+        return;
+      }
+
+      window.location.assign(redirectUrl);
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
       setGlobalError(clerkError || 'Oauth failed');
     } finally {
-      setGoogleLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleAppleSignUp = async () => {
-    if (fetchStatus === 'fetching' || !signUp) return;
-    try {
-      setGlobalError('');
-      setAppleLoading(true);
-      await resetClerkAuthResource({ resource: signUp });
-      const { error } = await signUp.sso({
-        strategy: 'oauth_apple',
-        redirectCallbackUrl: '/sso-callback',
-        redirectUrl: config.auth.afterSignUpUrl,
-      });
+  const handleGoogleSignUp = async () => {
+    await performOAuthSignUp({
+      strategy: 'oauth_google',
+      setLoading: setGoogleLoading,
+    });
+  };
 
-      if (error) {
-        console.error(JSON.stringify(error, null, 2));
-        const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Verification failed');
-        return;
-      }
-    } catch (err: unknown) {
-      console.error(JSON.stringify(err, null, 2));
-      const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Oauth failed');
-    } finally {
-      setAppleLoading(false);
-    }
+  const handleAppleSignUp = async () => {
+    await performOAuthSignUp({
+      strategy: 'oauth_apple',
+      setLoading: setAppleLoading,
+    });
   };
 
   if (verifying) {
