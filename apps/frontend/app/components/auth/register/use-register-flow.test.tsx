@@ -5,6 +5,10 @@ const mockSignUpState = vi.hoisted(() => ({
   signUp: null as null | MockSignUp,
   fetchStatus: 'idle',
 }));
+const mockSignInState = vi.hoisted(() => ({
+  signIn: null as null | MockSignIn,
+  fetchStatus: 'idle',
+}));
 const mockFormState = vi.hoisted(() => ({
   data: {
     email: 'new-user@example.com',
@@ -15,6 +19,14 @@ const mockFormState = vi.hoisted(() => ({
   isSubmitting: false,
 }));
 const mockPush = vi.hoisted(() => vi.fn());
+const mockLocationAssign = vi.hoisted(() => vi.fn());
+
+interface MockSignIn {
+  create: ReturnType<typeof vi.fn>;
+  firstFactorVerification: {
+    externalVerificationRedirectURL: URL | null;
+  };
+}
 
 interface MockSignUp {
   status: string | null;
@@ -25,10 +37,10 @@ interface MockSignUp {
   verifications: {
     sendEmailCode: ReturnType<typeof vi.fn>;
   };
-  sso: ReturnType<typeof vi.fn>;
 }
 
 vi.mock('@clerk/nextjs', () => ({
+  useSignIn: () => mockSignInState,
   useSignUp: () => mockSignUpState,
 }));
 
@@ -63,6 +75,13 @@ vi.mock('@/lib/config', () => ({
 
 const { useRegisterFlow } = await import('./use-register-flow');
 
+const createSignInMock = (): MockSignIn => ({
+  create: vi.fn().mockResolvedValue({ error: null }),
+  firstFactorVerification: {
+    externalVerificationRedirectURL: new URL('https://accounts.example.com/oauth'),
+  },
+});
+
 const createSignUpMock = (): MockSignUp => ({
   status: 'missing_requirements',
   unverifiedFields: ['email_address'],
@@ -72,7 +91,6 @@ const createSignUpMock = (): MockSignUp => ({
   verifications: {
     sendEmailCode: vi.fn().mockResolvedValue({ error: null }),
   },
-  sso: vi.fn().mockResolvedValue({ error: null }),
 });
 
 describe('useRegisterFlow', () => {
@@ -85,6 +103,16 @@ describe('useRegisterFlow', () => {
     };
     mockFormState.isSubmitting = false;
     mockPush.mockClear();
+    mockLocationAssign.mockReset();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        assign: mockLocationAssign,
+      },
+    });
+    mockSignInState.fetchStatus = 'idle';
+    mockSignInState.signIn = createSignInMock();
     mockSignUpState.fetchStatus = 'idle';
     mockSignUpState.signUp = createSignUpMock();
     window.sessionStorage.clear();
@@ -111,9 +139,9 @@ describe('useRegisterFlow', () => {
     });
   });
 
-  it('starts Google sign-up without writing a local flow marker', async () => {
-    const signUp = createSignUpMock();
-    mockSignUpState.signUp = signUp;
+  it('starts Google sign-up with a fresh sign-in OAuth attempt and provider redirect', async () => {
+    const signIn = createSignInMock();
+    mockSignInState.signIn = signIn;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;
@@ -126,17 +154,20 @@ describe('useRegisterFlow', () => {
       await current.formViewProps.onGoogleSignUp();
     });
 
-    expect(signUp.sso).toHaveBeenCalledWith({
+    expect(signIn.create).toHaveBeenCalledWith({
       strategy: 'oauth_google',
-      redirectCallbackUrl: '/sso-callback',
-      redirectUrl: '/onboarding',
+      redirectUrl: '/sso-callback',
+      actionCompleteRedirectUrl: '/onboarding',
     });
+    expect(mockLocationAssign).toHaveBeenCalledWith(
+      new URL('https://accounts.example.com/oauth'),
+    );
     expect(window.sessionStorage.getItem('tailorcv:sso-flow')).toBeNull();
   });
 
-  it('resets stale OAuth sign-up state before starting a new provider', async () => {
-    const signUp = createSignUpMock();
-    mockSignUpState.signUp = signUp;
+  it('creates a fresh OAuth sign-in attempt before each sign-up provider redirect', async () => {
+    const signIn = createSignInMock();
+    mockSignInState.signIn = signIn;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;
@@ -153,28 +184,22 @@ describe('useRegisterFlow', () => {
       await current.formViewProps.onAppleSignUp();
     });
 
-    expect(signUp.reset).toHaveBeenCalledTimes(2);
-    expect(signUp.reset.mock.invocationCallOrder[0]).toBeLessThan(
-      signUp.sso.mock.invocationCallOrder[0],
-    );
-    expect(signUp.reset.mock.invocationCallOrder[1]).toBeLessThan(
-      signUp.sso.mock.invocationCallOrder[1],
-    );
-    expect(signUp.sso).toHaveBeenNthCalledWith(1, {
+    expect(signIn.create).toHaveBeenNthCalledWith(1, {
       strategy: 'oauth_google',
-      redirectCallbackUrl: '/sso-callback',
-      redirectUrl: '/onboarding',
+      redirectUrl: '/sso-callback',
+      actionCompleteRedirectUrl: '/onboarding',
     });
-    expect(signUp.sso).toHaveBeenNthCalledWith(2, {
+    expect(signIn.create).toHaveBeenNthCalledWith(2, {
       strategy: 'oauth_apple',
-      redirectCallbackUrl: '/sso-callback',
-      redirectUrl: '/onboarding',
+      redirectUrl: '/sso-callback',
+      actionCompleteRedirectUrl: '/onboarding',
     });
+    expect(mockLocationAssign).toHaveBeenCalledTimes(2);
   });
 
   it('clears stale OAuth errors before starting a new provider', async () => {
-    const signUp = createSignUpMock();
-    signUp.sso
+    const signIn = createSignInMock();
+    signIn.create
       .mockResolvedValueOnce({
         error: {
           clerkError: true,
@@ -182,7 +207,7 @@ describe('useRegisterFlow', () => {
         },
       })
       .mockResolvedValueOnce({ error: null });
-    mockSignUpState.signUp = signUp;
+    mockSignInState.signIn = signIn;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;

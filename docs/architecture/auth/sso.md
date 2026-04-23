@@ -17,7 +17,8 @@
 
 ```
 User clicks "Continue with Google/Apple"
-  -> signIn.sso() / signUp.sso()
+  -> signIn.create({ strategy, redirectUrl, actionCompleteRedirectUrl })
+  -> window.location.assign(signIn.firstFactorVerification.externalVerificationRedirectURL)
   -> /sso-callback
   -> useSSOCallback()
      -> finalize sign-in
@@ -57,8 +58,9 @@ sequenceDiagram
     participant CB as /sso-callback
     participant Hook as useSSOCallback
 
-    U->>L: Click "Sign in with Google"
-    L->>O: signIn.sso({ redirectCallbackUrl: '/sso-callback', redirectUrl: '/dashboard' })
+    U->>L: Click "Continue with Google"
+    L->>O: signIn.create({ redirectUrl: '/sso-callback', actionCompleteRedirectUrl })
+    L->>O: window.location.assign(externalVerificationRedirectURL)
     O-->>CB: Redirect after OAuth
     CB->>Hook: useSSOCallback()
     alt signIn complete
@@ -91,23 +93,34 @@ app/components/auth/
 
 ```typescript
 await resetClerkAuthResource({ resource: signIn });
-await signIn.sso({
+const { error } = await signIn.create({
   strategy: 'oauth_google',
-  redirectCallbackUrl: '/sso-callback',
-  redirectUrl: config.auth.afterSignInUrl,
+  redirectUrl: '/sso-callback',
+  actionCompleteRedirectUrl: config.auth.afterSignInUrl,
 });
+
+if (!error) {
+  window.location.assign(signIn.firstFactorVerification.externalVerificationRedirectURL);
+}
 ```
 
-### 6.2 SSO Initiation (Sign-Up)
+### 6.2 SSO Initiation (Register Social Buttons)
 
 ```typescript
-await resetClerkAuthResource({ resource: signUp });
-await signUp.sso({
+const { error } = await signIn.create({
   strategy: 'oauth_google',
-  redirectCallbackUrl: '/sso-callback',
-  redirectUrl: config.auth.afterSignUpUrl,
+  redirectUrl: '/sso-callback',
+  actionCompleteRedirectUrl: config.auth.afterSignUpUrl,
 });
+
+if (!error) {
+  window.location.assign(signIn.firstFactorVerification.externalVerificationRedirectURL);
+}
 ```
+
+Registration social buttons intentionally start with `signIn.create()` instead of
+`signUp.sso()`. Unknown users are transferred to sign-up by `/sso-callback`, while
+existing users complete as sign-in.
 
 ### 6.3 OAuth Fallback Redirect Context
 
@@ -148,9 +161,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| `redirectUrl`/`redirectCallbackUrl` swapped in `sso()` | Keep the param order from the examples above; never swap them |
+| Legacy `sso()` redirect params mixed into the current `signIn.create()` flow | Current social auth uses `signIn.create({ redirectUrl, actionCompleteRedirectUrl })`, then navigates to `firstFactorVerification.externalVerificationRedirectURL`; do not confuse `externalVerificationRedirectURL` with legacy `redirectCallbackUrl`, and keep the param order shown in the examples above |
 | Clerk still requires first/last name after app removal | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled |
-| Cancelled OAuth attempt reuses the previous provider on the next click | Call `resetClerkAuthResource({ resource })` before every `signIn.sso()` and `signUp.sso()` call |
+| Cancelled OAuth attempt reuses the previous provider on the next click | Start OAuth through `signIn.create()` and manually navigate to `firstFactorVerification.externalVerificationRedirectURL`; avoid `signIn.sso()` and `signUp.sso()` for social buttons |
 | Transferred sign-up reports `missing_requirements` while the external account is still verifying | Defer the configuration-drift error until `signUp.verifications.externalAccount.status === 'verified'` |
 | React StrictMode double-execution on SSO callback | `hasRun = useRef(false)` guard in `useSSOCallback` |
 | Direct navigation to `/sso-callback` with no usable Clerk callback state | Fall through to `/login` instead of relying on a local sessionStorage marker |
@@ -159,6 +172,16 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 ---
 
 ## 10. Development Log
+
+### [2026-04-21] - Manual OAuth Start Avoids Abandoned Provider Resume
+
+- **Decision:** Start both login and register social auth through `signIn.create()` and manually navigate to Clerk's external provider redirect URL.
+- **Problem:** After a user cancelled an OAuth provider by navigating back, Clerk could auto-resume the abandoned provider on the next social-button click. `signIn.sso()`, `signUp.sso()`, resource reset, client reset, cache clear, and short delays did not reliably create a fresh provider attempt; manual testing showed `signIn.create()` did.
+- **Solution:**
+  1. **`apps/frontend/app/components/auth/login/use-login-flow.ts`**: Replaced social `signIn.sso()` starts with `signIn.create({ strategy, redirectUrl: '/sso-callback', actionCompleteRedirectUrl: config.auth.afterSignInUrl })`, then navigates to `signIn.firstFactorVerification.externalVerificationRedirectURL`.
+  2. **`apps/frontend/app/components/auth/register/use-register-flow.ts`**: Routes Google and Apple register buttons through the same sign-in OAuth start path, using `config.auth.afterSignUpUrl` as the action-complete URL so `/sso-callback` can transfer unknown users into sign-up.
+  3. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Updated OAuth tests to assert fresh `signIn.create()` attempts and provider redirects instead of `sso()` calls.
+- **Outcome:** Provider-back cancellation no longer leaks the abandoned provider into the next Google/Apple click on login or register; social registration relies on the existing callback transfer path for new users.
 
 ### [2026-04-21] - Clear Stale OAuth Errors Before Retry
 

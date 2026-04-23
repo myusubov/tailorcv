@@ -205,16 +205,25 @@ export function useLoginFlow(): UseLoginFlowResult {
       setGlobalError('');
       setLoading(true);
       await resetClerkAuthResource({ resource: signIn });
-      const { error } = await signIn.sso({
+      const { error } = await signIn.create({
         strategy,
-        redirectUrl: config.auth.afterSignInUrl,
-        redirectCallbackUrl: '/sso-callback',
+        redirectUrl: '/sso-callback',
+        actionCompleteRedirectUrl: config.auth.afterSignInUrl,
       });
 
       if (error) {
         const clerkError = getClerkErrorMessage(error);
         setGlobalError(clerkError || 'OAuth failed');
+        return;
       }
+
+      const redirectUrl = signIn.firstFactorVerification.externalVerificationRedirectURL;
+      if (!redirectUrl) {
+        setGlobalError('OAuth failed to initialize');
+        return;
+      }
+
+      window.location.assign(redirectUrl);
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
