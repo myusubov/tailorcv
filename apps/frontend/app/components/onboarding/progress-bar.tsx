@@ -11,60 +11,51 @@ interface ProgressBarProps {
 }
 
 /**
- * Onboarding progress stepper: shows step count, percentage, animated bar,
- * and step labels with completed/current state. Accessible and responsive.
+ * Onboarding progress stepper for the manual entry flow.
+ *
+ * Shows a compact current-step summary on mobile and a non-interactive
+ * labeled stepper on larger screens. The component communicates completed,
+ * current, and upcoming steps without duplicate percentage or progress bar UI.
  */
 export function ProgressBar({ currentStep }: ProgressBarProps) {
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
-  const progress = ((currentIndex + 1) / MANUAL_STEPS.length) * 100;
+
+  if (currentIndex === -1) {
+    console.warn('Invalid onboarding currentStep supplied to ProgressBar', {
+      currentStep,
+    });
+    return null;
+  }
+
   const currentStepConfig = MANUAL_STEPS[currentIndex];
+  const currentStepNumber = currentIndex + 1;
 
   return (
     <nav
-      className="w-full space-y-4"
+      className="w-full"
       aria-label="Onboarding progress"
     >
-      {/* Header: step count (primary) + percentage (secondary) + current step on mobile */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-          <span className="text-foreground text-sm font-semibold">
-            Step {currentIndex + 1} of {MANUAL_STEPS.length}
+      <div className="border-border bg-surface-secondary/70 mb-4 rounded-lg border px-4 py-3 sm:hidden">
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <span className="text-muted text-xs font-medium">
+            Step {currentStepNumber}
           </span>
-          <span className="text-muted text-sm" aria-hidden>
-            {Math.round(progress)}%
+          <span className="text-muted text-xs font-medium">
+            {currentStepNumber}/{MANUAL_STEPS.length}
           </span>
         </div>
-        {/* Show current step name on small screens where step pills are hidden */}
-        {currentStepConfig && (
-          <span
-            className="text-muted text-xs sm:hidden"
+        <div className="text-foreground flex items-center gap-2 text-base font-semibold">
+          <Icon
+            icon={currentStepConfig.icon}
+            className="text-primary size-5 shrink-0"
             aria-hidden
-          >
-            {currentStepConfig.label}
-          </span>
-        )}
+          />
+          <span>{currentStepConfig.label}</span>
+        </div>
       </div>
 
-      {/* Animated progress bar with ARIA for screen readers */}
-      <div
-        role="progressbar"
-        aria-valuenow={Math.round(progress)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Progress: step ${currentIndex + 1} of ${MANUAL_STEPS.length}, ${Math.round(progress)}% complete`}
-        className="bg-surface h-2.5 w-full overflow-hidden rounded-full"
-      >
-        <motion.div
-          className="bg-primary h-full rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        />
-      </div>
-
-      {/* Step labels: full list on sm+, current step name shown in header on mobile */}
       <ol
-        className="hidden gap-1 sm:flex"
+        className="hidden flex-wrap justify-center gap-2 sm:flex"
         aria-label="Form steps"
       >
         {MANUAL_STEPS.map((step, index) => {
@@ -74,16 +65,16 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
           return (
             <motion.li
               key={step.key}
-              className={`flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+              className={`flex w-fit items-center justify-start gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                 isCompleted
                   ? 'bg-primary/10 text-primary'
                   : isCurrent
-                    ? 'bg-surface-secondary text-foreground ring-1 ring-border'
-                    : 'text-muted'
+                    ? 'border-border bg-surface-secondary text-foreground border'
+                    : 'text-muted bg-surface/70'
               }`}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.04 }}
               aria-current={isCurrent ? 'step' : undefined}
               aria-label={
                 isCompleted
@@ -95,7 +86,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
             >
               <Icon
                 icon={isCompleted ? 'lucide:check-circle' : step.icon}
-                className={`size-4 shrink-0 ${isCompleted ? 'text-primary' : ''}`}
+                className={`size-4 shrink-0 ${isCompleted || isCurrent ? 'text-primary' : ''}`}
                 aria-hidden
               />
               <span className="truncate">{step.label}</span>
@@ -103,6 +94,11 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
           );
         })}
       </ol>
+
+      <span className="sr-only">
+        Step {currentStepNumber} of {MANUAL_STEPS.length}:{' '}
+        {currentStepConfig.label}
+      </span>
     </nav>
   );
 }
