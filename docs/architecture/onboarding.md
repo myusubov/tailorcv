@@ -23,7 +23,7 @@
 
 ## 2. Architecture Overview
 
-```
+```text
 app/onboarding/page.tsx
   ├─ MethodSelection
   ├─ UploadStep
@@ -71,7 +71,7 @@ flowchart TD
 
 ## 5. Component / Module Structure
 
-```
+```text
 apps/frontend/app/components/onboarding/
 ├── manual-entry-form.tsx       # Manual flow orchestration
 ├── progress-bar.tsx            # Manual step status UI
@@ -143,6 +143,16 @@ if (ok) goToNextStep();
 ---
 
 ## 10. Development Log
+
+### [2026-04-24] - Progress Stepper Review Fixes
+
+- **Decision:** Keep the simplified onboarding stepper design, but harden its docs, defensive state handling, and test harness behavior.
+- **Problem:** Follow-up review found markdownlint issues in the onboarding doc, motion-only props leaking into native test DOM nodes, and a missing defensive guard around invalid manual step indexes.
+- **Solution:**
+  1. **Labeled text fences:** Updated `docs/architecture/onboarding.md` to mark the architecture tree blocks as `text`.
+  2. **Safer motion test mock:** Updated `apps/frontend/app/components/onboarding/progress-bar.test.tsx` to strip motion-only props before rendering mocked `motion.div` and `motion.li`.
+  3. **Defensive step fallback:** Updated `apps/frontend/app/components/onboarding/progress-bar.tsx` to resolve invalid step indexes safely before deriving step text and state.
+- **Outcome:** The onboarding progress UI keeps the same visible behavior while avoiding DOM prop pollution, markdownlint noise, and invalid `Step 0` output.
 
 ### [2026-04-23] - Compact Desktop Stepper Pills
 

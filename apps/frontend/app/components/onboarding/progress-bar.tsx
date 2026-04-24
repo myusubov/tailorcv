@@ -19,8 +19,14 @@ interface ProgressBarProps {
  */
 export function ProgressBar({ currentStep }: ProgressBarProps) {
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
-  const currentStepConfig = MANUAL_STEPS[currentIndex];
-  const currentStepNumber = currentIndex + 1;
+  const resolvedCurrentIndex = currentIndex === -1 ? 0 : currentIndex;
+  const currentStepConfig = MANUAL_STEPS[resolvedCurrentIndex];
+
+  if (!currentStepConfig) {
+    return null;
+  }
+
+  const currentStepNumber = resolvedCurrentIndex + 1;
 
   return (
     <nav
@@ -53,8 +59,8 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
         aria-label="Form steps"
       >
         {MANUAL_STEPS.map((step, index) => {
-          const isCompleted = index < currentIndex;
-          const isCurrent = index === currentIndex;
+          const isCompleted = index < resolvedCurrentIndex;
+          const isCurrent = index === resolvedCurrentIndex;
 
           return (
             <motion.li

@@ -4,10 +4,32 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ProgressBar } from './progress-bar';
 
+interface MockMotionProps<Element extends HTMLElement>
+  extends HTMLAttributes<Element> {
+  initial?: unknown;
+  animate?: unknown;
+  exit?: unknown;
+  transition?: unknown;
+}
+
+function stripMotionProps<Element extends HTMLElement>({
+  initial: _initial,
+  animate: _animate,
+  exit: _exit,
+  transition: _transition,
+  ...safeProps
+}: MockMotionProps<Element>) {
+  return safeProps;
+}
+
 vi.mock('framer-motion', () => ({
   motion: {
-    div: (props: HTMLAttributes<HTMLDivElement>) => <div {...props} />,
-    li: (props: HTMLAttributes<HTMLLIElement>) => <li {...props} />,
+    div: (props: MockMotionProps<HTMLDivElement>) => (
+      <div {...stripMotionProps(props)} />
+    ),
+    li: (props: MockMotionProps<HTMLLIElement>) => (
+      <li {...stripMotionProps(props)} />
+    ),
   },
 }));
 
