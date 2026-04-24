@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import type { HTMLAttributes } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ManualEntryStep } from '../../onboarding/types';
 import { ProgressBar } from './progress-bar';
 
 interface MockMotionProps<Element extends HTMLElement>
@@ -34,7 +35,7 @@ vi.mock('framer-motion', () => ({
 }));
 
 describe('ProgressBar', () => {
-  it('shows step context without duplicate percentage or progressbar indicators', () => {
+  it('shows step context without duplicate percentage or progress bar indicators', () => {
     render(<ProgressBar currentStep="experience" />);
 
     expect(screen.getAllByText('Experience').length).toBeGreaterThan(0);
@@ -42,5 +43,23 @@ describe('ProgressBar', () => {
     expect(screen.getByText('3/5')).toBeTruthy();
     expect(screen.queryByText('60%')).toBeNull();
     expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('fails closed for an invalid current step', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      const { container } = render(
+        <ProgressBar currentStep={'invalid-step' as ManualEntryStep} />,
+      );
+
+      expect(container.firstChild).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Invalid onboarding currentStep supplied to ProgressBar',
+        { currentStep: 'invalid-step' },
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

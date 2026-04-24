@@ -100,7 +100,7 @@ if (ok) goToNextStep();
 ### 6.2 Progress UI
 
 - **Rule**: Use one primary visual progress model per viewport: full labeled stepper on larger screens, compact current-step summary on mobile.
-- **Anti-pattern**: Do not show percentage, a progressbar, and step labels together for the five-step manual form.
+- **Anti-pattern**: Do not show percentage, a progress bar, and step labels together for the five-step manual form.
 
 ---
 
@@ -151,8 +151,8 @@ if (ok) goToNextStep();
 - **Solution:**
   1. **Labeled text fences:** Updated `docs/architecture/onboarding.md` to mark the architecture tree blocks as `text`.
   2. **Safer motion test mock:** Updated `apps/frontend/app/components/onboarding/progress-bar.test.tsx` to strip motion-only props before rendering mocked `motion.div` and `motion.li`.
-  3. **Defensive step fallback:** Updated `apps/frontend/app/components/onboarding/progress-bar.tsx` to resolve invalid step indexes safely before deriving step text and state.
-- **Outcome:** The onboarding progress UI keeps the same visible behavior while avoiding DOM prop pollution, markdownlint noise, and invalid `Step 0` output.
+  3. **Fail-closed invalid step guard:** Updated `apps/frontend/app/components/onboarding/progress-bar.tsx` to warn and return `null` for invalid step indexes before deriving step text and state.
+- **Outcome:** The onboarding progress UI keeps the same visible behavior while avoiding DOM prop pollution, markdownlint noise, and invalid fallback output.
 
 ### [2026-04-23] - Compact Desktop Stepper Pills
 
@@ -166,11 +166,11 @@ if (ok) goToNextStep();
 ### [2026-04-23] - Simplified Manual Entry Progress UI
 
 - **Decision:** Manual entry now uses a single progress model per viewport: a non-interactive labeled stepper on larger screens and a compact current-step summary on mobile.
-- **Problem:** The previous progress header repeated status as a percentage, progressbar, numeric count, and step labels, which made the manual-entry form feel cluttered without adding useful guidance.
+- **Problem:** The previous progress header repeated status as a percentage, progress bar, numeric count, and step labels, which made the manual-entry form feel cluttered without adding useful guidance.
 - **Solution:**
-  1. **Removed duplicate progress signals:** Updated `apps/frontend/app/components/onboarding/progress-bar.tsx` to remove percentage text and the animated progressbar.
+  1. **Removed duplicate progress signals:** Updated `apps/frontend/app/components/onboarding/progress-bar.tsx` to remove percentage text and the animated progress bar.
   2. **Added mobile current-step summary:** Updated `apps/frontend/app/components/onboarding/progress-bar.tsx` to show `Step n`, `n/5`, and the current step label on small screens.
-  3. **Locked the UI contract:** Added `apps/frontend/app/components/onboarding/progress-bar.test.tsx` to verify the simplified progress indicator does not render duplicate percentage/progressbar signals.
+  3. **Locked the UI contract:** Added `apps/frontend/app/components/onboarding/progress-bar.test.tsx` to verify the simplified progress indicator does not render duplicate percentage/progress bar signals.
 - **Outcome:** Users now see one clear progress indicator for the manual-entry form without redundant visual noise.
 
 ---

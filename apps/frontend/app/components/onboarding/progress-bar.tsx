@@ -15,52 +15,52 @@ interface ProgressBarProps {
  *
  * Shows a compact current-step summary on mobile and a non-interactive
  * labeled stepper on larger screens. The component communicates completed,
- * current, and upcoming steps without duplicate percentage or progressbar UI.
+ * current, and upcoming steps without duplicate percentage or progress bar UI.
  */
 export function ProgressBar({ currentStep }: ProgressBarProps) {
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
-  const resolvedCurrentIndex = currentIndex === -1 ? 0 : currentIndex;
-  const currentStepConfig = MANUAL_STEPS[resolvedCurrentIndex];
 
-  if (!currentStepConfig) {
+  if (currentIndex === -1) {
+    console.warn('Invalid onboarding currentStep supplied to ProgressBar', {
+      currentStep,
+    });
     return null;
   }
 
-  const currentStepNumber = resolvedCurrentIndex + 1;
+  const currentStepConfig = MANUAL_STEPS[currentIndex];
+  const currentStepNumber = currentIndex + 1;
 
   return (
     <nav
       className="w-full"
       aria-label="Onboarding progress"
     >
-      {currentStepConfig && (
-        <div className="border-border bg-surface-secondary/70 mb-4 rounded-lg border px-4 py-3 sm:hidden">
-          <div className="mb-1 flex items-center justify-between gap-3">
-            <span className="text-muted text-xs font-medium">
-              Step {currentStepNumber}
-            </span>
-            <span className="text-muted text-xs font-medium">
-              {currentStepNumber}/{MANUAL_STEPS.length}
-            </span>
-          </div>
-          <div className="text-foreground flex items-center gap-2 text-base font-semibold">
-            <Icon
-              icon={currentStepConfig.icon}
-              className="text-primary size-5 shrink-0"
-              aria-hidden
-            />
-            <span>{currentStepConfig.label}</span>
-          </div>
+      <div className="border-border bg-surface-secondary/70 mb-4 rounded-lg border px-4 py-3 sm:hidden">
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <span className="text-muted text-xs font-medium">
+            Step {currentStepNumber}
+          </span>
+          <span className="text-muted text-xs font-medium">
+            {currentStepNumber}/{MANUAL_STEPS.length}
+          </span>
         </div>
-      )}
+        <div className="text-foreground flex items-center gap-2 text-base font-semibold">
+          <Icon
+            icon={currentStepConfig.icon}
+            className="text-primary size-5 shrink-0"
+            aria-hidden
+          />
+          <span>{currentStepConfig.label}</span>
+        </div>
+      </div>
 
       <ol
         className="hidden flex-wrap justify-center gap-2 sm:flex"
         aria-label="Form steps"
       >
         {MANUAL_STEPS.map((step, index) => {
-          const isCompleted = index < resolvedCurrentIndex;
-          const isCurrent = index === resolvedCurrentIndex;
+          const isCompleted = index < currentIndex;
+          const isCurrent = index === currentIndex;
 
           return (
             <motion.li
@@ -97,7 +97,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
 
       <span className="sr-only">
         Step {currentStepNumber} of {MANUAL_STEPS.length}:{' '}
-        {currentStepConfig?.label}
+        {currentStepConfig.label}
       </span>
     </nav>
   );
