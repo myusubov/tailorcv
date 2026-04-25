@@ -1,14 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  TextField,
-  Label,
-  Input,
-  Description,
-  Button,
-  FieldError,
-} from '@heroui/react';
+import { TextField, Label, Input, Button, FieldError } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { StepHeader } from '../step-header';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -51,8 +44,12 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               name="contact.firstName"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>First Name *</Label>
+                <TextField
+                  isRequired
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
+                  <Label>First Name</Label>
                   <Input {...field} placeholder="e.g. Jane" />
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
@@ -67,8 +64,12 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               name="contact.lastName"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>Last Name *</Label>
+                <TextField
+                  isRequired
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
+                  <Label>Last Name</Label>
                   <Input {...field} placeholder="e.g. Doe" />
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
@@ -85,8 +86,12 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
               name="contact.email"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>Email Address *</Label>
+                <TextField
+                  isRequired
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
+                  <Label>Email Address</Label>
                   <Input
                     {...field}
                     type="email"
@@ -115,7 +120,6 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
                   )}
-                  <Description>Optional</Description>
                 </TextField>
               )}
             />
@@ -137,7 +141,6 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
                 )}
-                <Description>Optional</Description>
               </TextField>
             )}
           />
@@ -159,7 +162,6 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
                   )}
-                  <Description>Optional</Description>
                 </TextField>
               )}
             />
@@ -180,7 +182,6 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                   {fieldState.error && (
                     <FieldError>{fieldState.error.message}</FieldError>
                   )}
-                  <Description>Optional</Description>
                 </TextField>
               )}
             />
@@ -202,7 +203,6 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
                 )}
-                <Description>Optional</Description>
               </TextField>
             )}
           />
@@ -218,7 +218,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
         <Button
           variant="ghost"
           onPress={onBack}
-          className="text-muted hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
         >
           <Icon icon="lucide:arrow-left" className="size-4" />
           Back

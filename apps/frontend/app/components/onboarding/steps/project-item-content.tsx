@@ -85,8 +85,12 @@ export function ProjectItemContent({
             name={`projects.${index}.name`}
             control={control}
             render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Project Name *</Label>
+              <TextField
+                isRequired
+                className="w-full"
+                isInvalid={!!fieldState.error}
+              >
+                <Label>Project Name</Label>
                 <Input {...field} placeholder="e.g. Personal Portfolio" />
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
@@ -115,8 +119,12 @@ export function ProjectItemContent({
           name={`projects.${index}.bullets.0.text`}
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>Description *</Label>
+            <TextField
+              isRequired
+              className="w-full"
+              isInvalid={!!fieldState.error}
+            >
+              <Label>Description</Label>
               <TextArea
                 {...field}
                 value={field.value || ''}
@@ -171,9 +179,10 @@ export function ProjectItemContent({
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
+                isRequired
                 isInvalid={!!fieldState.error}
               >
-                <Label>Start Date</Label>
+                <Label isRequired>Start Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -185,7 +194,9 @@ export function ProjectItemContent({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}>
+                  <Calendar
+                    maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}
+                  >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -196,13 +207,17 @@ export function ProjectItemContent({
                     </Calendar.Header>
                     <Calendar.Grid>
                       <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
                       </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
                     </Calendar.Grid>
                     <Calendar.YearPickerGrid>
                       <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
                       </Calendar.YearPickerGridBody>
                     </Calendar.YearPickerGrid>
                   </Calendar>
@@ -218,15 +233,15 @@ export function ProjectItemContent({
             control={control}
             render={({ field, fieldState }) => (
               <DatePicker
+                isRequired={!isCurrent}
                 value={field.value ? parseDate(`${field.value}-01`) : null}
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
                 isDisabled={!!isCurrent}
                 isInvalid={!!fieldState.error}
-                
               >
-                <Label>End Date</Label>
+                <Label isRequired={!isCurrent}>End Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -238,7 +253,11 @@ export function ProjectItemContent({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
+                  <Calendar
+                    minValue={
+                      startDate ? parseDate(`${startDate}-01`) : undefined
+                    }
+                  >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -249,13 +268,17 @@ export function ProjectItemContent({
                     </Calendar.Header>
                     <Calendar.Grid>
                       <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
                       </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
                     </Calendar.Grid>
                     <Calendar.YearPickerGrid>
                       <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
                       </Calendar.YearPickerGridBody>
                     </Calendar.YearPickerGrid>
                   </Calendar>

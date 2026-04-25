@@ -37,7 +37,9 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
   const [direction, setDirection] = useState<1 | -1>(1);
   const { beginJob, isActive } = useOnboardingJob();
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey, setIdempotencyKey] = useState(() =>
+    crypto.randomUUID(),
+  );
 
   const form = useForm<OnboardingFormInput>({
     resolver: zodResolver(onboardingSchema),
@@ -66,7 +68,8 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   });
 
   const { mutate: startJob, isPending } = useActionMutation(
-    (data: OnboardingFormInput) => startOnboardingJobAction(data, idempotencyKey),
+    (data: OnboardingFormInput) =>
+      startOnboardingJobAction(data, idempotencyKey),
     {
       successMessage: 'Generating your resume…',
       onSuccess: (res) => {
@@ -179,6 +182,10 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           animate={{ opacity: 1, y: 0 }}
         >
           <ProgressBar currentStep={currentStep} />
+          <p className="text-muted-foreground mt-3 text-center text-xs">
+            Required fields are marked with{' '}
+            <span className="text-danger">*</span>
+          </p>
         </motion.div>
 
         {/* Step Content with Animation */}

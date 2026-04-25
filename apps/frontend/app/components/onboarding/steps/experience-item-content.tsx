@@ -140,8 +140,12 @@ export function ExperienceItemContent({
             name={`experiences.${index}.title`}
             control={control}
             render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Job Title *</Label>
+              <TextField
+                isRequired
+                className="w-full"
+                isInvalid={!!fieldState.error}
+              >
+                <Label>Job Title</Label>
                 <Input {...field} placeholder="Frontend Developer" />
                 {fieldState.error ? (
                   <FieldError>{fieldState.error.message}</FieldError>
@@ -155,8 +159,12 @@ export function ExperienceItemContent({
               name={`experiences.${index}.company`}
               control={control}
               render={({ field, fieldState }) => (
-                <TextField className="w-full" isInvalid={!!fieldState.error}>
-                  <Label>Company *</Label>
+                <TextField
+                  isRequired
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
+                  <Label>Company</Label>
                   <Input {...field} placeholder="e.g. Acme Inc." />
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
@@ -191,13 +199,14 @@ export function ExperienceItemContent({
             control={control}
             render={({ field, fieldState }) => (
               <DatePicker
+                isRequired
                 value={field.value ? parseDate(`${field.value}-01`) : null}
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
                 isInvalid={!!fieldState.error}
               >
-                <Label>Start Date *</Label>
+                <Label isRequired>Start Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -249,6 +258,7 @@ export function ExperienceItemContent({
             control={control}
             render={({ field, fieldState }) => (
               <DatePicker
+                isRequired={!isCurrent}
                 value={field.value ? parseDate(`${field.value}-01`) : null}
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
@@ -256,7 +266,7 @@ export function ExperienceItemContent({
                 isDisabled={!!isCurrent}
                 isInvalid={!!fieldState.error}
               >
-                <Label>End Date</Label>
+                <Label isRequired={!isCurrent}>End Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -335,8 +345,12 @@ export function ExperienceItemContent({
           name={`experiences.${index}.bullets.0.text`}
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>What did you do? *</Label>
+            <TextField
+              isRequired
+              className="w-full"
+              isInvalid={!!fieldState.error}
+            >
+              <Label>What did you do?</Label>
               <TextArea
                 {...field}
                 value={field.value || ''}
