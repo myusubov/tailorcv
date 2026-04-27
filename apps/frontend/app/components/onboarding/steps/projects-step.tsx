@@ -13,7 +13,7 @@ import {
   useOverlayState,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { nanoid } from 'nanoid';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
@@ -26,6 +26,10 @@ import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
 interface ProjectsStepProps {
   onNext: () => void;
   onBack: () => void;
+}
+
+interface RemoveSkillArgs {
+  skillId: string;
 }
 
 /**
@@ -54,7 +58,8 @@ function createEmptyProject() {
  */
 export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   const deleteModalState = useOverlayState();
-  const { watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
+  const { control, watch, setValue, getValues } =
+    useFormContext<OnboardingFormInput>();
   const { fields, append, remove, move } = useStableFieldArray<
     OnboardingFormInput,
     'projects'
@@ -63,7 +68,11 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   });
 
   const projects = watch('projects');
-  const skills = watch('skills') ?? [];
+  const skills =
+    useWatch({
+      control,
+      name: 'skills',
+    }) ?? [];
   const [skillInput, setSkillInput] = useState('');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
@@ -107,11 +116,11 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
   /**
    * Removes a skill by its ID
    */
-  const removeSkill = (skillId: string) => {
+  const removeSkill = ({ skillId }: RemoveSkillArgs) => {
     setValue(
       'skills',
       (getValues('skills') ?? []).filter((s) => s.id !== skillId),
-      { shouldDirty: true },
+      { shouldDirty: true, shouldValidate: true },
     );
   };
 
@@ -239,7 +248,8 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
                       {skill.name}
                       <button
                         type="button"
-                        onClick={() => removeSkill(skill.id)}
+                        aria-label={`Remove ${skill.name} skill`}
+                        onClick={() => removeSkill({ skillId: skill.id })}
                         className="hover:bg-primary/20 ml-1 rounded-full p-0.5"
                       >
                         <Icon icon="lucide:x" className="size-3" />

@@ -145,6 +145,26 @@ if (ok) goToNextStep();
 
 ## 10. Development Log
 
+### [2026-04-27] - Professional Summary Step Simplification
+
+- **Decision:** Keep the professional summary step focused on one writing task and move guidance into the field helper text instead of a separate help panel.
+- **Problem:** The previous summary step repeated guidance across the centered header, field description, and help card, making the step feel visually cluttered for a single optional field.
+- **Solution:**
+  1. **Balanced prompt copy:** Updated `apps/frontend/app/components/onboarding/steps/summary-step.tsx` to use a shorter header description that wraps more cleanly.
+  2. **Inline field guidance:** Updated `apps/frontend/app/components/onboarding/steps/summary-step.tsx` to replace the separate help card with concise helper text under the textarea.
+  3. **Regression coverage:** Added `apps/frontend/app/components/onboarding/steps/summary-step.test.tsx` to verify the focused prompt and absence of the old help panel.
+- **Outcome:** The summary step now presents one clear writing surface with quieter guidance and less competing visual weight.
+
+### [2026-04-27] - Immediate Skill Chip Removal
+
+- **Decision:** Keep technical skills as a simple form-backed chip array, but subscribe the rendered chip list directly to the `skills` field.
+- **Problem:** Removing a skill updated React Hook Form state, but the chip list did not visually update until another local state change, making the remove button appear broken.
+- **Solution:**
+  1. **Field subscription:** Updated `apps/frontend/app/components/onboarding/steps/projects-step.tsx` to render skills from `useWatch({ control, name: 'skills' })` instead of relying on a stale `watch('skills')` snapshot.
+  2. **Typed removal handler:** Updated `apps/frontend/app/components/onboarding/steps/projects-step.tsx` to remove skills through a single object-parameter handler and validate the field after removal.
+  3. **Regression coverage:** Added `apps/frontend/app/components/onboarding/steps/projects-step.test.tsx` to verify a clicked skill remove control immediately removes that chip while keeping the other skills visible.
+- **Outcome:** Technical skill removal now updates the onboarding UI immediately and has focused regression coverage.
+
 ### [2026-04-24] - Required Field Legend Cleanup
 
 - **Decision:** Manual entry now explains required fields once near the progress header and avoids repeated optional helper text on contact fields.

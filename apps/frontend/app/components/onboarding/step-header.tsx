@@ -34,7 +34,7 @@ export function StepHeader({ icon, title, description }: StepHeaderProps) {
         {title}
       </motion.h2>
       <motion.p
-        className="text-muted-foreground mt-2 text-base"
+        className="text-muted-foreground mt-2 text-base text-balance"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
