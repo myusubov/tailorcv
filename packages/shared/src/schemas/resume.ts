@@ -138,7 +138,7 @@ export const baseResumeDataSchema = z.object({
       firstName: z.string().trim().min(1, 'First name is required'),
       lastName: z.string().trim().min(1, 'Last name is required'),
       headline: optionalStringSchema('Headline cannot be empty'),
-      email: z.email('Please enter a valid email address'),
+      email: z.string().email({ message: 'Please enter a valid email address' }),
       phone: optionalStringSchema('Phone number cannot be empty'),
       location: optionalStringSchema('Location cannot be empty'),
       websiteUrl: z
@@ -332,7 +332,7 @@ export const baseResumeDataSchema = z.object({
           degree: optionalStringSchema('Degree cannot be empty'),
           field: optionalStringSchema('Field of study cannot be empty'),
           location: optionalStringSchema('Location cannot be empty'),
-          startDate: dateSchema.nullish(),
+          startDate: dateSchema,
           endDate: dateSchema.nullish(),
           grade: optionalStringSchema('Grade cannot be empty'),
           notes: z.string().trim().nullish(),
@@ -340,22 +340,6 @@ export const baseResumeDataSchema = z.object({
         })
         .strict()
         .superRefine((data, ctx) => {
-          // If isCurrent, startDate is required
-          if (data.isCurrent && !data.startDate) {
-            ctx.addIssue({
-              code: 'custom',
-              message: 'Start date is required if currently studying',
-              path: ['startDate'],
-            });
-          }
-          // If endDate exists, startDate is required
-          if (data.endDate && !data.startDate) {
-            ctx.addIssue({
-              code: 'custom',
-              message: 'Start date is required if graduation date is present',
-              path: ['startDate'],
-            });
-          }
           // If startDate exists and not current, endDate is required
           if (data.startDate && !data.isCurrent && !data.endDate) {
             ctx.addIssue({

@@ -44,6 +44,9 @@ export function ProjectItemContent({
   const startDate = useWatch({ control, name: `projects.${index}.startDate` });
   const endDate = useWatch({ control, name: `projects.${index}.endDate` });
 
+  // Compute whether startDate is required based on schema logic
+  const isStartDateRequired = !!isCurrent || !!endDate;
+
   return (
     <Card className="mb-4">
       <Card.Header className="flex-row items-center justify-between">
@@ -179,10 +182,10 @@ export function ProjectItemContent({
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
-                isRequired
+                isRequired={isStartDateRequired}
                 isInvalid={!!fieldState.error}
               >
-                <Label isRequired>Start Date</Label>
+                <Label isRequired={isStartDateRequired}>Start Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}

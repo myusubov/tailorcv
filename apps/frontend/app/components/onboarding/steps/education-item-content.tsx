@@ -195,7 +195,7 @@ export function EducationItemContent({
               className="w-full"
               isInvalid={!!fieldState.error}
             >
-              <Label>School / Institution </Label>
+              <Label>School / Institution</Label>
               <Input
                 {...field}
                 value={field.value || ''}
