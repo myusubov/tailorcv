@@ -145,8 +145,12 @@ export function EducationItemContent({
             name={`education.${index}.degree`}
             control={control}
             render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Degree / Certification *</Label>
+              <TextField
+                isRequired
+                className="w-full"
+                isInvalid={!!fieldState.error}
+              >
+                <Label>Degree / Certification</Label>
                 <Input
                   {...field}
                   value={field.value || ''}
@@ -163,8 +167,12 @@ export function EducationItemContent({
             name={`education.${index}.field`}
             control={control}
             render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Field of Study *</Label>
+              <TextField
+                isRequired
+                className="w-full"
+                isInvalid={!!fieldState.error}
+              >
+                <Label>Field of Study</Label>
                 <Input
                   {...field}
                   value={field.value || ''}
@@ -182,8 +190,12 @@ export function EducationItemContent({
           name={`education.${index}.school`}
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>School / Institution *</Label>
+            <TextField
+              isRequired
+              className="w-full"
+              isInvalid={!!fieldState.error}
+            >
+              <Label>School / Institution</Label>
               <Input
                 {...field}
                 value={field.value || ''}
@@ -201,8 +213,12 @@ export function EducationItemContent({
             name={`education.${index}.location`}
             control={control}
             render={({ field, fieldState }) => (
-              <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Location *</Label>
+              <TextField
+                isRequired
+                className="w-full"
+                isInvalid={!!fieldState.error}
+              >
+                <Label>Location</Label>
                 <Input
                   {...field}
                   value={field.value || ''}
@@ -220,7 +236,7 @@ export function EducationItemContent({
             control={control}
             render={({ field, fieldState }) => (
               <TextField className="w-full" isInvalid={!!fieldState.error}>
-                <Label>Grade / GPA (Optional)</Label>
+                <Label>Grade / GPA</Label>
                 <Input
                   {...field}
                   value={field.value || ''}
@@ -240,13 +256,14 @@ export function EducationItemContent({
             control={control}
             render={({ field, fieldState }) => (
               <DatePicker
+                isRequired
                 value={field.value ? parseDate(`${field.value}-01`) : null}
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
                 isInvalid={!!fieldState.error}
               >
-                <Label>Start Date *</Label>
+                <Label isRequired>Start Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -258,7 +275,9 @@ export function EducationItemContent({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}>
+                  <Calendar
+                    maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}
+                  >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -269,13 +288,17 @@ export function EducationItemContent({
                     </Calendar.Header>
                     <Calendar.Grid>
                       <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
                       </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
                     </Calendar.Grid>
                     <Calendar.YearPickerGrid>
                       <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
                       </Calendar.YearPickerGridBody>
                     </Calendar.YearPickerGrid>
                   </Calendar>
@@ -298,9 +321,9 @@ export function EducationItemContent({
                 }
                 isDisabled={!!isCurrent}
                 isInvalid={!!fieldState.error}
-                
+                isRequired={!isCurrent}
               >
-                <Label>Graduation Date</Label>
+                <Label isRequired={!isCurrent}>Graduation Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -312,7 +335,11 @@ export function EducationItemContent({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
+                  <Calendar
+                    minValue={
+                      startDate ? parseDate(`${startDate}-01`) : undefined
+                    }
+                  >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -323,13 +350,17 @@ export function EducationItemContent({
                     </Calendar.Header>
                     <Calendar.Grid>
                       <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
                       </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
                     </Calendar.Grid>
                     <Calendar.YearPickerGrid>
                       <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
                       </Calendar.YearPickerGridBody>
                     </Calendar.YearPickerGrid>
                   </Calendar>

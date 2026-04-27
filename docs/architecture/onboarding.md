@@ -8,11 +8,11 @@
 
 ### 1.1 Design Pillars
 
-| Pillar | Description |
-| ------ | ----------- |
-| **Guided completion** | Manual entry is a sequential flow so required fields are validated before users advance. |
+| Pillar                   | Description                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **Guided completion**    | Manual entry is a sequential flow so required fields are validated before users advance.                       |
 | **Low-clutter feedback** | Progress UI should show where the user is without repeating equivalent percentage, count, and stepper signals. |
-| **Job handoff clarity** | Once valid data is submitted, the UI hands control to the onboarding job context and job UI. |
+| **Job handoff clarity**  | Once valid data is submitted, the UI hands control to the onboarding job context and job UI.                   |
 
 ### 1.2 Key Decisions
 
@@ -41,13 +41,13 @@ app/onboarding/page.tsx
 
 > **For AI**: When asked to work on this domain, start by reading these files.
 
-| File | Purpose | When to Read |
-| ---- | ------- | ------------ |
-| `apps/frontend/app/onboarding/page.tsx` | Chooses onboarding method and wraps job UI/provider. | Any onboarding route-level change. |
-| `apps/frontend/app/onboarding/types.ts` | Defines onboarding method and manual-entry step config. | Adding, removing, or renaming manual steps. |
-| `apps/frontend/app/components/onboarding/manual-entry-form.tsx` | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes. |
-| `apps/frontend/app/components/onboarding/progress-bar.tsx` | Non-interactive manual-entry step progress indicator. | Manual-entry progress UI changes. |
-| `apps/frontend/app/components/onboarding/steps/` | Individual manual-entry form steps. | Field-level manual-entry changes. |
+| File                                                            | Purpose                                                                           | When to Read                                |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
+| `apps/frontend/app/onboarding/page.tsx`                         | Chooses onboarding method and wraps job UI/provider.                              | Any onboarding route-level change.          |
+| `apps/frontend/app/onboarding/types.ts`                         | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
+| `apps/frontend/app/components/onboarding/manual-entry-form.tsx` | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes.                  |
+| `apps/frontend/app/components/onboarding/progress-bar.tsx`      | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
+| `apps/frontend/app/components/onboarding/steps/`                | Individual manual-entry form steps.                                               | Field-level manual-entry changes.           |
 
 ---
 
@@ -100,6 +100,7 @@ if (ok) goToNextStep();
 ### 6.2 Progress UI
 
 - **Rule**: Use one primary visual progress model per viewport: full labeled stepper on larger screens, compact current-step summary on mobile.
+- **Rule**: Explain the required-field marker once at the manual-entry form level instead of repeating optional helper text under individual fields.
 - **Anti-pattern**: Do not show percentage, a progress bar, and step labels together for the five-step manual form.
 
 ---
@@ -108,11 +109,11 @@ if (ok) goToNextStep();
 
 > How this domain connects to other domains. Update this when dependencies change.
 
-| Domain | Relationship | Key Interface |
-| ------ | ------------ | ------------- |
-| Auth | New users land on onboarding after registration. | `config.auth.afterSignUpUrl` |
-| Resume generation | Onboarding starts the generation job after valid input. | `startOnboardingJobAction`, `OnboardingJobProvider` |
-| Shared schemas | Manual entry validates against the shared onboarding form schema. | `onboardingSchema`, `OnboardingFormInput` |
+| Domain            | Relationship                                                      | Key Interface                                       |
+| ----------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| Auth              | New users land on onboarding after registration.                  | `config.auth.afterSignUpUrl`                        |
+| Resume generation | Onboarding starts the generation job after valid input.           | `startOnboardingJobAction`, `OnboardingJobProvider` |
+| Shared schemas    | Manual entry validates against the shared onboarding form schema. | `onboardingSchema`, `OnboardingFormInput`           |
 
 ---
 
@@ -134,15 +135,24 @@ if (ok) goToNextStep();
 
 ## 9. Risks & Mitigations
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| Users interpret the stepper as clickable tabs. | Keep step labels visually status-like and do not render buttons/links. |
-| Mobile progress UI becomes cramped. | Hide the full stepper on small screens and show a compact current-step summary. |
-| Required data is skipped before generation. | Trigger step-level validation before advancing and full schema validation before submitting. |
+| Risk                                           | Mitigation                                                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Users interpret the stepper as clickable tabs. | Keep step labels visually status-like and do not render buttons/links.                       |
+| Mobile progress UI becomes cramped.            | Hide the full stepper on small screens and show a compact current-step summary.              |
+| Required data is skipped before generation.    | Trigger step-level validation before advancing and full schema validation before submitting. |
 
 ---
 
 ## 10. Development Log
+
+### [2026-04-24] - Required Field Legend Cleanup
+
+- **Decision:** Manual entry now explains required fields once near the progress header and avoids repeated optional helper text on contact fields.
+- **Problem:** Optional helper text under unstarred contact fields duplicated the required-marker convention and made the helper/error text area feel busier than needed.
+- **Solution:**
+  1. **Shared required-field legend:** Updated `apps/frontend/app/components/onboarding/manual-entry-form.tsx` to render `Required fields are marked with *` beneath the manual progress header.
+  2. **Removed redundant optional labels:** Updated `apps/frontend/app/components/onboarding/steps/contact-step.tsx` to remove `Optional` descriptions from optional contact fields.
+- **Outcome:** Users get one clear explanation for required fields while optional contact fields stay visually quieter and reserve helper text space for meaningful guidance or errors.
 
 ### [2026-04-24] - Progress Stepper Review Fixes
 

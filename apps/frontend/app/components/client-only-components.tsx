@@ -25,7 +25,7 @@ export function ClientOnlyComponents() {
 
   return (
     <>
-      {isLoaded && isSignedIn && <AIChatBox />}
+      {/* {isLoaded && isSignedIn && <AIChatBox />} */}
       {config.isDev && isLoaded && isSignedIn ? <DevLogoutButton /> : null}
       <ThemeToggle />
     </>

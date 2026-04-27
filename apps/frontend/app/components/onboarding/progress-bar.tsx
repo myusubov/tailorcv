@@ -31,16 +31,13 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
   const currentStepNumber = currentIndex + 1;
 
   return (
-    <nav
-      className="w-full"
-      aria-label="Onboarding progress"
-    >
+    <nav className="w-full" aria-label="Onboarding progress">
       <div className="border-border bg-surface-secondary/70 mb-4 rounded-lg border px-4 py-3 sm:hidden">
         <div className="mb-1 flex items-center justify-between gap-3">
-          <span className="text-muted text-xs font-medium">
+          <span className="text-muted-foreground text-xs font-medium">
             Step {currentStepNumber}
           </span>
-          <span className="text-muted text-xs font-medium">
+          <span className="text-muted-foreground text-xs font-medium">
             {currentStepNumber}/{MANUAL_STEPS.length}
           </span>
         </div>
@@ -70,7 +67,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
                   ? 'bg-primary/10 text-primary'
                   : isCurrent
                     ? 'border-border bg-surface-secondary text-foreground border'
-                    : 'text-muted bg-surface/70'
+                    : 'text-muted-foreground bg-surface/70'
               }`}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
