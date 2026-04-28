@@ -33,12 +33,12 @@ export function EducationEditor() {
     append({
       id: nanoid(),
       school: '',
-      degree: null,
-      field: null,
-      location: null,
+      degree: '',
+      field: '',
+      location: '',
       startDate: null,
       endDate: null,
-      grade: null,
+      grade: '',
       notes: null,
       isCurrent: false,
     });

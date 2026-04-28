@@ -27,10 +27,11 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
       <StepHeader
         icon="lucide:file-text"
         title="Professional Summary"
-        description="Tell us about yourself in 2-3 sentences. What do you do? What are your key skills?"
+        description="Write 2-3 sentences about what you do, what you are strong at, and where you create impact."
       />
 
       <motion.div
+        className="space-y-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -40,43 +41,24 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
           control={control}
           render={({ field, fieldState }) => (
             <TextField className="w-full" isInvalid={!!fieldState.error}>
-              <Label>Your Summary</Label>
+              <Label>Professional Summary</Label>
               <TextArea
                 {...field}
                 value={field.value || ''}
-                placeholder="I'm a full-stack developer with 3 years of experience building scalable web applications..."
-                rows={6}
+                placeholder="I'm a full-stack developer with 3 years of experience building scalable web applications…"
+                rows={7}
               />
               {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
-              <Description>
-                Mention your role, experience level, and main technologies.
-                We&apos;ll refine this later.
+              <Description className="text-balance">
+                Include role, seniority, technologies, and one measurable strength. You can
+                leave this blank. TailorCV can generate a draft later.
               </Description>
+
             </TextField>
           )}
         />
-      </motion.div>
-
-      <motion.div
-        className="bg-surface mt-6 rounded-xl p-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="flex items-start gap-3">
-          <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
-            <Icon icon="lucide:lightbulb" className="size-4" />
-          </div>
-          <div>
-            <p className="text-foreground text-sm font-medium">Need help?</p>
-            <p className="text-muted mt-0.5 text-sm">
-              Not sure what to write? You can skip this and we&apos;ll generate
-              one based on your experience and projects.
-            </p>
-          </div>
-        </div>
       </motion.div>
 
       <motion.div
@@ -88,9 +70,9 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
         <Button
           variant="ghost"
           onPress={onBack}
-          className="text-muted hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
         >
-          <Icon icon="lucide:arrow-left" className="size-4" />
+          <Icon icon="lucide:arrow-left" className="size-4" aria-hidden />
           Back
         </Button>
         <Button onPress={onNext} className="group px-6">
@@ -98,6 +80,7 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
           <Icon
             icon="lucide:arrow-right"
             className="size-4 transition-transform group-hover:translate-x-1"
+            aria-hidden
           />
         </Button>
       </motion.div>

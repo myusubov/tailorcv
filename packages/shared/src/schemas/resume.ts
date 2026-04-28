@@ -332,7 +332,7 @@ export const baseResumeDataSchema = z.object({
           degree: optionalStringSchema('Degree cannot be empty'),
           field: optionalStringSchema('Field of study cannot be empty'),
           location: optionalStringSchema('Location cannot be empty'),
-          startDate: dateSchema,
+          startDate: dateSchema.nullish(),
           endDate: dateSchema.nullish(),
           grade: optionalStringSchema('Grade cannot be empty'),
           notes: z.string().trim().nullish(),
