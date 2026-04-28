@@ -36,7 +36,7 @@ export function EducationEditor() {
       degree: '',
       field: '',
       location: '',
-      startDate: '',
+      startDate: null,
       endDate: null,
       grade: '',
       notes: null,
