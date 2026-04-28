@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Card, useOverlayState } from '@heroui/react';
+import { Button, Card } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { useFormContext } from 'react-hook-form';
 import { nanoid } from 'nanoid';
@@ -42,7 +41,7 @@ export function EducationStep({
   onBack,
   isLoading,
 }: EducationStepProps) {
-  const { watch, setValue, getValues } = useFormContext<OnboardingFormInput>();
+  const { setValue, getValues } = useFormContext<OnboardingFormInput>();
   const { fields, append, remove, move } = useStableFieldArray<
     OnboardingFormInput,
     'education'
@@ -50,17 +49,12 @@ export function EducationStep({
     name: 'education',
   });
 
-  const education = watch('education');
-  // Simple delete handling without complex modal for now to match structure
-  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-
   const addEducation = () => {
     append(createEmptyEducation());
   };
 
   const handleDelete = (index: number) => {
     remove(index);
-    setDeleteIndex(null);
   };
 
   const handleDuplicate = (idx: number) => {
@@ -133,15 +127,13 @@ export function EducationStep({
             transition={{ delay: 0.15 }}
           >
             <Card className="mt-2">
-              <Card.Content className="flex flex-col items-center justify-center px-6 py-8 text-center">
-                <h3 className="text-foreground text-lg font-semibold">
-                  No education added yet?
-                </h3>
-                <p className="text-muted-foreground mt-2 max-w-md text-sm">
-                  Add your formal education, bootcamps, or certifications.
+              <Card.Content className="flex flex-col items-center justify-center px-5 py-5 text-center">
+                <p className="text-muted-foreground text-sm text-balance">
+                  Education is optional. Add schools, bootcamps, or
+                  certifications if they strengthen your resume.
                 </p>
 
-                <div className="mt-6 w-full max-w-sm">
+                <div className="mt-4 w-full max-w-sm">
                   <Button
                     variant="secondary"
                     onPress={addEducation}
@@ -173,27 +165,6 @@ export function EducationStep({
         )}
 
         <motion.div
-          className="bg-surface mt-6 rounded-xl p-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-start gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-              <Icon icon="lucide:check-circle" className="size-4" />
-            </div>
-            <div>
-              <p className="text-foreground text-sm font-medium">
-                You&apos;re all set!
-              </p>
-              <p className="text-muted mt-0.5 text-sm">
-                Click the button below to generate your professional resume.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
           className="mt-8 flex items-center justify-between gap-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -203,7 +174,7 @@ export function EducationStep({
             variant="ghost"
             onPress={onBack}
             isDisabled={isLoading}
-            className="text-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back

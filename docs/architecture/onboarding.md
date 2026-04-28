@@ -41,13 +41,14 @@ app/onboarding/page.tsx
 
 > **For AI**: When asked to work on this domain, start by reading these files.
 
-| File                                                            | Purpose                                                                           | When to Read                                |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
-| `apps/frontend/app/onboarding/page.tsx`                         | Chooses onboarding method and wraps job UI/provider.                              | Any onboarding route-level change.          |
-| `apps/frontend/app/onboarding/types.ts`                         | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
-| `apps/frontend/app/components/onboarding/manual-entry-form.tsx` | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes.                  |
-| `apps/frontend/app/components/onboarding/progress-bar.tsx`      | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
-| `apps/frontend/app/components/onboarding/steps/`                | Individual manual-entry form steps.                                               | Field-level manual-entry changes.           |
+| File                                                                    | Purpose                                                                           | When to Read                                |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
+| `apps/frontend/app/onboarding/page.tsx`                                 | Chooses onboarding method and wraps job UI/provider.                              | Any onboarding route-level change.          |
+| `apps/frontend/app/onboarding/types.ts`                                 | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
+| `apps/frontend/app/components/onboarding/manual-entry-form.tsx`         | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes.                  |
+| `apps/frontend/app/components/onboarding/progress-bar.tsx`              | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
+| `apps/frontend/app/components/onboarding/steps/education-step.test.tsx` | Locks the final education empty-state UI contract.                                | Education empty-state UI changes.           |
+| `apps/frontend/app/components/onboarding/steps/`                        | Individual manual-entry form steps.                                               | Field-level manual-entry changes.           |
 
 ---
 
@@ -144,6 +145,16 @@ if (ok) goToNextStep();
 ---
 
 ## 10. Development Log
+
+### [2026-04-28] - Education Empty State Cleanup
+
+- **Decision:** The final education step now uses the main step header as the only major heading, keeps the empty state concise, and relies on the generate button for final-step action clarity.
+- **Problem:** The previous empty state stacked a second headline with the main `Education` header and always rendered a separate `You're all set!` card, which added visual weight without changing the user's next action.
+- **Solution:**
+  1. **Concise empty prompt:** Updated `apps/frontend/app/components/onboarding/steps/education-step.tsx` to replace the duplicate empty-state heading with one optional-education support sentence and the existing `Add Education` action.
+  2. **Removed redundant completion card:** Updated `apps/frontend/app/components/onboarding/steps/education-step.tsx` to remove the persistent final-step success card and align muted text with `text-muted-foreground`.
+  3. **Locked the UI contract:** Added `apps/frontend/app/components/onboarding/steps/education-step.test.tsx` to verify the concise empty state and absence of duplicate completion messaging.
+- **Outcome:** Users see a calmer final onboarding step with one clear optional education prompt and an unchanged path to generate their resume.
 
 ### [2026-04-27] - Professional Summary Step Simplification
 
