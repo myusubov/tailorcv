@@ -44,13 +44,15 @@ export function ProjectItemContent({
   const startDate = useWatch({ control, name: `projects.${index}.startDate` });
   const endDate = useWatch({ control, name: `projects.${index}.endDate` });
 
-  // Compute whether startDate is required based on schema logic
-  const isStartDateRequired = !!isCurrent || !!endDate;
-
   return (
     <Card className="mb-4">
       <Card.Header className="flex-row items-center justify-between">
-        <Card.Title className="text-base">Project #{index + 1}</Card.Title>
+        <span
+          aria-label={`Project ${index + 1}`}
+          className="bg-surface-secondary text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+        >
+          {index + 1}
+        </span>
         <div className="flex items-center gap-1">
           <Tooltip delay={500}>
             <Button
@@ -182,10 +184,10 @@ export function ProjectItemContent({
                 onChange={(date) =>
                   field.onChange(date ? date.toString().slice(0, 7) : '')
                 }
-                isRequired={isStartDateRequired}
+                isRequired
                 isInvalid={!!fieldState.error}
               >
-                <Label isRequired={isStartDateRequired}>Start Date</Label>
+                <Label isRequired>Start Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
@@ -231,92 +233,99 @@ export function ProjectItemContent({
               </DatePicker>
             )}
           />
-          <Controller
-            name={`projects.${index}.endDate`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <DatePicker
-                isRequired={!isCurrent}
-                value={field.value ? parseDate(`${field.value}-01`) : null}
-                onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : '')
-                }
-                isDisabled={!!isCurrent}
-                isInvalid={!!fieldState.error}
-              >
-                <Label isRequired={!isCurrent}>End Date</Label>
-                <DateField.Group>
-                  <DateField.Input>
-                    {(segment) => <DateField.Segment segment={segment} />}
-                  </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger>
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover>
-                  <Calendar
-                    minValue={
-                      startDate ? parseDate(`${startDate}-01`) : undefined
-                    }
-                  >
-                    <Calendar.Header>
-                      <Calendar.YearPickerTrigger>
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <Calendar.NavButton slot="previous" />
-                      <Calendar.NavButton slot="next" />
-                    </Calendar.Header>
-                    <Calendar.Grid>
-                      <Calendar.GridHeader>
-                        {(day) => (
-                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
-                        )}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>
-                        {(date) => <Calendar.Cell date={date} />}
-                      </Calendar.GridBody>
-                    </Calendar.Grid>
-                    <Calendar.YearPickerGrid>
-                      <Calendar.YearPickerGridBody>
-                        {({ year }) => <Calendar.YearPickerCell year={year} />}
-                      </Calendar.YearPickerGridBody>
-                    </Calendar.YearPickerGrid>
-                  </Calendar>
-                </DatePicker.Popover>
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </DatePicker>
-            )}
-          />
-        </div>
+          <div className="w-full space-y-2">
+            <Controller
+              name={`projects.${index}.endDate`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <DatePicker
+                  className="w-full"
+                  isRequired={!isCurrent}
+                  value={field.value ? parseDate(`${field.value}-01`) : null}
+                  onChange={(date) =>
+                    field.onChange(date ? date.toString().slice(0, 7) : '')
+                  }
+                  isDisabled={!!isCurrent}
+                  isInvalid={!!fieldState.error}
+                >
+                  <Label isRequired={!isCurrent}>End Date</Label>
+                  <DateField.Group>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix>
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <Calendar
+                      minValue={
+                        startDate ? parseDate(`${startDate}-01`) : undefined
+                      }
+                    >
+                      <Calendar.Header>
+                        <Calendar.YearPickerTrigger>
+                          <Calendar.YearPickerTriggerHeading />
+                          <Calendar.YearPickerTriggerIndicator />
+                        </Calendar.YearPickerTrigger>
+                        <Calendar.NavButton slot="previous" />
+                        <Calendar.NavButton slot="next" />
+                      </Calendar.Header>
+                      <Calendar.Grid>
+                        <Calendar.GridHeader>
+                          {(day) => (
+                            <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                          )}
+                        </Calendar.GridHeader>
+                        <Calendar.GridBody>
+                          {(date) => <Calendar.Cell date={date} />}
+                        </Calendar.GridBody>
+                      </Calendar.Grid>
+                      <Calendar.YearPickerGrid>
+                        <Calendar.YearPickerGridBody>
+                          {({ year }) => (
+                            <Calendar.YearPickerCell year={year} />
+                          )}
+                        </Calendar.YearPickerGridBody>
+                      </Calendar.YearPickerGrid>
+                    </Calendar>
+                  </DatePicker.Popover>
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
+                </DatePicker>
+              )}
+            />
 
-        <Controller
-          name={`projects.${index}.isCurrent`}
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              isSelected={!!field.value}
-              onChange={(s) => {
-                field.onChange(s);
-                if (s)
-                  setValue(`projects.${index}.endDate`, null, {
-                    shouldValidate: true,
-                  });
-              }}
-            >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <span className="text-sm">I am currently working on this</span>
-              </Checkbox.Content>
-            </Checkbox>
-          )}
-        />
+            <Controller
+              name={`projects.${index}.isCurrent`}
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  isSelected={!!field.value}
+                  onChange={(s) => {
+                    field.onChange(s);
+                    if (s)
+                      setValue(`projects.${index}.endDate`, null, {
+                        shouldValidate: true,
+                      });
+                  }}
+                >
+                  <Checkbox.Control className="size-5">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <span className="text-sm">
+                      I am currently working on this
+                    </span>
+                  </Checkbox.Content>
+                </Checkbox>
+              )}
+            />
+          </div>
+        </div>
       </Card.Content>
     </Card>
   );
