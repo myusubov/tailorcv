@@ -57,14 +57,29 @@ describe('baseResumeDataSchema date fields', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid full date strings', () => {
+  it('rejects impossible calendar dates', () => {
+    const impossibleDates = ['2026-02-29', '2026-02-31', '2026-04-31'];
+
+    for (const startDate of impossibleDates) {
+      const result = baseResumeDataSchema.safeParse(
+        createResumeDataWithProjectDates({
+          startDate,
+          endDate: '2026-05-12',
+        }),
+      );
+
+      expect(result.success).toBe(false);
+    }
+  });
+
+  it('accepts leap-day full dates when the year is valid', () => {
     const result = baseResumeDataSchema.safeParse(
       createResumeDataWithProjectDates({
-        startDate: '2026-04-32',
-        endDate: '2026-05-12',
+        startDate: '2024-02-29',
+        endDate: '2024-03-12',
       }),
     );
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });

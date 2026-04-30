@@ -3,12 +3,24 @@ import { z } from 'zod';
 /**
  * SHARED CONSTANTS & HELPERS
  */
+const dateFormatRegex = /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/;
+
+const isValidResumeDate = (value: string) => {
+  if (!dateFormatRegex.test(value)) return false;
+
+  const [, month, day] = value.split('-');
+  if (!month || !day) return true;
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return date.toISOString().slice(0, 10) === value;
+};
+
 const dateSchema = z
   .string()
   .trim()
   .describe('Date in YYYY-MM-DD, YYYY-MM, or YYYY format.')
-  .regex(
-    /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/,
+  .refine(
+    isValidResumeDate,
     'Please enter a valid date in YYYY-MM-DD, YYYY-MM, or YYYY format (e.g., 2024-05-20)',
   );
 
