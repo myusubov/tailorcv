@@ -45,6 +45,12 @@ describe('ProgressBar', () => {
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
+  it('shows the combined projects and skills step label', () => {
+    render(<ProgressBar currentStep="projects" />);
+
+    expect(screen.getAllByText('Projects & Skills').length).toBeGreaterThan(0);
+  });
+
   it('fails closed for an invalid current step', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 

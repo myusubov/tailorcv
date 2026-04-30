@@ -34,7 +34,7 @@ export const MANUAL_STEPS: ManualStepConfig[] = [
   {
     key: 'projects',
     icon: 'lucide:rocket',
-    label: 'Projects',
+    label: 'Projects & Skills',
   },
   {
     key: 'education',

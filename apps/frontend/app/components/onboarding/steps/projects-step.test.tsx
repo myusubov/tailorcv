@@ -13,7 +13,8 @@ import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { ProjectsStep } from './projects-step';
 
 interface RenderProjectsStepArgs {
-  skills: OnboardingFormInput['skills'];
+  skills?: OnboardingFormInput['skills'];
+  projects?: OnboardingFormInput['projects'];
 }
 
 vi.mock('@heroui/react', () => ({
@@ -141,7 +142,24 @@ vi.mock('@/app/components/projects/delete-project-modal', () => ({
   DeleteProjectModal: (): null => null,
 }));
 
-function ProjectsStepHarness({ skills }: RenderProjectsStepArgs): ReactElement {
+vi.mock('@/app/components/ui/reorderable-item', () => ({
+  ReorderableItem: ({
+    children,
+  }: {
+    children: ReactElement;
+  }): ReactElement => <div>{children}</div>,
+}));
+
+vi.mock('./project-item-content', () => ({
+  ProjectItemContent: ({ index }: { index: number }): ReactElement => (
+    <div aria-label={`Project ${index + 1}`}>{index + 1}</div>
+  ),
+}));
+
+function ProjectsStepHarness({
+  skills = [],
+  projects = [],
+}: RenderProjectsStepArgs): ReactElement {
   const form = useForm<OnboardingFormInput>({
     defaultValues: {
       version: 1,
@@ -159,7 +177,7 @@ function ProjectsStepHarness({ skills }: RenderProjectsStepArgs): ReactElement {
       summary: '',
       skills,
       experiences: [],
-      projects: [],
+      projects,
       education: [],
       certifications: [],
       languages: [],
@@ -173,11 +191,88 @@ function ProjectsStepHarness({ skills }: RenderProjectsStepArgs): ReactElement {
   );
 }
 
-function renderProjectsStep(args: RenderProjectsStepArgs): void {
+function renderProjectsStep(args: RenderProjectsStepArgs = {}): void {
   render(<ProjectsStepHarness {...args} />);
 }
 
 describe('ProjectsStep', () => {
+  it('shows the populated project count in the section header', () => {
+    renderProjectsStep({
+      projects: [
+        {
+          id: 'project-1',
+          name: 'Portfolio',
+          role: '',
+          startDate: '',
+          endDate: '',
+          isCurrent: false,
+          url: '',
+          repoUrl: '',
+          tech: [],
+          bullets: [{ id: 'bullet-1', text: 'Built a portfolio.' }],
+        },
+        {
+          id: 'project-2',
+          name: 'Dashboard',
+          role: '',
+          startDate: '',
+          endDate: '',
+          isCurrent: false,
+          url: '',
+          repoUrl: '',
+          tech: [],
+          bullets: [{ id: 'bullet-2', text: 'Built a dashboard.' }],
+        },
+      ],
+    });
+
+    expect(screen.getByText('2 projects')).toBeTruthy();
+  });
+
+  it('shows a projects empty state with the advisory add action', () => {
+    renderProjectsStep();
+
+    expect(
+      screen.getByText(
+        'Projects are optional, but strong projects can showcase applied skills, technical judgment, and measurable impact.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add Project' })).toBeTruthy();
+  });
+
+  it('replaces the empty state with the populated add action after adding a project', async () => {
+    const user = userEvent.setup();
+
+    renderProjectsStep();
+
+    await user.click(screen.getByRole('button', { name: 'Add Project' }));
+
+    expect(
+      screen.queryByText(
+        'Projects are optional, but strong projects can showcase applied skills, technical judgment, and measurable impact.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Add Another Project' }),
+    ).toBeTruthy();
+  });
+
+  it('shows advisory project guidance without referencing experience', () => {
+    renderProjectsStep();
+
+    expect(screen.getByText('For a stronger generated resume:')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Add 1 project with a clear role, technologies, and impact details',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(
+        'Add at least 1 project or 1 experience with some details',
+      ),
+    ).toBeNull();
+  });
+
   it('removes a skill chip immediately when its remove button is clicked', async () => {
     const user = userEvent.setup();
 
@@ -199,5 +294,29 @@ describe('ProjectsStep', () => {
 
     expect(screen.queryByText('TypeScript')).toBeNull();
     expect(screen.getByText('React')).toBeTruthy();
+  });
+
+  it('clears all skill chips when the clear all skills button is clicked', async () => {
+    const user = userEvent.setup();
+
+    renderProjectsStep({
+      skills: [
+        { id: 'skill-react', name: 'React', category: null, level: null },
+        {
+          id: 'skill-typescript',
+          name: 'TypeScript',
+          category: null,
+          level: null,
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Clear all skills' }));
+
+    expect(screen.queryByText('React')).toBeNull();
+    expect(screen.queryByText('TypeScript')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Clear all skills' }),
+    ).toBeNull();
   });
 });

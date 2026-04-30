@@ -15,9 +15,12 @@ import {
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
-import { parseDate } from '@internationalized/date';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
+import {
+  parseResumeDateValue,
+  serializeResumeDateValue,
+} from '@/lib/utils/resume-date';
 
 export interface EducationItemContentProps {
   /** Array index of this education item */
@@ -257,9 +260,9 @@ export function EducationItemContent({
             render={({ field, fieldState }) => (
               <DatePicker
                 isRequired
-                value={field.value ? parseDate(`${field.value}-01`) : null}
+                value={parseResumeDateValue({ value: field.value })}
                 onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : '')
+                  field.onChange(serializeResumeDateValue({ value: date }))
                 }
                 isInvalid={!!fieldState.error}
               >
@@ -276,7 +279,9 @@ export function EducationItemContent({
                 </DateField.Group>
                 <DatePicker.Popover>
                   <Calendar
-                    maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}
+                    maxValue={
+                      parseResumeDateValue({ value: endDate }) ?? undefined
+                    }
                   >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
@@ -317,9 +322,9 @@ export function EducationItemContent({
               render={({ field, fieldState }) => (
                 <DatePicker
                   className="w-full"
-                  value={field.value ? parseDate(`${field.value}-01`) : null}
+                  value={parseResumeDateValue({ value: field.value })}
                   onChange={(date) =>
-                    field.onChange(date ? date.toString().slice(0, 7) : '')
+                    field.onChange(serializeResumeDateValue({ value: date }))
                   }
                   isDisabled={!!isCurrent}
                   isInvalid={!!fieldState.error}
@@ -339,7 +344,8 @@ export function EducationItemContent({
                   <DatePicker.Popover>
                     <Calendar
                       minValue={
-                        startDate ? parseDate(`${startDate}-01`) : undefined
+                        parseResumeDateValue({ value: startDate }) ??
+                        undefined
                       }
                     >
                       <Calendar.Header>
