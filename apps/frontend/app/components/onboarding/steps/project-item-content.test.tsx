@@ -139,7 +139,7 @@ vi.mock('@heroui/react', () => ({
       isInvalid: _isInvalid,
       isRequired: _isRequired,
       onChange: _onChange,
-      value: _value,
+      value,
       ...props
     }: ChildrenProps &
       HTMLAttributes<HTMLDivElement> & {
@@ -149,7 +149,14 @@ vi.mock('@heroui/react', () => ({
         onChange?: (value: unknown) => void;
         value?: unknown;
       }): ReactElement => (
-      <div {...props}>{children}</div>
+      <div
+        data-date-picker-value={
+          value && typeof value === 'object' ? String(value) : undefined
+        }
+        {...props}
+      >
+        {children}
+      </div>
     ),
     {
       Popover: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
@@ -165,10 +172,12 @@ vi.mock('@heroui/react', () => ({
   ),
   Label: ({
     children,
-    isRequired: _isRequired,
+    isRequired,
     ...props
   }: HTMLAttributes<HTMLLabelElement> & { isRequired?: boolean }): ReactElement => (
-    <label {...props}>{children}</label>
+    <label data-required={isRequired ? 'true' : 'false'} {...props}>
+      {children}
+    </label>
   ),
   TextArea: (
     props: TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -205,7 +214,17 @@ vi.mock('@/app/components/ui', () => ({
   ArrayInput: ({ label }: { label: string }): ReactElement => <div>{label}</div>,
 }));
 
-function ProjectItemContentHarness(): ReactElement {
+interface ProjectItemContentHarnessProps {
+  endDate?: string;
+  isCurrent?: boolean;
+  startDate?: string;
+}
+
+function ProjectItemContentHarness({
+  endDate = '',
+  isCurrent = false,
+  startDate = '',
+}: ProjectItemContentHarnessProps = {}): ReactElement {
   const form = useForm<OnboardingFormInput>({
     defaultValues: {
       version: 1,
@@ -228,9 +247,9 @@ function ProjectItemContentHarness(): ReactElement {
           id: 'project-1',
           name: 'Personal Portfolio',
           role: '',
-          startDate: '',
-          endDate: '',
-          isCurrent: false,
+          startDate,
+          endDate,
+          isCurrent,
           url: '',
           repoUrl: '',
           tech: [],
@@ -260,5 +279,56 @@ describe('ProjectItemContent', () => {
 
     expect(screen.queryByText('Project #1')).toBeNull();
     expect(screen.getByLabelText('Project 1').textContent).toBe('1');
+  });
+
+  it('marks project dates as required only when date context needs them', () => {
+    const { unmount } = render(<ProjectItemContentHarness />);
+
+    expect(screen.getByText('Start Date').dataset.required).toBe('false');
+    expect(screen.getByText('End Date').dataset.required).toBe('false');
+
+    unmount();
+    const endDateRender = render(
+      <ProjectItemContentHarness endDate="2026-02" />,
+    );
+
+    expect(screen.getByText('Start Date').dataset.required).toBe('true');
+    expect(screen.getByText('End Date').dataset.required).toBe('false');
+
+    endDateRender.unmount();
+    const startDateRender = render(
+      <ProjectItemContentHarness startDate="2026-01" />,
+    );
+
+    expect(screen.getByText('Start Date').dataset.required).toBe('false');
+    expect(screen.getByText('End Date').dataset.required).toBe('true');
+
+    startDateRender.unmount();
+    render(<ProjectItemContentHarness isCurrent />);
+
+    expect(screen.getByText('Start Date').dataset.required).toBe('true');
+    expect(screen.getByText('End Date').dataset.required).toBe('false');
+  });
+
+  it('passes full saved dates through to the date picker', () => {
+    render(
+      <ProjectItemContentHarness
+        startDate="2026-04-20"
+        endDate="2026-05-12"
+      />,
+    );
+
+    expect(
+      screen
+        .getByText('Start Date')
+        .closest('[data-date-picker-value]')
+        ?.getAttribute('data-date-picker-value'),
+    ).toBe('2026-04-20');
+    expect(
+      screen
+        .getByText('End Date')
+        .closest('[data-date-picker-value]')
+        ?.getAttribute('data-date-picker-value'),
+    ).toBe('2026-05-12');
   });
 });

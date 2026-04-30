@@ -13,10 +13,13 @@ import {
   Tooltip,
   Checkbox,
 } from '@heroui/react';
-import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
 import { DateSegmentFilter } from '../date-segment-filter';
+import {
+  parseResumeDateValue,
+  serializeResumeDateValue,
+} from '@/lib/utils/resume-date';
 
 /**
  * Props for the EducationCard component.
@@ -239,9 +242,9 @@ export function EducationCard({
             <DatePicker
               className="w-full"
               isInvalid={!!fieldState.error}
-              value={field.value ? parseDate(`${field.value}-01`) : null}
+              value={parseResumeDateValue({ value: field.value })}
               onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : '')
+                field.onChange(serializeResumeDateValue({ value: date }))
               }
             >
               <Label>Start Date</Label>
@@ -256,7 +259,7 @@ export function EducationCard({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}>
+                  <Calendar maxValue={parseResumeDateValue({ value: endDate }) ?? undefined}>
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />
@@ -293,9 +296,9 @@ export function EducationCard({
               className="w-full"
               isInvalid={!!fieldState.error}
               isDisabled={!!isCurrent}
-              value={field.value ? parseDate(`${field.value}-01`) : null}
+              value={parseResumeDateValue({ value: field.value })}
               onChange={(date) =>
-                field.onChange(date ? date.toString().slice(0, 7) : '')
+                field.onChange(serializeResumeDateValue({ value: date }))
               }
             >
               <Label>End Date / Expected</Label>
@@ -310,7 +313,7 @@ export function EducationCard({
                   </DateField.Suffix>
                 </DateField.Group>
                 <DatePicker.Popover>
-                  <Calendar minValue={startDate ? parseDate(`${startDate}-01`) : undefined}>
+                  <Calendar minValue={parseResumeDateValue({ value: startDate }) ?? undefined}>
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
                         <Calendar.YearPickerTriggerHeading />

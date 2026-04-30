@@ -47,7 +47,10 @@ app/onboarding/page.tsx
 | `apps/frontend/app/onboarding/types.ts`                                 | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
 | `apps/frontend/app/components/onboarding/manual-entry-form.tsx`         | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes.                  |
 | `apps/frontend/app/components/onboarding/progress-bar.tsx`              | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
+| `apps/frontend/lib/utils/resume-date.ts`                                | Shared DatePicker parser/serializer for resume date strings.                      | Resume date picker behavior changes.        |
+| `packages/shared/src/schemas/resume.ts`                                  | Single source of truth for onboarding resume validation.                          | Resume data validation changes.             |
 | `apps/frontend/app/components/onboarding/steps/projects-step.test.tsx`  | Locks the projects and skills guidance, empty-state, and skill chip UI contracts. | Projects & Skills step UI changes.          |
+| `apps/frontend/app/components/onboarding/steps/project-item-content.test.tsx` | Locks project item header and date picker behavior.                           | Project item UI changes.                    |
 | `apps/frontend/app/components/onboarding/steps/education-step.test.tsx` | Locks the final education empty-state UI contract.                                | Education empty-state UI changes.           |
 | `apps/frontend/app/components/onboarding/steps/`                        | Individual manual-entry form steps.                                               | Field-level manual-entry changes.           |
 
@@ -146,6 +149,17 @@ if (ok) goToNextStep();
 ---
 
 ## 10. Development Log
+
+### [2026-04-30] - Resume Date Picker Full-Date Preservation
+
+- **Decision:** Resume date pickers now preserve full selected dates while still loading legacy year-only and month-only values.
+- **Problem:** DatePicker controls rendered day-level calendars, but form handlers truncated selections to `YYYY-MM`, causing selected days to appear to jump back to the first day of the month and making min/max constraints inconsistent.
+- **Solution:**
+  1. **Shared parsing contract:** Added `apps/frontend/lib/utils/resume-date.ts` to parse `YYYY`, `YYYY-MM`, and `YYYY-MM-DD` values for DatePicker controls and serialize selected dates without dropping the day.
+  2. **Onboarding picker alignment:** Updated `apps/frontend/app/components/onboarding/steps/project-item-content.tsx`, `experience-item-content.tsx`, and `education-item-content.tsx` to use the shared parser for values and min/max bounds.
+  3. **Review picker alignment:** Updated `apps/frontend/app/components/resumes/review/sections/projects/project-card.tsx`, `experience/experience-card.tsx`, and `education/education-card.tsx` so post-onboarding edits preserve the same date behavior.
+  4. **Validation coverage:** Updated `packages/shared/src/schemas/resume.ts` to accept full `YYYY-MM-DD` dates and added focused tests for helper parsing, schema acceptance, and project item DatePicker values.
+- **Outcome:** Users can select a specific day without the UI snapping back to day one, while older resume data continues to load safely.
 
 ### [2026-04-29] - Skills Clear-All Control
 

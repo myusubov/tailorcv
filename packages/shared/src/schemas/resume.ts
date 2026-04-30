@@ -6,10 +6,10 @@ import { z } from 'zod';
 const dateSchema = z
   .string()
   .trim()
-  .describe('Date in YYYY-MM or YYYY format.')
+  .describe('Date in YYYY-MM-DD, YYYY-MM, or YYYY format.')
   .regex(
-    /^\d{4}(-(0[1-9]|1[0-2]))?$/,
-    'Please enter a valid date in YYYY-MM format (e.g., 2024-05)',
+    /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/,
+    'Please enter a valid date in YYYY-MM-DD, YYYY-MM, or YYYY format (e.g., 2024-05-20)',
   );
 
 const idSchema = z.string().trim().min(1, 'Missing ID');

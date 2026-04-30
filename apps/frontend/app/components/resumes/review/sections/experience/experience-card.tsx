@@ -13,11 +13,14 @@ import {
   Calendar,
   Tooltip,
 } from '@heroui/react';
-import { parseDate } from '@internationalized/date';
 import { Icon } from '@iconify/react';
 import type { BaseResumeData } from 'shared';
 import { BulletsEditor } from './bullets-editor';
 import { DateSegmentFilter } from '../date-segment-filter';
+import {
+  parseResumeDateValue,
+  serializeResumeDateValue,
+} from '@/lib/utils/resume-date';
 
 /**
  * Props for the ExperienceCard component.
@@ -198,9 +201,9 @@ export function ExperienceCard({
             <DatePicker
               className="w-full"
               isInvalid={!!fieldState.error}
-              value={field.value ? parseDate(`${field.value}-01`) : null}
+              value={parseResumeDateValue({ value: field.value })}
               onChange={(date) => {
-                field.onChange(date ? date.toString().slice(0, 7) : '');
+                field.onChange(serializeResumeDateValue({ value: date }));
               }}
             >
               <Label>Start Date *</Label>
@@ -216,7 +219,9 @@ export function ExperienceCard({
               </DateField.Group>
               <DatePicker.Popover>
                 <Calendar
-                  maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}
+                  maxValue={
+                    parseResumeDateValue({ value: endDate }) ?? undefined
+                  }
                 >
                   <Calendar.Header>
                     <Calendar.YearPickerTrigger>
@@ -260,9 +265,9 @@ export function ExperienceCard({
                 className="w-full"
                 isInvalid={!!fieldState.error}
                 isDisabled={!!isCurrent}
-                value={field.value ? parseDate(`${field.value}-01`) : null}
+                value={parseResumeDateValue({ value: field.value })}
                 onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : '')
+                  field.onChange(serializeResumeDateValue({ value: date }))
                 }
               >
                 <Label>End Date</Label>
@@ -281,7 +286,7 @@ export function ExperienceCard({
                 <DatePicker.Popover>
                   <Calendar
                     minValue={
-                      startDate ? parseDate(`${startDate}-01`) : undefined
+                      parseResumeDateValue({ value: startDate }) ?? undefined
                     }
                   >
                     <Calendar.Header>

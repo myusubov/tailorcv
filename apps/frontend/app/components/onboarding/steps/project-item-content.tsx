@@ -17,9 +17,12 @@ import {
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
-import { parseDate } from '@internationalized/date';
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
 import { ArrayInput } from '@/app/components/ui';
+import {
+  parseResumeDateValue,
+  serializeResumeDateValue,
+} from '@/lib/utils/resume-date';
 
 export interface ProjectItemContentProps {
   /** Array index of this project item */
@@ -43,6 +46,8 @@ export function ProjectItemContent({
   const isCurrent = useWatch({ control, name: `projects.${index}.isCurrent` });
   const startDate = useWatch({ control, name: `projects.${index}.startDate` });
   const endDate = useWatch({ control, name: `projects.${index}.endDate` });
+  const isStartDateRequired = !!isCurrent || !!endDate;
+  const isEndDateRequired = !!startDate && !isCurrent;
 
   return (
     <Card className="mb-4">
@@ -180,19 +185,39 @@ export function ProjectItemContent({
             control={control}
             render={({ field, fieldState }) => (
               <DatePicker
-                value={field.value ? parseDate(`${field.value}-01`) : null}
+                value={parseResumeDateValue({ value: field.value })}
                 onChange={(date) =>
-                  field.onChange(date ? date.toString().slice(0, 7) : '')
+                  field.onChange(serializeResumeDateValue({ value: date }))
                 }
-                isRequired
+                isRequired={isStartDateRequired}
                 isInvalid={!!fieldState.error}
               >
-                <Label isRequired>Start Date</Label>
+                <Label isRequired={isStartDateRequired}>Start Date</Label>
                 <DateField.Group>
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
                   </DateField.Input>
-                  <DateField.Suffix>
+                  <DateField.Suffix className="flex items-center gap-1">
+                    {field.value ? (
+                      <button
+                        type="button"
+                        aria-label="Clear start date"
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          field.onChange('');
+                        }}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onKeyDown={(event) => event.stopPropagation()}
+                        className="text-muted-foreground hover:bg-default/40 hover:text-foreground focus-visible:ring-ring flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        <Icon icon="lucide:x" className="size-4" />
+                      </button>
+                    ) : null}
                     <DatePicker.Trigger>
                       <DatePicker.TriggerIndicator />
                     </DatePicker.Trigger>
@@ -200,7 +225,9 @@ export function ProjectItemContent({
                 </DateField.Group>
                 <DatePicker.Popover>
                   <Calendar
-                    maxValue={endDate ? parseDate(`${endDate}-01`) : undefined}
+                    maxValue={
+                      parseResumeDateValue({ value: endDate }) ?? undefined
+                    }
                   >
                     <Calendar.Header>
                       <Calendar.YearPickerTrigger>
@@ -240,20 +267,40 @@ export function ProjectItemContent({
               render={({ field, fieldState }) => (
                 <DatePicker
                   className="w-full"
-                  isRequired={!isCurrent}
-                  value={field.value ? parseDate(`${field.value}-01`) : null}
+                  isRequired={isEndDateRequired}
+                  value={parseResumeDateValue({ value: field.value })}
                   onChange={(date) =>
-                    field.onChange(date ? date.toString().slice(0, 7) : '')
+                    field.onChange(serializeResumeDateValue({ value: date }))
                   }
                   isDisabled={!!isCurrent}
                   isInvalid={!!fieldState.error}
                 >
-                  <Label isRequired={!isCurrent}>End Date</Label>
+                  <Label isRequired={isEndDateRequired}>End Date</Label>
                   <DateField.Group>
                     <DateField.Input>
                       {(segment) => <DateField.Segment segment={segment} />}
                     </DateField.Input>
-                    <DateField.Suffix>
+                    <DateField.Suffix className="flex items-center gap-1">
+                      {field.value ? (
+                        <button
+                          type="button"
+                          aria-label="Clear end date"
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            field.onChange('');
+                          }}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                          className="text-muted-foreground hover:bg-default/40 hover:text-foreground focus-visible:ring-ring flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                        >
+                          <Icon icon="lucide:x" className="size-4" />
+                        </button>
+                      ) : null}
                       <DatePicker.Trigger>
                         <DatePicker.TriggerIndicator />
                       </DatePicker.Trigger>
@@ -262,7 +309,8 @@ export function ProjectItemContent({
                   <DatePicker.Popover>
                     <Calendar
                       minValue={
-                        startDate ? parseDate(`${startDate}-01`) : undefined
+                        parseResumeDateValue({ value: startDate }) ??
+                        undefined
                       }
                     >
                       <Calendar.Header>
