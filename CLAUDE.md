@@ -404,4 +404,6 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 
 ## Compounding Corrections
 
-<!-- Add corrections as they come up during development -->
+- Do not add or update tests for purely presentational copy, layout, count-display, or static text changes unless the behavior is critical, regression-prone, or protects an accessibility, validation, state-transition, persistence, async-flow, cache, or error-handling contract.
+- Prefer tests that prove meaningful user-observable behavior: form state changes, validation, submission, reordering, persistence, cache updates, async flow, error handling, or accessibility-critical interactions.
+- Before adding a new test file or broad UI assertions, confirm the test would catch a meaningful bug that users or developers would care about. If it only asserts static text exists, do not add it by default.

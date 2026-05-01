@@ -79,20 +79,6 @@ describe('RegistrationVerification', () => {
     mockToastSuccess.mockReset();
   });
 
-  it('renders the verification UI', () => {
-    render(
-      <RegistrationVerification
-        email="user@example.com"
-        onGoBack={vi.fn()}
-        signUp={createSignUpMock() as unknown as SignUpProp}
-        resetForm={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText('Check your email')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Verify Email' })).toBeTruthy();
-  });
-
   it('shows resend errors returned by Clerk', async () => {
     const user = userEvent.setup();
     const signUp = createSignUpMock();

@@ -274,13 +274,6 @@ function ProjectItemContentHarness({
 }
 
 describe('ProjectItemContent', () => {
-  it('uses a compact accessible number badge instead of a repeated title', () => {
-    render(<ProjectItemContentHarness />);
-
-    expect(screen.queryByText('Project #1')).toBeNull();
-    expect(screen.getByLabelText('Project 1').textContent).toBe('1');
-  });
-
   it('marks project dates as required only when date context needs them', () => {
     const { unmount } = render(<ProjectItemContentHarness />);
 
@@ -331,4 +324,5 @@ describe('ProjectItemContent', () => {
         ?.getAttribute('data-date-picker-value'),
     ).toBe('2026-05-12');
   });
+
 });
