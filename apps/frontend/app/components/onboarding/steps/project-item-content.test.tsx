@@ -21,17 +21,19 @@ vi.mock('@heroui/react', () => ({
   Button: ({
     children,
     onPress,
+    isDisabled,
     isIconOnly: _isIconOnly,
     variant: _variant,
     size: _size,
     ...props
   }: ButtonHTMLAttributes<HTMLButtonElement> & {
+    isDisabled?: boolean;
     isIconOnly?: boolean;
     onPress?: () => void;
     size?: string;
     variant?: string;
   }): ReactElement => (
-    <button type="button" onClick={onPress} {...props}>
+    <button type="button" disabled={isDisabled} onClick={onPress} {...props}>
       {children}
     </button>
   ),
@@ -266,6 +268,10 @@ function ProjectItemContentHarness({
     <FormProvider {...form}>
       <ProjectItemContent
         index={0}
+        isFirst
+        isLast
+        onMoveDown={() => undefined}
+        onMoveUp={() => undefined}
         onDelete={() => undefined}
         onDuplicate={() => undefined}
       />
@@ -324,5 +330,4 @@ describe('ProjectItemContent', () => {
         ?.getAttribute('data-date-picker-value'),
     ).toBe('2026-05-12');
   });
-
 });

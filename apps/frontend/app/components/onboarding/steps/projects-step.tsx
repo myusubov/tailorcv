@@ -1,17 +1,8 @@
 'use client';
 
 import { useState, type KeyboardEvent } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Button,
-  Card,
-  Chip,
-  Description,
-  Input,
-  Label,
-  TextField,
-  useOverlayState,
-} from '@heroui/react';
+import { motion } from 'framer-motion';
+import { Button, Card, useOverlayState } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { nanoid } from 'nanoid';
@@ -22,6 +13,8 @@ import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 import { DeleteProjectModal } from '@/app/components/projects/delete-project-modal';
 import { ProjectItemContent } from './project-item-content';
 import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
+import { OnboardingItemSection } from './onboarding-item-section';
+import { TechnicalSkillsSection } from './technical-skills-section';
 
 interface ProjectsStepProps {
   onNext: () => void;
@@ -73,8 +66,6 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
       control,
       name: 'skills',
     }) ?? [];
-  const projectCount = fields.length;
-  const projectCountLabel = `${projectCount} ${projectCount === 1 ? 'project' : 'projects'}`;
   const [skillInput, setSkillInput] = useState('');
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
@@ -184,84 +175,45 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
         </Card>
 
         {/* Projects Section */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-foreground text-lg font-semibold">Projects</h3>
-            {projectCount > 0 && (
-              <span className="text-muted-foreground text-sm font-medium">
-                {projectCountLabel}
-              </span>
-            )}
-          </div>
-          {fields.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Card className="mt-2">
-                <Card.Content className="flex flex-col items-center justify-center px-5 py-5 text-center">
-                  <p className="text-muted-foreground text-sm text-balance">
-                    Projects are optional, but strong projects can showcase
-                    applied skills, technical judgment, and measurable impact.
-                  </p>
-
-                  <div className="mt-4 w-full max-w-sm">
-                    <Button
-                      variant="secondary"
-                      onPress={addProject}
-                      className="w-full"
-                    >
-                      <Icon icon="lucide:plus" className="size-4" />
-                      Add Project
-                    </Button>
-                  </div>
-                </Card.Content>
-              </Card>
-            </motion.div>
-          ) : (
-            <>
-              <AnimatePresence mode="popLayout">
-                {fields.map((project, index) => (
-                  <ReorderableItem
-                    key={project.id}
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    transition={{ duration: 0.3 }}
-                    layout
-                    isFirst={index === 0}
-                    isLast={index === fields.length - 1}
-                    onMoveUp={() => handleMoveUp(index)}
-                    onMoveDown={() => handleMoveDown(index)}
-                  >
-                    <ProjectItemContent
-                      index={index}
-                      onDelete={() => {
-                        setDeleteIndex(index);
-                        deleteModalState.open();
-                      }}
-                      onDuplicate={() => handleDuplicate(index)}
-                    />
-                  </ReorderableItem>
-                ))}
-              </AnimatePresence>
-              <Button
-                variant="secondary"
-                onPress={addProject}
-                className="w-full"
+        <div className="mb-8">
+          <OnboardingItemSection
+            addLabel="Add Project"
+            addMoreLabel="Add Another Project"
+            count={fields.length}
+            emptyDescription="Projects are optional, but strong projects can showcase applied skills, technical judgment, and measurable impact."
+            onAdd={addProject}
+            singularLabel="project"
+            title="Projects"
+          >
+            {fields.map((project, index) => (
+              <ReorderableItem
+                key={project.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                layout
+                isFirst={index === 0}
+                isLast={index === fields.length - 1}
+                onMoveUp={() => handleMoveUp(index)}
+                onMoveDown={() => handleMoveDown(index)}
               >
-                <Icon icon="lucide:plus" className="size-4" />
-                Add Another Project
-              </Button>
-            </>
-          )}
-        </motion.div>
+                <ProjectItemContent
+                  index={index}
+                  isFirst={index === 0}
+                  isLast={index === fields.length - 1}
+                  onMoveUp={() => handleMoveUp(index)}
+                  onMoveDown={() => handleMoveDown(index)}
+                  onDelete={() => {
+                    setDeleteIndex(index);
+                    deleteModalState.open();
+                  }}
+                  onDuplicate={() => handleDuplicate(index)}
+                />
+              </ReorderableItem>
+            ))}
+          </OnboardingItemSection>
+        </div>
 
         {/* Skills Section */}
         <motion.div
@@ -272,55 +224,14 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           <h3 className="text-foreground mb-4 text-lg font-semibold">
             Technical Skills
           </h3>
-          <Card>
-            <Card.Content className="space-y-4">
-              <TextField className="w-full">
-                <div className="flex items-center justify-between gap-3">
-                  <Label>Add Skills</Label>
-                  {skills.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      aria-label="Clear all skills"
-                      onPress={clearSkills}
-                      className="text-muted-foreground hover:text-foreground px-2 text-sm"
-                    >
-                      <Icon icon="lucide:x-circle" className="size-4" />
-                      Clear all
-                    </Button>
-                  )}
-                </div>
-                <Input
-                  placeholder="Type a skill and press Enter..."
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={handleSkillKeyDown}
-                />
-                <Description className="sr-only">
-                  Press Enter to add each skill
-                </Description>
-              </TextField>
-              {skills.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <Chip
-                      key={skill.id}
-                      className="bg-primary/10 text-primary gap-1 pr-1"
-                    >
-                      {skill.name}
-                      <button
-                        type="button"
-                        aria-label={`Remove ${skill.name} skill`}
-                        onClick={() => removeSkill({ skillId: skill.id })}
-                        className="hover:bg-primary/20 rounded-full p-0.5"
-                      >
-                        <Icon icon="lucide:x" className="size-3" />
-                      </button>
-                    </Chip>
-                  ))}
-                </div>
-              )}
-            </Card.Content>
-          </Card>
+          <TechnicalSkillsSection
+            clearSkills={clearSkills}
+            skillInput={skillInput}
+            skills={skills}
+            onSkillKeyDown={handleSkillKeyDown}
+            removeSkill={removeSkill}
+            setSkillInput={setSkillInput}
+          />
         </motion.div>
 
         {/* Navigation */}

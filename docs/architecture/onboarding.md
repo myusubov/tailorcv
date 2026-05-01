@@ -47,6 +47,9 @@ app/onboarding/page.tsx
 | `apps/frontend/app/onboarding/types.ts`                                 | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
 | `apps/frontend/app/components/onboarding/manual-entry-form.tsx`         | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes.                  |
 | `apps/frontend/app/components/onboarding/progress-bar.tsx`              | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
+| `apps/frontend/app/components/onboarding/steps/onboarding-item-section.tsx` | Shared repeatable-item section wrapper for manual entry cards.                 | Experience, projects, or education list-section UI changes. |
+| `apps/frontend/app/components/onboarding/steps/technical-skills-section.tsx` | Technical skills input and chip UI used by Projects & Skills.                 | Technical skills UI changes.                |
+| `apps/frontend/app/components/onboarding/steps/date-clear-button.tsx`    | Shared DatePicker clear control for onboarding date fields.                      | Resume date clear-control behavior changes. |
 | `apps/frontend/lib/utils/resume-date.ts`                                | Shared DatePicker parser/serializer for resume date strings.                      | Resume date picker behavior changes.        |
 | `packages/shared/src/schemas/resume.ts`                                  | Single source of truth for onboarding resume validation.                          | Resume data validation changes.             |
 | `apps/frontend/app/components/onboarding/steps/projects-step.test.tsx`  | Locks the projects and skills guidance, empty-state, and skill chip UI contracts. | Projects & Skills step UI changes.          |
@@ -149,6 +152,26 @@ if (ok) goToNextStep();
 ---
 
 ## 10. Development Log
+
+### [2026-05-01] - Experience Card Alignment & Mobile Project Reordering
+
+- **Decision:** Experience cards now follow the same scan pattern as project cards, while project cards expose mobile reorder controls like the other reorderable onboarding entries.
+- **Problem:** Experience cards still used the older `Job #n` header, separate current-role checkbox placement, and non-clearable date controls, while project cards lacked small-screen up/down controls for users who cannot access the desktop hover controls.
+- **Solution:**
+  1. **Experience section polish:** Updated `apps/frontend/app/components/onboarding/steps/experience-step.tsx` to add an `Experience` section header, populated count, calmer empty state, and consistent add-action labels.
+  2. **Experience card alignment:** Updated `apps/frontend/app/components/onboarding/steps/experience-item-content.tsx` to use a numeric badge, clearable date pickers, and the current-role checkbox directly under End Date.
+  3. **Project mobile controls:** Updated `apps/frontend/app/components/onboarding/steps/projects-step.tsx` and `project-item-content.tsx` to pass and render mobile up/down reorder controls without changing the desktop floating controls.
+- **Outcome:** Work experience and project entries now share a consistent card rhythm, and project cards can be reordered on small screens.
+
+### [2026-05-01] - Onboarding Step Component Modularization
+
+- **Decision:** Repeatable onboarding step sections, date clear controls, and technical skills UI now live in focused components instead of being embedded in the step containers.
+- **Problem:** `experience-step.tsx` and `projects-step.tsx` mixed section chrome, empty states, add actions, item rendering, and skills UI, making small UI changes harder to review.
+- **Solution:**
+  1. **Shared section wrapper:** Added `apps/frontend/app/components/onboarding/steps/onboarding-item-section.tsx` and reused it from experience and projects steps.
+  2. **Shared date clear control:** Added `apps/frontend/app/components/onboarding/steps/date-clear-button.tsx` and reused it in project and experience date pickers.
+  3. **Skills section extraction:** Added `apps/frontend/app/components/onboarding/steps/technical-skills-section.tsx` so `projects-step.tsx` keeps form orchestration separate from skills rendering.
+- **Outcome:** Experience and Projects & Skills steps are easier to scan while preserving their existing form state, validation, and navigation behavior.
 
 ### [2026-04-30] - Resume Date Picker Full-Date Preservation
 

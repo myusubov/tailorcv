@@ -23,6 +23,7 @@ import {
   parseResumeDateValue,
   serializeResumeDateValue,
 } from '@/lib/utils/resume-date';
+import { DateClearButton } from './date-clear-button';
 
 export interface ExperienceItemContentProps {
   /** Array index of this experience item */
@@ -35,7 +36,6 @@ export interface ExperienceItemContentProps {
   onMoveUp: () => void;
   /** Callback to move item down in the list */
   onMoveDown: () => void;
-  /** Callback to delete this item */
   /** Callback to delete this item */
   onDelete: () => void;
   /** Callback to duplicate this item */
@@ -69,12 +69,17 @@ export function ExperienceItemContent({
   return (
     <Card className="mb-4 overflow-visible">
       <Card.Header className="flex-row items-center justify-between">
-        <Card.Title className="text-base">Job #{index + 1}</Card.Title>
+        <span
+          aria-label={`Experience ${index + 1}`}
+          className="bg-surface-secondary text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+        >
+          {index + 1}
+        </span>
         <div className="flex items-center gap-1">
-          {/* Mobile Reorder Controls */}
           <div className="flex items-center gap-1 lg:hidden">
             <Tooltip delay={500}>
               <Button
+                aria-label="Move experience up"
                 onPress={onMoveUp}
                 isDisabled={isFirst}
                 isIconOnly
@@ -90,6 +95,7 @@ export function ExperienceItemContent({
             </Tooltip>
             <Tooltip delay={500}>
               <Button
+                aria-label="Move experience down"
                 onPress={onMoveDown}
                 isDisabled={isLast}
                 isIconOnly
@@ -107,6 +113,7 @@ export function ExperienceItemContent({
 
           <Tooltip delay={500}>
             <Button
+              aria-label="Duplicate experience"
               isIconOnly
               variant="ghost"
               size="sm"
@@ -122,6 +129,7 @@ export function ExperienceItemContent({
 
           <Tooltip delay={500}>
             <Button
+              aria-label="Remove experience"
               isIconOnly
               variant="ghost"
               size="sm"
@@ -214,7 +222,13 @@ export function ExperienceItemContent({
                   <DateField.Input>
                     {(segment) => <DateField.Segment segment={segment} />}
                   </DateField.Input>
-                  <DateField.Suffix>
+                  <DateField.Suffix className="flex items-center gap-1">
+                    {field.value ? (
+                      <DateClearButton
+                        label="Clear start date"
+                        onClear={() => field.onChange('')}
+                      />
+                    ) : null}
                     <DatePicker.Trigger>
                       <DatePicker.TriggerIndicator />
                     </DatePicker.Trigger>
@@ -258,93 +272,105 @@ export function ExperienceItemContent({
             )}
           />
 
-          <Controller
-            name={`experiences.${index}.endDate`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <DatePicker
-                isRequired={!isCurrent}
-                value={parseResumeDateValue({ value: field.value })}
-                onChange={(date) =>
-                  field.onChange(serializeResumeDateValue({ value: date }))
-                }
-                isDisabled={!!isCurrent}
-                isInvalid={!!fieldState.error}
-              >
-                <Label isRequired={!isCurrent}>End Date</Label>
-                <DateField.Group>
-                  <DateField.Input>
-                    {(segment) => <DateField.Segment segment={segment} />}
-                  </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger>
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover>
-                  <Calendar
-                    minValue={
-                      parseResumeDateValue({ value: startDate }) ?? undefined
-                    }
-                  >
-                    <Calendar.Header>
-                      <Calendar.YearPickerTrigger>
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <Calendar.NavButton slot="previous" />
-                      <Calendar.NavButton slot="next" />
-                    </Calendar.Header>
-                    <Calendar.Grid>
-                      <Calendar.GridHeader>
-                        {(day) => (
-                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
-                        )}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>
-                        {(date) => <Calendar.Cell date={date} />}
-                      </Calendar.GridBody>
-                    </Calendar.Grid>
-                    <Calendar.YearPickerGrid>
-                      <Calendar.YearPickerGridBody>
-                        {({ year }) => <Calendar.YearPickerCell year={year} />}
-                      </Calendar.YearPickerGridBody>
-                    </Calendar.YearPickerGrid>
-                  </Calendar>
-                </DatePicker.Popover>
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </DatePicker>
-            )}
-          />
-        </div>
+          <div className="w-full space-y-2">
+            <Controller
+              name={`experiences.${index}.endDate`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <DatePicker
+                  className="w-full"
+                  isRequired={!isCurrent}
+                  value={parseResumeDateValue({ value: field.value })}
+                  onChange={(date) =>
+                    field.onChange(serializeResumeDateValue({ value: date }))
+                  }
+                  isDisabled={!!isCurrent}
+                  isInvalid={!!fieldState.error}
+                >
+                  <Label isRequired={!isCurrent}>End Date</Label>
+                  <DateField.Group>
+                    <DateField.Input>
+                      {(segment) => <DateField.Segment segment={segment} />}
+                    </DateField.Input>
+                    <DateField.Suffix className="flex items-center gap-1">
+                      {field.value ? (
+                        <DateClearButton
+                          label="Clear end date"
+                          onClear={() => field.onChange('')}
+                        />
+                      ) : null}
+                      <DatePicker.Trigger>
+                        <DatePicker.TriggerIndicator />
+                      </DatePicker.Trigger>
+                    </DateField.Suffix>
+                  </DateField.Group>
+                  <DatePicker.Popover>
+                    <Calendar
+                      minValue={
+                        parseResumeDateValue({ value: startDate }) ??
+                        undefined
+                      }
+                    >
+                      <Calendar.Header>
+                        <Calendar.YearPickerTrigger>
+                          <Calendar.YearPickerTriggerHeading />
+                          <Calendar.YearPickerTriggerIndicator />
+                        </Calendar.YearPickerTrigger>
+                        <Calendar.NavButton slot="previous" />
+                        <Calendar.NavButton slot="next" />
+                      </Calendar.Header>
+                      <Calendar.Grid>
+                        <Calendar.GridHeader>
+                          {(day) => (
+                            <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                          )}
+                        </Calendar.GridHeader>
+                        <Calendar.GridBody>
+                          {(date) => <Calendar.Cell date={date} />}
+                        </Calendar.GridBody>
+                      </Calendar.Grid>
+                      <Calendar.YearPickerGrid>
+                        <Calendar.YearPickerGridBody>
+                          {({ year }) => (
+                            <Calendar.YearPickerCell year={year} />
+                          )}
+                        </Calendar.YearPickerGridBody>
+                      </Calendar.YearPickerGrid>
+                    </Calendar>
+                  </DatePicker.Popover>
+                  {fieldState.error && (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  )}
+                </DatePicker>
+              )}
+            />
 
-        <Controller
-          name={`experiences.${index}.isCurrent`}
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              isSelected={!!field.value}
-              onChange={(isChecked) => {
-                field.onChange(isChecked);
-                if (isChecked) {
-                  setValue(`experiences.${index}.endDate`, null, {
-                    shouldValidate: true,
-                  });
-                }
-              }}
-            >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Content>
-                <span className="text-sm">I currently work here</span>
-              </Checkbox.Content>
-            </Checkbox>
-          )}
-        />
+            <Controller
+              name={`experiences.${index}.isCurrent`}
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  isSelected={!!field.value}
+                  onChange={(isChecked) => {
+                    field.onChange(isChecked);
+                    if (isChecked) {
+                      setValue(`experiences.${index}.endDate`, null, {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
+                >
+                  <Checkbox.Control className="size-5">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <span className="text-sm">I currently work here</span>
+                  </Checkbox.Content>
+                </Checkbox>
+              )}
+            />
+          </div>
+        </div>
 
         <Controller
           name={`experiences.${index}.bullets.0.text`}
