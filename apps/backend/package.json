@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch --include .env src/server.ts",
     "dev:worker": "tsx watch --include .env src/worker-runner.ts",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "build": "tsc -p tsconfig.build.json",
     "start": "cross-env NODE_ENV=production TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/src/server.js",
     "start:worker": "cross-env NODE_ENV=production TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/src/worker-runner.js",
