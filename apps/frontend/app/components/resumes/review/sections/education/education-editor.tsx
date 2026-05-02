@@ -145,7 +145,7 @@ export function EducationEditor() {
 
         {/* Empty state */}
         {(!fields || fields.length === 0) && (
-          <p className="text-muted text-center text-sm">
+          <p className="text-muted-foreground text-center text-sm">
             No education added yet. This is optional.
           </p>
         )}

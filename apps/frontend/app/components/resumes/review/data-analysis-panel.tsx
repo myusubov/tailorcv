@@ -74,11 +74,11 @@ export function DataAnalysisPanel({
           Resume Completeness
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-muted text-xs">{progressPct}% Complete</span>
+          <span className="text-muted-foreground text-xs">{progressPct}% Complete</span>
           <Icon
             icon="lucide:chevron-down"
             className={cn(
-              'text-muted size-4 transition-transform duration-300',
+              'text-muted-foreground size-4 transition-transform duration-300',
               isExpanded ? 'rotate-180' : '',
             )}
           />
@@ -144,7 +144,7 @@ export function DataAnalysisPanel({
                         'text-[10px] transition-colors',
                         isSelected
                           ? 'text-muted-foreground'
-                          : 'text-muted group-hover:text-muted-foreground',
+                          : 'text-muted-foreground group-hover:text-muted-foreground',
                       )}
                     >
                       {item.message}

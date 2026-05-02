@@ -64,7 +64,7 @@ export function ConversationItem({
           </Tooltip.Content>
         </Tooltip>
       </div>
-      <div className="text-muted flex items-center gap-2 text-xs">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <span>
           {formatDistanceToNow(new Date(conversation.updatedAt), {
             addSuffix: true,

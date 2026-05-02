@@ -296,7 +296,7 @@ export function ExperienceItemContent({
                       {field.value ? (
                         <DateClearButton
                           label="Clear end date"
-                          onClear={() => field.onChange('')}
+                          onClear={() => field.onChange(null)}
                         />
                       ) : null}
                       <DatePicker.Trigger>

@@ -320,7 +320,7 @@ export function ProjectItemContent({
                       {field.value ? (
                         <DateClearButton
                           label="Clear end date"
-                          onClear={() => field.onChange('')}
+                          onClear={() => field.onChange(null)}
                         />
                       ) : null}
                       <DatePicker.Trigger>

@@ -247,7 +247,7 @@ export function ResetPasswordView({
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
             {isVerifyStep ? (
-              <p className="text-muted text-center text-sm">
+              <p className="text-muted-foreground text-center text-sm">
                 Didn&apos;t receive the code?{' '}
                 <button
                   type="button"
@@ -260,7 +260,7 @@ export function ResetPasswordView({
                 </button>
               </p>
             ) : null}
-            <p className="text-muted text-center text-sm">
+            <p className="text-muted-foreground text-center text-sm">
               <button
                 type="button"
                 aria-label="Use a different email address"

@@ -151,7 +151,7 @@ export function ExperienceEditor() {
 
         {/* Empty state */}
         {fields.length === 0 && (
-          <p className="text-muted text-center text-sm">
+          <p className="text-muted-foreground text-center text-sm">
             No work experience added yet.
           </p>
         )}

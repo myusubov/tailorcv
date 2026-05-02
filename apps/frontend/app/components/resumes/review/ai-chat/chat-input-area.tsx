@@ -157,7 +157,7 @@ export function ChatInputArea({
                 className={cn(
                   input.trim() && !isTyping
                     ? 'bg-accent text-accent-foreground'
-                    : 'bg-default text-muted',
+                    : 'bg-default text-muted-foreground',
                 )}
                 aria-label="Send message"
               >

@@ -68,7 +68,7 @@ export function BulletsEditor({ basePath }: BulletsEditorProps) {
 
   return (
     <div className="space-y-2">
-      <Label className="text-muted text-xs">
+      <Label className="text-muted-foreground text-xs">
         Achievements / Responsibilities
       </Label>
 

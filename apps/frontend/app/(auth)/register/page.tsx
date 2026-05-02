@@ -47,7 +47,7 @@ export default function RegisterPage() {
             <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
               Create account
             </h2>
-            <p className="text-muted mt-3 text-lg">
+            <p className="text-muted-foreground mt-3 text-lg">
               Start building your resume for free.
             </p>
           </motion.div>

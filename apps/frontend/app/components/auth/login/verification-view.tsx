@@ -80,7 +80,7 @@ export function VerificationView({
             </form>
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-            <p className="text-muted text-center text-sm">
+            <p className="text-muted-foreground text-center text-sm">
               Didn&apos;t receive the code?{' '}
               <button
                 type="button"
@@ -93,7 +93,7 @@ export function VerificationView({
             </p>
             <button
               type="button"
-              className="text-muted mt-2 text-sm hover:underline"
+              className="text-muted-foreground mt-2 text-sm hover:underline"
               onClick={onBack}
             >
               Back to Sign In

@@ -133,7 +133,7 @@ export function EmailEntryView({
             <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
               Forgot password?
             </h2>
-            <p className="text-muted mt-3 text-lg">
+            <p className="text-muted-foreground mt-3 text-lg">
               Enter your email and we&apos;ll send you a reset code
             </p>
           </motion.div>
@@ -196,7 +196,7 @@ export function EmailEntryView({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.5 }}
-              className="text-muted text-center text-sm"
+              className="text-muted-foreground text-center text-sm"
             >
               Remember your password?{' '}
               <NextLink

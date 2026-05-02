@@ -60,7 +60,7 @@ export function BulletItem({
       >
         <Icon
           icon="lucide:grip-vertical"
-          className="text-muted hover:text-foreground size-3.5 transition-colors"
+          className="text-muted-foreground hover:text-foreground size-3.5 transition-colors"
         />
       </div>
 

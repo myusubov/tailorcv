@@ -80,7 +80,7 @@ export function RegisterFormView({
           <Separator className="border-divider w-full" />
         </div>
         <div className="relative flex justify-center text-xs tracking-wider uppercase">
-          <span className="bg-background text-muted px-4 font-medium">Or</span>
+          <span className="bg-background text-muted-foreground px-4 font-medium">Or</span>
         </div>
       </motion.div>
 
@@ -96,7 +96,7 @@ export function RegisterFormView({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 1.0 }}
-        className="text-muted text-center text-sm"
+        className="text-muted-foreground text-center text-sm"
       >
         Already have an account?{' '}
         <NextLink
