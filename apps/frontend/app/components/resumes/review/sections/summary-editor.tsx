@@ -31,7 +31,7 @@ export function SummaryEditor() {
           </TextField>
         )}
       />
-      <p className="text-muted text-xs">
+      <p className="text-muted-foreground text-xs">
         Aim for 2-4 sentences that capture your professional identity.
       </p>
     </div>

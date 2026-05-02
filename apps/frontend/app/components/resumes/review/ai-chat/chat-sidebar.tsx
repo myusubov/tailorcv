@@ -104,7 +104,7 @@ export function ChatSidebar() {
                   <ConversationSkeleton />
                 </>
               ) : conversations.length === 0 ? (
-                <div className="text-muted flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
+                <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
                   <Icon
                     icon="solar:chat-dots-linear"
                     className="size-8 opacity-50"

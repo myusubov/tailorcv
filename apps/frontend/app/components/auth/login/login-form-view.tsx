@@ -80,7 +80,7 @@ export function LoginFormView({
           <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome back
           </h2>
-          <p className="text-muted mt-3 text-lg">
+          <p className="text-muted-foreground mt-3 text-lg">
             Enter your email to sign in to your account
           </p>
         </motion.div>
@@ -100,7 +100,7 @@ export function LoginFormView({
               </div>
               <div className="space-y-1 text-left">
                 <p className="text-foreground font-semibold">{authNotice.title}</p>
-                <p className="text-muted text-sm">{authNotice.description}</p>
+                <p className="text-muted-foreground text-sm">{authNotice.description}</p>
               </div>
             </div>
 
@@ -219,7 +219,7 @@ export function LoginFormView({
               <Separator className="border-divider w-full" />
             </div>
             <div className="relative flex justify-center text-xs tracking-wider uppercase">
-              <span className="bg-background text-muted px-4 font-medium">
+              <span className="bg-background text-muted-foreground px-4 font-medium">
                 Or
               </span>
             </div>
@@ -280,7 +280,7 @@ export function LoginFormView({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.8 }}
-            className="text-muted text-center text-sm"
+            className="text-muted-foreground text-center text-sm"
           >
             Don&apos;t have an account?{' '}
             <NextLink

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Card, useOverlayState } from '@heroui/react';
+import { motion } from 'framer-motion';
+import { Button, useOverlayState } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { useFormContext } from 'react-hook-form';
 import { nanoid } from 'nanoid';
@@ -13,7 +13,7 @@ import { DeleteExperienceModal } from '@/app/components/experience/delete-experi
 import { ReorderableItem } from '@/app/components/ui/reorderable-item';
 import { ExperienceItemContent } from './experience-item-content';
 import { useStableFieldArray } from '@/lib/hooks/use-stable-field-array';
-import { v4 as uuidv4 } from 'uuid';
+import { OnboardingItemSection } from './onboarding-item-section';
 
 interface ExperienceStepProps {
   onNext: () => void;
@@ -91,9 +91,9 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
 
     const newItem = {
       ...itemToDuplicate,
-      id: uuidv4(),
+      id: nanoid(),
       bullets:
-        itemToDuplicate.bullets?.map((b) => ({ ...b, id: uuidv4() })) || [],
+        itemToDuplicate.bullets?.map((b) => ({ ...b, id: nanoid() })) || [],
     };
 
     const newExperiences = [
@@ -122,7 +122,15 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
           description="Add your professional work history."
         />
 
-        <AnimatePresence mode="popLayout">
+        <OnboardingItemSection
+          addLabel="Add Experience"
+          addMoreLabel="Add Another Experience"
+          count={fields.length}
+          emptyDescription="Experience is optional. Add work history if it strengthens your resume, or continue with projects and skills."
+          onAdd={addExperience}
+          singularLabel="experience"
+          title="Experience"
+        >
           {fields.map((field, index) => (
             <ReorderableItem
               key={field.id}
@@ -150,55 +158,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
               />
             </ReorderableItem>
           ))}
-        </AnimatePresence>
-
-        {fields.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <Card className="mt-2">
-              <Card.Content className="flex flex-col items-center justify-center px-6 py-8 text-center">
-                <h3 className="text-foreground text-lg font-semibold">
-                  No work experience yet?
-                </h3>
-                <p className="text-muted-foreground mt-2 max-w-md text-sm">
-                  This step is optional. Add a job if you have one — or skip and
-                  we&apos;ll still build a great resume from your projects and
-                  skills.
-                </p>
-
-                <div className="mt-6 w-full max-w-sm">
-                  <Button
-                    variant="secondary"
-                    onPress={addExperience}
-                    className="w-full"
-                  >
-                    <Icon icon="lucide:plus" className="size-4" />
-                    Add your first job
-                  </Button>
-                </div>
-              </Card.Content>
-            </Card>
-          </motion.div>
-        ) : (
-          <motion.div
-            className="flex flex-col gap-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Button
-              variant="secondary"
-              onPress={addExperience}
-              className="w-full"
-            >
-              <Icon icon="lucide:plus" className="size-4" />
-              Add Another Job
-            </Button>
-          </motion.div>
-        )}
+        </OnboardingItemSection>
 
         <motion.div
           className="mt-8 flex items-center justify-between gap-3"
@@ -209,7 +169,7 @@ export function ExperienceStep({ onNext, onBack }: ExperienceStepProps) {
           <Button
             variant="ghost"
             onPress={onBack}
-            className="text-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back

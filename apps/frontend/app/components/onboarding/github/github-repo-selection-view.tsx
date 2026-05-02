@@ -85,7 +85,7 @@ export function GitHubRepoSelectionView({
               <p className="text-foreground font-semibold">
                 Connected as @{connection.githubUsername}
               </p>
-              <p className="text-muted text-sm">
+              <p className="text-muted-foreground text-sm">
                 {repos.length} repositories found
               </p>
             </div>
@@ -100,7 +100,7 @@ export function GitHubRepoSelectionView({
             Select Your Hero Repositories
           </motion.h1>
           <motion.p
-            className="text-muted text-sm"
+            className="text-muted-foreground text-sm"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -121,7 +121,7 @@ export function GitHubRepoSelectionView({
           <div className="relative sm:max-w-xs">
             <Icon
               icon="lucide:search"
-              className="text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2"
+              className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
             />
             <Input
               placeholder="Search repositories..."
@@ -133,7 +133,7 @@ export function GitHubRepoSelectionView({
           <div className="flex items-center gap-2">
             <span
               className={`text-sm font-medium ${
-                selectedRepos.size === MAX_REPOS ? 'text-warning' : 'text-muted'
+                selectedRepos.size === MAX_REPOS ? 'text-warning' : 'text-muted-foreground'
               }`}
             >
               {selectedRepos.size}/{MAX_REPOS} selected
@@ -181,20 +181,20 @@ export function GitHubRepoSelectionView({
                           icon={
                             repo.private ? 'lucide:lock' : 'lucide:book-open'
                           }
-                          className="text-muted size-4 shrink-0"
+                          className="text-muted-foreground size-4 shrink-0"
                         />
                         <h3 className="text-foreground truncate font-semibold">
                           {repo.name}
                         </h3>
                         {repo.fork && (
-                          <span className="bg-surface-secondary text-muted rounded px-1.5 py-0.5 text-xs">
+                          <span className="bg-surface-secondary text-muted-foreground rounded px-1.5 py-0.5 text-xs">
                             Fork
                           </span>
                         )}
                       </div>
 
                       {repo.description && (
-                        <p className="text-muted mb-2 line-clamp-1 text-sm">
+                        <p className="text-muted-foreground mb-2 line-clamp-1 text-sm">
                           {repo.description}
                         </p>
                       )}
@@ -209,18 +209,18 @@ export function GitHubRepoSelectionView({
                                   LANGUAGE_COLORS[repo.language] || '#6e7681',
                               }}
                             />
-                            <span className="text-muted">{repo.language}</span>
+                            <span className="text-muted-foreground">{repo.language}</span>
                           </span>
                         )}
-                        <span className="text-muted flex items-center gap-1">
+                        <span className="text-muted-foreground flex items-center gap-1">
                           <Icon icon="lucide:star" className="size-3" />
                           {repo.stargazers_count}
                         </span>
-                        <span className="text-muted flex items-center gap-1">
+                        <span className="text-muted-foreground flex items-center gap-1">
                           <Icon icon="lucide:git-fork" className="size-3" />
                           {repo.forks_count}
                         </span>
-                        <span className="text-muted">
+                        <span className="text-muted-foreground">
                           Updated{' '}
                           {formatDistanceToNow(new Date(repo.updated_at), {
                             addSuffix: true,
@@ -252,9 +252,9 @@ export function GitHubRepoSelectionView({
             <div className="col-span-full py-12 text-center">
               <Icon
                 icon="lucide:search-x"
-                className="text-muted mx-auto mb-3 size-12"
+                className="text-muted-foreground mx-auto mb-3 size-12"
               />
-              <p className="text-muted">No repositories match your search.</p>
+              <p className="text-muted-foreground">No repositories match your search.</p>
             </div>
           )}
         </motion.div>
@@ -269,7 +269,7 @@ export function GitHubRepoSelectionView({
           <Button
             variant="ghost"
             onPress={onBack}
-            className="text-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back

@@ -56,7 +56,7 @@ export function GitHubConnectView({
           </motion.h1>
 
           <motion.p
-            className="text-muted mx-auto mt-4 max-w-md text-base leading-relaxed"
+            className="text-muted-foreground mx-auto mt-4 max-w-md text-base leading-relaxed"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
@@ -99,7 +99,7 @@ export function GitHubConnectView({
                 <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
                   <Icon icon={item.icon} className="text-primary size-4" />
                 </div>
-                <span className="text-muted text-sm">{item.text}</span>
+                <span className="text-muted-foreground text-sm">{item.text}</span>
               </motion.div>
             ))}
           </div>
@@ -127,7 +127,7 @@ export function GitHubConnectView({
             {isConnecting ? 'Connecting...' : 'Connect GitHub Account'}
           </Button>
 
-          <p className="text-muted flex items-center gap-2 text-xs">
+          <p className="text-muted-foreground flex items-center gap-2 text-xs">
             <Icon icon="lucide:lock" className="size-3" />
             Read-only access. We never modify your repositories.
           </p>
@@ -135,7 +135,7 @@ export function GitHubConnectView({
           <Button
             variant="ghost"
             onPress={onBack}
-            className="text-muted hover:text-foreground mt-2"
+            className="text-muted-foreground hover:text-foreground mt-2"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Choose a different method

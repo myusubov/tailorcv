@@ -31,7 +31,7 @@ export function RegisterTermsField({ control }: RegisterTermsFieldProps) {
                 <Checkbox.Indicator />
               </Checkbox.Control>
               <Checkbox.Content>
-                <span className="text-muted text-sm leading-snug">
+                <span className="text-muted-foreground text-sm leading-snug">
                   I agree to the{' '}
                   <Link href="#" className="text-primary hover:text-primary/80 font-bold">
                     Terms

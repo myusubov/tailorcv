@@ -71,10 +71,10 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
         <h1 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
           Welcome to TailorCV!
         </h1>
-        <p className="text-muted mt-3 text-lg">
+        <p className="text-muted-foreground mt-3 text-lg">
           Let&apos;s create your base resume in 2 minutes
         </p>
-        <p className="text-muted mt-2 text-sm">
+        <p className="text-muted-foreground mt-2 text-sm">
           Choose the fastest way to get started:
         </p>
       </motion.div>
@@ -125,16 +125,16 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
                   </Card.Description>
                 </Card.Header>
 
-                <p className="text-muted mt-2 text-xs">{method.details}</p>
+                <p className="text-muted-foreground mt-2 text-xs">{method.details}</p>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <div className="text-muted flex items-center gap-1.5 text-xs">
+                  <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
                     <Icon icon="lucide:clock" className="size-3.5" />
                     <span>Takes {method.time}</span>
                   </div>
                   <Icon
                     icon="lucide:arrow-right"
-                    className="text-muted size-4 transition-transform group-hover:translate-x-1"
+                    className="text-muted-foreground size-4 transition-transform group-hover:translate-x-1"
                   />
                 </div>
               </button>

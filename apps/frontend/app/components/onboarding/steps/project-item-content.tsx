@@ -23,10 +23,19 @@ import {
   parseResumeDateValue,
   serializeResumeDateValue,
 } from '@/lib/utils/resume-date';
+import { DateClearButton } from './date-clear-button';
 
 export interface ProjectItemContentProps {
   /** Array index of this project item */
   index: number;
+  /** Whether this is the first item in the list */
+  isFirst: boolean;
+  /** Whether this is the last item in the list */
+  isLast: boolean;
+  /** Callback to move item up in the list */
+  onMoveUp: () => void;
+  /** Callback to move item down in the list */
+  onMoveDown: () => void;
   /** Callback to delete this item */
   onDelete: () => void;
   /** Callback to duplicate this item */
@@ -39,6 +48,10 @@ export interface ProjectItemContentProps {
  */
 export function ProjectItemContent({
   index,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
   onDelete,
   onDuplicate,
 }: ProjectItemContentProps) {
@@ -59,8 +72,44 @@ export function ProjectItemContent({
           {index + 1}
         </span>
         <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 lg:hidden">
+            <Tooltip delay={500}>
+              <Button
+                aria-label="Move project up"
+                onPress={onMoveUp}
+                isDisabled={isFirst}
+                isIconOnly
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Icon icon="lucide:arrow-up" />
+              </Button>
+              <Tooltip.Content>
+                <p>Move up</p>
+              </Tooltip.Content>
+            </Tooltip>
+            <Tooltip delay={500}>
+              <Button
+                aria-label="Move project down"
+                onPress={onMoveDown}
+                isDisabled={isLast}
+                isIconOnly
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Icon icon="lucide:arrow-down" />
+              </Button>
+              <Tooltip.Content>
+                <p>Move down</p>
+              </Tooltip.Content>
+            </Tooltip>
+          </div>
+
           <Tooltip delay={500}>
             <Button
+              aria-label="Duplicate project"
               isIconOnly
               variant="ghost"
               size="sm"
@@ -75,6 +124,7 @@ export function ProjectItemContent({
           </Tooltip>
           <Tooltip delay={500}>
             <Button
+              aria-label="Remove project"
               isIconOnly
               variant="ghost"
               size="sm"
@@ -199,24 +249,10 @@ export function ProjectItemContent({
                   </DateField.Input>
                   <DateField.Suffix className="flex items-center gap-1">
                     {field.value ? (
-                      <button
-                        type="button"
-                        aria-label="Clear start date"
-                        onPointerDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          field.onChange('');
-                        }}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onKeyDown={(event) => event.stopPropagation()}
-                        className="text-muted-foreground hover:bg-default/40 hover:text-foreground focus-visible:ring-ring flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                      >
-                        <Icon icon="lucide:x" className="size-4" />
-                      </button>
+                      <DateClearButton
+                        label="Clear start date"
+                        onClear={() => field.onChange('')}
+                      />
                     ) : null}
                     <DatePicker.Trigger>
                       <DatePicker.TriggerIndicator />
@@ -282,24 +318,10 @@ export function ProjectItemContent({
                     </DateField.Input>
                     <DateField.Suffix className="flex items-center gap-1">
                       {field.value ? (
-                        <button
-                          type="button"
-                          aria-label="Clear end date"
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                          }}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            field.onChange('');
-                          }}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                          className="text-muted-foreground hover:bg-default/40 hover:text-foreground focus-visible:ring-ring flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                        >
-                          <Icon icon="lucide:x" className="size-4" />
-                        </button>
+                        <DateClearButton
+                          label="Clear end date"
+                          onClear={() => field.onChange(null)}
+                        />
                       ) : null}
                       <DatePicker.Trigger>
                         <DatePicker.TriggerIndicator />

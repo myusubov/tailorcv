@@ -47,7 +47,7 @@ export function RegistrationVerificationView({
                 <Tooltip delay={500}>
                   <Button
                     isIconOnly
-                    className="text-muted hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
+                    className="text-muted-foreground hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
                     onClick={onGoBack}
                   >
                     <Icon icon="lucide:undo-2" className="size-3" />
@@ -113,7 +113,7 @@ export function RegistrationVerificationView({
             </form>
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-            <p className="text-muted text-center text-sm">
+            <p className="text-muted-foreground text-center text-sm">
               Didn&apos;t receive the code?{' '}
               <button
                 type="button"

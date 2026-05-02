@@ -175,7 +175,7 @@ export function UploadAboutMeView({
             variant="ghost"
             onPress={onBack}
             isDisabled={isUploading}
-            className="text-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back

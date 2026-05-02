@@ -119,7 +119,7 @@ export function ReviewPageContent() {
                   </Tooltip.Content>
                 </Tooltip>
               </div>
-              <span className="text-muted text-xs">
+              <span className="text-muted-foreground text-xs">
                 {isSaving
                   ? 'Saving...'
                   : isDirty
@@ -130,7 +130,7 @@ export function ReviewPageContent() {
               </span>
             </div>
           </div>
-          <p className="text-muted text-sm">
+          <p className="text-muted-foreground text-sm">
             Make sure everything looks good before finalizing.
           </p>
         </div>

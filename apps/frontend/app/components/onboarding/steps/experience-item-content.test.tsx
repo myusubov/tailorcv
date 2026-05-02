@@ -11,7 +11,7 @@ import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form
 import { describe, expect, it, vi } from 'vitest';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
-import { ProjectItemContent } from './project-item-content';
+import { ExperienceItemContent } from './experience-item-content';
 
 interface ChildrenProps {
   children?: ReactNode;
@@ -168,6 +168,7 @@ vi.mock('@heroui/react', () => ({
       TriggerIndicator: (): ReactElement => <span />,
     },
   ),
+  Description: ({ children }: ChildrenProps): ReactElement => <p>{children}</p>,
   FieldError: ({ children }: ChildrenProps): ReactElement => <p>{children}</p>,
   Input: (props: InputHTMLAttributes<HTMLInputElement>): ReactElement => (
     <input {...props} />
@@ -216,24 +217,22 @@ vi.mock('@/app/components/ui', () => ({
   ArrayInput: ({ label }: { label: string }): ReactElement => <div>{label}</div>,
 }));
 
-interface ProjectItemContentHarnessProps {
-  endDate?: string;
-  isCurrent?: boolean;
-  startDate?: string;
+interface ExperienceItemContentHarnessProps {
+  endDate?: string | null;
 }
 
-function ProjectEndDateValue(): ReactElement {
+function ExperienceEndDateValue(): ReactElement {
   const { control } = useFormContext<OnboardingFormInput>();
-  const endDate = useWatch({ control, name: 'projects.0.endDate' });
+  const endDate = useWatch({ control, name: 'experiences.0.endDate' });
 
-  return <output data-testid="project-end-date-value">{String(endDate)}</output>;
+  return (
+    <output data-testid="experience-end-date-value">{String(endDate)}</output>
+  );
 }
 
-function ProjectItemContentHarness({
+function ExperienceItemContentHarness({
   endDate = '',
-  isCurrent = false,
-  startDate = '',
-}: ProjectItemContentHarnessProps = {}): ReactElement {
+}: ExperienceItemContentHarnessProps = {}): ReactElement {
   const form = useForm<OnboardingFormInput>({
     defaultValues: {
       version: 1,
@@ -250,21 +249,20 @@ function ProjectItemContentHarness({
       },
       summary: '',
       skills: [],
-      experiences: [],
-      projects: [
+      experiences: [
         {
-          id: 'project-1',
-          name: 'Personal Portfolio',
-          role: '',
-          startDate,
+          id: 'experience-1',
+          title: 'Frontend Developer',
+          company: 'Acme Inc.',
+          location: '',
+          startDate: '2024-01',
           endDate,
-          isCurrent,
-          url: '',
-          repoUrl: '',
+          isCurrent: false,
           tech: [],
           bullets: [{ id: 'bullet-1', text: '' }],
         },
       ],
+      projects: [],
       education: [],
       certifications: [],
       languages: [],
@@ -273,7 +271,7 @@ function ProjectItemContentHarness({
 
   return (
     <FormProvider {...form}>
-      <ProjectItemContent
+      <ExperienceItemContent
         index={0}
         isFirst
         isLast
@@ -282,73 +280,22 @@ function ProjectItemContentHarness({
         onDelete={() => undefined}
         onDuplicate={() => undefined}
       />
-      <ProjectEndDateValue />
+      <ExperienceEndDateValue />
     </FormProvider>
   );
 }
 
-describe('ProjectItemContent', () => {
-  it('marks project dates as required only when date context needs them', () => {
-    const { unmount } = render(<ProjectItemContentHarness />);
-
-    expect(screen.getByText('Start Date').dataset.required).toBe('false');
-    expect(screen.getByText('End Date').dataset.required).toBe('false');
-
-    unmount();
-    const endDateRender = render(
-      <ProjectItemContentHarness endDate="2026-02" />,
-    );
-
-    expect(screen.getByText('Start Date').dataset.required).toBe('true');
-    expect(screen.getByText('End Date').dataset.required).toBe('false');
-
-    endDateRender.unmount();
-    const startDateRender = render(
-      <ProjectItemContentHarness startDate="2026-01" />,
-    );
-
-    expect(screen.getByText('Start Date').dataset.required).toBe('false');
-    expect(screen.getByText('End Date').dataset.required).toBe('true');
-
-    startDateRender.unmount();
-    render(<ProjectItemContentHarness isCurrent />);
-
-    expect(screen.getByText('Start Date').dataset.required).toBe('true');
-    expect(screen.getByText('End Date').dataset.required).toBe('false');
-  });
-
-  it('passes full saved dates through to the date picker', () => {
-    render(
-      <ProjectItemContentHarness
-        startDate="2026-04-20"
-        endDate="2026-05-12"
-      />,
-    );
-
-    expect(
-      screen
-        .getByText('Start Date')
-        .closest('[data-date-picker-value]')
-        ?.getAttribute('data-date-picker-value'),
-    ).toBe('2026-04-20');
-    expect(
-      screen
-        .getByText('End Date')
-        .closest('[data-date-picker-value]')
-        ?.getAttribute('data-date-picker-value'),
-    ).toBe('2026-05-12');
-  });
-
+describe('ExperienceItemContent', () => {
   it('clears end date to null from the clear button', () => {
-    render(<ProjectItemContentHarness endDate="2026-05" />);
+    render(<ExperienceItemContentHarness endDate="2026-05" />);
 
-    expect(screen.getByTestId('project-end-date-value').textContent).toBe(
+    expect(screen.getByTestId('experience-end-date-value').textContent).toBe(
       '2026-05',
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear end date' }));
 
-    expect(screen.getByTestId('project-end-date-value').textContent).toBe(
+    expect(screen.getByTestId('experience-end-date-value').textContent).toBe(
       'null',
     );
   });

@@ -1,11 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TextField, Label, Input, Button, FieldError } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { StepHeader } from '../step-header';
-import { Controller, useFormContext } from 'react-hook-form';
-import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
+import { ContactInputField } from './contact-input-field';
 
 interface ContactStepProps {
   onNext: () => void;
@@ -22,8 +21,6 @@ const fieldVariants = {
 };
 
 export function ContactStep({ onNext, onBack }: ContactStepProps) {
-  const { control } = useFormContext<OnboardingFormInput>();
-
   return (
     <div className="mx-auto w-full max-w-xl">
       <StepHeader
@@ -40,171 +37,80 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <motion.div custom={0} variants={fieldVariants}>
-            <Controller
+            <ContactInputField
               name="contact.firstName"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField
-                  isRequired
-                  className="w-full"
-                  isInvalid={!!fieldState.error}
-                >
-                  <Label>First Name</Label>
-                  <Input {...field} placeholder="e.g. Jane" />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
-              )}
+              label="First Name"
+              placeholder="e.g. Jane"
+              isRequired
             />
           </motion.div>
 
           <motion.div custom={1} variants={fieldVariants}>
-            <Controller
+            <ContactInputField
               name="contact.lastName"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField
-                  isRequired
-                  className="w-full"
-                  isInvalid={!!fieldState.error}
-                >
-                  <Label>Last Name</Label>
-                  <Input {...field} placeholder="e.g. Doe" />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
-              )}
+              label="Last Name"
+              placeholder="e.g. Doe"
+              isRequired
             />
           </motion.div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <motion.div custom={2} variants={fieldVariants}>
-            <Controller
+            <ContactInputField
               name="contact.email"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField
-                  isRequired
-                  className="w-full"
-                  isInvalid={!!fieldState.error}
-                >
-                  <Label>Email Address</Label>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="e.g. jane.doe@example.com"
-                  />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
-              )}
+              label="Email Address"
+              placeholder="e.g. jane.doe@example.com"
+              type="email"
+              isRequired
             />
           </motion.div>
 
           <motion.div custom={3} variants={fieldVariants}>
-            <Controller
+            <ContactInputField
               name="contact.phone"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField isInvalid={!!fieldState.error} className="w-full">
-                  <Label>Phone Number</Label>
-                  <Input
-                    {...field}
-                    value={field.value || ''}
-                    placeholder="e.g. +1 (555) 000-0000"
-                  />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
-              )}
+              label="Phone Number"
+              placeholder="e.g. +1 (555) 000-0000"
+              useEmptyFallback
             />
           </motion.div>
         </div>
 
         <motion.div custom={4} variants={fieldVariants}>
-          <Controller
+          <ContactInputField
             name="contact.location"
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField isInvalid={!!fieldState.error} className="w-full">
-                <Label>Location</Label>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  placeholder="e.g. San Francisco, CA"
-                />
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </TextField>
-            )}
+            label="Location"
+            placeholder="e.g. San Francisco, CA"
+            useEmptyFallback
           />
         </motion.div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <motion.div custom={5} variants={fieldVariants}>
-            <Controller
+            <ContactInputField
               name="contact.githubUrl"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField isInvalid={!!fieldState.error} className="w-full">
-                  <Label>GitHub URL</Label>
-                  <Input
-                    {...field}
-                    value={field.value || ''}
-                    placeholder="https://github.com/username"
-                  />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
-              )}
+              label="GitHub URL"
+              placeholder="https://github.com/username"
+              useEmptyFallback
             />
           </motion.div>
 
           <motion.div custom={6} variants={fieldVariants}>
-            <Controller
+            <ContactInputField
               name="contact.linkedinUrl"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField isInvalid={!!fieldState.error} className="w-full">
-                  <Label>LinkedIn URL</Label>
-                  <Input
-                    {...field}
-                    value={field.value || ''}
-                    placeholder="https://linkedin.com/in/username"
-                  />
-                  {fieldState.error && (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  )}
-                </TextField>
-              )}
+              label="LinkedIn URL"
+              placeholder="https://linkedin.com/in/username"
+              useEmptyFallback
             />
           </motion.div>
         </div>
 
         <motion.div custom={7} variants={fieldVariants}>
-          <Controller
+          <ContactInputField
             name="contact.websiteUrl"
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField isInvalid={!!fieldState.error} className="w-full">
-                <Label>Portfolio / Website</Label>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  placeholder="https://yourwebsite.com"
-                />
-                {fieldState.error && (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                )}
-              </TextField>
-            )}
+            label="Portfolio / Website"
+            placeholder="https://yourwebsite.com"
+            useEmptyFallback
           />
         </motion.div>
       </motion.div>
@@ -220,7 +126,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           onPress={onBack}
           className="text-muted-foreground hover:text-foreground"
         >
-          <Icon icon="lucide:arrow-left" className="size-4" />
+          <Icon icon="lucide:arrow-left" className="size-4" aria-hidden />
           Back
         </Button>
         <Button onPress={onNext} className="group px-6">
@@ -228,6 +134,7 @@ export function ContactStep({ onNext, onBack }: ContactStepProps) {
           <Icon
             icon="lucide:arrow-right"
             className="size-4 transition-transform group-hover:translate-x-1"
+            aria-hidden
           />
         </Button>
       </motion.div>
