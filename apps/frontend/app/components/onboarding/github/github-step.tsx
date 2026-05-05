@@ -9,9 +9,6 @@ import {
 import { GitHubConnectView } from './github-connect-view';
 import { GitHubLoadingView } from './github-loading-view';
 import { GitHubRepoSelectionView } from './github-repo-selection-view';
-import { useOnboardingJob } from '../onboarding-job-context';
-import { useActionMutation } from '@/lib/hooks/use-action-mutation';
-import { startOnboardingGithubJobAction } from '@/lib/actions/onboarding.actions';
 import { env } from '@/lib/config';
 import { useQueryStates, parseAsString } from 'nuqs';
 import GithubErrorView from './github-error-view';
@@ -22,8 +19,6 @@ interface GitHubStepProps {
 
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const [isConnecting, setIsConnecting] = useState(false);
-  const { beginJob } = useOnboardingJob();
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   // Handle OAuth search params using nuqs
   const [oauthParams, setOauthParams] = useQueryStates(
@@ -34,16 +29,6 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     {
       history: 'replace',
       shallow: true,
-    },
-  );
-
-  const { mutate: analyze, isPending: isAnalyzing } = useActionMutation(
-    (input: { repositoryIds: string[] }) => startOnboardingGithubJobAction(input, idempotencyKey),
-    {
-      onSuccess: (res) => {
-        beginJob(res.jobId);
-      },
-      onSettled: () => setIdempotencyKey(crypto.randomUUID()),
     },
   );
 
@@ -83,7 +68,10 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    analyze({ repositoryIds: selectedRepoIds.map(String) });
+    toast.info(
+      `GitHub analysis is not implemented yet. ${selectedRepoIds.length} ${selectedRepoIds.length === 1 ? 'repository' : 'repositories'
+      } selected.`,
+    );
   };
 
   // Show loading state while checking connection status
@@ -94,10 +82,6 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   // If connected and we have repos, show the selection view
   // Note: connectionError with 404/502 means no connection found
   if (githubConnection && !connectionError) {
-    if (isLoadingRepos) {
-      return <GitHubLoadingView />;
-    }
-
     if (reposError) {
       return (
         <GithubErrorView
@@ -108,17 +92,14 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
       );
     }
 
-    if (!githubRepos) {
-      return <GitHubLoadingView />;
-    }
-
     return (
       <GitHubRepoSelectionView
-        repos={githubRepos}
+        repos={githubRepos ?? []}
         connection={githubConnection}
         onBack={onBack}
         onAnalyze={handleAnalyze}
-        isLoading={isAnalyzing}
+        isLoading={false}
+        isReposLoading={isLoadingRepos}
       />
     );
   }

@@ -1,15 +1,17 @@
 'use client';
 
-import { Button, Input, Spinner, Card } from '@heroui/react';
-import { Icon } from '@iconify/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo } from 'react';
-import { GitHubRepo, GitHubConnection } from 'shared';
-import Image from 'next/image';
-import { formatDistanceToNow } from 'date-fns';
-import { LANGUAGE_COLORS } from '@/lib/constants/github';
+import { motion } from 'framer-motion';
+import { parseAsString, useQueryState } from 'nuqs';
+import { useMemo, useState } from 'react';
+import type { GitHubConnection, GitHubRepo } from 'shared';
+import { GitHubRepoCard } from './github-repo-card';
+import { GitHubRepoGridSkeleton } from './github-repo-grid-skeleton';
+import { GitHubRepoSelectionActions } from './github-repo-selection-actions';
+import { GitHubRepoSelectionEmptyState } from './github-repo-selection-empty-state';
+import { GitHubRepoSelectionHeader } from './github-repo-selection-header';
+import { GitHubRepoSelectionToolbar } from './github-repo-selection-toolbar';
 
-const MAX_REPOS = 5;
+const MAX_REPOS = 3;
 
 interface GitHubRepoSelectionViewProps {
   repos: GitHubRepo[];
@@ -17,17 +19,32 @@ interface GitHubRepoSelectionViewProps {
   onBack: () => void;
   onAnalyze: (selectedRepoIds: number[]) => void;
   isLoading?: boolean;
+  isReposLoading?: boolean;
 }
 
+interface ToggleRepoInput {
+  repoId: number;
+}
+
+/**
+ * Coordinates GitHub repository search, selection state, and repo analysis handoff.
+ */
 export function GitHubRepoSelectionView({
   repos,
   connection,
   onBack,
   onAnalyze,
   isLoading,
+  isReposLoading,
 }: GitHubRepoSelectionViewProps) {
   const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useQueryState(
+    'q',
+    parseAsString.withDefault('').withOptions({
+      history: 'replace',
+      shallow: true,
+    }),
+  );
 
   const filteredRepos = useMemo(() => {
     if (!searchQuery.trim()) return repos;
@@ -40,7 +57,7 @@ export function GitHubRepoSelectionView({
     );
   }, [repos, searchQuery]);
 
-  const toggleRepo = (repoId: number) => {
+  const toggleRepo = ({ repoId }: ToggleRepoInput) => {
     setSelectedRepos((prev) => {
       const next = new Set(prev);
       if (next.has(repoId)) {
@@ -56,238 +73,68 @@ export function GitHubRepoSelectionView({
     onAnalyze(Array.from(selectedRepos));
   };
 
+  const clearSelection = () => {
+    setSelectedRepos(new Set());
+  };
+
   return (
-    <div className="flex min-h-[60vh] flex-col px-4 py-8">
+    <div className="flex min-h-[60vh] flex-col">
       <motion.div
         className="mx-auto w-full max-w-3xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Header */}
-        <div className="mb-8 text-center">
+        <GitHubRepoSelectionHeader
+          connection={connection}
+          repositoryCount={repos.length}
+          maxRepos={MAX_REPOS}
+          isRepositoryCountLoading={isReposLoading}
+        />
+
+        <GitHubRepoSelectionToolbar
+          searchQuery={searchQuery}
+          selectedCount={selectedRepos.size}
+          maxRepos={MAX_REPOS}
+          onSearchChange={setSearchQuery}
+          onClearSelection={clearSelection}
+        />
+
+        {isReposLoading ? (
+          <GitHubRepoGridSkeleton />
+        ) : (
           <motion.div
-            className="mb-4 flex items-center justify-center gap-3"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
+            className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
           >
-            <Image
-              src={connection.githubAvatarUrl || ''}
-              alt={connection.githubUsername}
-              width={48}
-              height={48}
-              quality={100}
-              priority
-              className="ring-primary/20 size-12 rounded-full ring-2"
-            />
-            <div className="text-left">
-              <p className="text-foreground font-semibold">
-                Connected as @{connection.githubUsername}
-              </p>
-              <p className="text-muted-foreground text-sm">
-                {repos.length} repositories found
-              </p>
-            </div>
-          </motion.div>
-
-          <motion.h1
-            className="text-foreground mb-2 text-2xl font-bold tracking-tight sm:text-3xl"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            Select Your Hero Repositories
-          </motion.h1>
-          <motion.p
-            className="text-muted-foreground text-sm"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Choose up to {MAX_REPOS} repositories that showcase your best work.
-            We&apos;ll analyze commits and PRs to generate powerful impact
-            statements.
-          </motion.p>
-        </div>
-
-        {/* Search & Selection Info */}
-        <motion.div
-          className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="relative sm:max-w-xs">
-            <Icon
-              icon="lucide:search"
-              className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
-            />
-            <Input
-              placeholder="Search repositories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-sm font-medium ${
-                selectedRepos.size === MAX_REPOS ? 'text-warning' : 'text-muted-foreground'
-              }`}
-            >
-              {selectedRepos.size}/{MAX_REPOS} selected
-            </span>
-            {selectedRepos.size === MAX_REPOS && (
-              <span className="bg-warning/10 text-warning rounded-full px-2 py-0.5 text-xs">
-                Max reached
-              </span>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Repository List */}
-        <motion.div
-          className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <>
-            {filteredRepos.map((repo, index) => {
+            {filteredRepos.map((repo) => {
               const isSelected = selectedRepos.has(repo.id);
-              const isDisabled = !isSelected && selectedRepos.size >= MAX_REPOS;
+              const isDisabled =
+                !isSelected && selectedRepos.size >= MAX_REPOS;
 
               return (
-                <Card
+                <GitHubRepoCard
                   key={repo.id}
-                  onClick={() => !isDisabled && toggleRepo(repo.id)}
-                  role="button"
-                  aria-pressed={isSelected}
-                  aria-disabled={isDisabled}
-                  className={`group relative cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
-                      : isDisabled
-                        ? 'cursor-not-allowed opacity-50'
-                        : 'hover:border-primary/50 hover:bg-surface-secondary'
-                  }`}
-                >
-                  <Card.Content className="flex flex-row items-start gap-4">
-                    {/* Repo Info */}
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex items-center gap-2">
-                        <Icon
-                          icon={
-                            repo.private ? 'lucide:lock' : 'lucide:book-open'
-                          }
-                          className="text-muted-foreground size-4 shrink-0"
-                        />
-                        <h3 className="text-foreground truncate font-semibold">
-                          {repo.name}
-                        </h3>
-                        {repo.fork && (
-                          <span className="bg-surface-secondary text-muted-foreground rounded px-1.5 py-0.5 text-xs">
-                            Fork
-                          </span>
-                        )}
-                      </div>
-
-                      {repo.description && (
-                        <p className="text-muted-foreground mb-2 line-clamp-1 text-sm">
-                          {repo.description}
-                        </p>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-3 text-xs">
-                        {repo.language && (
-                          <span className="flex items-center gap-1">
-                            <span
-                              className="size-2.5 rounded-full"
-                              style={{
-                                backgroundColor:
-                                  LANGUAGE_COLORS[repo.language] || '#6e7681',
-                              }}
-                            />
-                            <span className="text-muted-foreground">{repo.language}</span>
-                          </span>
-                        )}
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Icon icon="lucide:star" className="size-3" />
-                          {repo.stargazers_count}
-                        </span>
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Icon icon="lucide:git-fork" className="size-3" />
-                          {repo.forks_count}
-                        </span>
-                        <span className="text-muted-foreground">
-                          Updated{' '}
-                          {formatDistanceToNow(new Date(repo.updated_at), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Selection indicator */}
-                    {isSelected && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="bg-primary flex size-6 items-center justify-center rounded-full"
-                      >
-                        <Icon
-                          icon="lucide:check"
-                          className="text-background size-4"
-                        />
-                      </motion.div>
-                    )}
-                  </Card.Content>
-                </Card>
+                  repo={repo}
+                  isSelected={isSelected}
+                  isDisabled={isDisabled}
+                  onToggle={() => toggleRepo({ repoId: repo.id })}
+                />
               );
             })}
-          </>
 
-          {filteredRepos.length === 0 && (
-            <div className="col-span-full py-12 text-center">
-              <Icon
-                icon="lucide:search-x"
-                className="text-muted-foreground mx-auto mb-3 size-12"
-              />
-              <p className="text-muted-foreground">No repositories match your search.</p>
-            </div>
-          )}
-        </motion.div>
+            {filteredRepos.length === 0 && <GitHubRepoSelectionEmptyState />}
+          </motion.div>
+        )}
 
-        {/* Actions */}
-        <motion.div
-          className="flex items-center justify-between gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <Button
-            variant="ghost"
-            onPress={onBack}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Icon icon="lucide:arrow-left" className="size-4" />
-            Back
-          </Button>
-          <Button
-            isDisabled={selectedRepos.size === 0}
-            onPress={handleAnalyze}
-            isPending={isLoading}
-          >
-            {({ isPending }) => (
-              <>
-                {isPending && <Spinner color="current" size="sm" />}
-                Analyze {selectedRepos.size}{' '}
-                {selectedRepos.size === 1 ? 'Repository' : 'Repositories'}
-              </>
-            )}
-          </Button>
-        </motion.div>
+        <GitHubRepoSelectionActions
+          selectedCount={selectedRepos.size}
+          isLoading={isLoading}
+          onBack={onBack}
+          onAnalyze={handleAnalyze}
+        />
       </motion.div>
     </div>
   );

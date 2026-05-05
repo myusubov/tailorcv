@@ -9,11 +9,11 @@
   "scripts": {
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
     "start:frontend": "npm run start --workspace=frontend",
-    "start:backend": "concurrently \"npm run start --workspace=backend\" \"npm run start:worker --workspace=backend\"",
+    "start:backend": "npm run start --workspace=backend",
     "redis": "sh -c \"docker inspect -f '{{.State.Running}}' tailorcv-redis 2>/dev/null | grep -q true || docker start tailorcv-redis >/dev/null 2>&1 || docker run -d --name tailorcv-redis -p 6380:6379 redis:7 >/dev/null\"",
     "dev": "npm run redis && cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=frontend",
-    "dev:backend": "concurrently \"npm run dev --workspace=shared\" \"npm run dev --workspace=backend\" \"npm run dev:worker --workspace=backend\"",
+    "dev:backend": "concurrently \"npm run dev --workspace=shared\" \"npm run dev --workspace=backend\"",
     "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
     "test": "npm run test --workspaces --if-present",
     "test:frontend": "npm run test -w frontend",
