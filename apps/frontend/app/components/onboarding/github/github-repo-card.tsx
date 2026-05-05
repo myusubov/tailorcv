@@ -28,10 +28,24 @@ export function GitHubRepoCard({
       onClick={() => {
         if (!isDisabled) onToggle();
       }}
+      onKeyDown={(event) => {
+        if (isDisabled) return;
+
+        if (event.key === 'Enter') {
+          onToggle();
+          return;
+        }
+
+        if (event.key === ' ' || event.key === 'Spacebar') {
+          event.preventDefault();
+          onToggle();
+        }
+      }}
       role="button"
+      tabIndex={isDisabled ? -1 : 0}
       aria-pressed={isSelected}
       aria-disabled={isDisabled}
-      className={`group relative cursor-pointer rounded-lg transition-all ${
+      className={`focus-visible:ring-primary/70 group relative cursor-pointer rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none ${
         isSelected
           ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
           : isDisabled

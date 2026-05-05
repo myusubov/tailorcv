@@ -20,6 +20,10 @@ export function GitHubRepoSelectionHeader({
   maxRepos,
   isRepositoryCountLoading,
 }: GitHubRepoSelectionHeaderProps) {
+  const avatarUrl = connection.githubAvatarUrl?.trim();
+  const avatarInitial =
+    connection.githubUsername.trim().charAt(0).toUpperCase() || '?';
+
   return (
     <div className="mb-8 text-center">
       <motion.div
@@ -28,18 +32,32 @@ export function GitHubRepoSelectionHeader({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <Image
-          src={connection.githubAvatarUrl || ''}
-          alt={connection.githubUsername}
-          width={48}
-          height={48}
-          quality={100}
-          priority
-          className="ring-primary/20 size-12 rounded-full ring-2"
-        />
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt={connection.githubUsername}
+            width={48}
+            height={48}
+            quality={100}
+            priority
+            className="ring-primary/20 size-12 rounded-full ring-2"
+          />
+        ) : (
+          <div className="bg-surface-secondary ring-primary/20 text-muted-foreground flex size-12 items-center justify-center rounded-full text-sm font-semibold ring-2">
+            {avatarInitial}
+          </div>
+        )}
         <div className="text-left">
           <p className="text-foreground font-semibold">
-            Connected as <a href={`https://github.com/${connection.githubUsername}`} target="_blank" rel="noopener noreferrer" className="text-primary underline">@{connection.githubUsername}</a>
+            Connected as{' '}
+            <a
+              href={`https://github.com/${connection.githubUsername}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline"
+            >
+              @{connection.githubUsername}
+            </a>
           </p>
           {isRepositoryCountLoading ? (
             <div className="bg-surface-secondary mt-1 h-3 w-32 animate-pulse rounded-full" />
