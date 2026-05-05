@@ -1,6 +1,6 @@
 # Onboarding: Resume Data Capture
 
-> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry, then starts the resume generation job.
+> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. Generation submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt.
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Pillar                   | Description                                                                                                    |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| **Guided completion**    | Manual entry is a sequential flow so required fields are validated before users advance.                       |
-| **Low-clutter feedback** | Progress UI should show where the user is without repeating equivalent percentage, count, and stepper signals. |
-| **Job handoff clarity**  | Once valid data is submitted, the UI hands control to the onboarding job context and job UI.                   |
+| **Guided completion**      | Manual entry is a sequential flow so required fields are validated before users advance.                       |
+| **Low-clutter feedback**   | Progress UI should show where the user is without repeating equivalent percentage, count, and stepper signals. |
+| **Scratch-ready submits**  | Generate/analyze actions keep their UI entry points but do not call backend generation until the new pipeline is designed. |
 
 ### 1.2 Key Decisions
 
@@ -31,8 +31,7 @@ app/onboarding/page.tsx
   └─ ManualEntryForm
        ├─ ProgressBar
        ├─ react-hook-form + onboardingSchema
-       ├─ Contact/Summary/Experience/Projects/Education steps
-       └─ startOnboardingJobAction -> OnboardingJobProvider
+       └─ Contact/Summary/Experience/Projects/Education steps
 ```
 
 ---
@@ -43,9 +42,15 @@ app/onboarding/page.tsx
 
 | File                                                                    | Purpose                                                                           | When to Read                                |
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
-| `apps/frontend/app/onboarding/page.tsx`                                 | Chooses onboarding method and wraps job UI/provider.                              | Any onboarding route-level change.          |
+| `apps/frontend/app/onboarding/page.tsx`                                 | Chooses onboarding method and renders the selected onboarding path.               | Any onboarding route-level change.          |
 | `apps/frontend/app/onboarding/types.ts`                                 | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
-| `apps/frontend/app/components/onboarding/manual-entry-form.tsx`         | Coordinates manual-entry form state, validation, step transitions, and job start. | Manual-entry flow changes.                  |
+| `apps/frontend/app/components/onboarding/manual-entry-form.tsx`         | Coordinates manual-entry form state, validation, step transitions, and placeholder generation submit. | Manual-entry flow changes.                  |
+| `apps/frontend/app/components/onboarding/github/github-step.tsx`        | Handles GitHub connection/repo loading and placeholder repo analysis submit.      | GitHub onboarding path changes.             |
+| `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` | Coordinates GitHub repo search query param, selection limit, clear selection, and analyze handoff. | GitHub repo picker behavior changes.        |
+| `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`      | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components. | GitHub repo picker presentation changes.    |
+| `apps/frontend/app/components/onboarding/github/github-loading-view.tsx` | Skeleton UI for GitHub connection and repository loading states.                  | GitHub onboarding loading-state UI changes. |
+| `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx` | Shared skeleton grid used while GitHub repositories are loading.                  | GitHub repo loading-state UI changes.       |
+| `apps/frontend/app/components/onboarding/upload/upload-step.tsx`        | Handles upload view submission and placeholder file analysis submit.              | Upload onboarding path changes.             |
 | `apps/frontend/app/components/onboarding/progress-bar.tsx`              | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
 | `apps/frontend/app/components/onboarding/steps/onboarding-item-section.tsx` | Shared repeatable-item section wrapper for manual entry cards.                 | Experience, projects, or education list-section UI changes. |
 | `apps/frontend/app/components/onboarding/steps/technical-skills-section.tsx` | Technical skills input and chip UI used by Projects & Skills.                 | Technical skills UI changes.                |
@@ -71,8 +76,7 @@ flowchart TD
   Validate -->|Invalid| Focus[Focus validation error]
   Advance --> Finish[Final Education step]
   Finish --> ValidateAll[Validate full onboarding schema]
-  ValidateAll --> Action[startOnboardingJobAction]
-  Action --> Job[OnboardingJobProvider begins job]
+  ValidateAll --> Placeholder[Show generation placeholder toast]
 ```
 
 ---
@@ -84,9 +88,11 @@ apps/frontend/app/components/onboarding/
 ├── manual-entry-form.tsx       # Manual flow orchestration
 ├── progress-bar.tsx            # Manual step status UI
 ├── progress-bar.test.tsx       # Progress UI contract test
-├── onboarding-job-context.tsx   # Job state provider
-├── onboarding-job-ui.tsx        # Job status UI
-├── github/                     # GitHub onboarding flow views
+├── github/                     # GitHub onboarding flow views and repo picker components
+│   ├── github-step.tsx
+│   ├── github-connect-view.tsx
+│   ├── github-repo-selection-view.tsx
+│   └── github-repo-*.tsx
 ├── upload/                     # Upload onboarding flow views
 └── steps/                      # Manual-entry step components
 ```
@@ -120,7 +126,7 @@ if (ok) goToNextStep();
 | Domain            | Relationship                                                      | Key Interface                                       |
 | ----------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
 | Auth              | New users land on onboarding after registration.                  | `config.auth.afterSignUpUrl`                        |
-| Resume generation | Onboarding starts the generation job after valid input.           | `startOnboardingJobAction`, `OnboardingJobProvider` |
+| Resume generation | Onboarding submit handlers are placeholders until the next analysis pipeline is implemented. | Placeholder toasts in GitHub, upload, and manual paths |
 | Shared schemas    | Manual entry validates against the shared onboarding form schema. | `onboardingSchema`, `OnboardingFormInput`           |
 
 ---
@@ -132,12 +138,14 @@ if (ok) goToNextStep();
 - [x] Sequential manual-entry form
 - [x] Per-step validation before advancing
 - [x] Compact non-interactive progress indicator
+- [x] Generation submit temporarily reset to placeholder
 - [ ] Optional future review screen before generation
 
 ### Phase 2: Alternative Inputs
 
 - [x] Upload onboarding path
 - [x] GitHub onboarding path
+- [x] Alternative-input analysis submit temporarily reset to placeholder
 
 ---
 
@@ -148,10 +156,62 @@ if (ok) goToNextStep();
 | Users interpret the stepper as clickable tabs. | Keep step labels visually status-like and do not render buttons/links.                       |
 | Mobile progress UI becomes cramped.            | Hide the full stepper on small screens and show a compact current-step summary.              |
 | Required data is skipped before generation.    | Trigger step-level validation before advancing and full schema validation before submitting. |
+| Placeholder submits look like completed generation. | Use explicit not-implemented toasts until the new generation pipeline exists.              |
 
 ---
 
 ## 10. Development Log
+
+### [2026-05-05] - Progressive GitHub Repository Loading
+
+- **Decision:** Render the GitHub repo picker shell as soon as the connection is known, and skeleton-load only repo-dependent content while repositories fetch.
+- **Problem:** Repository loading still blocked the search, selected count, Back, Analyze, and connected-account UI even though the connection data was already available.
+- **Solution:**
+  1. **Progressive flow:** Updated `apps/frontend/app/components/onboarding/github/github-step.tsx` to render `GitHubRepoSelectionView` during repository loading with an empty repo list and `isReposLoading`.
+  2. **Partial skeleton state:** Updated `github-repo-selection-view.tsx` and `github-repo-selection-header.tsx` so only the repository count and grid skeleton while search/actions remain visible.
+  3. **Shared grid skeleton:** Added `github-repo-grid-skeleton.tsx` and reused it from `github-loading-view.tsx` to keep skeleton card shape consistent.
+- **Outcome:** Users see the connected account, search field, selected count, and actions earlier while repositories continue loading in the grid area.
+
+### [2026-05-05] - GitHub Repo Search URL State
+
+- **Decision:** Persist GitHub repo search text in the onboarding URL as `q` using `nuqs`.
+- **Problem:** Repository search was held only in component state, so refreshing the page or sharing the current onboarding URL lost the active filter.
+- **Solution:**
+  1. **URL-backed search state:** Updated `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` to replace local search text state with `useQueryState('q', parseAsString.withDefault(''))`.
+  2. **History control:** Configured the `q` parameter with replace-history and shallow routing so typing in the search bar updates the URL without adding a browser-history entry per keypress.
+  3. **Documentation update:** Updated this doc's key file description for the GitHub repo picker.
+- **Outcome:** The GitHub repo search field now survives refreshes and restores from URLs while preserving existing search filtering and selection behavior.
+
+### [2026-05-04] - GitHub Repo Picker Modularization
+
+- **Decision:** Keep GitHub repo selection behavior in `github-repo-selection-view.tsx`, but move each visual region into focused feature-local components.
+- **Problem:** The repo picker mixed account header, search/status controls, repository cards, empty state, and action footer in one file, making UI changes harder to isolate without touching selection logic.
+- **Solution:**
+  1. **Thin flow container:** Updated `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` to own `selectedRepos`, `searchQuery`, filtering, clear selection, and analyze handoff only.
+  2. **Focused render components:** Added `github-repo-selection-header.tsx`, `github-repo-selection-toolbar.tsx`, `github-repo-card.tsx`, `github-repo-selection-empty-state.tsx`, and `github-repo-selection-actions.tsx` under `apps/frontend/app/components/onboarding/github/`.
+  3. **Documentation entry points:** Updated this doc's GitHub key files and component tree so future GitHub picker work starts from the correct files.
+- **Outcome:** The GitHub repo picker is easier to edit section-by-section while preserving repo search, selection limit, clear selection, empty state, back, and analyze behavior.
+
+### [2026-05-04] - GitHub Loading Skeleton Alignment
+
+- **Decision:** Match the GitHub loading skeleton to the live repository picker layout instead of using the older stacked loading cards.
+- **Problem:** The loading state had different width, spacing, card shape, and breakpoints from the actual repo selection UI, causing a visible layout jump when repositories loaded.
+- **Solution:**
+  1. **Layout parity:** Updated `apps/frontend/app/components/onboarding/github/github-loading-view.tsx` to use the same `max-w-3xl`, header rhythm, toolbar breakpoint, repo grid, and footer action row as the repo picker.
+  2. **Card skeleton parity:** Added a private `RepoCardSkeleton` in `github-loading-view.tsx` with the same rounded card shape and internal zones as `github-repo-card.tsx`.
+  3. **Documentation entry point:** Added `github-loading-view.tsx` to the GitHub onboarding key files table.
+- **Outcome:** GitHub repository loading now transitions into the loaded picker with less visual shift and a closer representation of the final screen.
+
+### [2026-05-04] - Onboarding Generation Reset
+
+- **Decision:** Remove the old onboarding job pipeline while preserving onboarding UI entry points and GitHub connection/repo browsing.
+- **Problem:** GitHub, upload, and manual onboarding submits were coupled to job IDs, BullMQ workers, polling, streaming, idempotency headers, and file extraction code that made the next generation rewrite harder to reason about.
+- **Solution:**
+  1. **Frontend placeholder submits:** Updated `apps/frontend/app/components/onboarding/github/github-step.tsx`, `upload/upload-step.tsx`, and `manual-entry-form.tsx` so Analyze/Generate actions validate/select data and show explicit placeholder toasts instead of calling generation actions.
+  2. **Job UI removal:** Updated `apps/frontend/app/onboarding/page.tsx` and onboarding exports, and removed the job provider, job UI, job proxy routes, and job HTTP hooks.
+  3. **Backend generation reset:** Updated `apps/backend/src/routes/onboarding.router.ts`, `controllers/onboarding.controller.ts`, and `server.ts` to keep only onboarding status and remove onboarding job/worker/admin queue wiring.
+  4. **Database cleanup:** Updated `apps/backend/prisma/schema.prisma` and added a migration to drop `onboarding_jobs` plus its job status/stage enums.
+- **Outcome:** Onboarding is now a clean UI/data-capture surface ready for a new generation implementation without the retired job pipeline.
 
 ### [2026-05-01] - Experience Card Alignment & Mobile Project Reordering
 

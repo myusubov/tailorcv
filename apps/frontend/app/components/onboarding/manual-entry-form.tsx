@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button, Form } from '@heroui/react';
+import { toast } from 'sonner';
 import { ProgressBar } from './progress-bar';
 import {
   ContactStep,
@@ -19,10 +20,7 @@ import {
   onboardingSchema,
   type OnboardingFormInput,
 } from '@/lib/schemas/onboarding';
-import { useActionMutation } from '@/lib/hooks/use-action-mutation';
-import { startOnboardingJobAction } from '@/lib/actions/onboarding.actions';
 import { fillValues } from '@/lib/data/mock-onboarding';
-import { useOnboardingJob } from './onboarding-job-context';
 import { config } from '@/lib/config';
 
 interface ManualEntryFormProps {
@@ -36,10 +34,6 @@ interface ManualEntryFormProps {
 export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   const [currentStep, setCurrentStep] = useState<ManualEntryStep>('contact');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const { beginJob, isActive } = useOnboardingJob();
-  const [idempotencyKey, setIdempotencyKey] = useState(() =>
-    crypto.randomUUID(),
-  );
 
   const form = useForm<OnboardingFormInput>({
     resolver: zodResolver(onboardingSchema),
@@ -66,19 +60,6 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
     },
     mode: 'onSubmit',
   });
-
-  const { mutate: startJob, isPending } = useActionMutation(
-    (data: OnboardingFormInput) =>
-      startOnboardingJobAction(data, idempotencyKey),
-    {
-      successMessage: 'Generating your resume…',
-      onSuccess: (res) => {
-        beginJob(res.jobId);
-      },
-      onSettled: () => setIdempotencyKey(crypto.randomUUID()),
-      form,
-    },
-  );
 
   const currentIndex = MANUAL_STEPS.findIndex((s) => s.key === currentStep);
 
@@ -116,17 +97,15 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
   };
 
   const handleNext = async () => {
-    if (isPending || isActive) return;
     const ok = await form.trigger(stepFields, { shouldFocus: true });
     if (ok) goToNextStep();
   };
 
   const handleFinish = async () => {
-    if (isPending || isActive) return;
     const ok = await form.trigger(undefined, { shouldFocus: true });
     if (!ok) return;
-    const data = onboardingSchema.parse(form.getValues());
-    startJob(data);
+    onboardingSchema.parse(form.getValues());
+    toast.info('Manual resume generation is not implemented yet.');
   };
 
   const slideVariants = {
@@ -159,7 +138,7 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           <EducationStep
             onFinish={handleFinish}
             onBack={goToPreviousStep}
-            isLoading={isPending || isActive}
+            isLoading={false}
           />
         );
       default:
