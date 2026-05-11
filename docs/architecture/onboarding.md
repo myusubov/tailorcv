@@ -8,11 +8,11 @@
 
 ### 1.1 Design Pillars
 
-| Pillar                   | Description                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| **Guided completion**      | Manual entry is a sequential flow so required fields are validated before users advance.                       |
-| **Low-clutter feedback**   | Progress UI should show where the user is without repeating equivalent percentage, count, and stepper signals. |
-| **Scratch-ready submits**  | Generate/analyze actions keep their UI entry points but do not call backend generation until the new pipeline is designed. |
+| Pillar                    | Description                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Guided completion**     | Manual entry is a sequential flow so required fields are validated before users advance.                                   |
+| **Low-clutter feedback**  | Progress UI should show where the user is without repeating equivalent percentage, count, and stepper signals.             |
+| **Scratch-ready submits** | Generate/analyze actions keep their UI entry points but do not call backend generation until the new pipeline is designed. |
 
 ### 1.2 Key Decisions
 
@@ -40,27 +40,27 @@ app/onboarding/page.tsx
 
 > **For AI**: When asked to work on this domain, start by reading these files.
 
-| File                                                                    | Purpose                                                                           | When to Read                                |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------- |
-| `apps/frontend/app/onboarding/page.tsx`                                 | Chooses onboarding method and renders the selected onboarding path.               | Any onboarding route-level change.          |
-| `apps/frontend/app/onboarding/types.ts`                                 | Defines onboarding method and manual-entry step config.                           | Adding, removing, or renaming manual steps. |
-| `apps/frontend/app/components/onboarding/manual-entry-form.tsx`         | Coordinates manual-entry form state, validation, step transitions, and placeholder generation submit. | Manual-entry flow changes.                  |
-| `apps/frontend/app/components/onboarding/github/github-step.tsx`        | Handles GitHub connection/repo loading and placeholder repo analysis submit.      | GitHub onboarding path changes.             |
-| `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` | Coordinates GitHub repo search query param, selection limit, clear selection, and analyze handoff. | GitHub repo picker behavior changes.        |
-| `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`      | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components. | GitHub repo picker presentation changes.    |
-| `apps/frontend/app/components/onboarding/github/github-loading-view.tsx` | Skeleton UI for GitHub connection and repository loading states.                  | GitHub onboarding loading-state UI changes. |
-| `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx` | Shared skeleton grid used while GitHub repositories are loading.                  | GitHub repo loading-state UI changes.       |
-| `apps/frontend/app/components/onboarding/upload/upload-step.tsx`        | Handles upload view submission and placeholder file analysis submit.              | Upload onboarding path changes.             |
-| `apps/frontend/app/components/onboarding/progress-bar.tsx`              | Non-interactive manual-entry step progress indicator.                             | Manual-entry progress UI changes.           |
-| `apps/frontend/app/components/onboarding/steps/onboarding-item-section.tsx` | Shared repeatable-item section wrapper for manual entry cards.                 | Experience, projects, or education list-section UI changes. |
-| `apps/frontend/app/components/onboarding/steps/technical-skills-section.tsx` | Technical skills input and chip UI used by Projects & Skills.                 | Technical skills UI changes.                |
-| `apps/frontend/app/components/onboarding/steps/date-clear-button.tsx`    | Shared DatePicker clear control for onboarding date fields.                      | Resume date clear-control behavior changes. |
-| `apps/frontend/lib/utils/resume-date.ts`                                | Shared DatePicker parser/serializer for resume date strings.                      | Resume date picker behavior changes.        |
-| `packages/shared/src/schemas/resume.ts`                                  | Single source of truth for onboarding resume validation.                          | Resume data validation changes.             |
-| `apps/frontend/app/components/onboarding/steps/projects-step.test.tsx`  | Locks the projects and skills guidance, empty-state, and skill chip UI contracts. | Projects & Skills step UI changes.          |
-| `apps/frontend/app/components/onboarding/steps/project-item-content.test.tsx` | Locks project item header and date picker behavior.                           | Project item UI changes.                    |
-| `apps/frontend/app/components/onboarding/steps/education-step.test.tsx` | Locks the final education empty-state UI contract.                                | Education empty-state UI changes.           |
-| `apps/frontend/app/components/onboarding/steps/`                        | Individual manual-entry form steps.                                               | Field-level manual-entry changes.           |
+| File                                                                            | Purpose                                                                                               | When to Read                                                |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `apps/frontend/app/onboarding/page.tsx`                                         | Chooses onboarding method and renders the selected onboarding path.                                   | Any onboarding route-level change.                          |
+| `apps/frontend/app/onboarding/types.ts`                                         | Defines onboarding method and manual-entry step config.                                               | Adding, removing, or renaming manual steps.                 |
+| `apps/frontend/app/components/onboarding/manual-entry-form.tsx`                 | Coordinates manual-entry form state, validation, step transitions, and placeholder generation submit. | Manual-entry flow changes.                                  |
+| `apps/frontend/app/components/onboarding/github/github-step.tsx`                | Handles GitHub connection/repo loading and temporary repo analysis submit.                            | GitHub onboarding path changes.                             |
+| `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` | Coordinates GitHub repo search query param, selection limit, clear selection, and analyze handoff.    | GitHub repo picker behavior changes.                        |
+| `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`              | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components.           | GitHub repo picker presentation changes.                    |
+| `apps/frontend/app/components/onboarding/github/github-loading-view.tsx`        | Skeleton UI for GitHub connection and repository loading states.                                      | GitHub onboarding loading-state UI changes.                 |
+| `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx`  | Shared skeleton grid used while GitHub repositories are loading.                                      | GitHub repo loading-state UI changes.                       |
+| `apps/frontend/app/components/onboarding/upload/upload-step.tsx`                | Handles upload view submission and placeholder file analysis submit.                                  | Upload onboarding path changes.                             |
+| `apps/frontend/app/components/onboarding/progress-bar.tsx`                      | Non-interactive manual-entry step progress indicator.                                                 | Manual-entry progress UI changes.                           |
+| `apps/frontend/app/components/onboarding/steps/onboarding-item-section.tsx`     | Shared repeatable-item section wrapper for manual entry cards.                                        | Experience, projects, or education list-section UI changes. |
+| `apps/frontend/app/components/onboarding/steps/technical-skills-section.tsx`    | Technical skills input and chip UI used by Projects & Skills.                                         | Technical skills UI changes.                                |
+| `apps/frontend/app/components/onboarding/steps/date-clear-button.tsx`           | Shared DatePicker clear control for onboarding date fields.                                           | Resume date clear-control behavior changes.                 |
+| `apps/frontend/lib/utils/resume-date.ts`                                        | Shared DatePicker parser/serializer for resume date strings.                                          | Resume date picker behavior changes.                        |
+| `packages/shared/src/schemas/resume.ts`                                         | Single source of truth for onboarding resume validation.                                              | Resume data validation changes.                             |
+| `apps/frontend/app/components/onboarding/steps/projects-step.test.tsx`          | Locks the projects and skills guidance, empty-state, and skill chip UI contracts.                     | Projects & Skills step UI changes.                          |
+| `apps/frontend/app/components/onboarding/steps/project-item-content.test.tsx`   | Locks project item header and date picker behavior.                                                   | Project item UI changes.                                    |
+| `apps/frontend/app/components/onboarding/steps/education-step.test.tsx`         | Locks the final education empty-state UI contract.                                                    | Education empty-state UI changes.                           |
+| `apps/frontend/app/components/onboarding/steps/`                                | Individual manual-entry form steps.                                                                   | Field-level manual-entry changes.                           |
 
 ---
 
@@ -123,11 +123,12 @@ if (ok) goToNextStep();
 
 > How this domain connects to other domains. Update this when dependencies change.
 
-| Domain            | Relationship                                                      | Key Interface                                       |
-| ----------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-| Auth              | New users land on onboarding after registration.                  | `config.auth.afterSignUpUrl`                        |
-| Resume generation | Onboarding submit handlers are placeholders until the next analysis pipeline is implemented. | Placeholder toasts in GitHub, upload, and manual paths |
-| Shared schemas    | Manual entry validates against the shared onboarding form schema. | `onboardingSchema`, `OnboardingFormInput`           |
+| Domain            | Relationship                                                                                          | Key Interface                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Auth              | New users land on onboarding after registration.                                                      | `config.auth.afterSignUpUrl`                                   |
+| GitHub analysis   | GitHub Analyze calls the temporary backend analysis endpoint and logs project-structure summaries.    | `analyzeGithubReposAction`, `POST /api/v1/auth/github/analyze` |
+| Resume generation | Upload and manual submit handlers are placeholders until the next generation pipeline is implemented. | Placeholder toasts in upload and manual paths                  |
+| Shared schemas    | Manual entry validates against the shared onboarding form schema.                                     | `onboardingSchema`, `OnboardingFormInput`                      |
 
 ---
 
@@ -145,22 +146,32 @@ if (ok) goToNextStep();
 
 - [x] Upload onboarding path
 - [x] GitHub onboarding path
-- [x] Alternative-input analysis submit temporarily reset to placeholder
+- [x] Upload analysis submit temporarily reset to placeholder
+- [x] GitHub analysis submit wired to temporary project-structure logging endpoint
 
 ---
 
 ## 9. Risks & Mitigations
 
-| Risk                                           | Mitigation                                                                                   |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Users interpret the stepper as clickable tabs. | Keep step labels visually status-like and do not render buttons/links.                       |
-| Mobile progress UI becomes cramped.            | Hide the full stepper on small screens and show a compact current-step summary.              |
-| Required data is skipped before generation.    | Trigger step-level validation before advancing and full schema validation before submitting. |
-| Placeholder submits look like completed generation. | Use explicit not-implemented toasts until the new generation pipeline exists.              |
+| Risk                                                | Mitigation                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Users interpret the stepper as clickable tabs.      | Keep step labels visually status-like and do not render buttons/links.                       |
+| Mobile progress UI becomes cramped.                 | Hide the full stepper on small screens and show a compact current-step summary.              |
+| Required data is skipped before generation.         | Trigger step-level validation before advancing and full schema validation before submitting. |
+| Placeholder submits look like completed generation. | Use explicit not-implemented toasts until the new generation pipeline exists.                |
 
 ---
 
 ## 10. Development Log
+
+### [2026-05-09] - Temporary GitHub Analyze Submit
+
+- **Decision:** Connect the GitHub repo picker Analyze action to the temporary backend analysis endpoint.
+- **Problem:** GitHub Analyze still only showed a placeholder toast, so the new backend project-structure analyzer could not be tested from the onboarding UI.
+- **Solution:**
+  1. **Server action:** Added `apps/frontend/lib/actions/github.actions.ts` for `POST auth/github/analyze`.
+  2. **Mutation wiring:** Updated `apps/frontend/app/components/onboarding/github/github-step.tsx` to call `analyzeGithubReposAction` with selected repo IDs and use the existing loading state prop.
+- **Outcome:** The onboarding GitHub repo picker can now trigger live project-structure summary logging while the final resume generation pipeline remains unimplemented.
 
 ### [2026-05-05] - Progressive GitHub Repository Loading
 

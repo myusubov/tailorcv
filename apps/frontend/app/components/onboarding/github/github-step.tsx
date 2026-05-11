@@ -6,6 +6,8 @@ import {
   useGithubConnectionQuery,
   useGithubReposQuery,
 } from '@/lib/http/github-client';
+import { analyzeGithubReposAction } from '@/lib/actions/github.actions';
+import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 import { GitHubConnectView } from './github-connect-view';
 import { GitHubLoadingView } from './github-loading-view';
 import { GitHubRepoSelectionView } from './github-repo-selection-view';
@@ -19,6 +21,11 @@ interface GitHubStepProps {
 
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const [isConnecting, setIsConnecting] = useState(false);
+  const analyzeMutation = useActionMutation(analyzeGithubReposAction, {
+    successMessage: (data) =>
+      `Logged ${data.summaries.length} GitHub ${data.summaries.length === 1 ? 'summary' : 'summaries'}`,
+    showErrorToast: true,
+  });
 
   // Handle OAuth search params using nuqs
   const [oauthParams, setOauthParams] = useQueryStates(
@@ -68,10 +75,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    toast.info(
-      `GitHub analysis is not implemented yet. ${selectedRepoIds.length} ${selectedRepoIds.length === 1 ? 'repository' : 'repositories'
-      } selected.`,
-    );
+    analyzeMutation.mutate({ repoIds: selectedRepoIds });
   };
 
   // Show loading state while checking connection status
@@ -98,7 +102,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
         connection={githubConnection}
         onBack={onBack}
         onAnalyze={handleAnalyze}
-        isLoading={false}
+        isLoading={analyzeMutation.isPending}
         isReposLoading={isLoadingRepos}
       />
     );

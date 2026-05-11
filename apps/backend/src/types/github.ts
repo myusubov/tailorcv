@@ -25,6 +25,24 @@ export interface DetectRepoTechStackInput {
   repo: string;
 }
 
+export interface AnalyzeGithubRepositoriesInput {
+  clerkUserId: string;
+  repoIds: number[];
+}
+
+export interface AnalyzeGithubRepositoriesOutput {
+  summaries: Array<{
+    repositoryId: number;
+    repositoryFullName: string;
+    projectShape: string;
+    inferredStack: string[];
+    totalFiles: number;
+    topLevelFolders: string[];
+    maxDepth: number;
+    isTreeTruncated: boolean;
+  }>;
+}
+
 // GitHub API Commit Response
 export interface GitHubCommit {
   sha: string;
@@ -163,6 +181,6 @@ export interface GitHubPullRequest {
     statuses: { href: string };
   };
   author_association: string;
-  auto_merge: any | null;
+  auto_merge: unknown | null;
   active_lock_reason: string | null;
 }

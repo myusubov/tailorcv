@@ -4,8 +4,11 @@ import {
   handleGithubCallback,
   getGithubRepos,
   fetchGithubConnection,
+  analyzeGithubRepos,
 } from '../controllers/github.controller';
 import { requireClerkAuth } from '../middleware/auth';
+import { validateBody } from '../middleware/validate';
+import { analyzeGithubReposRequestBodySchema } from '../schemas/github.schema';
 
 export const githubRouter = Router();
 
@@ -20,3 +23,11 @@ githubRouter.get('/repos', requireClerkAuth, getGithubRepos);
 
 // /api/v1/auth/github/connection
 githubRouter.get('/connection', requireClerkAuth, fetchGithubConnection);
+
+// /api/v1/auth/github/analyze
+githubRouter.post(
+  '/analyze',
+  requireClerkAuth,
+  validateBody(analyzeGithubReposRequestBodySchema),
+  analyzeGithubRepos,
+);

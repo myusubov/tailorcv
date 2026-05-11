@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { analyzeGithubRepositories } from '../services/github-analysis.service';
 import {
   exchangeCodeForToken,
   fetchGithubRepos,
@@ -9,6 +10,7 @@ import {
   verifyOAuthState,
 } from '../services/github.service';
 import { ClerkLocals } from '../types/locals';
+import type { AnalyzeGithubReposRequestBody } from '../schemas/github.schema';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
@@ -71,7 +73,9 @@ export async function handleGithubCallback(
     );
   } catch (error: any) {
     const appError =
-      error instanceof AppError ? error : handleResilienceError(error, 'GitHub');
+      error instanceof AppError
+        ? error
+        : handleResilienceError(error, 'GitHub');
     console.error('GitHub Callback Error:', error); // Log the real error
     const errorMessage = appError.errorCode.toLowerCase(); // Use the standardized error code
     res.redirect(
@@ -104,6 +108,21 @@ export async function fetchGithubConnection(
     const { clerkUserId } = res.locals;
     const githubConnection = await getGithubConnection(clerkUserId);
     return successResponse(res, githubConnection, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function analyzeGithubRepos(
+  req: Request<unknown, unknown, AnalyzeGithubReposRequestBody>,
+  res: Response<unknown, ClerkLocals>,
+  next: NextFunction,
+) {
+  try {
+    const { clerkUserId } = res.locals;
+    const { repoIds } = req.body;
+    const result = await analyzeGithubRepositories({ clerkUserId, repoIds });
+    return successResponse(res, result, 200);
   } catch (error) {
     next(error);
   }

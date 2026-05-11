@@ -2,24 +2,37 @@
 
 > AI-powered resume tailoring platform. Monorepo with Express backend, Next.js frontend, and shared type package.
 
+## Non-Negotiable Work Gate
+
+Before any code implementation:
+
+- Read `docs/architecture/README.md`.
+- Read the relevant domain doc if one exists.
+- If no relevant domain doc exists, create/update one before the work is considered complete.
+
+After any source/config change under `apps/`, `packages/`, or root project config:
+
+- Update the relevant `docs/architecture` doc and dev log in the same work session.
+- Do not claim completion, commit, or open a PR until the architecture docs are current.
+
 ## Tech Stack
 
-| Layer | Technology | Version |
-| ----- | ---------- | ------- |
-| Runtime | Node.js | 20.x |
-| Frontend | Next.js (App Router) | 16.x |
-| Backend | Express.js | 4.x |
-| Database | PostgreSQL + Prisma | Prisma 7.x |
-| Auth | Clerk | v7 (frontend), v1 (backend) |
-| UI | HeroUI v3 Beta + Tailwind CSS 4 | - |
-| Icons | Iconify (`@iconify/react`) | - |
-| AI | OpenAI (Responses API) + Anthropic | - |
-| Queue | BullMQ + Redis | - |
-| Validation | Zod 4 | - |
-| Data Fetching | TanStack React Query v5 | - |
-| Forms | react-hook-form + Zod | - |
-| Toasts | sonner | - |
-| Resilience | cockatiel | - |
+| Layer         | Technology                         | Version                     |
+| ------------- | ---------------------------------- | --------------------------- |
+| Runtime       | Node.js                            | 20.x                        |
+| Frontend      | Next.js (App Router)               | 16.x                        |
+| Backend       | Express.js                         | 4.x                         |
+| Database      | PostgreSQL + Prisma                | Prisma 7.x                  |
+| Auth          | Clerk                              | v7 (frontend), v1 (backend) |
+| UI            | HeroUI v3 Beta + Tailwind CSS 4    | -                           |
+| Icons         | Iconify (`@iconify/react`)         | -                           |
+| AI            | OpenAI (Responses API) + Anthropic | -                           |
+| Queue         | BullMQ + Redis                     | -                           |
+| Validation    | Zod 4                              | -                           |
+| Data Fetching | TanStack React Query v5            | -                           |
+| Forms         | react-hook-form + Zod              | -                           |
+| Toasts        | sonner                             | -                           |
+| Resilience    | cockatiel                          | -                           |
 
 ## Project Structure
 
@@ -96,6 +109,7 @@ router.use('/entity', entityRouter);
 ```
 
 **Key rules:**
+
 - Always apply `requireClerkAuth` middleware (except health/webhooks)
 - Apply rate limiter middleware per route group
 - Use `idempotency()` middleware for POST endpoints that trigger async/streaming work
@@ -135,6 +149,7 @@ export async function listEntities(input: ListEntitiesInput) {
 ```
 
 **Key rules:**
+
 - Services use single object parameter with a dedicated input type
 - Controllers NEVER access Prisma directly -- always go through services
 - Parallelize independent DB operations with `Promise.all`
@@ -156,14 +171,17 @@ export const useEntitiesQuery = defineQuery<void, Entity[]>({
 });
 
 // With dynamic params:
-export const useEntityDetailsQuery = defineQuery<{ id: string }, EntityDetails>({
-  path: ({ id }) => `/api/entity/${id}`,
-  keyPrefix: 'entity-details',
-  dynamicParts: ({ id }) => [id],
-});
+export const useEntityDetailsQuery = defineQuery<{ id: string }, EntityDetails>(
+  {
+    path: ({ id }) => `/api/entity/${id}`,
+    keyPrefix: 'entity-details',
+    dynamicParts: ({ id }) => [id],
+  },
+);
 ```
 
 **Key rules:**
+
 - All GET requests use `defineQuery` -- never raw `fetch` or `useQuery`
 - Query hooks go in `lib/http/`, DAL fetchers in `lib/data/`
 - API routes (`app/api/`) are thin GET proxies to the backend -- no mutations
@@ -184,7 +202,7 @@ import { defineAction } from './_action';
 export const createEntityAction = defineAction<CreateInput, CreateOutput>({
   method: 'POST',
   path: 'entity',
-  keyPrefix: 'entities',           // auto-revalidates this cache tag
+  keyPrefix: 'entities', // auto-revalidates this cache tag
   revalidate: { fromKey: false },
 });
 
@@ -198,6 +216,7 @@ export const deleteEntityAction = defineAction<{ id: string }, null>({
 ```
 
 **Key rules:**
+
 - NEVER use `fetch` for mutations -- always `defineAction` + `useActionMutation`
 - Mutations are NEVER allowed in API routes -- Server Actions only
 - `keyPrefix` auto-revalidates the matching React Query cache
@@ -211,14 +230,17 @@ export const deleteEntityAction = defineAction<{ id: string }, null>({
 
 ```typescript
 const { mutate } = useActionMutation(createEntityAction, {
-  onSuccess: (data) => { /* optimistic cache update */ },
+  onSuccess: (data) => {
+    /* optimistic cache update */
+  },
   showErrorToast: true,
   successMessage: 'Created successfully',
-  form: formInstance,  // optional: auto-maps validation errors to fields
+  form: formInstance, // optional: auto-maps validation errors to fields
 });
 ```
 
 **Key rules:**
+
 - Always use `useActionMutation` -- never raw `useMutation` with server actions
 - Use `useQueryCache` hook for cache manipulation instead of scattered `setQueryData`
 
@@ -238,12 +260,15 @@ setupStreamTermination(res, cleanup);
 
 // Frontend proxy: pipe backend stream through Next.js API route
 const response = await streamChat(body);
-return new Response(response.body, { headers: { 'Content-Type': 'text/event-stream' } });
+return new Response(response.body, {
+  headers: { 'Content-Type': 'text/event-stream' },
+});
 
 // Client: use @microsoft/fetch-event-source, write chunks to TanStack Query cache
 ```
 
 **Key rules:**
+
 - Write streamed data directly into React Query cache (cache-direct pattern) -- no `useState` for message history
 - SSE event types: `text`, `proposal`, `done`, `error`, `thinking`
 - Client generates `assistantMessageId` UUID -- backend respects client-provided IDs
@@ -267,6 +292,7 @@ showErrorToast(error);
 ```
 
 **Key rules:**
+
 - Backend has a global error handler middleware that catches `AppError`, `ZodError`, Prisma errors, and cockatiel resilience errors
 - All API responses follow: `{ success: boolean, data?, error?: { message, code, details }, meta: { timestamp, requestId } }`
 - `ErrorCode` enum lives in `packages/shared` -- use it everywhere
@@ -311,6 +337,7 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 ```
 
 **Key rules:**
+
 - Route components and top-level feature containers should stay thin and only choose which view to render.
 - Flow hooks own `react-hook-form`, async orchestration, router/search-param handling, and state-machine transitions.
 - When a container would pass several values from the same flow hook into one view, return a grouped view-props object from the hook (for example `formViewProps` or `verificationViewProps`) and spread that object intentionally into the matching view.
@@ -327,6 +354,7 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 **Canonical examples:** auth flow hooks, E2E helpers, and query/action modules
 
 **Key rules:**
+
 - Keep private single-file types colocated with the function or module that uses them unless a more specific frontend rule applies.
 - Frontend shared UI/domain types follow the existing frontend rule: place them under `lib/types/`, never inside component directories.
 - Move non-UI helper or module types into a sibling `types.ts` or `*.types.ts` file only when they are reused across multiple files or form part of an exported contract.
@@ -337,20 +365,20 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 
 ## Key Utilities & Shared Functions
 
-| Utility | Location | Purpose |
-| ------- | -------- | ------- |
-| `defineQuery` | `apps/frontend/lib/http/define-query.ts` | Wraps React Query for GET requests |
-| `defineAction` | `apps/frontend/lib/actions/_action.ts` | Wraps Server Actions for mutations |
-| `useActionMutation` | `apps/frontend/lib/hooks/use-action-mutation.ts` | Centralized mutation handler with toasts + form errors |
-| `useQueryCache` | `apps/frontend/lib/hooks/use-query-cache.ts` | Cache operations (setData, list.add/remove/update, invalidate) |
-| `backendRequest` | `apps/frontend/lib/api/index.ts` | Server-only HTTP client to backend |
-| `backendStream` | `apps/frontend/lib/api/index.ts` | Server-only streaming client to backend |
-| `defineGet` | `apps/frontend/lib/data/` | Server-only data fetcher (used by defineQuery) |
-| `successResponse` | `apps/backend/src/utils/response.ts` | Standardized success response wrapper |
-| `AppError` | `apps/backend/src/utils/AppError.ts` | Typed error class with ErrorCode |
-| `initSseResponse` / `writeSseEvent` | `apps/backend/src/utils/ai-stream-sse.ts` | SSE utilities for streaming |
-| `showErrorToast` | `apps/frontend/lib/utils/error-toast.ts` | Sonner toast for API errors |
-| `deepMerge` | `packages/shared/src/utils/deepMerge.ts` | Deep object merge |
+| Utility                             | Location                                         | Purpose                                                        |
+| ----------------------------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| `defineQuery`                       | `apps/frontend/lib/http/define-query.ts`         | Wraps React Query for GET requests                             |
+| `defineAction`                      | `apps/frontend/lib/actions/_action.ts`           | Wraps Server Actions for mutations                             |
+| `useActionMutation`                 | `apps/frontend/lib/hooks/use-action-mutation.ts` | Centralized mutation handler with toasts + form errors         |
+| `useQueryCache`                     | `apps/frontend/lib/hooks/use-query-cache.ts`     | Cache operations (setData, list.add/remove/update, invalidate) |
+| `backendRequest`                    | `apps/frontend/lib/api/index.ts`                 | Server-only HTTP client to backend                             |
+| `backendStream`                     | `apps/frontend/lib/api/index.ts`                 | Server-only streaming client to backend                        |
+| `defineGet`                         | `apps/frontend/lib/data/`                        | Server-only data fetcher (used by defineQuery)                 |
+| `successResponse`                   | `apps/backend/src/utils/response.ts`             | Standardized success response wrapper                          |
+| `AppError`                          | `apps/backend/src/utils/AppError.ts`             | Typed error class with ErrorCode                               |
+| `initSseResponse` / `writeSseEvent` | `apps/backend/src/utils/ai-stream-sse.ts`        | SSE utilities for streaming                                    |
+| `showErrorToast`                    | `apps/frontend/lib/utils/error-toast.ts`         | Sonner toast for API errors                                    |
+| `deepMerge`                         | `packages/shared/src/utils/deepMerge.ts`         | Deep object merge                                              |
 
 ## Cross-Project Workflows
 
@@ -371,25 +399,25 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 
 ## Naming Conventions
 
-| Thing | Convention | Example |
-| ----- | ---------- | ------- |
-| Backend controllers | `{verb}{Entity}Controller` | `listConversationsController` |
-| Backend services | `{verb}{Entity}` | `createConversation` |
-| Backend routes | `{entity}Router` | `aiChatRouter` |
-| Backend route files | `{entity}.router.ts` | `ai-chat.router.ts` |
-| Backend controller files | `{entity}.controller.ts` | `ai-chat.controller.ts` |
-| Backend service files | `{entity}.service.ts` | `chat-conversations.service.ts` |
-| Backend type files | `{entity}.ts` in `src/types/` | `ai-chat.ts` |
-| Frontend query hooks | `use{Entity}Query` | `useConversationsQuery` |
-| Frontend cache hooks | `use{Entity}Cache` | `useConversationsCache` |
-| Frontend actions | `{verb}{Entity}Action` | `createConversationAction` |
-| Frontend action files | `{entity}.actions.ts` | `ai-chat.actions.ts` |
-| Frontend type files | `{entity}.ts` in `lib/types/` | `ai-chat.ts` |
-| Components | PascalCase, feature-grouped | `ChatSidebar`, `OnboardingForm` |
-| Hooks | `use-{name}.ts` (kebab-case file) | `use-action-mutation.ts` |
-| Feature flow hooks | `use-{feature}-flow.ts` | `use-login-flow.ts` |
-| Frontend colocated tests | `{name}.test.ts(x)` beside feature code | `use-login-flow.test.tsx` |
-| API routes | kebab-case paths | `/api/ai/chat/conversations` |
+| Thing                    | Convention                              | Example                         |
+| ------------------------ | --------------------------------------- | ------------------------------- |
+| Backend controllers      | `{verb}{Entity}Controller`              | `listConversationsController`   |
+| Backend services         | `{verb}{Entity}`                        | `createConversation`            |
+| Backend routes           | `{entity}Router`                        | `aiChatRouter`                  |
+| Backend route files      | `{entity}.router.ts`                    | `ai-chat.router.ts`             |
+| Backend controller files | `{entity}.controller.ts`                | `ai-chat.controller.ts`         |
+| Backend service files    | `{entity}.service.ts`                   | `chat-conversations.service.ts` |
+| Backend type files       | `{entity}.ts` in `src/types/`           | `ai-chat.ts`                    |
+| Frontend query hooks     | `use{Entity}Query`                      | `useConversationsQuery`         |
+| Frontend cache hooks     | `use{Entity}Cache`                      | `useConversationsCache`         |
+| Frontend actions         | `{verb}{Entity}Action`                  | `createConversationAction`      |
+| Frontend action files    | `{entity}.actions.ts`                   | `ai-chat.actions.ts`            |
+| Frontend type files      | `{entity}.ts` in `lib/types/`           | `ai-chat.ts`                    |
+| Components               | PascalCase, feature-grouped             | `ChatSidebar`, `OnboardingForm` |
+| Hooks                    | `use-{name}.ts` (kebab-case file)       | `use-action-mutation.ts`        |
+| Feature flow hooks       | `use-{feature}-flow.ts`                 | `use-login-flow.ts`             |
+| Frontend colocated tests | `{name}.test.ts(x)` beside feature code | `use-login-flow.test.tsx`       |
+| API routes               | kebab-case paths                        | `/api/ai/chat/conversations`    |
 
 ## Project-Specific Rules
 
