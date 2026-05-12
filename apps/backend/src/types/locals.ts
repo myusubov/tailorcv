@@ -3,9 +3,14 @@ import type {
   ResumeIdParams,
   UpdateBaseResumeBody,
 } from '../schemas/resumes.schema';
+import type { GitHubConnection } from 'shared';
 
 export type ClerkLocals = {
   clerkUserId: string;
+};
+
+export type GitHubConnectionLocals = ClerkLocals & {
+  githubConnection: GitHubConnection;
 };
 
 export type ValidatedLocals = {

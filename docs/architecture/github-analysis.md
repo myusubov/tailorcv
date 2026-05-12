@@ -29,7 +29,8 @@
 ```text
 GitHub repo IDs selected by user
   └─ POST /api/v1/auth/github/analyze
-      ├─ fetch current GitHub connection
+      ├─ require Clerk authentication
+      ├─ require saved GitHub connection
       ├─ fetch current repository list
       ├─ filter selected repository IDs
       ├─ fetch each selected repository tree
@@ -59,6 +60,7 @@ GitHub repo IDs selected by user
 | `apps/backend/src/routes/github.router.ts`                                                        | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                              | GitHub endpoint changes.                    |
 | `apps/backend/src/schemas/github.schema.ts`                                                       | Zod request body schema and inferred type for temporary GitHub analysis.                                      | GitHub request validation changes.          |
 | `apps/backend/src/controllers/github.controller.ts`                                               | Reads validated selected repo IDs and calls GitHub analysis service.                                          | GitHub request/response changes.            |
+| `apps/backend/src/middleware/github-auth.ts`                                                      | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.         | GitHub-protected route changes.             |
 | `apps/backend/src/services/github-analysis.service.ts`                                            | Temporary orchestration service that fetches repo trees, runs project-structure analysis, and logs summaries. | GitHub analysis orchestration changes.      |
 | `apps/backend/src/services/github-analysis/github-tree-fetcher.ts`                                | Fetches recursive GitHub tree metadata for a selected repository.                                             | GitHub tree API changes.                    |
 | `apps/backend/src/utils/github-utils.ts`                                                          | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                  | Tree normalization or repo parsing changes. |
@@ -80,7 +82,9 @@ GitHub repo IDs selected by user
 ```mermaid
 flowchart TD
   FE[GitHub onboarding Analyze] --> Route[POST /api/v1/auth/github/analyze]
-  Route --> Controller[analyzeGithubRepos]
+  Route --> Clerk[requireClerkAuth]
+  Clerk --> GitHubAuth[requireGithubConnection]
+  GitHubAuth --> Controller[analyzeGithubRepos]
   Controller --> Service[analyzeGithubRepositories]
   Service --> Repos[Fetch GitHub repos]
   Service --> Tree[Fetch recursive repository tree]
@@ -119,6 +123,8 @@ The analyzer does not fetch GitHub data, read file contents, or call AI.
 apps/backend/src/
 ├── utils/
 │   └── github-utils.ts                   # raw tree types, name parsing, tree normalization
+├── middleware/
+│   └── github-auth.ts                    # require saved GitHub connection
 └── services/
     ├── github-analysis.service.ts        # temporary orchestration entry point
     └── github-analysis/
@@ -151,14 +157,20 @@ apps/backend/src/
 - **Rule**: Use one object parameter for exported functions.
 - **Anti-pattern**: Do not pass repo IDs into analyzers and let each analyzer refetch the same GitHub data.
 
-### 6.2 Project Shape Detection
+### 6.2 GitHub Connection Boundary
+
+- **Rule**: GitHub-token routes must run `requireClerkAuth` before `requireGithubConnection`.
+- **Rule**: `requireGithubConnection` attaches `res.locals.githubConnection` so controllers/services do not refetch the connection.
+- **Rule**: `/connection` remains Clerk-only because it is the status endpoint used to detect whether the user is connected.
+
+### 6.3 Project Shape Detection
 
 - **Rule**: Use score-based path evidence, not a single exact string match.
 - **Rule**: Return `unknown` when evidence is weak.
 - **Rule**: Keep possible shape scores private until there is a real consumer.
 - **Current labels**: `full-stack monorepo`, `monorepo`, `full-stack app`, `frontend app`, `backend api`, `library/package`, `cli tool`, `mobile app`, `documentation site`, `unknown`.
 
-### 6.3 Inferred Stack Detection
+### 6.4 Inferred Stack Detection
 
 - **Rule**: `summary.inferredStack` is structure-inferred only.
 - **Rule**: Do not treat it as the final stack source of truth.
@@ -168,11 +180,11 @@ apps/backend/src/
 
 ## 7. Integration Points
 
-| Domain            | Relationship                                                                                           | Key Interface                    |
-| ----------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| Onboarding        | GitHub repo selection now calls the temporary analyze endpoint and shows a success/error toast.        | `AnalyzeGithubReposInput`        |
-| GitHub service    | Analysis orchestration fetches repo metadata/tree once and passes normalized entries into analyzers.   | `AnalyzeProjectStructureInput`   |
-| Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps. | `ProjectStructureAnalysisResult` |
+| Domain            | Relationship                                                                                                                                       | Key Interface                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Onboarding        | GitHub repo selection now calls the temporary analyze endpoint and shows a success/error toast.                                                    | `AnalyzeGithubReposInput`        |
+| GitHub service    | Protected GitHub routes receive a saved connection from middleware, then fetch repo metadata/tree once and pass normalized entries into analyzers. | `AnalyzeProjectStructureInput`   |
+| Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps.                                             | `ProjectStructureAnalysisResult` |
 
 ---
 
@@ -187,6 +199,7 @@ apps/backend/src/
 - [x] Structure-inferred stack detector implemented
 - [x] Focused tests added for current detection behavior
 - [x] Temporary endpoint logs selected repository summaries
+- [x] GitHub connection middleware protects repo/analyze routes
 - [ ] Detected areas builder
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
@@ -220,6 +233,16 @@ apps/backend/src/
 ---
 
 ## 10. Development Log
+
+### [2026-05-12] - GitHub Connection Middleware Boundary
+
+- **Decision:** Add a dedicated middleware boundary for routes that require a saved GitHub access token.
+- **Problem:** GitHub-token routes were individually fetching the connection, which duplicated DB reads and mixed route authorization with controller/service logic.
+- **Solution:**
+  1. **Middleware:** Added `apps/backend/src/middleware/github-auth.ts` to load the current user's GitHub connection after Clerk auth and attach it to `res.locals.githubConnection`.
+  2. **Route protection:** Updated `/repos` and `/analyze` to use `requireClerkAuth` followed by `requireGithubConnection`; kept `/connection` Clerk-only for connection status checks.
+  3. **Service contract:** Updated analysis orchestration to receive the access token from the controller instead of refetching the connection.
+- **Outcome:** GitHub-protected endpoints now enforce backend connection state once at the route boundary and downstream code can reuse the loaded connection.
 
 ### [2026-05-11] - Shared GitHub Utility Placement
 

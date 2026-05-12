@@ -8,7 +8,7 @@ import {
   splitRepositoryFullName,
 } from '../utils/github-utils';
 import { analyzeProjectStructure } from './github-analysis/project-structure/project-structure-analyzer';
-import { fetchGithubRepos, getGithubConnection } from './github.service';
+import { fetchGithubRepos } from './github.service';
 import type {
   AnalyzeGithubRepositoriesInput,
   AnalyzeGithubRepositoriesOutput,
@@ -24,19 +24,11 @@ interface GitHubRepoForAnalysis extends GitHubRepo {
  */
 export async function analyzeGithubRepositories({
   clerkUserId,
+  accessToken,
   repoIds,
 }: AnalyzeGithubRepositoriesInput): Promise<AnalyzeGithubRepositoriesOutput> {
-  if (repoIds.length === 0 || repoIds.length > 3) {
-    throw new AppError(
-      'Select between 1 and 3 repositories to analyze',
-      ErrorCode.BAD_REQUEST,
-      400,
-    );
-  }
-
-  const githubConnection = await getGithubConnection(clerkUserId);
   const repos = (await fetchGithubRepos(
-    githubConnection!.accessToken,
+    accessToken,
   )) as GitHubRepoForAnalysis[];
   const selectedRepos = repos.filter((repo) => repoIds.includes(repo.id));
 
@@ -54,7 +46,7 @@ export async function analyzeGithubRepositories({
         repositoryFullName: repo.full_name,
       });
       const tree = await fetchRepositoryTree({
-        accessToken: githubConnection!.accessToken,
+        accessToken,
         owner,
         repo: repoName,
         treeRef: repo.default_branch ?? 'HEAD',

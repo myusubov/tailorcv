@@ -27,6 +27,7 @@ export interface DetectRepoTechStackInput {
 
 export interface AnalyzeGithubRepositoriesInput {
   clerkUserId: string;
+  accessToken: string;
   repoIds: number[];
 }
 

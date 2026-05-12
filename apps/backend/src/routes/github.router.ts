@@ -7,6 +7,7 @@ import {
   analyzeGithubRepos,
 } from '../controllers/github.controller';
 import { requireClerkAuth } from '../middleware/auth';
+import { requireGithubConnection } from '../middleware/github-auth';
 import { validateBody } from '../middleware/validate';
 import { analyzeGithubReposRequestBodySchema } from '../schemas/github.schema';
 
@@ -19,7 +20,12 @@ githubRouter.get('/', requireClerkAuth, initiateGithubAuth);
 githubRouter.get('/callback', requireClerkAuth, handleGithubCallback);
 
 // /api/v1/auth/github/repos
-githubRouter.get('/repos', requireClerkAuth, getGithubRepos);
+githubRouter.get(
+  '/repos',
+  requireClerkAuth,
+  requireGithubConnection,
+  getGithubRepos,
+);
 
 // /api/v1/auth/github/connection
 githubRouter.get('/connection', requireClerkAuth, fetchGithubConnection);
@@ -28,6 +34,7 @@ githubRouter.get('/connection', requireClerkAuth, fetchGithubConnection);
 githubRouter.post(
   '/analyze',
   requireClerkAuth,
+  requireGithubConnection,
   validateBody(analyzeGithubReposRequestBodySchema),
   analyzeGithubRepos,
 );

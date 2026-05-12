@@ -9,7 +9,7 @@ import {
   saveGitHubConnection,
   verifyOAuthState,
 } from '../services/github.service';
-import { ClerkLocals } from '../types/locals';
+import type { ClerkLocals, GitHubConnectionLocals } from '../types/locals';
 import type { AnalyzeGithubReposRequestBody } from '../schemas/github.schema';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
@@ -86,13 +86,12 @@ export async function handleGithubCallback(
 
 export async function getGithubRepos(
   req: Request,
-  res: Response<any, ClerkLocals>,
+  res: Response<any, GitHubConnectionLocals>,
   next: NextFunction,
 ) {
   try {
-    const { clerkUserId } = res.locals;
-    const githubConnection = await getGithubConnection(clerkUserId);
-    const repos = await fetchGithubRepos(githubConnection!.accessToken);
+    const { githubConnection } = res.locals;
+    const repos = await fetchGithubRepos(githubConnection.accessToken);
     return successResponse(res, repos, 200);
   } catch (error) {
     next(error);
@@ -115,13 +114,17 @@ export async function fetchGithubConnection(
 
 export async function analyzeGithubRepos(
   req: Request<unknown, unknown, AnalyzeGithubReposRequestBody>,
-  res: Response<unknown, ClerkLocals>,
+  res: Response<unknown, GitHubConnectionLocals>,
   next: NextFunction,
 ) {
   try {
-    const { clerkUserId } = res.locals;
+    const { clerkUserId, githubConnection } = res.locals;
     const { repoIds } = req.body;
-    const result = await analyzeGithubRepositories({ clerkUserId, repoIds });
+    const result = await analyzeGithubRepositories({
+      clerkUserId,
+      accessToken: githubConnection.accessToken,
+      repoIds,
+    });
     return successResponse(res, result, 200);
   } catch (error) {
     next(error);
