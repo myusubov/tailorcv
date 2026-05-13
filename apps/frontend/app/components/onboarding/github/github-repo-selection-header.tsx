@@ -2,10 +2,10 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import type { GitHubConnection } from 'shared';
+import type { GitHubConnectionResponse } from 'shared';
 
 interface GitHubRepoSelectionHeaderProps {
-  connection: GitHubConnection;
+  connection: GitHubConnectionResponse;
   repositoryCount: number;
   maxRepos: number;
   isRepositoryCountLoading?: boolean;

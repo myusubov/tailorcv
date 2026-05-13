@@ -9,6 +9,7 @@ import {
   saveGitHubConnection,
   verifyOAuthState,
 } from '../services/github.service';
+import { mapGitHubConnectionToResponse } from '../mappers/github.mapper';
 import type { ClerkLocals, GitHubConnectionLocals } from '../types/locals';
 import type { AnalyzeGithubReposRequestBody } from '../schemas/github.schema';
 import { env } from '../config/env';
@@ -71,7 +72,7 @@ export async function handleGithubCallback(
     res.redirect(
       `${env.FRONTEND_URL}/onboarding?method=github&status=connected`,
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     const appError =
       error instanceof AppError
         ? error
@@ -106,7 +107,13 @@ export async function fetchGithubConnection(
   try {
     const { clerkUserId } = res.locals;
     const githubConnection = await getGithubConnection(clerkUserId);
-    return successResponse(res, githubConnection, 200);
+    return successResponse(
+      res,
+      githubConnection
+        ? mapGitHubConnectionToResponse({ githubConnection })
+        : null,
+      200,
+    );
   } catch (error) {
     next(error);
   }

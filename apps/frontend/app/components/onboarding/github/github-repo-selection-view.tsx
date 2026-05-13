@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useMemo, useState } from 'react';
-import type { GitHubConnection, GitHubRepo } from 'shared';
+import type { GitHubConnectionResponse, GitHubRepo } from 'shared';
 import { GitHubRepoCard } from './github-repo-card';
 import { GitHubRepoGridSkeleton } from './github-repo-grid-skeleton';
 import { GitHubRepoSelectionActions } from './github-repo-selection-actions';
@@ -15,7 +15,7 @@ const MAX_REPOS = 3;
 
 interface GitHubRepoSelectionViewProps {
   repos: GitHubRepo[];
-  connection: GitHubConnection;
+  connection: GitHubConnectionResponse;
   onBack: () => void;
   onAnalyze: (selectedRepoIds: number[]) => void;
   isLoading?: boolean;
@@ -111,8 +111,7 @@ export function GitHubRepoSelectionView({
           >
             {filteredRepos.map((repo) => {
               const isSelected = selectedRepos.has(repo.id);
-              const isDisabled =
-                !isSelected && selectedRepos.size >= MAX_REPOS;
+              const isDisabled = !isSelected && selectedRepos.size >= MAX_REPOS;
 
               return (
                 <GitHubRepoCard

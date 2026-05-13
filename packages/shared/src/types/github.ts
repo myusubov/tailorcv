@@ -65,3 +65,13 @@ export interface GitHubConnection {
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+
+export interface GitHubConnectionResponse {
+  id: string;
+  githubUserId: number;
+  githubUsername: string;
+  githubAvatarUrl: string | null;
+  scopes: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}

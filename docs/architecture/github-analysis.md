@@ -60,7 +60,9 @@ GitHub repo IDs selected by user
 | `apps/backend/src/routes/github.router.ts`                                                        | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                              | GitHub endpoint changes.                    |
 | `apps/backend/src/schemas/github.schema.ts`                                                       | Zod request body schema and inferred type for temporary GitHub analysis.                                      | GitHub request validation changes.          |
 | `apps/backend/src/controllers/github.controller.ts`                                               | Reads validated selected repo IDs and calls GitHub analysis service.                                          | GitHub request/response changes.            |
+| `apps/backend/src/mappers/github.mapper.ts`                                                       | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                    | GitHub response DTO changes.                |
 | `apps/backend/src/middleware/github-auth.ts`                                                      | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.         | GitHub-protected route changes.             |
+| `packages/shared/src/types/github.ts`                                                             | Defines full backend GitHub connection and client-safe public connection response types.                      | GitHub API contract changes.                |
 | `apps/backend/src/services/github-analysis.service.ts`                                            | Temporary orchestration service that fetches repo trees, runs project-structure analysis, and logs summaries. | GitHub analysis orchestration changes.      |
 | `apps/backend/src/services/github-analysis/github-tree-fetcher.ts`                                | Fetches recursive GitHub tree metadata for a selected repository.                                             | GitHub tree API changes.                    |
 | `apps/backend/src/utils/github-utils.ts`                                                          | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                  | Tree normalization or repo parsing changes. |
@@ -125,6 +127,8 @@ apps/backend/src/
 │   └── github-utils.ts                   # raw tree types, name parsing, tree normalization
 ├── middleware/
 │   └── github-auth.ts                    # require saved GitHub connection
+├── mappers/
+│   └── github.mapper.ts                  # client-safe GitHub response DTO mapping
 └── services/
     ├── github-analysis.service.ts        # temporary orchestration entry point
     └── github-analysis/
@@ -162,6 +166,8 @@ apps/backend/src/
 - **Rule**: GitHub-token routes must run `requireClerkAuth` before `requireGithubConnection`.
 - **Rule**: `requireGithubConnection` attaches `res.locals.githubConnection` so controllers/services do not refetch the connection.
 - **Rule**: `/connection` remains Clerk-only because it is the status endpoint used to detect whether the user is connected.
+- **Rule**: `/connection` must return `GitHubConnectionResponse | null` and must never expose the stored OAuth `accessToken` to the browser.
+- **Rule**: Any client response derived from a token-bearing/internal GitHub object must use a response DTO mapper with an explicit field allowlist.
 
 ### 6.3 Project Shape Detection
 
@@ -233,6 +239,26 @@ apps/backend/src/
 ---
 
 ## 10. Development Log
+
+### [2026-05-13] - Standardized GitHub Response DTO Mapper
+
+- **Decision:** Standardize GitHub client-safe responses around explicit response DTO mapping.
+- **Problem:** The first public connection mapper lived inside `github.service.ts`, which mixed response serialization with GitHub business/API service logic.
+- **Solution:**
+  1. **DTO naming:** Renamed the shared client-safe type to `GitHubConnectionResponse` so it describes the API response contract.
+  2. **Mapper boundary:** Added `apps/backend/src/mappers/github.mapper.ts` with `mapGitHubConnectionToResponse`.
+  3. **Allowlist safety:** Kept response mapping explicit so future private fields are not accidentally exposed through object spreading or omit-style filtering.
+- **Outcome:** GitHub response shaping now has a repeatable backend pattern: internal model to response DTO through a dedicated mapper.
+
+### [2026-05-13] - Public GitHub Connection Response
+
+- **Decision:** Split the stored GitHub connection from the client-safe connection response.
+- **Problem:** The `/connection` status endpoint returned the full stored GitHub connection, including the OAuth access token, to the browser.
+- **Solution:**
+  1. **Public contract:** Added `GitHubConnectionResponse` in `packages/shared/src/types/github.ts` without `accessToken` or backend user foreign key.
+  2. **Backend mapper:** Added a response mapper so `fetchGithubConnection` returns only the public shape or `null`.
+  3. **Frontend typing:** Updated GitHub connection query and repo selection components to consume `GitHubConnectionResponse | null`.
+- **Outcome:** The frontend can still detect/display GitHub connection state while OAuth tokens remain backend-only.
 
 ### [2026-05-12] - GitHub Connection Middleware Boundary
 
