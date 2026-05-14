@@ -1,6 +1,5 @@
 import { ErrorCode, type GitHubRepo } from 'shared';
 
-import { logger } from '../lib/logger';
 import { AppError } from '../utils/AppError';
 import { fetchRepositoryTree } from './github-analysis/github-tree-fetcher';
 import {
@@ -26,7 +25,7 @@ export async function analyzeGithubRepositories({
   clerkUserId,
   accessToken,
   repoIds,
-}: AnalyzeGithubRepositoriesInput): Promise<AnalyzeGithubRepositoriesOutput> {
+}: AnalyzeGithubRepositoriesInput) {
   const repos = (await fetchGithubRepos(
     accessToken,
   )) as GitHubRepoForAnalysis[];
@@ -61,23 +60,11 @@ export async function analyzeGithubRepositories({
         isTruncated: tree.truncated,
       });
 
-      logger.info(
-        {
-          clerkUserId,
-          repositoryId: repo.id,
-          repositoryFullName: repo.full_name,
-          summary: analysis.summary,
-        },
-        'GitHub project structure summary',
-      );
+      const { summary, detectedAreas } = analysis
 
-      return {
-        repositoryId: repo.id,
-        repositoryFullName: repo.full_name,
-        ...analysis.summary,
-      };
+      return { summary, detectedAreas }
     }),
   );
 
-  return { summaries };
+  return summaries;
 }

@@ -1,40 +1,82 @@
 import { buildEntryIndex } from './project-structure-entry-index';
+import {
+  addCandidateScore,
+  candidateScore,
+  candidatesByScore,
+  createScoreCandidates,
+} from './project-structure-score-candidates';
 import type { RepoTreeEntry } from './project-structure-analyzer.types';
 
-interface ProjectShapeCandidate {
-  shape: string;
-  score: number;
-}
+type ProjectShape =
+  | 'full-stack monorepo'
+  | 'monorepo'
+  | 'full-stack app'
+  | 'frontend app'
+  | 'backend api'
+  | 'library/package'
+  | 'cli tool'
+  | 'mobile app'
+  | 'documentation site'
+  | 'unknown';
 
-function createCandidates(): Map<string, ProjectShapeCandidate> {
-  return new Map(
-    [
-      'full-stack monorepo',
-      'monorepo',
-      'full-stack app',
-      'frontend app',
-      'backend api',
-      'library/package',
-      'cli tool',
-      'mobile app',
-      'documentation site',
-      'unknown',
-    ].map((shape) => [shape, { shape, score: 0 }]),
-  );
-}
+const PROJECT_SHAPES: readonly ProjectShape[] = [
+  'full-stack monorepo',
+  'monorepo',
+  'full-stack app',
+  'frontend app',
+  'backend api',
+  'library/package',
+  'cli tool',
+  'mobile app',
+  'documentation site',
+  'unknown',
+];
 
-function addScore({
+const MONOREPO_CONFIG_FILES = [
+  'turbo.json',
+  'pnpm-workspace.yaml',
+  'nx.json',
+  'workspace.json',
+  'project.json',
+  'lerna.json',
+] as const;
+
+const MONOREPO_ROOT_DIRECTORIES = ['apps', 'packages', 'libs'] as const;
+
+const WEAK_MONOREPO_ROOT_DIRECTORIES = ['services'] as const;
+
+const FRONTEND_DIRECTORY_NAMES = ['frontend', 'web', 'client'] as const;
+
+const FRONTEND_CONFIG_PATTERNS = [/^next\.config\./, /^vite\.config\./];
+
+const FRONTEND_PATH_PREFIXES = ['app', 'pages', 'src/components'] as const;
+
+const FRONTEND_MONOREPO_APP_PATH_PATTERN = /^apps\/[^/]+\/(app|pages)(\/|$)/;
+
+const BACKEND_DIRECTORY_NAMES = ['backend', 'api', 'server'] as const;
+
+const BACKEND_STRUCTURE_DIRECTORY_NAMES = [
+  'routes',
+  'controllers',
+  'services',
+] as const;
+
+const BACKEND_SIGNAL_FILES = ['server.ts', 'app.ts'] as const;
+
+function addProjectShapeScore({
   candidates,
   shape,
   score,
 }: {
-  candidates: Map<string, ProjectShapeCandidate>;
-  shape: string;
+  candidates: ReturnType<typeof createProjectShapeCandidates>;
+  shape: ProjectShape;
   score: number;
 }): void {
-  const candidate = candidates.get(shape);
-  if (!candidate) return;
-  candidate.score += score;
+  addCandidateScore({ candidates, name: shape, score });
+}
+
+function createProjectShapeCandidates() {
+  return createScoreCandidates({ names: PROJECT_SHAPES });
 }
 
 /**
@@ -47,64 +89,75 @@ export function detectProjectShape({
   entries: RepoTreeEntry[];
 }): string {
   const index = buildEntryIndex({ entries });
-  const candidates = createCandidates();
+  const candidates = createProjectShapeCandidates();
 
-  if (index.hasDirectory({ path: 'apps' })) {
-    addScore({ candidates, shape: 'monorepo', score: 2 });
-  }
-  if (index.hasDirectory({ path: 'packages' })) {
-    addScore({ candidates, shape: 'monorepo', score: 2 });
-  }
-  if (
-    index.hasFileName({ name: 'turbo.json' }) ||
-    index.hasFileName({ name: 'pnpm-workspace.yaml' })
-  ) {
-    addScore({ candidates, shape: 'monorepo', score: 3 });
+  const monorepoRootDirectoryCount = MONOREPO_ROOT_DIRECTORIES.filter((path) =>
+    index.hasDirectory({ path }),
+  ).length;
+
+  if (monorepoRootDirectoryCount > 0) {
+    addProjectShapeScore({
+      candidates,
+      shape: 'monorepo',
+      score: monorepoRootDirectoryCount * 2,
+    });
   }
 
-  if (
-    index.hasDirectoryNamed({ name: 'frontend' }) ||
-    index.hasDirectoryNamed({ name: 'web' }) ||
-    index.hasDirectoryNamed({ name: 'client' })
-  ) {
-    addScore({ candidates, shape: 'frontend app', score: 2 });
-  }
-  if (
-    index.hasFileNameMatching({ pattern: /^next\.config\./ }) ||
-    index.hasFileNameMatching({ pattern: /^vite\.config\./ })
-  ) {
-    addScore({ candidates, shape: 'frontend app', score: 4 });
-  }
-  if (
-    index.hasPathStartingWith({ prefix: 'app' }) ||
-    index.hasPathStartingWith({ prefix: 'pages' }) ||
-    index.hasPathStartingWith({ prefix: 'src/components' }) ||
-    index.hasPathStartingWith({ prefix: 'apps/frontend/app' }) ||
-    index.hasPathStartingWith({ prefix: 'apps/frontend/pages' })
-  ) {
-    addScore({ candidates, shape: 'frontend app', score: 3 });
+  if (MONOREPO_CONFIG_FILES.some((name) => index.hasFileName({ name }))) {
+    addProjectShapeScore({ candidates, shape: 'monorepo', score: 3 });
   }
 
   if (
-    index.hasDirectoryNamed({ name: 'backend' }) ||
-    index.hasDirectoryNamed({ name: 'api' }) ||
-    index.hasDirectoryNamed({ name: 'server' })
+    index.hasFileName({ name: 'nx.json' }) &&
+    index.hasFileName({ name: 'project.json' })
   ) {
-    addScore({ candidates, shape: 'backend api', score: 2 });
+    addProjectShapeScore({ candidates, shape: 'monorepo', score: 2 });
+  }
+
+  if (
+    WEAK_MONOREPO_ROOT_DIRECTORIES.some((path) => index.hasDirectory({ path }))
+  ) {
+    addProjectShapeScore({ candidates, shape: 'monorepo', score: 1 });
+  }
+
+  if (
+    FRONTEND_DIRECTORY_NAMES.some((name) => index.hasDirectoryNamed({ name }))
+  ) {
+    addProjectShapeScore({ candidates, shape: 'frontend app', score: 2 });
   }
   if (
-    index.hasDirectoryNamed({ name: 'routes' }) &&
-    index.hasDirectoryNamed({ name: 'controllers' }) &&
-    index.hasDirectoryNamed({ name: 'services' })
+    FRONTEND_CONFIG_PATTERNS.some((pattern) =>
+      index.hasFileNameMatching({ pattern }),
+    )
   ) {
-    addScore({ candidates, shape: 'backend api', score: 5 });
+    addProjectShapeScore({ candidates, shape: 'frontend app', score: 4 });
+  }
+  if (
+    FRONTEND_PATH_PREFIXES.some((prefix) =>
+      index.hasPathStartingWith({ prefix }),
+    ) ||
+    index.hasPathMatching({ pattern: FRONTEND_MONOREPO_APP_PATH_PATTERN })
+  ) {
+    addProjectShapeScore({ candidates, shape: 'frontend app', score: 3 });
+  }
+
+  if (
+    BACKEND_DIRECTORY_NAMES.some((name) => index.hasDirectoryNamed({ name }))
+  ) {
+    addProjectShapeScore({ candidates, shape: 'backend api', score: 2 });
+  }
+  if (
+    BACKEND_STRUCTURE_DIRECTORY_NAMES.every((name) =>
+      index.hasDirectoryNamed({ name }),
+    )
+  ) {
+    addProjectShapeScore({ candidates, shape: 'backend api', score: 5 });
   }
   if (
     index.hasDirectoryNamed({ name: 'prisma' }) ||
-    index.hasFileName({ name: 'server.ts' }) ||
-    index.hasFileName({ name: 'app.ts' })
+    BACKEND_SIGNAL_FILES.some((name) => index.hasFileName({ name }))
   ) {
-    addScore({ candidates, shape: 'backend api', score: 2 });
+    addProjectShapeScore({ candidates, shape: 'backend api', score: 2 });
   }
 
   if (
@@ -114,51 +167,55 @@ export function detectProjectShape({
       index.hasPath({ path: 'lib/index.ts' }) ||
       index.hasPath({ path: 'lib/index.js' }))
   ) {
-    addScore({ candidates, shape: 'library/package', score: 5 });
+    addProjectShapeScore({ candidates, shape: 'library/package', score: 5 });
   }
   if (
     index.hasDirectoryNamed({ name: 'bin' }) ||
     index.hasFileNameMatching({ pattern: /^cli\.(ts|js)$/ })
   ) {
-    addScore({ candidates, shape: 'cli tool', score: 5 });
+    addProjectShapeScore({ candidates, shape: 'cli tool', score: 5 });
   }
   if (
     index.hasDirectory({ path: 'ios' }) ||
     index.hasDirectory({ path: 'android' }) ||
     index.hasFileName({ name: 'app.json' })
   ) {
-    addScore({ candidates, shape: 'mobile app', score: 5 });
+    addProjectShapeScore({ candidates, shape: 'mobile app', score: 5 });
   }
   if (
     index.hasFileName({ name: 'docusaurus.config.js' }) ||
     index.hasFileName({ name: 'mkdocs.yml' })
   ) {
-    addScore({ candidates, shape: 'documentation site', score: 5 });
+    addProjectShapeScore({
+      candidates,
+      shape: 'documentation site',
+      score: 5,
+    });
   }
 
-  const monorepoScore = candidates.get('monorepo')?.score ?? 0;
-  const frontendScore = candidates.get('frontend app')?.score ?? 0;
-  const backendScore = candidates.get('backend api')?.score ?? 0;
+  const monorepoScore = candidateScore({ candidates, name: 'monorepo' });
+  const frontendScore = candidateScore({ candidates, name: 'frontend app' });
+  const backendScore = candidateScore({ candidates, name: 'backend api' });
 
   if (monorepoScore >= 3 && frontendScore >= 4 && backendScore >= 4) {
-    addScore({
+    addProjectShapeScore({
       candidates,
       shape: 'full-stack monorepo',
       score: monorepoScore + frontendScore + backendScore + 3,
     });
   }
   if (frontendScore >= 4 && backendScore >= 4) {
-    addScore({
+    addProjectShapeScore({
       candidates,
       shape: 'full-stack app',
       score: frontendScore + backendScore + 1,
     });
   }
 
-  const bestCandidate = [...candidates.values()]
-    .filter((candidate) => candidate.shape !== 'unknown')
-    .sort((a, b) => b.score - a.score)[0];
+  const bestCandidate = candidatesByScore({ candidates }).filter(
+    (candidate) => candidate.name !== 'unknown',
+  )[0];
 
   if (!bestCandidate || bestCandidate.score < 4) return 'unknown';
-  return bestCandidate.shape;
+  return bestCandidate.name;
 }

@@ -1,4 +1,5 @@
 import type { RepoTreeEntry } from './project-structure-analyzer.types';
+import { normalizePath } from './project-structure-path-utils';
 
 /**
  * Lookup structure for normalized repository tree entries.
@@ -16,10 +17,6 @@ export interface EntryIndex {
   hasFileNameMatching: (input: { pattern: RegExp }) => boolean;
   hasDirectory: (input: { path: string }) => boolean;
   hasDirectoryNamed: (input: { name: string }) => boolean;
-}
-
-function normalizePath({ path }: { path: string }): string {
-  return path.replace(/\\/g, '/').toLowerCase();
 }
 
 /**
@@ -40,9 +37,9 @@ export function buildEntryIndex({
       .map((entry) => normalizePath({ path: entry.path })),
   );
   const extensions = new Set(
-    entries
-      .map((entry) => entry.extension?.toLowerCase() ?? null)
-      .filter((extension): extension is string => Boolean(extension)),
+    entries.flatMap((entry) =>
+      entry.extension ? [entry.extension.toLowerCase()] : [],
+    ),
   );
 
   return {

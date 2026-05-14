@@ -22,9 +22,10 @@ interface GitHubStepProps {
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const analyzeMutation = useActionMutation(analyzeGithubReposAction, {
-    successMessage: (data) =>
-      `Logged ${data.summaries.length} GitHub ${data.summaries.length === 1 ? 'summary' : 'summaries'}`,
     showErrorToast: true,
+    onSuccess: (data) => {
+      console.log({ data })
+    }
   });
 
   // Handle OAuth search params using nuqs

@@ -37,7 +37,8 @@ GitHub repo IDs selected by user
       ├─ Project Structure Analyzer
       │   ├─ normalize path lookups
       │   ├─ infer project shape
-      │   └─ infer early stack signals
+      │   ├─ infer early stack signals
+      │   └─ detect meaningful repo areas
       ├─ future analyzers
       │   ├─ dependency/config
       │   ├─ source code
@@ -55,25 +56,29 @@ GitHub repo IDs selected by user
 
 > **For AI**: When asked to work on GitHub analysis, start by reading these files.
 
-| File                                                                                              | Purpose                                                                                                       | When to Read                                |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `apps/backend/src/routes/github.router.ts`                                                        | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                              | GitHub endpoint changes.                    |
-| `apps/backend/src/schemas/github.schema.ts`                                                       | Zod request body schema and inferred type for temporary GitHub analysis.                                      | GitHub request validation changes.          |
-| `apps/backend/src/controllers/github.controller.ts`                                               | Reads validated selected repo IDs and calls GitHub analysis service.                                          | GitHub request/response changes.            |
-| `apps/backend/src/mappers/github.mapper.ts`                                                       | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                    | GitHub response DTO changes.                |
-| `apps/backend/src/middleware/github-auth.ts`                                                      | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.         | GitHub-protected route changes.             |
-| `packages/shared/src/types/github.ts`                                                             | Defines full backend GitHub connection and client-safe public connection response types.                      | GitHub API contract changes.                |
-| `apps/backend/src/services/github-analysis.service.ts`                                            | Temporary orchestration service that fetches repo trees, runs project-structure analysis, and logs summaries. | GitHub analysis orchestration changes.      |
-| `apps/backend/src/services/github-analysis/github-tree-fetcher.ts`                                | Fetches recursive GitHub tree metadata for a selected repository.                                             | GitHub tree API changes.                    |
-| `apps/backend/src/utils/github-utils.ts`                                                          | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                  | Tree normalization or repo parsing changes. |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.ts`       | Public project-structure analyzer entry point and orchestration.                                              | Any project-structure analyzer change.      |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts` | Public input/output contracts for project structure analysis.                                                 | Changing analyzer input/output shape.       |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-entry-index.ts`    | Path/name/extension lookup helpers built from normalized GitHub tree entries.                                 | Adding path-based detection rules.          |
-| `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts`           | Score-based project shape detection.                                                                          | Changing `summary.projectShape`.            |
-| `apps/backend/src/services/github-analysis/project-structure/primary-stack-detector.ts`           | Structure-inferred stack detection.                                                                           | Changing `summary.inferredStack`.           |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`        | Builds the summary block from tree entries.                                                                   | Changing summary fields.                    |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`  | Focused coverage for current project shape and inferred stack rules.                                          | Updating detection behavior.                |
-| `apps/backend/src/services/github-analysis/*-analyzer.ts`                                         | Placeholder analyzer files for future repo signals.                                                           | Expanding the GitHub analysis pipeline.     |
+| File                                                                                                | Purpose                                                                                                       | When to Read                                |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `apps/backend/src/routes/github.router.ts`                                                          | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                              | GitHub endpoint changes.                    |
+| `apps/backend/src/schemas/github.schema.ts`                                                         | Zod request body schema and inferred type for temporary GitHub analysis.                                      | GitHub request validation changes.          |
+| `apps/backend/src/controllers/github.controller.ts`                                                 | Reads validated selected repo IDs and calls GitHub analysis service.                                          | GitHub request/response changes.            |
+| `apps/backend/src/mappers/github.mapper.ts`                                                         | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                    | GitHub response DTO changes.                |
+| `apps/backend/src/middleware/github-auth.ts`                                                        | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.         | GitHub-protected route changes.             |
+| `packages/shared/src/types/github.ts`                                                               | Defines full backend GitHub connection and client-safe public connection response types.                      | GitHub API contract changes.                |
+| `apps/backend/src/services/github-analysis.service.ts`                                              | Temporary orchestration service that fetches repo trees, runs project-structure analysis, and logs summaries. | GitHub analysis orchestration changes.      |
+| `apps/backend/src/services/github-analysis/github-tree-fetcher.ts`                                  | Fetches recursive GitHub tree metadata for a selected repository.                                             | GitHub tree API changes.                    |
+| `apps/backend/src/utils/github-utils.ts`                                                            | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                  | Tree normalization or repo parsing changes. |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.ts`         | Public project-structure analyzer entry point and orchestration.                                              | Any project-structure analyzer change.      |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`   | Public input/output contracts for project structure analysis.                                                 | Changing analyzer input/output shape.       |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-entry-index.ts`      | Path/name/extension lookup helpers built from normalized GitHub tree entries.                                 | Adding path-based detection rules.          |
+| `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts`             | Score-based project shape detection.                                                                          | Changing `summary.projectShape`.            |
+| `apps/backend/src/services/github-analysis/project-structure/primary-stack-detector.ts`             | Structure-inferred stack detection.                                                                           | Changing `summary.inferredStack`.           |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`          | Builds the summary block from tree entries.                                                                   | Changing summary fields.                    |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-areas.ts`   | Orchestrates score-based detected area generation from path evidence.                                         | Changing `detectedAreas` output.            |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-*.ts`  | Detected-area rule, candidate, and internal type helpers.                                                     | Changing detected-area scoring internals.   |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`       | Shared path normalization and owner-path helpers for project-structure detectors.                             | Adding reusable path helpers.               |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-score-candidates.ts` | Shared score candidate helpers for deterministic structure detectors.                                         | Adding score-based detector helpers.        |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`    | Focused coverage for current project shape and inferred stack rules.                                          | Updating detection behavior.                |
+| `apps/backend/src/services/github-analysis/*-analyzer.ts`                                           | Placeholder analyzer files for future repo signals.                                                           | Expanding the GitHub analysis pipeline.     |
 
 ---
 
@@ -102,8 +107,10 @@ flowchart TD
   Input[AnalyzeProjectStructureInput] --> Summary[buildProjectStructureSummary]
   Summary --> Shape[detectProjectShape]
   Summary --> Stack[detectPrimaryStack]
+  Summary --> Areas[buildDetectedAreas]
   Shape --> Result[ProjectStructureAnalysisResult]
   Stack --> Result
+  Areas --> Result
   Result --> Future[Future analyzers and evidence aggregator]
 ```
 
@@ -140,6 +147,12 @@ apps/backend/src/
         │   ├── project-shape-detector.ts          # projectShape scoring
         │   ├── primary-stack-detector.ts          # inferredStack scoring
         │   ├── project-structure-summary.ts       # summary builder
+        │   ├── project-structure-detected-areas.ts # detectedAreas orchestration
+        │   ├── project-structure-detected-area-rules.ts # detectedAreas rules
+        │   ├── project-structure-detected-area-candidates.ts # detectedAreas scoring helpers
+        │   ├── project-structure-detected-areas.types.ts # detectedAreas internal contracts
+        │   ├── project-structure-path-utils.ts    # shared path helpers
+        │   ├── project-structure-score-candidates.ts # shared score helpers
         │   └── project-structure-analyzer.test.ts # behavior tests
         ├── dependency-config-analyzer.ts # future
         ├── source-code-analyzer.ts       # future
@@ -174,6 +187,8 @@ apps/backend/src/
 - **Rule**: Use score-based path evidence, not a single exact string match.
 - **Rule**: Return `unknown` when evidence is weak.
 - **Rule**: Keep possible shape scores private until there is a real consumer.
+- **Rule**: Monorepo evidence includes common workspace config files such as `turbo.json`, `pnpm-workspace.yaml`, `nx.json`, `workspace.json`, `project.json`, and `lerna.json`, plus owner roots such as `apps/`, `packages/`, `libs/`, and weak `services/` evidence.
+- **Rule**: Frontend monorepo paths should match generalized owners such as `apps/*/app` or `apps/*/pages`, not only `apps/frontend`.
 - **Current labels**: `full-stack monorepo`, `monorepo`, `full-stack app`, `frontend app`, `backend api`, `library/package`, `cli tool`, `mobile app`, `documentation site`, `unknown`.
 
 ### 6.4 Inferred Stack Detection
@@ -181,6 +196,16 @@ apps/backend/src/
 - **Rule**: `summary.inferredStack` is structure-inferred only.
 - **Rule**: Do not treat it as the final stack source of truth.
 - **Rule**: Dependency/config analyzer will later confirm stack from files such as `package.json`, lockfiles, Prisma schema, Docker config, and framework config.
+
+### 6.5 Detected Area Generation
+
+- **Rule**: `detectedAreas` identifies meaningful repository regions from path evidence only.
+- **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
+- **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
+- **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
+- **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
+- **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
+- **Rule**: The temporary analyze endpoint can keep returning summaries while later pipeline stages consume the full internal analyzer result.
 
 ---
 
@@ -206,7 +231,7 @@ apps/backend/src/
 - [x] Focused tests added for current detection behavior
 - [x] Temporary endpoint logs selected repository summaries
 - [x] GitHub connection middleware protects repo/analyze routes
-- [ ] Detected areas builder
+- [x] Detected areas builder
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
 - [ ] Candidate files builder
@@ -239,6 +264,96 @@ apps/backend/src/
 ---
 
 ## 10. Development Log
+
+### [2026-05-14] - Conservative Backend Area Evidence
+
+- **Decision:** Require complete backend structure before emitting a `Backend API` detected area from folder evidence.
+- **Problem:** Frontend projects can have `src/routes` for client routing and `src/services` for API clients, which caused false `Backend API` areas in Vite repositories.
+- **Solution:**
+  1. **Regression coverage:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` with a Vite + Drizzle repo that has frontend `src/routes` and `src/services`.
+  2. **Evidence aggregation:** Updated `project-structure-detected-area-rules.ts` to collect backend structure by owner and emit `Backend API` only when `routes`, `controllers`, and `services` are all present.
+  3. **Entry-file fallback:** Kept explicit `server.ts` and `app.ts` files as backend evidence, while dropping broad `src/main.ts` backend detection.
+- **Outcome:** Frontend routing/service folders no longer produce backend API areas without stronger backend proof.
+
+### [2026-05-14] - Project Shape Rule Readability Cleanup
+
+- **Decision:** Keep project-shape signal groups as constants, but call `EntryIndex` helpers directly inside `detectProjectShape`.
+- **Problem:** Extra private wrapper helpers around simple `.some()` and `.filter()` calls made `project-shape-detector.ts` harder to read than the rules required.
+- **Solution:**
+  1. **Inline index checks:** Updated `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts` to remove thin helper functions and use constants directly with `index`.
+  2. **Behavior preservation:** Kept the same monorepo, frontend, backend, and full-stack scoring rules.
+- **Outcome:** Project-shape rules are shorter and closer to the scoring logic without changing analyzer behavior.
+
+### [2026-05-14] - Generalized Monorepo Shape Signals
+
+- **Decision:** Detect common Nx/Turborepo-style monorepos through reusable rule groups instead of hardcoded frontend/backend folder names.
+- **Problem:** The project shape detector recognized `apps/frontend` well, but layouts such as `apps/web`, `services/api`, and `libs/shared` are common in Nx and other workspace repos and could be under-scored.
+- **Solution:**
+  1. **Rule constants:** Updated `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts` with grouped monorepo config files, root directories, frontend paths, and backend path signals.
+  2. **Generalized app paths:** Updated `project-shape-detector.ts` and `primary-stack-detector.ts` to match `apps/*/app` and `apps/*/pages` instead of only `apps/frontend/*`.
+  3. **Library area support:** Updated `project-structure-detected-area-rules.ts` so `libs/*` can emit `Shared package` evidence alongside `packages/*`.
+  4. **Regression coverage:** Updated `project-structure-analyzer.test.ts` with an Nx-style `apps/web`, `services/api`, and `libs/shared` repository shape.
+- **Outcome:** Project structure analysis now handles more common monorepo layouts without relying on AI or file-content parsing.
+
+### [2026-05-14] - Detected Area Owner Path Grouping
+
+- **Decision:** Treat `detectedAreas[].path` as the owner root for an area, while keeping exact proof paths in `evidence`.
+- **Problem:** Root-level repositories could emit duplicate areas for the same category, such as `Frontend app` at `next.config.js` and another `Frontend app` at `app`, because raw evidence paths were used as candidate paths.
+- **Solution:**
+  1. **Owner-path helpers:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` with separate owner helpers for application, backend, and root config areas.
+  2. **Rule ownership:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-rules.ts` so root app/config evidence groups under `.` while monorepo evidence still groups under owners such as `apps/frontend`.
+  3. **Regression coverage:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` to assert root frontend and root containerization evidence merge into one owner area.
+- **Outcome:** Detected areas now distinguish where an area lives from which paths proved it, preventing duplicate same-category areas in root-level repositories.
+
+### [2026-05-14] - Prisma Database Area Grouping
+
+- **Decision:** Group Prisma schema and migration evidence under the same database owner path.
+- **Problem:** Repositories with both `prisma/schema.prisma` and `prisma/migrations` emitted two `Database schema` areas, even though both paths describe the same Prisma database area.
+- **Solution:**
+  1. **Database owner helper:** Added `ownerPathForDatabaseArea` in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`.
+  2. **Rule update:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-rules.ts` so schema and migration evidence use the same owner path.
+  3. **Regression coverage:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` to assert Prisma schema and migrations merge into one detected database area.
+- **Outcome:** Prisma-backed repositories now emit one `Database schema` area with both schema and migration evidence.
+
+### [2026-05-14] - Conservative Drizzle Database Detection
+
+- **Decision:** Add Drizzle support only for strong path conventions in the project-structure detected area analyzer.
+- **Problem:** Drizzle-backed repositories did not emit a database area, but broad `schema.ts` matching would create noisy false positives for validation, GraphQL, or API schemas.
+- **Solution:**
+  1. **Strong conventions:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-rules.ts` to detect `drizzle.config.*`, `drizzle/`, and explicit `db/schema.ts` or `src/db/schema.ts` paths.
+  2. **Owner grouping:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` so Drizzle and `db` evidence groups under stable owner paths.
+  3. **Regression coverage:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` to cover Drizzle evidence while confirming ambiguous `src/schema.ts` is ignored.
+- **Outcome:** Common Drizzle projects now produce database-area evidence without turning every schema-like filename into a database claim.
+
+### [2026-05-13] - Shared Project Structure Score Helpers
+
+- **Decision:** Reuse a generic score-candidate helper across Step 1.1 project shape and inferred stack detectors.
+- **Problem:** `project-shape-detector.ts` and `primary-stack-detector.ts` duplicated fixed-candidate map creation and score increment logic, which made future score-based analyzers more repetitive than necessary.
+- **Solution:**
+  1. **Shared scoring:** Added `apps/backend/src/services/github-analysis/project-structure/project-structure-score-candidates.ts` for candidate creation, score increments, score reads, and score sorting.
+  2. **Shape detector cleanup:** Updated `project-shape-detector.ts` to keep project-shape labels and rules local while delegating candidate bookkeeping to the shared helper.
+  3. **Stack detector cleanup:** Updated `primary-stack-detector.ts` to keep stack labels and rules local while reusing the same score helper.
+- **Outcome:** Step 1.1 and Step 1.2 now share the same score bookkeeping style without changing analyzer output.
+
+### [2026-05-13] - Detected Area Module Cleanup
+
+- **Decision:** Split detected-area path normalization, candidate scoring, internal types, and rule groups into focused project-structure modules.
+- **Problem:** `project-structure-detected-areas.ts` mixed reusable path helpers, mutable candidate bookkeeping, area-specific rules, sorting, and public orchestration, making the Step 1.2 implementation harder to extend safely.
+- **Solution:**
+  1. **Shared paths:** Added `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` and updated `project-structure-entry-index.ts` to reuse the same path normalizer.
+  2. **Detected-area internals:** Added `project-structure-detected-areas.types.ts` and `project-structure-detected-area-candidates.ts` for fixed area labels, candidate state, score accumulation, and public result conversion.
+  3. **Rule grouping:** Added `project-structure-detected-area-rules.ts` so `project-structure-detected-areas.ts` stays focused on orchestration and ordering.
+- **Outcome:** Detected-area rules are easier to scan and extend while the analyzer output contract remains unchanged.
+
+### [2026-05-13] - Project Structure Detected Areas
+
+- **Decision:** Implement detected areas as deterministic `(name, path)` candidates scored from repository tree paths.
+- **Problem:** Step 1.1 produced useful repository summaries, but later analyzers still had no structured map of where important repo regions such as frontend, backend, database, tests, docs, and tooling lived.
+- **Solution:**
+  1. **Focused builder:** Added `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-areas.ts` to score fixed v1 area names from path evidence.
+  2. **Analyzer wiring:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.ts` so the public analyzer result now includes populated `detectedAreas` while the temporary endpoint remains summary-only.
+  3. **Behavior coverage:** Updated `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` to cover monorepo app/package/database areas, root backend/database areas, support tooling areas, and weak README-only repos.
+- **Outcome:** Project structure analysis now produces an internal, evidence-backed repo area map that future analyzers can use before reading file contents or invoking AI.
 
 ### [2026-05-13] - Standardized GitHub Response DTO Mapper
 

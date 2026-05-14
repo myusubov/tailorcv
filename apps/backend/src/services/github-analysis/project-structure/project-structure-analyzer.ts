@@ -1,9 +1,9 @@
+import { buildDetectedAreas } from './project-structure-detected-areas';
 import { buildProjectStructureSummary } from './project-structure-summary';
 import type {
   AnalyzeProjectStructureInput,
   ArchitectureSignal,
   CandidateFileToInspect,
-  DetectedProjectArea,
   MaturitySignal,
   ProjectStructureAnalysisResult,
   ProjectStructureFeedback,
@@ -31,15 +31,6 @@ export type {
   ResumeSignalHint,
   SignalStrength,
 } from './project-structure-analyzer.types';
-
-function buildDetectedAreas({
-  entries,
-}: {
-  entries: RepoTreeEntry[];
-}): DetectedProjectArea[] {
-  void entries;
-  return [];
-}
 
 function buildArchitectureSignals({
   entries,
@@ -99,7 +90,7 @@ export function analyzeProjectStructure(
 ): ProjectStructureAnalysisResult {
   const { repository, entries, isTruncated } = input;
   const summary = buildProjectStructureSummary({ entries, isTruncated });
-  const detectedAreas = buildDetectedAreas({ entries });
+  const detectedAreas = buildDetectedAreas({ entries, summary });
   const architectureSignals = buildArchitectureSignals({ entries });
   const maturitySignals = buildMaturitySignals({ entries });
   const candidateFilesToInspect = buildCandidateFilesToInspect({ entries });

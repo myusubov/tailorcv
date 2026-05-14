@@ -1,39 +1,51 @@
 import { buildEntryIndex } from './project-structure-entry-index';
+import {
+  addCandidateScore,
+  createScoreCandidates,
+} from './project-structure-score-candidates';
 import type { RepoTreeEntry } from './project-structure-analyzer.types';
 
-interface StackCandidate {
-  stack: string;
-  score: number;
+type StackName =
+  | 'Docker'
+  | 'Express'
+  | 'Next.js'
+  | 'Node.js/TypeScript'
+  | 'PostgreSQL'
+  | 'Prisma'
+  | 'React'
+  | 'Turborepo'
+  | 'Vite';
+
+const STACK_NAMES: readonly StackName[] = [
+  'Docker',
+  'Express',
+  'Next.js',
+  'Node.js/TypeScript',
+  'PostgreSQL',
+  'Prisma',
+  'React',
+  'Turborepo',
+  'Vite',
+];
+
+const NEXT_APP_PATH_PREFIXES = ['app', 'pages'] as const;
+
+const NEXT_MONOREPO_APP_PATH_PATTERN = /^apps\/[^/]+\/(app|pages)(\/|$)/;
+
+function createStackCandidates() {
+  return createScoreCandidates({ names: STACK_NAMES });
 }
 
-function createCandidates(): Map<string, StackCandidate> {
-  return new Map(
-    [
-      'Docker',
-      'Express',
-      'Next.js',
-      'Node.js/TypeScript',
-      'PostgreSQL',
-      'Prisma',
-      'React',
-      'Turborepo',
-      'Vite',
-    ].map((stack) => [stack, { stack, score: 0 }]),
-  );
-}
-
-function addScore({
+function addStackScore({
   candidates,
   stack,
   score,
 }: {
-  candidates: Map<string, StackCandidate>;
-  stack: string;
+  candidates: ReturnType<typeof createStackCandidates>;
+  stack: StackName;
   score: number;
 }): void {
-  const candidate = candidates.get(stack);
-  if (!candidate) return;
-  candidate.score += score;
+  addCandidateScore({ candidates, name: stack, score });
 }
 
 /**
@@ -48,46 +60,46 @@ export function detectPrimaryStack({
   projectShape: string;
 }): string[] {
   const index = buildEntryIndex({ entries });
-  const candidates = createCandidates();
+  const candidates = createStackCandidates();
 
   if (index.hasFileNameMatching({ pattern: /^next\.config\./ })) {
-    addScore({ candidates, stack: 'Next.js', score: 4 });
+    addStackScore({ candidates, stack: 'Next.js', score: 4 });
   }
   if (
-    index.hasPathStartingWith({ prefix: 'app' }) ||
-    index.hasPathStartingWith({ prefix: 'pages' }) ||
-    index.hasPathStartingWith({ prefix: 'apps/frontend/app' }) ||
-    index.hasPathStartingWith({ prefix: 'apps/frontend/pages' })
+    NEXT_APP_PATH_PREFIXES.some((prefix) =>
+      index.hasPathStartingWith({ prefix }),
+    ) ||
+    index.hasPathMatching({ pattern: NEXT_MONOREPO_APP_PATH_PATTERN })
   ) {
-    addScore({ candidates, stack: 'Next.js', score: 2 });
+    addStackScore({ candidates, stack: 'Next.js', score: 2 });
   }
   if (index.hasFileNameMatching({ pattern: /^vite\.config\./ })) {
-    addScore({ candidates, stack: 'Vite', score: 4 });
+    addStackScore({ candidates, stack: 'Vite', score: 4 });
   }
   if (index.hasPathMatching({ pattern: /^src\/(app|main)\.(tsx|jsx)$/ })) {
-    addScore({ candidates, stack: 'React', score: 3 });
+    addStackScore({ candidates, stack: 'React', score: 3 });
   }
   if (
     index.hasDirectoryNamed({ name: 'routes' }) &&
     index.hasDirectoryNamed({ name: 'controllers' }) &&
     index.hasDirectoryNamed({ name: 'services' })
   ) {
-    addScore({ candidates, stack: 'Express', score: 3 });
+    addStackScore({ candidates, stack: 'Express', score: 3 });
   }
   if (index.hasPathMatching({ pattern: /(^|\/)prisma\/schema\.prisma$/ })) {
-    addScore({ candidates, stack: 'Prisma', score: 4 });
+    addStackScore({ candidates, stack: 'Prisma', score: 4 });
   }
   if (index.hasPathMatching({ pattern: /postgres|postgresql/ })) {
-    addScore({ candidates, stack: 'PostgreSQL', score: 3 });
+    addStackScore({ candidates, stack: 'PostgreSQL', score: 3 });
   }
   if (
     index.hasFileName({ name: 'dockerfile' }) ||
     index.hasFileNameMatching({ pattern: /^docker-compose\./ })
   ) {
-    addScore({ candidates, stack: 'Docker', score: 3 });
+    addStackScore({ candidates, stack: 'Docker', score: 3 });
   }
   if (index.hasFileName({ name: 'turbo.json' })) {
-    addScore({ candidates, stack: 'Turborepo', score: 4 });
+    addStackScore({ candidates, stack: 'Turborepo', score: 4 });
   }
 
   const hasTypeScript =
@@ -100,11 +112,11 @@ export function detectPrimaryStack({
     index.hasFileName({ name: 'package.json' }) &&
     hasTypeScript
   ) {
-    addScore({ candidates, stack: 'Node.js/TypeScript', score: 3 });
+    addStackScore({ candidates, stack: 'Node.js/TypeScript', score: 3 });
   }
 
   return [...candidates.values()]
     .filter((candidate) => candidate.score >= 2)
-    .map((candidate) => candidate.stack)
+    .map((candidate) => candidate.name)
     .sort((a, b) => a.localeCompare(b));
 }
