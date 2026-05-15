@@ -6,15 +6,16 @@
 
 ## Quick Reference Table
 
-| **Use Case**                                   | **Primary Doc**                          | **Supporting Docs**                                                                            |
-| ---------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| SSO / OAuth login or signup changes            | [auth/README.md](auth/README.md)         | [auth/sso.md](auth/sso.md), `proxy.ts`, `lib/config.ts`                                        |
-| Email/password auth changes                    | [auth/README.md](auth/README.md)         | [auth/flows.md](auth/flows.md), `lib/schemas/auth.ts`                                          |
-| Auth browser automation / E2E                  | [auth/README.md](auth/README.md)         | [auth/testing.md](auth/testing.md), `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/` |
-| Real forgot-password E2E setup                 | [auth/testing.md](auth/testing.md)       | `apps/frontend/e2e/helpers/mail/`, `apps/frontend/.env.e2e.local.example`                      |
-| Route protection / middleware                  | [auth/README.md](auth/README.md)         | [auth/sso.md](auth/sso.md), `proxy.ts`                                                         |
-| Onboarding method or manual-entry flow changes | [onboarding.md](onboarding.md)           | `apps/frontend/app/onboarding/page.tsx`, `apps/frontend/app/components/onboarding/`            |
-| GitHub repository analysis pipeline changes    | [github-analysis.md](github-analysis.md) | `apps/backend/src/services/github-analysis/`, [onboarding.md](onboarding.md)                   |
+| **Use Case**                                   | **Primary Doc**                                                              | **Supporting Docs**                                                                            |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| SSO / OAuth login or signup changes            | [auth/README.md](auth/README.md)                                             | [auth/sso.md](auth/sso.md), `proxy.ts`, `lib/config.ts`                                        |
+| Email/password auth changes                    | [auth/README.md](auth/README.md)                                             | [auth/flows.md](auth/flows.md), `lib/schemas/auth.ts`                                          |
+| Auth browser automation / E2E                  | [auth/README.md](auth/README.md)                                             | [auth/testing.md](auth/testing.md), `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/` |
+| Real forgot-password E2E setup                 | [auth/testing.md](auth/testing.md)                                           | `apps/frontend/e2e/helpers/mail/`, `apps/frontend/.env.e2e.local.example`                      |
+| Route protection / middleware                  | [auth/README.md](auth/README.md)                                             | [auth/sso.md](auth/sso.md), `proxy.ts`                                                         |
+| Onboarding method or manual-entry flow changes | [onboarding.md](onboarding.md)                                               | `apps/frontend/app/onboarding/page.tsx`, `apps/frontend/app/components/onboarding/`            |
+| GitHub repository analysis pipeline changes    | [github-analysis/README.md](github-analysis/README.md)                       | [github-analysis/pipeline.md](github-analysis/pipeline.md), [onboarding.md](onboarding.md)     |
+| GitHub project structure analyzer changes      | [github-analysis/project-structure.md](github-analysis/project-structure.md) | `apps/backend/src/services/github-analysis/project-structure/`                                 |
 
 ---
 
@@ -41,7 +42,10 @@
 
 ### Backend Analysis
 
-- [github-analysis.md](github-analysis.md) — GitHub repository analyzer pipeline, project structure analysis, and future evidence extraction stages
+- [github-analysis/README.md](github-analysis/README.md) — Hub for GitHub repository analyzer pipeline documentation
+- [github-analysis/pipeline.md](github-analysis/pipeline.md) — GitHub endpoint, connection, tree fetching, and orchestration boundaries
+- [github-analysis/project-structure.md](github-analysis/project-structure.md) — Implemented project structure analyzer, scoring rules, and output contracts
+- [github-analysis/changelog.md](github-analysis/changelog.md) — GitHub analysis implementation history and decision log
 
 ---
 
@@ -87,8 +91,8 @@
 
 | Metric                 | Status     |
 | ---------------------- | ---------- |
-| **Total domain docs**  | 5          |
-| **Last full review**   | 2026-04-23 |
+| **Total domain docs**  | 9          |
+| **Last full review**   | 2026-05-15 |
 | **Docs needing split** | None       |
 
 <!--

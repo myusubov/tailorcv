@@ -91,6 +91,11 @@ export function detectProjectShape({
   const index = buildEntryIndex({ entries });
   const candidates = createProjectShapeCandidates();
 
+  /**
+   * Monorepo shape evidence.
+   * Workspace roots and workspace config files are structure-level signals; `services`
+   * is intentionally weak because many single-backend repos also use that folder name.
+   */
   const monorepoRootDirectoryCount = MONOREPO_ROOT_DIRECTORIES.filter((path) =>
     index.hasDirectory({ path }),
   ).length;
@@ -120,6 +125,11 @@ export function detectProjectShape({
     addProjectShapeScore({ candidates, shape: 'monorepo', score: 1 });
   }
 
+  /**
+   * Frontend app evidence.
+   * Framework config files are strong signals, while generic folders such as `web`
+   * and `client` only support the guess because they can appear in mixed repos.
+   */
   if (
     FRONTEND_DIRECTORY_NAMES.some((name) => index.hasDirectoryNamed({ name }))
   ) {
@@ -141,6 +151,12 @@ export function detectProjectShape({
     addProjectShapeScore({ candidates, shape: 'frontend app', score: 3 });
   }
 
+  /**
+   * Backend API evidence.
+   * Layered folders are the strongest path-only signal; entry files are weaker
+   * support. Database tooling is intentionally not used here because it can exist
+   * in frontend or full-stack apps without proving a backend API area.
+   */
   if (
     BACKEND_DIRECTORY_NAMES.some((name) => index.hasDirectoryNamed({ name }))
   ) {
@@ -153,13 +169,16 @@ export function detectProjectShape({
   ) {
     addProjectShapeScore({ candidates, shape: 'backend api', score: 5 });
   }
-  if (
-    index.hasDirectoryNamed({ name: 'prisma' }) ||
-    BACKEND_SIGNAL_FILES.some((name) => index.hasFileName({ name }))
-  ) {
+
+  if (BACKEND_SIGNAL_FILES.some((name) => index.hasFileName({ name }))) {
     addProjectShapeScore({ candidates, shape: 'backend api', score: 2 });
   }
 
+  /**
+   * Specialized project shapes.
+   * These rules look for conventional entry points for packages, CLIs, mobile apps,
+   * and documentation sites. Their scores are high because the paths are specific.
+   */
   if (
     index.hasFileName({ name: 'package.json' }) &&
     (index.hasPath({ path: 'src/index.ts' }) ||
@@ -197,6 +216,11 @@ export function detectProjectShape({
   const frontendScore = candidateScore({ candidates, name: 'frontend app' });
   const backendScore = candidateScore({ candidates, name: 'backend api' });
 
+  /**
+   * Derived full-stack labels.
+   * These combine earlier scores so the more specific label wins when a repo is
+   * both frontend and backend, and even more specific when it is also a monorepo.
+   */
   if (monorepoScore >= 3 && frontendScore >= 4 && backendScore >= 4) {
     addProjectShapeScore({
       candidates,

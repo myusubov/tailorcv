@@ -76,7 +76,6 @@ describe('analyzeProjectStructure', () => {
 
     expect(result.summary.projectShape).toBe('full-stack monorepo');
     expect(result.summary.inferredStack).toEqual([
-      'Express',
       'Next.js',
       'Prisma',
       'Turborepo',
@@ -130,7 +129,7 @@ describe('analyzeProjectStructure', () => {
     ]);
 
     expect(result.summary.projectShape).toBe('full-stack monorepo');
-    expect(result.summary.inferredStack).toEqual(['Express', 'Next.js']);
+    expect(result.summary.inferredStack).toEqual(['Next.js', 'Nx']);
     expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
       evidence: expect.arrayContaining([
         'apps/web/app',
@@ -222,7 +221,6 @@ describe('analyzeProjectStructure', () => {
 
     expect(result.summary.projectShape).toBe('backend api');
     expect(result.summary.inferredStack).toEqual([
-      'Express',
       'Node.js/TypeScript',
       'Prisma',
     ]);
@@ -242,6 +240,58 @@ describe('analyzeProjectStructure', () => {
     expect(
       result.detectedAreas.filter((area) => area.name === 'Database schema'),
     ).toHaveLength(1);
+  });
+
+  it('infers NestJS from Nest-specific entry and module files', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/routes'),
+      directory('src/controllers'),
+      directory('src/services'),
+      file('src/main.ts'),
+      file('src/app.module.ts'),
+      file('package.json'),
+      file('tsconfig.json'),
+    ]);
+
+    expect(result.summary.projectShape).toBe('backend api');
+    expect(result.summary.inferredStack).toEqual([
+      'NestJS',
+      'Node.js/TypeScript',
+    ]);
+  });
+
+  it('infers mobile stacks from conservative path signals', () => {
+    const expoResult = analyze([
+      directory('app'),
+      file('app/_layout.tsx'),
+      file('app.json'),
+      file('app.config.ts'),
+      file('expo-env.d.ts'),
+      file('package.json'),
+      file('tsconfig.json'),
+    ]);
+    const reactNativeResult = analyze([file('metro.config.js')]);
+    const nativeResult = analyze([
+      directory('android'),
+      file('android/build.gradle'),
+      file('android/app/src/main/java/com/example/MainActivity.java'),
+      directory('ios'),
+      file('ios/Podfile'),
+    ]);
+    const flutterResult = analyze([
+      file('pubspec.yaml'),
+      directory('lib'),
+      file('lib/main.dart'),
+    ]);
+
+    expect(expoResult.summary.inferredStack).toEqual([
+      'Expo',
+      'Node.js/TypeScript',
+    ]);
+    expect(reactNativeResult.summary.inferredStack).toEqual(['React Native']);
+    expect(nativeResult.summary.inferredStack).toEqual(['Android', 'iOS']);
+    expect(flutterResult.summary.inferredStack).toEqual(['Flutter']);
   });
 
   it('detects conservative Drizzle database conventions', () => {

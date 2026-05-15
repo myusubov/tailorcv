@@ -1,0 +1,189 @@
+# GitHub Analysis Changelog
+
+> Historical implementation log for the GitHub analysis domain. New high-level doc changes go in the hub; implementation changes should add entries here when they affect pipeline or analyzer behavior.
+
+---
+
+## 2026-05-15
+
+### Primary Stack Signal Expansion
+
+- **Decision:** Keep primary stack inference path-only and conservative while adding distinctive stack/tool signals.
+- **Problem:** The stack detector previously inferred `Express` from generic backend folders, but those folders are not Express-specific; it also missed common monorepo and mobile stack signals.
+- **Solution:** Removed path-only `Express`, added NestJS/Nx/mobile/Docker Compose signals, and updated analyzer tests.
+- **Outcome:** `summary.inferredStack` avoids overclaiming Express while capturing more distinctive path-only stack evidence.
+
+### Project Shape Rule Comments
+
+- **Decision:** Add concise JSDoc-style comments around the main project-shape scoring groups.
+- **Problem:** Weak versus strong evidence was not obvious while scanning `project-shape-detector.ts`.
+- **Solution:** Added comments for monorepo, frontend, backend, specialized, and derived full-stack score groups.
+- **Outcome:** Future project-shape scoring edits have clearer local context without changing analyzer behavior.
+
+---
+
+## 2026-05-14
+
+### Conservative Backend Area Evidence
+
+- **Decision:** Require complete backend structure before emitting a `Backend API` detected area from folder evidence.
+- **Problem:** Frontend projects can have `src/routes` for client routing and `src/services` for API clients, causing false backend areas.
+- **Solution:** Aggregate backend structure by owner and emit `Backend API` only when `routes`, `controllers`, and `services` are all present.
+- **Outcome:** Frontend routing/service folders no longer produce backend API areas without stronger backend proof.
+
+### Project Shape Rule Readability Cleanup
+
+- **Decision:** Keep project-shape signal groups as constants, but call `EntryIndex` helpers directly inside `detectProjectShape`.
+- **Problem:** Thin helper wrappers around simple `.some()` and `.filter()` calls made the detector harder to read.
+- **Solution:** Removed helper wrappers and used constants directly with `index`.
+- **Outcome:** Project-shape rules are shorter and closer to the scoring logic.
+
+### Generalized Monorepo Shape Signals
+
+- **Decision:** Detect common Nx/Turborepo-style monorepos through reusable rule groups instead of hardcoded frontend/backend folder names.
+- **Problem:** Layouts such as `apps/web`, `services/api`, and `libs/shared` were common but under-scored.
+- **Solution:** Added grouped monorepo config/root signals, generalized `apps/*/app|pages`, added `libs/*` shared package evidence, and regression coverage.
+- **Outcome:** Project structure analysis handles more common monorepo layouts without AI or file-content parsing.
+
+### Detected Area Owner Path Grouping
+
+- **Decision:** Treat `detectedAreas[].path` as the owner root for an area while keeping exact proof paths in `evidence`.
+- **Problem:** Root-level repositories could emit duplicate areas for the same category.
+- **Solution:** Added owner-path helpers and updated detected-area rules so root app/config evidence groups under `.` while monorepos group under app/package owners.
+- **Outcome:** Detected areas now distinguish where an area lives from which paths proved it.
+
+### Prisma Database Area Grouping
+
+- **Decision:** Group Prisma schema and migration evidence under the same database owner path.
+- **Problem:** `prisma/schema.prisma` and `prisma/migrations` emitted two database areas.
+- **Solution:** Added `ownerPathForDatabaseArea` and updated Prisma rules/tests.
+- **Outcome:** Prisma repositories emit one `Database schema` area with schema and migration evidence.
+
+### Conservative Drizzle Database Detection
+
+- **Decision:** Add Drizzle support only for strong path conventions.
+- **Problem:** Broad `schema.ts` matching would create noisy false positives.
+- **Solution:** Detect `drizzle.config.*`, `drizzle/`, and explicit `db/schema.ts` / `src/db/schema.ts`; ignore ambiguous `src/schema.ts`.
+- **Outcome:** Common Drizzle projects produce database-area evidence without overclaiming.
+
+---
+
+## 2026-05-13
+
+### Shared Project Structure Score Helpers
+
+- **Decision:** Reuse a generic score-candidate helper across project shape and inferred stack detectors.
+- **Problem:** Detectors duplicated fixed-candidate map creation and score increment logic.
+- **Solution:** Added `project-structure-score-candidates.ts` and updated shape/stack detectors to use it.
+- **Outcome:** Score bookkeeping is shared without changing analyzer output.
+
+### Detected Area Module Cleanup
+
+- **Decision:** Split detected-area normalization, candidate scoring, internal types, and rule groups into focused modules.
+- **Problem:** `project-structure-detected-areas.ts` mixed orchestration, paths, mutable candidates, rules, and sorting.
+- **Solution:** Added path helpers, internal detected-area types/candidates, and rule grouping modules.
+- **Outcome:** Detected-area rules are easier to scan and extend.
+
+### Project Structure Detected Areas
+
+- **Decision:** Implement detected areas as deterministic `(name, path)` candidates scored from repository tree paths.
+- **Problem:** Later analyzers had no structured map of important repo regions.
+- **Solution:** Added the detected-area builder, analyzer wiring, and behavior coverage.
+- **Outcome:** Project structure analysis produces an internal evidence-backed repo area map.
+
+### GitHub Response DTO Cleanup
+
+- **Decision:** Standardize GitHub client-safe responses around explicit response DTO mapping.
+- **Problem:** Response serialization mixed with GitHub service logic and previously risked exposing token-bearing fields.
+- **Solution:** Added `GitHubConnectionResponse` and `mapGitHubConnectionToResponse`.
+- **Outcome:** GitHub response shaping now uses explicit allowlist mapping.
+
+---
+
+## 2026-05-12
+
+### GitHub Connection Middleware Boundary
+
+- **Decision:** Add dedicated middleware for routes that require a saved GitHub access token.
+- **Problem:** GitHub-token routes duplicated DB reads and mixed authorization with controller/service logic.
+- **Solution:** Added `requireGithubConnection`, protected `/repos` and `/analyze`, and passed the loaded token downstream.
+- **Outcome:** GitHub-protected endpoints enforce connection state once at the route boundary.
+
+---
+
+## 2026-05-11
+
+### GitHub Utility and Service Modularization
+
+- **Decision:** Move pure GitHub helpers into backend `utils` and split service orchestration helpers.
+- **Problem:** The temporary service mixed parsing, tree fetching, normalization, analyzer invocation, and logging.
+- **Solution:** Consolidated pure helpers in `github-utils.ts`, kept `github-tree-fetcher.ts` for GitHub I/O, and thinned `github-analysis.service.ts`.
+- **Outcome:** GitHub analysis has clearer boundaries between pure helpers, API fetching, and analyzer orchestration.
+
+### Analyze Request Body Validation Cleanup
+
+- **Decision:** Use the GitHub Zod schema as the source of truth for temporary analyze request typing.
+- **Problem:** Controller typing and route validation were separate, and repo ID validation was too loose.
+- **Solution:** Tightened `repoIds` schema and used inferred request body typing in the controller.
+- **Outcome:** The temporary analyze endpoint has one validation/type source.
+
+---
+
+## 2026-05-09
+
+### Temporary GitHub Analyze Endpoint
+
+- **Decision:** Wire the GitHub repo picker Analyze button to a minimal backend endpoint that logs project-structure summaries.
+- **Problem:** The analyzer could not be exercised against selected real repositories from onboarding.
+- **Solution:** Added `POST /api/v1/auth/github/analyze`, controller validation, analysis orchestration, and frontend action wiring.
+- **Outcome:** Selecting repositories in onboarding can exercise the project-structure analyzer against live GitHub tree data.
+
+### Project Structure Analyzer Folder Boundary
+
+- **Decision:** Move implemented project-structure analyzer files under `services/github-analysis/project-structure/`.
+- **Problem:** The GitHub analysis root was becoming noisy beside future analyzer placeholders.
+- **Solution:** Moved project structure orchestration, types, summary, index, detectors, and tests into a feature-local folder.
+- **Outcome:** The implemented analyzer has a clear local module boundary.
+
+### GitHub Analysis Architecture Doc
+
+- **Decision:** Document the GitHub analysis domain and add it to the architecture index.
+- **Problem:** GitHub analysis files existed without a first-read domain doc.
+- **Solution:** Added the original GitHub analysis architecture doc and index entry.
+- **Outcome:** Future GitHub analysis work had an architecture entry point and progress history.
+
+### Structure-Inferred Stack Naming
+
+- **Decision:** Rename `summary.primaryStack` to `summary.inferredStack`.
+- **Problem:** `primaryStack` sounded final, but project structure only infers stack from paths and config-like filenames.
+- **Solution:** Renamed the public summary contract, output, and tests.
+- **Outcome:** The output communicates that stack values remain inferred until dependency/config analysis confirms them.
+
+---
+
+## 2026-05-08
+
+### Project Shape and Inferred Stack Prototype
+
+- **Decision:** Implement project shape and structure-inferred stack detection using deterministic score-based rules, not AI.
+- **Problem:** Exact path matching was too brittle, while AI was too uncontrolled for first-stage classification.
+- **Solution:** Added path indexing, shape scoring, stack scoring, summary building, and behavior tests.
+- **Outcome:** Project structure analysis returns useful early classification without reading contents or calling AI.
+
+### Project Structure Analyzer Modularization
+
+- **Decision:** Split the large project structure analyzer into feature-local modules.
+- **Problem:** Types, path indexing, scoring, summary building, and orchestration were mixed in one file.
+- **Solution:** Moved contracts, detectors, and summary logic into focused modules with a thin entry point.
+- **Outcome:** Future analyzer sections can grow independently.
+
+---
+
+## 2026-05-07
+
+### GitHub Analysis Analyzer Scaffold
+
+- **Decision:** Create one feature-local analyzer file per planned GitHub repo signal.
+- **Problem:** The new GitHub analysis direction needed clear backend entry points without committing to queueing, AI prompts, or final orchestration yet.
+- **Solution:** Added analyzer placeholders for project structure, dependency/config, source code, tests, README/docs, CI/CD, commits, and pull requests.
+- **Outcome:** The backend has a clear place to build the GitHub analyzer pipeline incrementally.
