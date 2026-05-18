@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-05-18
+
+### Detected Area Backend Rule Readability
+
+- **Decision:** Keep backend detected-area behavior the same while extracting the owner-evidence grouping logic into named helpers.
+- **Problem:** `addBackendAreas` mixed regex matching, owner grouping, evidence bucket creation, and completion checks inline, making the false-positive prevention logic hard to reason about.
+- **Solution:** Added explicit required backend folder constants and helper functions for structure-folder extraction, owner evidence creation, and complete backend-structure checks in `project-structure-detected-area-rules.ts`.
+- **Outcome:** Backend area detection still requires `routes`, `controllers`, and `services` under the same owner, but the main rule now reads closer to the intended mental model.
+
+---
+
 ## 2026-05-15
 
 ### Primary Stack Signal Expansion

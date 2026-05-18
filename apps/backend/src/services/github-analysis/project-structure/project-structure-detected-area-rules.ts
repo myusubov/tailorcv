@@ -27,11 +27,7 @@ function addFrontendAreas({
   for (const entry of entries) {
     const normalizedPath = normalizePath({ path: entry.path });
 
-    if (
-      isFileNameMatch({ entry, pattern: /^(next|vite)\.config\./ }) ||
-      normalizedPath.endsWith('/next.config.ts') ||
-      normalizedPath.endsWith('/vite.config.ts')
-    ) {
+    if (isFileNameMatch({ entry, pattern: /^(next|vite)\.config\./ })) {
       addAreaScore({
         candidates,
         name: 'Frontend app',
@@ -60,10 +56,71 @@ function addFrontendAreas({
   }
 }
 
+const REQUIRED_BACKEND_STRUCTURE_DIRECTORIES = [
+  'routes',
+  'controllers',
+  'services',
+] as const;
+
+type BackendStructureDirectory =
+  (typeof REQUIRED_BACKEND_STRUCTURE_DIRECTORIES)[number];
+
 interface BackendStructureEvidence {
   path: string;
-  directories: Set<string>;
+  directories: Set<BackendStructureDirectory>;
   evidence: Set<string>;
+}
+
+function backendStructureDirectoryFromEntry({
+  entry,
+}: {
+  entry: RepoTreeEntry;
+}): BackendStructureDirectory | null {
+  if (entry.type !== 'directory') return null;
+
+  const normalizedPath = normalizePath({ path: entry.path });
+  const match = normalizedPath.match(
+    /(^|\/)src\/(?<directory>routes|controllers|services)$/,
+  );
+
+  switch (match?.groups?.directory) {
+    case 'routes':
+    case 'controllers':
+    case 'services':
+      return match.groups.directory;
+    default:
+      return null;
+  }
+}
+
+function getOrCreateBackendStructureEvidence({
+  evidenceByOwner,
+  ownerPath,
+}: {
+  evidenceByOwner: Map<string, BackendStructureEvidence>;
+  ownerPath: string;
+}): BackendStructureEvidence {
+  const existingEvidence = evidenceByOwner.get(ownerPath);
+  if (existingEvidence) return existingEvidence;
+
+  const newEvidence = {
+    path: ownerPath,
+    directories: new Set<BackendStructureDirectory>(),
+    evidence: new Set<string>(),
+  } satisfies BackendStructureEvidence;
+
+  evidenceByOwner.set(ownerPath, newEvidence);
+  return newEvidence;
+}
+
+function hasCompleteBackendStructure({
+  structureEvidence,
+}: {
+  structureEvidence: BackendStructureEvidence;
+}): boolean {
+  return REQUIRED_BACKEND_STRUCTURE_DIRECTORIES.every((directory) =>
+    structureEvidence.directories.has(directory),
+  );
 }
 
 function addBackendAreas({
@@ -73,27 +130,17 @@ function addBackendAreas({
   const structureEvidenceByOwner = new Map<string, BackendStructureEvidence>();
 
   for (const entry of entries) {
-    const normalizedPath = normalizePath({ path: entry.path });
-    const backendStructureMatch = normalizedPath.match(
-      /(^|\/)src\/(routes|controllers|services)$/,
-    );
+    const structureDirectory = backendStructureDirectoryFromEntry({ entry });
 
-    if (entry.type === 'directory' && backendStructureMatch) {
-      const structureDirectory = backendStructureMatch[2];
-      if (!structureDirectory) continue;
-
+    if (structureDirectory) {
       const ownerPath = ownerPathForBackendArea({ path: entry.path });
-      const ownerEvidence =
-        structureEvidenceByOwner.get(ownerPath) ??
-        ({
-          path: ownerPath,
-          directories: new Set<string>(),
-          evidence: new Set<string>(),
-        } satisfies BackendStructureEvidence);
+      const ownerEvidence = getOrCreateBackendStructureEvidence({
+        evidenceByOwner: structureEvidenceByOwner,
+        ownerPath,
+      });
 
       ownerEvidence.directories.add(structureDirectory);
       ownerEvidence.evidence.add(entry.path);
-      structureEvidenceByOwner.set(ownerPath, ownerEvidence);
     }
 
     if (isFileNameMatch({ entry, pattern: /^(server|app)\.(ts|js)$/ })) {
@@ -108,11 +155,7 @@ function addBackendAreas({
   }
 
   for (const structureEvidence of structureEvidenceByOwner.values()) {
-    if (
-      ['routes', 'controllers', 'services'].every((directory) =>
-        structureEvidence.directories.has(directory),
-      )
-    ) {
+    if (hasCompleteBackendStructure({ structureEvidence })) {
       addAreaScore({
         candidates,
         name: 'Backend API',
