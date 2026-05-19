@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-05-19
+
+### Detected Area Rule Module Skeleton
+
+- **Decision:** Split detected-area rule orchestration from frontend and framework-specific rule modules before rebuilding detection logic.
+- **Problem:** The previous single rules file mixed rule dispatch, area grouping, and framework-specific evidence, which made step-by-step reconstruction harder to follow.
+- **Solution:** Kept `project-structure-detected-area-rules.ts` as the public rule entry point, added `detected-area-rules/frontend/frontend-area-rules.ts` for frontend dispatch, and added `detected-area-rules/frontend/next-frontend-area-rules.ts` as the first framework-specific placeholder.
+- **Outcome:** Detected-area rules now have a modular shell where Next.js, Angular, Vue, backend, database, and support detectors can be rebuilt one small module at a time.
+
+---
+
 ## 2026-05-18
 
 ### Detected Area Backend Rule Readability

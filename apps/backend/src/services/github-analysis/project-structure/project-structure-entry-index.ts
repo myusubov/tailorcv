@@ -17,6 +17,9 @@ export interface EntryIndex {
   hasFileNameMatching: (input: { pattern: RegExp }) => boolean;
   hasDirectory: (input: { path: string }) => boolean;
   hasDirectoryNamed: (input: { name: string }) => boolean;
+  findFilesByNameMatching: (input: { pattern: RegExp }) => RepoTreeEntry[]
+  findDirectoriesByPathMatching: (input: { pattern: RegExp }) => RepoTreeEntry[]
+  findEntriesByPathMatching: (input: { pattern: RegExp }) => RepoTreeEntry[]
 }
 
 /**
@@ -64,6 +67,11 @@ export function buildEntryIndex({
       const normalizedName = name.toLowerCase();
       return [...directoryPaths].some((path) =>
         path.split('/').includes(normalizedName),
+      );
+    },
+    findFilesByNameMatching: ({ pattern }) => {
+      return entries.filter(
+        (entry) => entry.type === 'file' && pattern.test(entry.name.toLowerCase()),
       );
     },
   };

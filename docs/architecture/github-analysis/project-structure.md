@@ -80,6 +80,10 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── project-structure-summary.ts
 ├── project-structure-detected-areas.ts
 ├── project-structure-detected-area-rules.ts
+├── detected-area-rules/
+│   └── frontend/
+│       ├── frontend-area-rules.ts
+│       └── next-frontend-area-rules.ts
 ├── project-structure-detected-area-candidates.ts
 ├── project-structure-detected-areas.types.ts
 ├── project-structure-path-utils.ts
