@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-05-20
+
+### Next.js Frontend Area Evidence
+
+- **Decision:** Rebuild frontend detected-area behavior through the new Next.js-specific rule module first.
+- **Problem:** The modular detected-area shell no longer emitted frontend areas, and Next.js needed path-only evidence restored before adding other frontend frameworks.
+- **Solution:** Added `next.config.*`, App Router file, Pages Router file, and weaker route-directory evidence in `detected-area-rules/frontend/next-frontend-area-rules.ts`.
+- **Outcome:** Next.js repository regions can again contribute `Frontend app` candidates while keeping framework-specific logic isolated.
+
+---
+
 ## 2026-05-19
 
 ### Detected Area Rule Module Skeleton

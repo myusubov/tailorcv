@@ -6,8 +6,8 @@ import type { DetectedAreaRuleContext } from './project-structure-detected-areas
  * Rule groups are kept in feature-specific modules so each area can evolve independently.
  */
 export function applyDetectedAreaRules({
-  entries,
   candidates,
+  index,
 }: DetectedAreaRuleContext): void {
-  addFrontendAreas({ entries, candidates });
+  addFrontendAreas({ candidates, index });
 }

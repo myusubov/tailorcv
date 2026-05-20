@@ -1,4 +1,4 @@
-import type { RepoTreeEntry } from './project-structure-analyzer.types';
+import type { EntryIndex } from './project-structure-entry-index';
 
 /**
  * Fixed v1 labels emitted by the project-structure detected-area analyzer.
@@ -32,6 +32,6 @@ export interface AreaCandidate {
  * Shared state passed into detected-area rule groups.
  */
 export interface DetectedAreaRuleContext {
-  entries: RepoTreeEntry[];
   candidates: Map<string, AreaCandidate>;
+  index: EntryIndex;
 }

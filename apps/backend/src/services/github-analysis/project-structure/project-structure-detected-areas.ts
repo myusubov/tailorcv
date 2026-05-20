@@ -85,7 +85,7 @@ export function buildDetectedAreas({
 
   if (index.paths.length === 0) return [];
 
-  applyDetectedAreaRules({ entries, candidates });
+  applyDetectedAreaRules({ candidates, index });
 
   return toDetectedProjectAreas({ candidates: [...candidates.values()] }).sort(
     (a, b) => {

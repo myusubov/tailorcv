@@ -6,8 +6,8 @@ import { addNextFrontendAreas } from './next-frontend-area-rules';
  * Framework-specific rules live in separate modules and all emit `Frontend app` candidates.
  */
 export function addFrontendAreas({
-  entries,
   candidates,
+  index,
 }: DetectedAreaRuleContext): void {
-  addNextFrontendAreas({ entries, candidates });
+  addNextFrontendAreas({ candidates, index });
 }

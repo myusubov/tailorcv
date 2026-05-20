@@ -74,5 +74,17 @@ export function buildEntryIndex({
         (entry) => entry.type === 'file' && pattern.test(entry.name.toLowerCase()),
       );
     },
+    findDirectoriesByPathMatching: ({ pattern }) => {
+      return entries.filter(
+        (entry) =>
+          entry.type === 'directory' &&
+          pattern.test(normalizePath({ path: entry.path })),
+      );
+    },
+    findEntriesByPathMatching: ({ pattern }) => {
+      return entries.filter((entry) =>
+        pattern.test(normalizePath({ path: entry.path })),
+      );
+    },
   };
 }
