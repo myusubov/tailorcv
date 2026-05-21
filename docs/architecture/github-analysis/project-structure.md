@@ -83,6 +83,7 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── detected-area-rules/
 │   └── frontend/
 │       ├── frontend-area-rules.ts
+│       ├── generic-frontend-area-rules.ts
 │       └── next-frontend-area-rules.ts
 ├── project-structure-detected-area-candidates.ts
 ├── project-structure-detected-areas.types.ts
@@ -120,7 +121,8 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
-- **Rule**: Next.js frontend area evidence includes `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints.
+- **Rule**: Next.js frontend area evidence is grouped by owner path and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints.
+- **Rule**: Generic frontend area evidence includes Vite-style `vite.config.*`, `index.html`, `src/main.*`, `src/App.*`, and React SPA `src/index.*` while still emitting role-based `Frontend app` areas.
 - **Rule**: The temporary analyze endpoint can keep returning summaries while later pipeline stages consume the full internal analyzer result.
 
 ---

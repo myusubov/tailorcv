@@ -172,6 +172,66 @@ describe('analyzeProjectStructure', () => {
     ).toHaveLength(1);
   });
 
+  it('scores repeated Next.js route files once per signal type', () => {
+    const result = analyze([
+      directory('app'),
+      directory('app/(main)'),
+      directory('app/(main)/projects'),
+      file('app/(main)/projects/page.tsx'),
+      file('app/(main)/projects/loading.tsx'),
+      file('app/(main)/projects/error.tsx'),
+      directory('app/(main)/settings'),
+      file('app/(main)/settings/page.tsx'),
+      file('app/(main)/settings/loading.tsx'),
+      file('next.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      confidence: 1,
+      evidence: ['app', 'app/(main)/projects/page.tsx', 'next.config.ts'],
+    });
+  });
+
+  it('detects a frontend app from Vite config evidence', () => {
+    const result = analyze([
+      file('index.html'),
+      directory('src'),
+      file('src/main.tsx'),
+      file('src/App.tsx'),
+      file('vite.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'vite.config.ts',
+        'index.html',
+        'src/main.tsx',
+        'src/App.tsx',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from React SPA structure', () => {
+    const result = analyze([
+      directory('public'),
+      file('public/index.html'),
+      directory('src'),
+      file('src/index.tsx'),
+      file('src/App.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'public/index.html',
+        'src/index.tsx',
+        'src/App.tsx',
+      ]),
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

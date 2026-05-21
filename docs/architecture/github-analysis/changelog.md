@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-05-21
+
+### Next.js Area Signal Scoring
+
+- **Decision:** Score Next.js detected-area evidence once per owner-level signal instead of once per matched route file.
+- **Problem:** Broad App Router and Pages Router path patterns could inflate scores and evidence arrays when an app contained many `page.tsx`, `loading.tsx`, or `error.tsx` files.
+- **Solution:** Updated `detected-area-rules/frontend/next-frontend-area-rules.ts` to group evidence by owner path, track Next.js signal types in a set, and keep representative evidence per signal.
+- **Outcome:** Next.js app areas still emit `Frontend app`, but repeated route files no longer multiply confidence or flood evidence output.
+
+### Vite Frontend Area Evidence
+
+- **Decision:** Add generic frontend detected-area coverage through a Vite-style rule module before broader React or static-site detection.
+- **Problem:** After splitting detected-area rules, Vite repositories could still infer `summary.inferredStack` but no longer emitted a `Frontend app` area.
+- **Solution:** Added `generic-frontend-area-rules.ts`, wired it from `frontend-area-rules.ts`, and scored `vite.config.*`, `index.html`, `src/main.*`, `src/App.*`, and React SPA `src/index.*` as role-based frontend evidence.
+- **Outcome:** Vite-style and React SPA repositories can again produce `Frontend app` candidates without adding framework-specific output fields.
+
+---
+
 ## 2026-05-20
 
 ### Next.js Frontend Area Evidence
