@@ -1,5 +1,5 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { addGenericFrontendAreas } from './generic-frontend-area-rules';
+import { addAngularFrontendAreas } from './angular-frontend-area-rules';
 import { addNextFrontendAreas } from './next-frontend-area-rules';
 
 /**
@@ -11,5 +11,5 @@ export function addFrontendAreas({
   index,
 }: DetectedAreaRuleContext): void {
   addNextFrontendAreas({ candidates, index });
-  addGenericFrontendAreas({ candidates, index });
+  addAngularFrontendAreas({ candidates, index });
 }

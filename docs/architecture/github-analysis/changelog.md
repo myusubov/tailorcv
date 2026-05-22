@@ -6,6 +6,13 @@
 
 ## 2026-05-22
 
+### Angular Frontend Area Rule
+
+- **Decision:** Add Angular as the next framework-specific frontend detected-area rule.
+- **Problem:** Frontend area detection only had Next.js framework-specific evidence, leaving Angular repository areas unrecognized by the modular rule dispatcher.
+- **Solution:** Added `detected-area-rules/frontend/angular-frontend-area-rules.ts` with owner-scoped signal scoring for `angular.json`, Angular root component/module files, `src/main.ts`, weak `project.json`, and `src/app` support evidence, then wired it from `frontend-area-rules.ts`.
+- **Outcome:** Angular project regions can now emit role-based `Frontend app` candidates while using the same one-score-per-signal pattern as Next.js.
+
 ### Next.js Signal Bucket Completion
 
 - **Decision:** Finish the first explicit Next.js signal-bucket implementation for frontend area detection.
