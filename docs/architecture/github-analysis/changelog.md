@@ -6,6 +6,20 @@
 
 ## 2026-05-22
 
+### Astro Frontend Area Rule
+
+- **Decision:** Add Astro as the next framework-specific frontend detected-area rule.
+- **Problem:** Frontend area detection covered Next.js, Angular, and SvelteKit, but Astro sites with distinctive config and `src/pages` routing conventions still lacked framework-specific path evidence.
+- **Solution:** Added `detected-area-rules/frontend/astro-frontend-area-rules.ts` with owner-scoped signal scoring for `astro.config.*`, strong `.astro` page files, weak Markdown/HTML content page hints, endpoint files, layouts, components, and weak `src/pages` support evidence, then wired it from `frontend-area-rules.ts`; weak-only Astro hints are gated from emission.
+- **Outcome:** Astro project regions can now emit role-based `Frontend app` candidates without scoring repeated page files individually.
+
+### SvelteKit Frontend Area Rule
+
+- **Decision:** Add SvelteKit as the next framework-specific frontend detected-area rule.
+- **Problem:** Frontend area detection covered Next.js and Angular, but SvelteKit apps with distinctive `+page`/`+layout` route conventions still lacked framework-specific path evidence.
+- **Solution:** Added `detected-area-rules/frontend/sveltekit-frontend-area-rules.ts` with owner-scoped signal scoring for `svelte.config.*`, SvelteKit route files, `src/app.html`, and weak `src/routes` support evidence, then wired it from `frontend-area-rules.ts`.
+- **Outcome:** SvelteKit project regions can now emit role-based `Frontend app` candidates without scoring repeated route files individually.
+
 ### Angular Frontend Area Rule
 
 - **Decision:** Add Angular as the next framework-specific frontend detected-area rule.

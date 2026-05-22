@@ -232,6 +232,118 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  it('detects a frontend app from root SvelteKit structure', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/app.html'),
+      directory('src/routes'),
+      file('src/routes/+page.svelte'),
+      file('src/routes/+layout.svelte'),
+      file('svelte.config.js'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'svelte.config.js',
+        'src/app.html',
+        'src/routes',
+        'src/routes/+page.svelte',
+        'src/routes/+layout.svelte',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from SvelteKit structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/web'),
+      directory('apps/web/src'),
+      directory('apps/web/src/routes'),
+      file('apps/web/src/routes/+page.svelte'),
+      file('apps/web/svelte.config.js'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/web/svelte.config.js',
+        'apps/web/src/routes/+page.svelte',
+      ]),
+    });
+  });
+
+  it('does not detect SvelteKit from routes directory alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/routes'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('detects a frontend app from root Astro structure', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/pages'),
+      file('src/pages/index.astro'),
+      directory('src/layouts'),
+      file('src/layouts/BaseLayout.astro'),
+      file('astro.config.mjs'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'astro.config.mjs',
+        'src/layouts/BaseLayout.astro',
+        'src/pages',
+        'src/pages/index.astro',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from Astro structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/site'),
+      directory('apps/site/src'),
+      directory('apps/site/src/pages'),
+      file('apps/site/src/pages/index.astro'),
+      file('apps/site/astro.config.mjs'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/site')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/site/astro.config.mjs',
+        'apps/site/src/pages/index.astro',
+      ]),
+    });
+  });
+
+  it('does not detect Astro from pages directory alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/pages'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Astro from content page evidence alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/pages'),
+      file('src/pages/about.md'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),
