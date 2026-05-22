@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-05-22
+
+### Next.js Signal Bucket Completion
+
+- **Decision:** Finish the first explicit Next.js signal-bucket implementation for frontend area detection.
+- **Problem:** The Next.js detector had only started counting config and App Router core evidence, leaving support files, Pages Router evidence, route directories, and final candidate emission incomplete.
+- **Solution:** Completed `detected-area-rules/frontend/next-frontend-area-rules.ts` with one-score-per-signal loops for App Router support files, Pages Router special files, Pages Router route files, and route directories before emitting one `Frontend app` candidate per owner.
+- **Outcome:** Next.js frontend area detection now follows the agreed owner-scoped signal scoring model without scoring repeated route files individually.
+
+---
+
 ## 2026-05-21
 
 ### Next.js Area Signal Scoring

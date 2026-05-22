@@ -4,21 +4,25 @@ import { ownerPathForApplicationArea } from '../../project-structure-path-utils'
 
 type NextFrontendSignal =
   | 'next-config'
-  | 'app-router'
-  | 'pages-router'
+  | 'app-router-core'
+  | 'app-router-support'
+  | 'pages-router-special'
+  | 'pages-router-route'
   | 'route-directory';
 
-interface NextFrontendEvidence {
-  path: string;
-  signals: Set<NextFrontendSignal>;
-  evidenceBySignal: Map<NextFrontendSignal, string>;
-}
+type NextAreaCandidate = {
+  score: number;
+  evidence: string[];
+  countedSignals: Set<NextFrontendSignal>;
+};
 
 const NEXT_FRONTEND_SIGNAL_SCORES = {
   'next-config': 4,
-  'app-router': 4,
-  'pages-router': 3,
-  'route-directory': 2,
+  'app-router-core': 4,
+  'app-router-support': 2,
+  'pages-router-special': 4,
+  'pages-router-route': 3,
+  'route-directory': 1,
 } satisfies Record<NextFrontendSignal, number>;
 
 /**
@@ -29,101 +33,169 @@ export function addNextFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const evidenceByOwner = new Map<string, NextFrontendEvidence>();
+  const nextAreasByOwner = new Map<string, NextAreaCandidate>();
+
   const nextConfigFiles = index.findFilesByNameMatching({
     pattern: /^next\.config\./,
   });
-  const appRouterFiles = index.findEntriesByPathMatching({
+
+  const appRouterCoreFiles = index.findEntriesByPathMatching({
     pattern:
-      /(^|\/)(src\/)?app\/(?:.*\/)?(page|layout|loading|error|global-error|not-found|template|default|route)\.(js|jsx|ts|tsx|mdx)$/,
+      /(^|\/)(src\/)?app\/(?:.*\/)?(page|layout|route)\.(js|jsx|ts|tsx|mdx)$/,
   });
-  const pagesRouterFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)(src\/)?pages\/.*\.(js|jsx|ts|tsx|mdx)$/,
+
+  const appRouterSupportFiles = index.findEntriesByPathMatching({
+    pattern:
+      /(^|\/)(src\/)?app\/(?:.*\/)?(loading|error|global-error|not-found|template|default)\.(js|jsx|ts|tsx|mdx)$/,
   });
+
+  const pagesRouterSpecialFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)(src\/)?pages\/(_app|_document|_error)\.(js|jsx|ts|tsx)$/,
+  });
+
+  const pagesRouterRouteFiles = index.findEntriesByPathMatching({
+    pattern:
+      /(^|\/)(src\/)?pages\/(?!_app\.|_document\.|_error\.).+\.(js|jsx|ts|tsx)$/,
+  });
+
   const routeDirectories = index.findDirectoriesByPathMatching({
     pattern: /(^|\/)(src\/)?(app|pages)$/,
   });
 
-  for (const entry of nextConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({ path: entry.path });
-    const ownerEvidence =
-      evidenceByOwner.get(ownerPath) ??
+  for (const nextConfigFile of nextConfigFiles) {
+    const ownerPath = ownerPathForApplicationArea({
+      path: nextConfigFile.path,
+    });
+    const ownerCandidate =
+      nextAreasByOwner.get(ownerPath) ??
       ({
-        path: ownerPath,
-        signals: new Set<NextFrontendSignal>(),
-        evidenceBySignal: new Map<NextFrontendSignal, string>(),
-      } satisfies NextFrontendEvidence);
+        score: 0,
+        evidence: [],
+        countedSignals: new Set<NextFrontendSignal>(),
+      } satisfies NextAreaCandidate);
 
-    ownerEvidence.signals.add('next-config');
-    if (!ownerEvidence.evidenceBySignal.has('next-config')) {
-      ownerEvidence.evidenceBySignal.set('next-config', entry.path);
+    if (!ownerCandidate.countedSignals.has('next-config')) {
+      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['next-config'];
+      ownerCandidate.evidence.push(nextConfigFile.path);
+      ownerCandidate.countedSignals.add('next-config');
     }
-    evidenceByOwner.set(ownerPath, ownerEvidence);
+
+    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
-  for (const entry of appRouterFiles) {
-    const ownerPath = ownerPathForApplicationArea({ path: entry.path });
-    const ownerEvidence =
-      evidenceByOwner.get(ownerPath) ??
+  for (const appRouterCoreFile of appRouterCoreFiles) {
+    const ownerPath = ownerPathForApplicationArea({
+      path: appRouterCoreFile.path,
+    });
+    const ownerCandidate =
+      nextAreasByOwner.get(ownerPath) ??
       ({
-        path: ownerPath,
-        signals: new Set<NextFrontendSignal>(),
-        evidenceBySignal: new Map<NextFrontendSignal, string>(),
-      } satisfies NextFrontendEvidence);
+        score: 0,
+        evidence: [],
+        countedSignals: new Set<NextFrontendSignal>(),
+      } satisfies NextAreaCandidate);
 
-    ownerEvidence.signals.add('app-router');
-    if (!ownerEvidence.evidenceBySignal.has('app-router')) {
-      ownerEvidence.evidenceBySignal.set('app-router', entry.path);
+    if (!ownerCandidate.countedSignals.has('app-router-core')) {
+      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['app-router-core'];
+      ownerCandidate.evidence.push(appRouterCoreFile.path);
+      ownerCandidate.countedSignals.add('app-router-core');
     }
-    evidenceByOwner.set(ownerPath, ownerEvidence);
+
+    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
-  for (const entry of pagesRouterFiles) {
-    const ownerPath = ownerPathForApplicationArea({ path: entry.path });
-    const ownerEvidence =
-      evidenceByOwner.get(ownerPath) ??
+  for (const appRouterSupportFile of appRouterSupportFiles) {
+    const ownerPath = ownerPathForApplicationArea({
+      path: appRouterSupportFile.path,
+    });
+    const ownerCandidate =
+      nextAreasByOwner.get(ownerPath) ??
       ({
-        path: ownerPath,
-        signals: new Set<NextFrontendSignal>(),
-        evidenceBySignal: new Map<NextFrontendSignal, string>(),
-      } satisfies NextFrontendEvidence);
+        score: 0,
+        evidence: [],
+        countedSignals: new Set<NextFrontendSignal>(),
+      } satisfies NextAreaCandidate);
 
-    ownerEvidence.signals.add('pages-router');
-    if (!ownerEvidence.evidenceBySignal.has('pages-router')) {
-      ownerEvidence.evidenceBySignal.set('pages-router', entry.path);
+    if (!ownerCandidate.countedSignals.has('app-router-support')) {
+      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['app-router-support'];
+      ownerCandidate.evidence.push(appRouterSupportFile.path);
+      ownerCandidate.countedSignals.add('app-router-support');
     }
-    evidenceByOwner.set(ownerPath, ownerEvidence);
+
+    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
-  for (const entry of routeDirectories) {
-    const ownerPath = ownerPathForApplicationArea({ path: entry.path });
-    const ownerEvidence =
-      evidenceByOwner.get(ownerPath) ??
+  for (const pagesRouterSpecialFile of pagesRouterSpecialFiles) {
+    const ownerPath = ownerPathForApplicationArea({
+      path: pagesRouterSpecialFile.path,
+    });
+    const ownerCandidate =
+      nextAreasByOwner.get(ownerPath) ??
       ({
-        path: ownerPath,
-        signals: new Set<NextFrontendSignal>(),
-        evidenceBySignal: new Map<NextFrontendSignal, string>(),
-      } satisfies NextFrontendEvidence);
+        score: 0,
+        evidence: [],
+        countedSignals: new Set<NextFrontendSignal>(),
+      } satisfies NextAreaCandidate);
 
-    ownerEvidence.signals.add('route-directory');
-    if (!ownerEvidence.evidenceBySignal.has('route-directory')) {
-      ownerEvidence.evidenceBySignal.set('route-directory', entry.path);
+    if (!ownerCandidate.countedSignals.has('pages-router-special')) {
+      ownerCandidate.score +=
+        NEXT_FRONTEND_SIGNAL_SCORES['pages-router-special'];
+      ownerCandidate.evidence.push(pagesRouterSpecialFile.path);
+      ownerCandidate.countedSignals.add('pages-router-special');
     }
-    evidenceByOwner.set(ownerPath, ownerEvidence);
+
+    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
-  for (const ownerEvidence of evidenceByOwner.values()) {
-    let score = 0;
-    for (const signal of ownerEvidence.signals) {
-      score += NEXT_FRONTEND_SIGNAL_SCORES[signal];
+  for (const pagesRouterRouteFile of pagesRouterRouteFiles) {
+    const ownerPath = ownerPathForApplicationArea({
+      path: pagesRouterRouteFile.path,
+    });
+    const ownerCandidate =
+      nextAreasByOwner.get(ownerPath) ??
+      ({
+        score: 0,
+        evidence: [],
+        countedSignals: new Set<NextFrontendSignal>(),
+      } satisfies NextAreaCandidate);
+
+    if (!ownerCandidate.countedSignals.has('pages-router-route')) {
+      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['pages-router-route'];
+      ownerCandidate.evidence.push(pagesRouterRouteFile.path);
+      ownerCandidate.countedSignals.add('pages-router-route');
     }
 
+    nextAreasByOwner.set(ownerPath, ownerCandidate);
+  }
+
+  for (const routeDirectory of routeDirectories) {
+    const ownerPath = ownerPathForApplicationArea({
+      path: routeDirectory.path,
+    });
+    const ownerCandidate =
+      nextAreasByOwner.get(ownerPath) ??
+      ({
+        score: 0,
+        evidence: [],
+        countedSignals: new Set<NextFrontendSignal>(),
+      } satisfies NextAreaCandidate);
+
+    if (!ownerCandidate.countedSignals.has('route-directory')) {
+      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['route-directory'];
+      ownerCandidate.evidence.push(routeDirectory.path);
+      ownerCandidate.countedSignals.add('route-directory');
+    }
+
+    nextAreasByOwner.set(ownerPath, ownerCandidate);
+  }
+
+  for (const [ownerPath, ownerCandidate] of nextAreasByOwner) {
     addAreaScore({
       candidates,
       name: 'Frontend app',
-      path: ownerEvidence.path,
-      score,
-      evidence: [...ownerEvidence.evidenceBySignal.values()],
+      path: ownerPath,
+      score: ownerCandidate.score,
+      evidence: ownerCandidate.evidence,
     });
   }
 }
