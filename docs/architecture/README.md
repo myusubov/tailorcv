@@ -16,6 +16,7 @@
 | Onboarding method or manual-entry flow changes | [onboarding.md](onboarding.md)                                               | `apps/frontend/app/onboarding/page.tsx`, `apps/frontend/app/components/onboarding/`            |
 | GitHub repository analysis pipeline changes    | [github-analysis/README.md](github-analysis/README.md)                       | [github-analysis/pipeline.md](github-analysis/pipeline.md), [onboarding.md](onboarding.md)     |
 | GitHub project structure analyzer changes      | [github-analysis/project-structure.md](github-analysis/project-structure.md) | `apps/backend/src/services/github-analysis/project-structure/`                                 |
+| Dependency placement or audit remediation      | [dependency-management.md](dependency-management.md)                         | `package.json`, `apps/*/package.json`, `packages/*/package.json`, `package-lock.json`          |
 
 ---
 
@@ -59,6 +60,8 @@
 
 <!-- Docs related to shared hooks, helpers, cross-cutting concerns -->
 
+- [dependency-management.md](dependency-management.md) — Workspace dependency ownership, audit remediation, and verified override rules
+
 ---
 
 ### Migrations & Refactors
@@ -91,7 +94,7 @@
 
 | Metric                 | Status     |
 | ---------------------- | ---------- |
-| **Total domain docs**  | 9          |
+| **Total domain docs**  | 10         |
 | **Last full review**   | 2026-05-15 |
 | **Docs needing split** | None       |
 
