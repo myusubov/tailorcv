@@ -344,6 +344,228 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
+  it('detects a frontend app from root Nuxt 4 structure', () => {
+    const result = analyze([
+      directory('app'),
+      file('app/app.vue'),
+      directory('app/pages'),
+      file('app/pages/index.vue'),
+      directory('app/layouts'),
+      file('app/layouts/default.vue'),
+      file('nuxt.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'app/app.vue',
+        'app/layouts/default.vue',
+        'app/pages',
+        'app/pages/index.vue',
+        'nuxt.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from root Nuxt 3 structure', () => {
+    const result = analyze([
+      file('app.vue'),
+      directory('pages'),
+      file('pages/index.vue'),
+      directory('layouts'),
+      file('layouts/default.vue'),
+      file('nuxt.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'app.vue',
+        'layouts/default.vue',
+        'nuxt.config.ts',
+        'pages',
+        'pages/index.vue',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from Nuxt structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/web'),
+      directory('apps/web/app'),
+      file('apps/web/app/app.vue'),
+      directory('apps/web/app/pages'),
+      file('apps/web/app/pages/index.vue'),
+      file('apps/web/nuxt.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/web/app/app.vue',
+        'apps/web/app/pages/index.vue',
+        'apps/web/nuxt.config.ts',
+      ]),
+    });
+  });
+
+  it('does not detect Nuxt from weak hints alone', () => {
+    const result = analyze([
+      directory('pages'),
+      directory('server'),
+      directory('server/api'),
+      file('server/api/health.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Nuxt from page files alone', () => {
+    const result = analyze([
+      directory('pages'),
+      file('pages/index.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Nuxt from layout files alone', () => {
+    const result = analyze([
+      directory('layouts'),
+      file('layouts/default.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('detects a frontend app from Vite Vue structure', () => {
+    const result = analyze([
+      file('vite.config.ts'),
+      directory('src'),
+      file('src/main.ts'),
+      file('src/App.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/App.vue',
+        'src/main.ts',
+        'vite.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from Vue Router structure', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/main.ts'),
+      file('src/App.vue'),
+      directory('src/router'),
+      file('src/router/index.ts'),
+      directory('src/views'),
+      file('src/views/HomeView.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/App.vue',
+        'src/main.ts',
+        'src/router/index.ts',
+        'src/views/HomeView.vue',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from Vue structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/web'),
+      file('apps/web/vite.config.ts'),
+      directory('apps/web/src'),
+      file('apps/web/src/main.ts'),
+      file('apps/web/src/App.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/web/src/App.vue',
+        'apps/web/src/main.ts',
+        'apps/web/vite.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from Vue CLI structure', () => {
+    const result = analyze([
+      file('vue.config.js'),
+      directory('src'),
+      file('src/main.js'),
+      file('src/App.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/App.vue',
+        'src/main.js',
+        'vue.config.js',
+      ]),
+    });
+  });
+
+  it('does not detect Vue from Vite config alone', () => {
+    const result = analyze([file('vite.config.ts'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Vue from component library files alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/components'),
+      file('src/components/Button.vue'),
+      file('src/components/Card.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Vue from route-like files without app root', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/pages'),
+      file('src/pages/Home.vue'),
+      directory('src/layouts'),
+      file('src/layouts/MainLayout.vue'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not add Vue evidence to Nuxt owners', () => {
+    const result = analyze([
+      file('nuxt.config.ts'),
+      directory('src'),
+      file('src/App.vue'),
+      directory('src/router'),
+      file('src/router/index.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: ['nuxt.config.ts'],
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

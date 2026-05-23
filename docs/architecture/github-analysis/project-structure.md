@@ -87,7 +87,9 @@ apps/backend/src/services/github-analysis/project-structure/
 │       ├── frontend-area-rules.ts
 │       ├── generic-frontend-area-rules.ts
 │       ├── next-frontend-area-rules.ts
-│       └── sveltekit-frontend-area-rules.ts
+│       ├── nuxt-frontend-area-rules.ts
+│       ├── sveltekit-frontend-area-rules.ts
+│       └── vue-frontend-area-rules.ts
 ├── project-structure-detected-area-candidates.ts
 ├── project-structure-detected-areas.types.ts
 ├── project-structure-path-utils.ts
@@ -125,6 +127,8 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
 - **Rule**: Next.js frontend area evidence is grouped by owner path and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints.
+- **Rule**: Nuxt frontend area evidence is grouped by owner path and scored once per signal type: `nuxt.config.*`, `app.vue`/`app/app.vue`, Vue page/layout files, weaker script pages and server routes, and weak `pages` directory hints; Nuxt areas emit only from config or Nuxt app-entry proof.
+- **Rule**: Vue frontend area evidence is grouped by owner path and scored once per signal type: `src/App.vue`, `src/main.*`, Vue Router files, Vue view/page components, Vue CLI config, and Vite config support; Vue areas emit only from root app component combinations and skip owners with Nuxt proof.
 - **Rule**: Angular frontend area evidence is grouped by owner path and scored once per signal type: `angular.json`, root component/module files, `src/main.ts`, and weak `project.json`/`src/app` support hints.
 - **Rule**: SvelteKit frontend area evidence is grouped by owner path and scored once per signal type: `svelte.config.*`, `src/routes/+page.*`, `src/routes/+layout.*`, `src/routes/+server.*`, `src/app.html`, and weak `src/routes` support hints.
 - **Rule**: Astro frontend area evidence is grouped by owner path and scored once per signal type: `astro.config.*`, strong `src/pages/*.astro` page files, weak `src/pages/*.{md,mdx,html}` content page hints, endpoint files, `src/layouts/*.astro`, `src/components/*.astro`, and weak `src/pages` support hints; weak-only Astro hints do not emit an area.

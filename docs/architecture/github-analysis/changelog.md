@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-05-23
+
+### Vue Frontend Area Rule
+
+- **Decision:** Add Vue as a framework-specific frontend detected-area rule while keeping it separate from Nuxt.
+- **Problem:** Nuxt and Vue share `.vue` files and common route/layout folder names, so Vue detection needed owner-scoped proof gates that avoid stealing Nuxt owners or emitting from weak component-library evidence.
+- **Solution:** Added `detected-area-rules/frontend/vue-frontend-area-rules.ts` with owner-scoped signal scoring for `src/App.vue`, `src/main.*`, Vue Router files, views/pages, Vue CLI config, Vite config support, and weak components, then wired it after Nuxt; Vue emission skips owners with Nuxt proof and requires root-app combinations.
+- **Outcome:** Vue SPA project regions can emit role-based `Frontend app` candidates without misclassifying Nuxt apps or Vue component libraries.
+
+### Nuxt Frontend Area Rule
+
+- **Decision:** Add Nuxt as the next framework-specific frontend detected-area rule.
+- **Problem:** Frontend area detection covered Next.js, Angular, SvelteKit, and Astro, but Nuxt apps with distinctive config, app entry, page, layout, and server route conventions still lacked framework-specific path evidence.
+- **Solution:** Added `detected-area-rules/frontend/nuxt-frontend-area-rules.ts` with owner-scoped signal scoring for `nuxt.config.*`, `app.vue`/`app/app.vue`, Vue pages, layouts, weaker script pages/server routes, and weak `pages` directory evidence, then wired it from `frontend-area-rules.ts`; Nuxt emission now requires config or Nuxt app-entry proof.
+- **Outcome:** Nuxt project regions can now emit role-based `Frontend app` candidates without scoring repeated pages, layouts, or server route files individually.
+
+---
+
 ## 2026-05-22
 
 ### Astro Frontend Area Rule
