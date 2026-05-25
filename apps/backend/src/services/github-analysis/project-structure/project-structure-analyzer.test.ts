@@ -566,6 +566,83 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  it('detects a frontend app from root React Router framework structure', () => {
+    const result = analyze([
+      directory('app'),
+      file('app/root.tsx'),
+      file('app/routes.ts'),
+      directory('app/routes'),
+      file('app/routes/_index.tsx'),
+      file('react-router.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'app/root.tsx',
+        'app/routes.ts',
+        'app/routes',
+        'app/routes/_index.tsx',
+        'react-router.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from React Router framework structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/web'),
+      directory('apps/web/app'),
+      file('apps/web/app/root.tsx'),
+      file('apps/web/app/routes.ts'),
+      directory('apps/web/app/routes'),
+      file('apps/web/app/routes/_index.tsx'),
+      file('apps/web/react-router.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/web/app/root.tsx',
+        'apps/web/app/routes.ts',
+        'apps/web/app/routes/_index.tsx',
+        'apps/web/react-router.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from React Router optional entry files', () => {
+    const result = analyze([
+      directory('app'),
+      file('app/entry.client.tsx'),
+      file('app/entry.server.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'app/entry.client.tsx',
+        'app/entry.server.tsx',
+      ]),
+    });
+  });
+
+  it('does not detect React Router from routes directory alone', () => {
+    const result = analyze([
+      directory('app'),
+      directory('app/routes'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect React Router from Vite config alone', () => {
+    const result = analyze([file('vite.config.ts'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

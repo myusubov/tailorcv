@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-05-25
+
+### React Router Frontend Area Rule
+
+- **Decision:** Add React Router framework-mode frontend area detection as a separate framework-specific rule.
+- **Problem:** Frontend detected-area rules covered multiple frameworks, but React Router framework apps with `app/root.*`, `app/routes.*`, optional entry files, and `react-router.config.*` still lacked owner-scoped path evidence.
+- **Solution:** Added `detected-area-rules/frontend/react-router-frontend-area-rules.ts` with owner-scoped signal scoring for framework config, root route, routes config, optional client/server entry files, file routes, and weak Vite/routes directory support, then wired it from `frontend-area-rules.ts`.
+- **Outcome:** React Router framework project regions can now emit role-based `Frontend app` candidates without scoring repeated route files individually.
+
 ## 2026-05-23
 
 ### Vue Frontend Area Rule
