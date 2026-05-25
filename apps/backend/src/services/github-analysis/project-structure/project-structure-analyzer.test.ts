@@ -643,6 +643,97 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
+  it('detects a frontend app from Vite React structure', () => {
+    const result = analyze([
+      file('index.html'),
+      directory('src'),
+      file('src/main.tsx'),
+      file('src/App.tsx'),
+      file('vite.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'index.html',
+        'src/App.tsx',
+        'src/main.tsx',
+        'vite.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from CRA-style React structure', () => {
+    const result = analyze([
+      directory('public'),
+      file('public/index.html'),
+      directory('src'),
+      file('src/index.js'),
+      file('src/App.js'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'public/index.html',
+        'src/App.js',
+        'src/index.js',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from React structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/web'),
+      file('apps/web/index.html'),
+      directory('apps/web/src'),
+      file('apps/web/src/main.jsx'),
+      file('apps/web/src/App.jsx'),
+      file('apps/web/vite.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/web/index.html',
+        'apps/web/src/App.jsx',
+        'apps/web/src/main.jsx',
+        'apps/web/vite.config.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from React App JSX evidence alone', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/App.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: ['src/App.tsx'],
+    });
+  });
+
+  it('does not detect React from Vite config alone', () => {
+    const result = analyze([file('vite.config.ts'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect React from component library files alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/components'),
+      file('src/components/Button.tsx'),
+      file('src/components/Card.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

@@ -6,6 +6,13 @@
 
 ## 2026-05-25
 
+### React Frontend Area Rule
+
+- **Decision:** Add React as a non-framework frontend detected-area rule separate from React Router framework mode.
+- **Problem:** Frontend detection covered React meta-frameworks and other framework families, but common React SPA layouts such as Vite React and CRA-style apps still lacked a dedicated owner-scoped rule.
+- **Solution:** Added `detected-area-rules/frontend/react-frontend-area-rules.ts` with fixed per-owner signal scoring for Vite config, root/public index HTML, JSX/TSX entry files, `src/App.*`, starter CSS files, components, and page/view hints, then wired it after React Router.
+- **Outcome:** React app regions can now emit role-based `Frontend app` candidates from common path-only React structure while leaving future React-specific output gates for a later refinement.
+
 ### React Router Frontend Area Rule
 
 - **Decision:** Add React Router framework-mode frontend area detection as a separate framework-specific rule.
