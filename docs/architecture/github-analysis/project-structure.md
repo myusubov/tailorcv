@@ -81,6 +81,7 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── project-structure-detected-areas.ts
 ├── project-structure-detected-area-rules.ts
 ├── detected-area-rules/
+│   ├── project-structure-area-rule-candidates.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -127,6 +128,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
 - **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
 - **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
+- **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; framework rule files still own their signal unions, scores, finder variables, and output gates.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
 - **Rule**: Next.js frontend area evidence is grouped by owner path and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints.

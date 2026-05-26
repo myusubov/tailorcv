@@ -189,7 +189,12 @@ describe('analyzeProjectStructure', () => {
 
     expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
       confidence: 1,
-      evidence: ['app', 'app/(main)/projects/page.tsx', 'next.config.ts'],
+      evidence: [
+        'app',
+        'app/(main)/projects/loading.tsx',
+        'app/(main)/projects/page.tsx',
+        'next.config.ts',
+      ],
     });
   });
 

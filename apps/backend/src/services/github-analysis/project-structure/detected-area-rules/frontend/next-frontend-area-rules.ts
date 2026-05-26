@@ -1,6 +1,10 @@
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
+import {
+  addAreaRuleCandidates,
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
 
 type NextFrontendSignal =
   | 'next-config'
@@ -10,12 +14,6 @@ type NextFrontendSignal =
   | 'pages-router-route'
   | 'route-directory';
 
-type NextAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<NextFrontendSignal>;
-};
-
 const NEXT_FRONTEND_SIGNAL_SCORES = {
   'next-config': 4,
   'app-router-core': 4,
@@ -23,7 +21,7 @@ const NEXT_FRONTEND_SIGNAL_SCORES = {
   'pages-router-special': 4,
   'pages-router-route': 3,
   'route-directory': 1,
-} satisfies Record<NextFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<NextFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from Next.js path evidence.
@@ -33,7 +31,7 @@ export function addNextFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const nextAreasByOwner = new Map<string, NextAreaCandidate>();
+  const nextAreasByOwner = createAreaRuleCandidateMap<NextFrontendSignal>();
 
   const nextConfigFiles = index.findFilesByNameMatching({
     pattern: /^next\.config\./,
@@ -63,139 +61,62 @@ export function addNextFrontendAreas({
   });
 
   for (const nextConfigFile of nextConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: nextConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: nextAreasByOwner,
+      entry: nextConfigFile,
+      signal: 'next-config',
+      score: NEXT_FRONTEND_SIGNAL_SCORES['next-config'],
     });
-    const ownerCandidate =
-      nextAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<NextFrontendSignal>(),
-      } satisfies NextAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('next-config')) {
-      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['next-config'];
-      ownerCandidate.evidence.push(nextConfigFile.path);
-      ownerCandidate.countedSignals.add('next-config');
-    }
-
-    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const appRouterCoreFile of appRouterCoreFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: appRouterCoreFile.path,
+    countAreaRuleSignal({
+      areasByOwner: nextAreasByOwner,
+      entry: appRouterCoreFile,
+      signal: 'app-router-core',
+      score: NEXT_FRONTEND_SIGNAL_SCORES['app-router-core'],
     });
-    const ownerCandidate =
-      nextAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<NextFrontendSignal>(),
-      } satisfies NextAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('app-router-core')) {
-      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['app-router-core'];
-      ownerCandidate.evidence.push(appRouterCoreFile.path);
-      ownerCandidate.countedSignals.add('app-router-core');
-    }
-
-    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const appRouterSupportFile of appRouterSupportFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: appRouterSupportFile.path,
+    countAreaRuleSignal({
+      areasByOwner: nextAreasByOwner,
+      entry: appRouterSupportFile,
+      signal: 'app-router-support',
+      score: NEXT_FRONTEND_SIGNAL_SCORES['app-router-support'],
     });
-    const ownerCandidate =
-      nextAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<NextFrontendSignal>(),
-      } satisfies NextAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('app-router-support')) {
-      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['app-router-support'];
-      ownerCandidate.evidence.push(appRouterSupportFile.path);
-      ownerCandidate.countedSignals.add('app-router-support');
-    }
-
-    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const pagesRouterSpecialFile of pagesRouterSpecialFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: pagesRouterSpecialFile.path,
+    countAreaRuleSignal({
+      areasByOwner: nextAreasByOwner,
+      entry: pagesRouterSpecialFile,
+      signal: 'pages-router-special',
+      score: NEXT_FRONTEND_SIGNAL_SCORES['pages-router-special'],
     });
-    const ownerCandidate =
-      nextAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<NextFrontendSignal>(),
-      } satisfies NextAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('pages-router-special')) {
-      ownerCandidate.score +=
-        NEXT_FRONTEND_SIGNAL_SCORES['pages-router-special'];
-      ownerCandidate.evidence.push(pagesRouterSpecialFile.path);
-      ownerCandidate.countedSignals.add('pages-router-special');
-    }
-
-    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const pagesRouterRouteFile of pagesRouterRouteFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: pagesRouterRouteFile.path,
+    countAreaRuleSignal({
+      areasByOwner: nextAreasByOwner,
+      entry: pagesRouterRouteFile,
+      signal: 'pages-router-route',
+      score: NEXT_FRONTEND_SIGNAL_SCORES['pages-router-route'],
     });
-    const ownerCandidate =
-      nextAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<NextFrontendSignal>(),
-      } satisfies NextAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('pages-router-route')) {
-      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['pages-router-route'];
-      ownerCandidate.evidence.push(pagesRouterRouteFile.path);
-      ownerCandidate.countedSignals.add('pages-router-route');
-    }
-
-    nextAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const routeDirectory of routeDirectories) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: routeDirectory.path,
-    });
-    const ownerCandidate =
-      nextAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<NextFrontendSignal>(),
-      } satisfies NextAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('route-directory')) {
-      ownerCandidate.score += NEXT_FRONTEND_SIGNAL_SCORES['route-directory'];
-      ownerCandidate.evidence.push(routeDirectory.path);
-      ownerCandidate.countedSignals.add('route-directory');
-    }
-
-    nextAreasByOwner.set(ownerPath, ownerCandidate);
-  }
-
-  for (const [ownerPath, ownerCandidate] of nextAreasByOwner) {
-    addAreaScore({
-      candidates,
-      name: 'Frontend app',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
+    countAreaRuleSignal({
+      areasByOwner: nextAreasByOwner,
+      entry: routeDirectory,
+      signal: 'route-directory',
+      score: NEXT_FRONTEND_SIGNAL_SCORES['route-directory'],
     });
   }
+
+  addAreaRuleCandidates({
+    areasByOwner: nextAreasByOwner,
+    candidates,
+    name: 'Frontend app',
+  });
 }

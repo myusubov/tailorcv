@@ -6,6 +6,13 @@
 
 ## 2026-05-25
 
+### Detected Area Rule Candidate Infrastructure
+
+- **Decision:** Start modularizing repeated detected-area rule candidate types before changing existing framework rule behavior.
+- **Problem:** Frontend rule modules repeatedly define the same owner-scoped candidate shape and map typing, which makes future gate-blocker refactors noisier than necessary.
+- **Solution:** Added `detected-area-rules/project-structure-area-rule-candidates.ts` with shared generic candidate, score-map, owner-map factory, once-per-owner signal counting, and area-candidate adding exports, then migrated the Next.js frontend rule to use them while keeping its finder loops explicit.
+- **Outcome:** Future detector cleanup can migrate one rule at a time to shared infrastructure without mixing framework-specific signal meanings or changing analyzer output.
+
 ### Static Frontend Area Rule
 
 - **Decision:** Add a plain static frontend detected-area rule for repositories that do not use a framework-specific frontend convention.
