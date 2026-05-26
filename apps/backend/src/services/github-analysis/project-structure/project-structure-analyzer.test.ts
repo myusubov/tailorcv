@@ -734,6 +734,96 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
+  it('detects a frontend app from root static HTML and CSS files', () => {
+    const result = analyze([
+      file('index.html'),
+      file('style.css'),
+      file('script.js'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'index.html',
+        'script.js',
+        'style.css',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from static css and js directories', () => {
+    const result = analyze([
+      file('index.html'),
+      directory('css'),
+      file('css/site.css'),
+      directory('js'),
+      file('js/site.js'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'css/site.css',
+        'index.html',
+        'js/site.js',
+      ]),
+    });
+  });
+
+  it('detects a monorepo frontend app from Vite static structure', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/site'),
+      file('apps/site/index.html'),
+      directory('apps/site/src'),
+      file('apps/site/src/main.js'),
+      file('apps/site/src/style.css'),
+      file('apps/site/vite.config.js'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/site')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/site/index.html',
+        'apps/site/src/main.js',
+        'apps/site/src/style.css',
+        'apps/site/vite.config.js',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from multi-page static HTML and CSS evidence', () => {
+    const result = analyze([
+      file('index.html'),
+      file('about.html'),
+      directory('css'),
+      file('css/site.css'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'about.html',
+        'css/site.css',
+        'index.html',
+      ]),
+    });
+  });
+
+  it('does not detect static frontend from index html alone', () => {
+    const result = analyze([file('index.html')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect static frontend from nested generated html files', () => {
+    const result = analyze([
+      directory('docs'),
+      file('docs/index.html'),
+      file('docs/about.html'),
+      directory('docs/css'),
+      file('docs/css/site.css'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

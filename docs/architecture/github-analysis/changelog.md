@@ -6,6 +6,13 @@
 
 ## 2026-05-25
 
+### Static Frontend Area Rule
+
+- **Decision:** Add a plain static frontend detected-area rule for repositories that do not use a framework-specific frontend convention.
+- **Problem:** Frontend detection covered framework and library app shapes, but simple HTML/CSS/JavaScript sites with root `index.html`, stylesheet evidence, static asset folders, or Vite static structure still lacked a conservative owner-scoped rule.
+- **Solution:** Added `detected-area-rules/frontend/static-frontend-area-rules.ts` with fixed per-owner signal scoring for root HTML/CSS/JS files, `css`/`js` directory files, Vite config, and `src` static support files, then gated output on supported static page combinations.
+- **Outcome:** Plain static site regions can now emit role-based `Frontend app` candidates without treating isolated HTML files or nested generated docs as frontend apps.
+
 ### React Frontend Area Rule
 
 - **Decision:** Add React as a non-framework frontend detected-area rule separate from React Router framework mode.
