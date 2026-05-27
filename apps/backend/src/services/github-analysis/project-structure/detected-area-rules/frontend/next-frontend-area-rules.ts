@@ -17,9 +17,9 @@ type NextFrontendSignal =
 const NEXT_FRONTEND_SIGNAL_SCORES = {
   'next-config': 4,
   'app-router-core': 4,
-  'app-router-support': 2,
   'pages-router-special': 4,
   'pages-router-route': 3,
+  'app-router-support': 2,
   'route-directory': 1,
 } satisfies AreaRuleSignalScores<NextFrontendSignal>;
 

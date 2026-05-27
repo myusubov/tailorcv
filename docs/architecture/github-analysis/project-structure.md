@@ -85,6 +85,7 @@ apps/backend/src/services/github-analysis/project-structure/
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
+│       ├── frontend-area-competing-proof.ts
 │       ├── frontend-area-rules.ts
 │       ├── generic-frontend-area-rules.ts
 │       ├── next-frontend-area-rules.ts
@@ -128,14 +129,15 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
 - **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
 - **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
-- **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; framework rule files still own their signal unions, scores, finder variables, and output gates.
+- **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
 - **Rule**: Next.js frontend area evidence is grouped by owner path and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints.
 - **Rule**: Nuxt frontend area evidence is grouped by owner path and scored once per signal type: `nuxt.config.*`, `app.vue`/`app/app.vue`, Vue page/layout files, weaker script pages and server routes, and weak `pages` directory hints; Nuxt areas emit only from config or Nuxt app-entry proof.
 - **Rule**: Vue frontend area evidence is grouped by owner path and scored once per signal type: `src/App.vue`, `src/main.*`, Vue Router files, Vue view/page components, Vue CLI config, and Vite config support; Vue areas emit only from root app component combinations and skip owners with Nuxt proof.
 - **Rule**: React Router frontend area evidence is grouped by owner path and scored once per signal type: `react-router.config.*`, `app/root.*`, `app/routes.*`, optional `app/entry.client.*`/`app/entry.server.*`, route files under `app/routes`, and weak `app/routes`/Vite support hints; this first version relies only on the global minimum area score for output filtering.
-- **Rule**: React frontend area evidence is grouped by owner path and scored once per signal type: Vite config, root/public index HTML, `src/main.*`, `src/index.*`, `src/App.*`, starter CSS files, JSX/TSX components, and page/view component hints; this first version relies only on the global minimum area score for output filtering.
+- **Rule**: React frontend area evidence is grouped by owner path and scored once per signal type: Vite config, root/public index HTML, `src/main.*`, `src/index.*`, `src/App.*`, starter CSS files, JSX/TSX components, and page/view component hints; broad React output skips owners with stronger same-owner Next.js or React Router proof.
+- **Rule**: Broad frontend detectors can use blocker-grade proof helpers from `frontend-area-competing-proof.ts`; those helpers return only strong competing framework evidence, not weak support files.
 - **Rule**: Static frontend area evidence is grouped by owner path and scored once per signal type: root `index.html`, non-index root HTML pages, root CSS/JS files, `css`/`js` directory files, Vite config, and `src/main.js`/`src` CSS support; static areas emit only from supported static page shapes such as index+CSS, directory CSS, Vite static, or multi-page HTML with CSS evidence.
 - **Rule**: Angular frontend area evidence is grouped by owner path and scored once per signal type: `angular.json`, root component/module files, `src/main.ts`, and weak `project.json`/`src/app` support hints.
 - **Rule**: SvelteKit frontend area evidence is grouped by owner path and scored once per signal type: `svelte.config.*`, `src/routes/+page.*`, `src/routes/+layout.*`, `src/routes/+server.*`, `src/app.html`, and weak `src/routes` support hints.

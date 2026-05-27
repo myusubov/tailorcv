@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-05-27
+
+### React Frontend Competing-Proof Gate
+
+- **Decision:** Add the first owner-scoped competing-proof gate to the broad React frontend detector.
+- **Problem:** Generic React evidence such as `index.html` and `src/App.tsx` could merge into the same `Frontend app` candidate as stronger Next.js or React Router framework proof for the same owner.
+- **Solution:** Added blocker-grade frontend proof helpers for Next.js and React Router, finalized same-owner competing proof checks, and gated React output so those stronger framework proofs suppress only the matching owner.
+- **Outcome:** React fallback detection remains available for standalone React apps while avoiding mixed React evidence on same-owner Next.js and React Router areas.
+
+### Frontend Area Rule Modularization
+
+- **Decision:** Migrate the remaining active frontend owner-scoped detectors to the shared area-rule candidate infrastructure after proving the pattern on Next.js.
+- **Problem:** Nuxt, Vue, React Router, React, Static, Angular, SvelteKit, and Astro still repeated the same owner lookup, candidate creation, counted-signal mutation, and score/evidence update logic in every signal loop.
+- **Solution:** Updated those rule modules to use shared owner candidate map creation, typed signal-score maps, and once-per-owner signal counting while preserving each detector's finder variables, signal scores, gates, and output behavior.
+- **Outcome:** Active frontend detectors now share the same candidate mutation path, reducing boilerplate before future gate-blocker work without changing detected-area semantics.
+
 ## 2026-05-25
 
 ### Detected Area Rule Candidate Infrastructure

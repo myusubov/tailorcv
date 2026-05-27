@@ -1,6 +1,10 @@
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
+import {
+  addAreaRuleCandidates,
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
 
 type ReactRouterFrontendSignal =
   | 'react-router-config'
@@ -12,12 +16,6 @@ type ReactRouterFrontendSignal =
   | 'react-router-routes-directory'
   | 'react-router-vite-config';
 
-type ReactRouterAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<ReactRouterFrontendSignal>;
-};
-
 const REACT_ROUTER_FRONTEND_SIGNAL_SCORES = {
   'react-router-config': 4,
   'react-router-root-route': 4,
@@ -27,7 +25,7 @@ const REACT_ROUTER_FRONTEND_SIGNAL_SCORES = {
   'react-router-file-route': 3,
   'react-router-routes-directory': 1,
   'react-router-vite-config': 1,
-} satisfies Record<ReactRouterFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<ReactRouterFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from React Router framework path evidence.
@@ -37,10 +35,8 @@ export function addReactRouterFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const reactRouterAreasByOwner = new Map<
-    string,
-    ReactRouterAreaCandidate
-  >();
+  const reactRouterAreasByOwner =
+    createAreaRuleCandidateMap<ReactRouterFrontendSignal>();
 
   const reactRouterConfigFiles = index.findFilesByNameMatching({
     pattern: /^react-router\.config\.(js|mjs|cjs|ts)$/,
@@ -75,190 +71,81 @@ export function addReactRouterFrontendAreas({
   });
 
   for (const reactRouterConfigFile of reactRouterConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterConfigFile,
+      signal: 'react-router-config',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-config'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-config')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-config'];
-      ownerCandidate.evidence.push(reactRouterConfigFile.path);
-      ownerCandidate.countedSignals.add('react-router-config');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterRootRouteFile of reactRouterRootRouteFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterRootRouteFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterRootRouteFile,
+      signal: 'react-router-root-route',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-root-route'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-root-route')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-root-route'];
-      ownerCandidate.evidence.push(reactRouterRootRouteFile.path);
-      ownerCandidate.countedSignals.add('react-router-root-route');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterRoutesConfigFile of reactRouterRoutesConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterRoutesConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterRoutesConfigFile,
+      signal: 'react-router-routes-config',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-routes-config'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-routes-config')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-routes-config'];
-      ownerCandidate.evidence.push(reactRouterRoutesConfigFile.path);
-      ownerCandidate.countedSignals.add('react-router-routes-config');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterEntryClientFile of reactRouterEntryClientFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterEntryClientFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterEntryClientFile,
+      signal: 'react-router-entry-client',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-entry-client'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-entry-client')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-entry-client'];
-      ownerCandidate.evidence.push(reactRouterEntryClientFile.path);
-      ownerCandidate.countedSignals.add('react-router-entry-client');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterEntryServerFile of reactRouterEntryServerFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterEntryServerFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterEntryServerFile,
+      signal: 'react-router-entry-server',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-entry-server'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-entry-server')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-entry-server'];
-      ownerCandidate.evidence.push(reactRouterEntryServerFile.path);
-      ownerCandidate.countedSignals.add('react-router-entry-server');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterFileRouteFile of reactRouterFileRouteFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterFileRouteFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterFileRouteFile,
+      signal: 'react-router-file-route',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-file-route'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-file-route')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-file-route'];
-      ownerCandidate.evidence.push(reactRouterFileRouteFile.path);
-      ownerCandidate.countedSignals.add('react-router-file-route');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterRoutesDirectory of reactRouterRoutesDirectories) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterRoutesDirectory.path,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterRoutesDirectory,
+      signal: 'react-router-routes-directory',
+      score:
+        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-routes-directory'],
     });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-routes-directory')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES[
-          'react-router-routes-directory'
-        ];
-      ownerCandidate.evidence.push(reactRouterRoutesDirectory.path);
-      ownerCandidate.countedSignals.add('react-router-routes-directory');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouterViteConfigFile of reactRouterViteConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouterViteConfigFile.path,
-    });
-    const ownerCandidate =
-      reactRouterAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactRouterFrontendSignal>(),
-      } satisfies ReactRouterAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-router-vite-config')) {
-      ownerCandidate.score +=
-        REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-vite-config'];
-      ownerCandidate.evidence.push(reactRouterViteConfigFile.path);
-      ownerCandidate.countedSignals.add('react-router-vite-config');
-    }
-
-    reactRouterAreasByOwner.set(ownerPath, ownerCandidate);
-  }
-
-  for (const [ownerPath, ownerCandidate] of reactRouterAreasByOwner) {
-    addAreaScore({
-      candidates,
-      name: 'Frontend app',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
+    countAreaRuleSignal({
+      areasByOwner: reactRouterAreasByOwner,
+      entry: reactRouterViteConfigFile,
+      signal: 'react-router-vite-config',
+      score: REACT_ROUTER_FRONTEND_SIGNAL_SCORES['react-router-vite-config'],
     });
   }
+
+  addAreaRuleCandidates({
+    areasByOwner: reactRouterAreasByOwner,
+    candidates,
+    name: 'Frontend app',
+  });
 }

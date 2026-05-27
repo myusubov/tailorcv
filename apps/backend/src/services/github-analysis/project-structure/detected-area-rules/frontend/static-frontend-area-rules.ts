@@ -1,6 +1,10 @@
+import {
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
 
 type StaticFrontendSignal =
   | 'static-root-index-html'
@@ -13,12 +17,6 @@ type StaticFrontendSignal =
   | 'static-src-main-script'
   | 'static-src-style-file';
 
-type StaticAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<StaticFrontendSignal>;
-};
-
 const STATIC_FRONTEND_SIGNAL_SCORES = {
   'static-root-index-html': 2,
   'static-root-html-page': 1,
@@ -29,7 +27,7 @@ const STATIC_FRONTEND_SIGNAL_SCORES = {
   'static-vite-config': 1,
   'static-src-main-script': 1,
   'static-src-style-file': 1,
-} satisfies Record<StaticFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<StaticFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from plain HTML/CSS/JavaScript path evidence.
@@ -39,7 +37,7 @@ export function addStaticFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const staticAreasByOwner = new Map<string, StaticAreaCandidate>();
+  const staticAreasByOwner = createAreaRuleCandidateMap<StaticFrontendSignal>();
   const rootIndexHtmlFiles = index.findEntriesByPathMatching({
     pattern:
       /^(index\.html|apps\/[^/]+\/index\.html|packages\/[^/]+\/index\.html)$/,
@@ -85,199 +83,84 @@ export function addStaticFrontendAreas({
   });
 
   for (const indexHtmlFile of rootIndexHtmlFiles) {
-    const ownerPath = ownerPathForApplicationArea({ path: indexHtmlFile.path });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-root-index-html')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-root-index-html'];
-      ownerCandidate.evidence.push(indexHtmlFile.path);
-      ownerCandidate.countedSignals.add('static-root-index-html');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: indexHtmlFile,
+      signal: 'static-root-index-html',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-root-index-html'],
+    });
   }
 
   for (const rootHtmlPageFile of rootHtmlPageFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: rootHtmlPageFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: rootHtmlPageFile,
+      signal: 'static-root-html-page',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-root-html-page'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-root-html-page')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-root-html-page'];
-      ownerCandidate.evidence.push(rootHtmlPageFile.path);
-      ownerCandidate.countedSignals.add('static-root-html-page');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const rootStyleCssFile of rootStyleCssFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: rootStyleCssFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: rootStyleCssFile,
+      signal: 'static-root-style-file',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-root-style-file'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-root-style-file')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-root-style-file'];
-      ownerCandidate.evidence.push(rootStyleCssFile.path);
-      ownerCandidate.countedSignals.add('static-root-style-file');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const rootScriptJsFile of rootScriptJsFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: rootScriptJsFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: rootScriptJsFile,
+      signal: 'static-root-script-file',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-root-script-file'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-root-script-file')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-root-script-file'];
-      ownerCandidate.evidence.push(rootScriptJsFile.path);
-      ownerCandidate.countedSignals.add('static-root-script-file');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const directoryCssFile of directoryCssFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: directoryCssFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: directoryCssFile,
+      signal: 'static-css-directory-file',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-css-directory-file'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-css-directory-file')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-css-directory-file'];
-      ownerCandidate.evidence.push(directoryCssFile.path);
-      ownerCandidate.countedSignals.add('static-css-directory-file');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const directoryJsFile of directoryJsFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: directoryJsFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: directoryJsFile,
+      signal: 'static-js-directory-file',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-js-directory-file'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-js-directory-file')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-js-directory-file'];
-      ownerCandidate.evidence.push(directoryJsFile.path);
-      ownerCandidate.countedSignals.add('static-js-directory-file');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const srcCssFile of srcCssFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: srcCssFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: srcCssFile,
+      signal: 'static-src-style-file',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-src-style-file'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-src-style-file')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-src-style-file'];
-      ownerCandidate.evidence.push(srcCssFile.path);
-      ownerCandidate.countedSignals.add('static-src-style-file');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const srcMainJsFile of srcMainJsFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: srcMainJsFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: srcMainJsFile,
+      signal: 'static-src-main-script',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-src-main-script'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-src-main-script')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-src-main-script'];
-      ownerCandidate.evidence.push(srcMainJsFile.path);
-      ownerCandidate.countedSignals.add('static-src-main-script');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const viteConfigFile of viteConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: viteConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: staticAreasByOwner,
+      entry: viteConfigFile,
+      signal: 'static-vite-config',
+      score: STATIC_FRONTEND_SIGNAL_SCORES['static-vite-config'],
     });
-    const ownerCandidate =
-      staticAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<StaticFrontendSignal>(),
-      } satisfies StaticAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('static-vite-config')) {
-      ownerCandidate.score +=
-        STATIC_FRONTEND_SIGNAL_SCORES['static-vite-config'];
-      ownerCandidate.evidence.push(viteConfigFile.path);
-      ownerCandidate.countedSignals.add('static-vite-config');
-    }
-
-    staticAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const [ownerPath, ownerCandidate] of staticAreasByOwner) {

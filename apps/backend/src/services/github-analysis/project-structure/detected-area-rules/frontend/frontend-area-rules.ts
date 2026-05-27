@@ -26,4 +26,4 @@ export function addFrontendAreas({
   addAngularFrontendAreas({ candidates, index });
   addSvelteKitFrontendAreas({ candidates, index });
   addAstroFrontendAreas({ candidates, index });
-}
+};

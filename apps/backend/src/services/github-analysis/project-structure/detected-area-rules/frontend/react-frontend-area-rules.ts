@@ -1,6 +1,15 @@
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
+import {
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  hasCompetingAreaProof,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
+import { addAreaScore } from '../../project-structure-detected-area-candidates';
+import {
+  findNextFrontendProofEntries,
+  findReactRouterFrontendProofEntries,
+} from './frontend-area-competing-proof';
 
 type ReactFrontendSignal =
   | 'react-vite-config'
@@ -15,12 +24,6 @@ type ReactFrontendSignal =
   | 'react-component-jsx'
   | 'react-route-component';
 
-type ReactAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<ReactFrontendSignal>;
-};
-
 const REACT_FRONTEND_SIGNAL_SCORES = {
   'react-vite-config': 1,
   'react-root-index-html': 1,
@@ -33,7 +36,7 @@ const REACT_FRONTEND_SIGNAL_SCORES = {
   'react-style-file': 1,
   'react-component-jsx': 1,
   'react-route-component': 1,
-} satisfies Record<ReactFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<ReactFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from non-framework React path evidence.
@@ -43,7 +46,11 @@ export function addReactFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const reactAreasByOwner = new Map<string, ReactAreaCandidate>();
+  const reactAreasByOwner = createAreaRuleCandidateMap<ReactFrontendSignal>();
+  const reactCompetingProofEntries = [
+    ...findNextFrontendProofEntries({ index }),
+    ...findReactRouterFrontendProofEntries({ index }),
+  ];
 
   const reactViteConfigFiles = index.findFilesByNameMatching({
     pattern: /^vite\.config\.(js|mjs|cjs|ts)$/,
@@ -91,244 +98,112 @@ export function addReactFrontendAreas({
   });
 
   for (const reactViteConfigFile of reactViteConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactViteConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactViteConfigFile,
+      signal: 'react-vite-config',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-vite-config'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-vite-config')) {
-      ownerCandidate.score += REACT_FRONTEND_SIGNAL_SCORES['react-vite-config'];
-      ownerCandidate.evidence.push(reactViteConfigFile.path);
-      ownerCandidate.countedSignals.add('react-vite-config');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRootIndexHtmlFile of reactRootIndexHtmlFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRootIndexHtmlFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactRootIndexHtmlFile,
+      signal: 'react-root-index-html',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-root-index-html'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-root-index-html')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-root-index-html'];
-      ownerCandidate.evidence.push(reactRootIndexHtmlFile.path);
-      ownerCandidate.countedSignals.add('react-root-index-html');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactPublicIndexHtmlFile of reactPublicIndexHtmlFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactPublicIndexHtmlFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactPublicIndexHtmlFile,
+      signal: 'react-public-index-html',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-public-index-html'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-public-index-html')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-public-index-html'];
-      ownerCandidate.evidence.push(reactPublicIndexHtmlFile.path);
-      ownerCandidate.countedSignals.add('react-public-index-html');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactMainJsxEntryFile of reactMainJsxEntryFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactMainJsxEntryFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactMainJsxEntryFile,
+      signal: 'react-main-jsx-entry',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-main-jsx-entry'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-main-jsx-entry')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-main-jsx-entry'];
-      ownerCandidate.evidence.push(reactMainJsxEntryFile.path);
-      ownerCandidate.countedSignals.add('react-main-jsx-entry');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactIndexJsxEntryFile of reactIndexJsxEntryFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactIndexJsxEntryFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactIndexJsxEntryFile,
+      signal: 'react-index-jsx-entry',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-index-jsx-entry'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-index-jsx-entry')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-index-jsx-entry'];
-      ownerCandidate.evidence.push(reactIndexJsxEntryFile.path);
-      ownerCandidate.countedSignals.add('react-index-jsx-entry');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactIndexJsEntryFile of reactIndexJsEntryFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactIndexJsEntryFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactIndexJsEntryFile,
+      signal: 'react-index-js-entry',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-index-js-entry'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-index-js-entry')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-index-js-entry'];
-      ownerCandidate.evidence.push(reactIndexJsEntryFile.path);
-      ownerCandidate.countedSignals.add('react-index-js-entry');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRootAppJsxFile of reactRootAppJsxFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRootAppJsxFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactRootAppJsxFile,
+      signal: 'react-root-app-jsx',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-root-app-jsx'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-root-app-jsx')) {
-      ownerCandidate.score += REACT_FRONTEND_SIGNAL_SCORES['react-root-app-jsx'];
-      ownerCandidate.evidence.push(reactRootAppJsxFile.path);
-      ownerCandidate.countedSignals.add('react-root-app-jsx');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRootAppJsFile of reactRootAppJsFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRootAppJsFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactRootAppJsFile,
+      signal: 'react-root-app-js',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-root-app-js'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-root-app-js')) {
-      ownerCandidate.score += REACT_FRONTEND_SIGNAL_SCORES['react-root-app-js'];
-      ownerCandidate.evidence.push(reactRootAppJsFile.path);
-      ownerCandidate.countedSignals.add('react-root-app-js');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactStyleFile of reactStyleFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactStyleFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactStyleFile,
+      signal: 'react-style-file',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-style-file'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-style-file')) {
-      ownerCandidate.score += REACT_FRONTEND_SIGNAL_SCORES['react-style-file'];
-      ownerCandidate.evidence.push(reactStyleFile.path);
-      ownerCandidate.countedSignals.add('react-style-file');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactComponentJsxFile of reactComponentJsxFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactComponentJsxFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactComponentJsxFile,
+      signal: 'react-component-jsx',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-component-jsx'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-component-jsx')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-component-jsx'];
-      ownerCandidate.evidence.push(reactComponentJsxFile.path);
-      ownerCandidate.countedSignals.add('react-component-jsx');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const reactRouteComponentFile of reactRouteComponentFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: reactRouteComponentFile.path,
+    countAreaRuleSignal({
+      areasByOwner: reactAreasByOwner,
+      entry: reactRouteComponentFile,
+      signal: 'react-route-component',
+      score: REACT_FRONTEND_SIGNAL_SCORES['react-route-component'],
     });
-    const ownerCandidate =
-      reactAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<ReactFrontendSignal>(),
-      } satisfies ReactAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('react-route-component')) {
-      ownerCandidate.score +=
-        REACT_FRONTEND_SIGNAL_SCORES['react-route-component'];
-      ownerCandidate.evidence.push(reactRouteComponentFile.path);
-      ownerCandidate.countedSignals.add('react-route-component');
-    }
-
-    reactAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const [ownerPath, ownerCandidate] of reactAreasByOwner) {
+    const hasCompetingProof = hasCompetingAreaProof({
+      ownerPath,
+      evidenceEntries: reactCompetingProofEntries,
+    });
+
+    if (hasCompetingProof) continue;
+
     addAreaScore({
       candidates,
       name: 'Frontend app',

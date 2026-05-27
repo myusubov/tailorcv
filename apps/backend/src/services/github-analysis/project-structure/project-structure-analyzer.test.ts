@@ -739,6 +739,66 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
+  it('skips same-owner React fallback evidence when Next.js proof exists', () => {
+    const result = analyze([
+      file('next.config.ts'),
+      file('index.html'),
+      directory('src'),
+      file('src/App.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: ['next.config.ts'],
+    });
+  });
+
+  it('keeps React fallback evidence when Next.js proof belongs to another owner', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/next'),
+      file('apps/next/next.config.ts'),
+      directory('apps/react'),
+      file('apps/react/index.html'),
+      directory('apps/react/src'),
+      file('apps/react/src/main.tsx'),
+      file('apps/react/src/App.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/next')).toMatchObject({
+      evidence: ['apps/next/next.config.ts'],
+    });
+    expect(areaByName(result, 'Frontend app', 'apps/react')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/react/index.html',
+        'apps/react/src/App.tsx',
+        'apps/react/src/main.tsx',
+      ]),
+    });
+  });
+
+  it('skips same-owner React fallback evidence when React Router proof exists', () => {
+    const result = analyze([
+      file('react-router.config.ts'),
+      directory('app'),
+      file('app/root.tsx'),
+      directory('src'),
+      file('src/App.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'app/root.tsx',
+        'react-router.config.ts',
+      ]),
+    });
+    expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toContain(
+      'src/App.tsx',
+    );
+  });
+
   it('detects a frontend app from root static HTML and CSS files', () => {
     const result = analyze([
       file('index.html'),

@@ -1,6 +1,10 @@
+import {
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
 
 type AstroFrontendSignal =
   | 'astro-config'
@@ -11,12 +15,6 @@ type AstroFrontendSignal =
   | 'astro-component'
   | 'astro-pages-directory';
 
-type AstroAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<AstroFrontendSignal>;
-};
-
 const ASTRO_FRONTEND_SIGNAL_SCORES = {
   'astro-config': 4,
   'astro-page': 4,
@@ -25,7 +23,7 @@ const ASTRO_FRONTEND_SIGNAL_SCORES = {
   'astro-component': 2,
   'astro-content-page': 1,
   'astro-pages-directory': 1,
-} satisfies Record<AstroFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<AstroFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from Astro path evidence.
@@ -35,7 +33,7 @@ export function addAstroFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const astroAreasByOwner = new Map<string, AstroAreaCandidate>();
+  const astroAreasByOwner = createAreaRuleCandidateMap<AstroFrontendSignal>();
 
   const astroConfigFiles = index.findFilesByNameMatching({
     pattern: /^astro\.config\.(js|mjs|cjs|ts)$/,
@@ -66,152 +64,66 @@ export function addAstroFrontendAreas({
   });
 
   for (const astroConfigFile of astroConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroConfigFile,
+      signal: 'astro-config',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-config'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-config')) {
-      ownerCandidate.score += ASTRO_FRONTEND_SIGNAL_SCORES['astro-config'];
-      ownerCandidate.evidence.push(astroConfigFile.path);
-      ownerCandidate.countedSignals.add('astro-config');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const astroPageFile of astroPageFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroPageFile.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroPageFile,
+      signal: 'astro-page',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-page'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-page')) {
-      ownerCandidate.score += ASTRO_FRONTEND_SIGNAL_SCORES['astro-page'];
-      ownerCandidate.evidence.push(astroPageFile.path);
-      ownerCandidate.countedSignals.add('astro-page');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const astroContentPageFile of astroContentPageFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroContentPageFile.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroContentPageFile,
+      signal: 'astro-content-page',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-content-page'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-content-page')) {
-      ownerCandidate.score +=
-        ASTRO_FRONTEND_SIGNAL_SCORES['astro-content-page'];
-      ownerCandidate.evidence.push(astroContentPageFile.path);
-      ownerCandidate.countedSignals.add('astro-content-page');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const astroEndpointFile of astroEndpointFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroEndpointFile.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroEndpointFile,
+      signal: 'astro-endpoint',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-endpoint'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-endpoint')) {
-      ownerCandidate.score += ASTRO_FRONTEND_SIGNAL_SCORES['astro-endpoint'];
-      ownerCandidate.evidence.push(astroEndpointFile.path);
-      ownerCandidate.countedSignals.add('astro-endpoint');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const astroLayoutFile of astroLayoutFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroLayoutFile.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroLayoutFile,
+      signal: 'astro-layout',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-layout'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-layout')) {
-      ownerCandidate.score += ASTRO_FRONTEND_SIGNAL_SCORES['astro-layout'];
-      ownerCandidate.evidence.push(astroLayoutFile.path);
-      ownerCandidate.countedSignals.add('astro-layout');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const astroComponentFile of astroComponentFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroComponentFile.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroComponentFile,
+      signal: 'astro-component',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-component'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-component')) {
-      ownerCandidate.score += ASTRO_FRONTEND_SIGNAL_SCORES['astro-component'];
-      ownerCandidate.evidence.push(astroComponentFile.path);
-      ownerCandidate.countedSignals.add('astro-component');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const astroPagesDirectory of astroPagesDirectories) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: astroPagesDirectory.path,
+    countAreaRuleSignal({
+      areasByOwner: astroAreasByOwner,
+      entry: astroPagesDirectory,
+      signal: 'astro-pages-directory',
+      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-pages-directory'],
     });
-    const ownerCandidate =
-      astroAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<AstroFrontendSignal>(),
-      } satisfies AstroAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('astro-pages-directory')) {
-      ownerCandidate.score +=
-        ASTRO_FRONTEND_SIGNAL_SCORES['astro-pages-directory'];
-      ownerCandidate.evidence.push(astroPagesDirectory.path);
-      ownerCandidate.countedSignals.add('astro-pages-directory');
-    }
-
-    astroAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const [ownerPath, ownerCandidate] of astroAreasByOwner) {

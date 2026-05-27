@@ -1,6 +1,10 @@
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
+import {
+  addAreaRuleCandidates,
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
 
 type SvelteKitFrontendSignal =
   | 'sveltekit-config'
@@ -10,12 +14,6 @@ type SvelteKitFrontendSignal =
   | 'sveltekit-app-template'
   | 'sveltekit-routes-directory';
 
-type SvelteKitAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<SvelteKitFrontendSignal>;
-};
-
 const SVELTEKIT_FRONTEND_SIGNAL_SCORES = {
   'sveltekit-config': 4,
   'sveltekit-page-route': 4,
@@ -23,7 +21,7 @@ const SVELTEKIT_FRONTEND_SIGNAL_SCORES = {
   'sveltekit-server-route': 3,
   'sveltekit-app-template': 3,
   'sveltekit-routes-directory': 1,
-} satisfies Record<SvelteKitFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<SvelteKitFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from SvelteKit path evidence.
@@ -33,7 +31,8 @@ export function addSvelteKitFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const svelteKitAreasByOwner = new Map<string, SvelteKitAreaCandidate>();
+  const svelteKitAreasByOwner =
+    createAreaRuleCandidateMap<SvelteKitFrontendSignal>();
 
   const svelteKitConfigFiles = index.findFilesByNameMatching({
     pattern: /^svelte\.config\.(js|mjs|ts)$/,
@@ -60,144 +59,62 @@ export function addSvelteKitFrontendAreas({
   });
 
   for (const svelteKitConfigFile of svelteKitConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: svelteKitConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitConfigFile,
+      signal: 'sveltekit-config',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-config'],
     });
-    const ownerCandidate =
-      svelteKitAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<SvelteKitFrontendSignal>(),
-      } satisfies SvelteKitAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('sveltekit-config')) {
-      ownerCandidate.score +=
-        SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-config'];
-      ownerCandidate.evidence.push(svelteKitConfigFile.path);
-      ownerCandidate.countedSignals.add('sveltekit-config');
-    }
-
-    svelteKitAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const svelteKitPageRouteFile of svelteKitPageRouteFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: svelteKitPageRouteFile.path,
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitPageRouteFile,
+      signal: 'sveltekit-page-route',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-page-route'],
     });
-    const ownerCandidate =
-      svelteKitAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<SvelteKitFrontendSignal>(),
-      } satisfies SvelteKitAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('sveltekit-page-route')) {
-      ownerCandidate.score +=
-        SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-page-route'];
-      ownerCandidate.evidence.push(svelteKitPageRouteFile.path);
-      ownerCandidate.countedSignals.add('sveltekit-page-route');
-    }
-
-    svelteKitAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const svelteKitLayoutRouteFile of svelteKitLayoutRouteFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: svelteKitLayoutRouteFile.path,
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitLayoutRouteFile,
+      signal: 'sveltekit-layout-route',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-layout-route'],
     });
-    const ownerCandidate =
-      svelteKitAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<SvelteKitFrontendSignal>(),
-      } satisfies SvelteKitAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('sveltekit-layout-route')) {
-      ownerCandidate.score +=
-        SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-layout-route'];
-      ownerCandidate.evidence.push(svelteKitLayoutRouteFile.path);
-      ownerCandidate.countedSignals.add('sveltekit-layout-route');
-    }
-
-    svelteKitAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const svelteKitServerRouteFile of svelteKitServerRouteFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: svelteKitServerRouteFile.path,
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitServerRouteFile,
+      signal: 'sveltekit-server-route',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-server-route'],
     });
-    const ownerCandidate =
-      svelteKitAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<SvelteKitFrontendSignal>(),
-      } satisfies SvelteKitAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('sveltekit-server-route')) {
-      ownerCandidate.score +=
-        SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-server-route'];
-      ownerCandidate.evidence.push(svelteKitServerRouteFile.path);
-      ownerCandidate.countedSignals.add('sveltekit-server-route');
-    }
-
-    svelteKitAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const svelteKitAppTemplateFile of svelteKitAppTemplateFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: svelteKitAppTemplateFile.path,
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitAppTemplateFile,
+      signal: 'sveltekit-app-template',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-app-template'],
     });
-    const ownerCandidate =
-      svelteKitAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<SvelteKitFrontendSignal>(),
-      } satisfies SvelteKitAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('sveltekit-app-template')) {
-      ownerCandidate.score +=
-        SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-app-template'];
-      ownerCandidate.evidence.push(svelteKitAppTemplateFile.path);
-      ownerCandidate.countedSignals.add('sveltekit-app-template');
-    }
-
-    svelteKitAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const svelteKitRoutesDirectory of svelteKitRoutesDirectories) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: svelteKitRoutesDirectory.path,
-    });
-    const ownerCandidate =
-      svelteKitAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<SvelteKitFrontendSignal>(),
-      } satisfies SvelteKitAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('sveltekit-routes-directory')) {
-      ownerCandidate.score +=
-        SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-routes-directory'];
-      ownerCandidate.evidence.push(svelteKitRoutesDirectory.path);
-      ownerCandidate.countedSignals.add('sveltekit-routes-directory');
-    }
-
-    svelteKitAreasByOwner.set(ownerPath, ownerCandidate);
-  }
-
-  for (const [ownerPath, ownerCandidate] of svelteKitAreasByOwner) {
-    addAreaScore({
-      candidates,
-      name: 'Frontend app',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitRoutesDirectory,
+      signal: 'sveltekit-routes-directory',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-routes-directory'],
     });
   }
+
+  addAreaRuleCandidates({
+    areasByOwner: svelteKitAreasByOwner,
+    candidates,
+    name: 'Frontend app',
+  });
 }

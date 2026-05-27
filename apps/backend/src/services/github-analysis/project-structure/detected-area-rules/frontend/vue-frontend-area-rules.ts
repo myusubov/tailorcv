@@ -1,3 +1,8 @@
+import {
+  countAreaRuleSignal,
+  createAreaRuleCandidateMap,
+  type AreaRuleSignalScores,
+} from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
@@ -11,12 +16,6 @@ type VueFrontendSignal =
   | 'vue-view-component'
   | 'vue-component';
 
-type VueAreaCandidate = {
-  score: number;
-  evidence: string[];
-  countedSignals: Set<VueFrontendSignal>;
-};
-
 const VUE_FRONTEND_SIGNAL_SCORES = {
   'vue-root-component': 4,
   'vue-main-entry': 3,
@@ -25,7 +24,7 @@ const VUE_FRONTEND_SIGNAL_SCORES = {
   'vue-cli-config': 2,
   'vue-view-component': 2,
   'vue-component': 1,
-} satisfies Record<VueFrontendSignal, number>;
+} satisfies AreaRuleSignalScores<VueFrontendSignal>;
 
 /**
  * Adds `Frontend app` candidates from Vue path evidence.
@@ -35,7 +34,7 @@ export function addVueFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const vueAreasByOwner = new Map<string, VueAreaCandidate>();
+  const vueAreasByOwner = createAreaRuleCandidateMap<VueFrontendSignal>();
   const nuxtProofOwners = new Set<string>();
 
   const nuxtConfigFiles = index.findFilesByNameMatching({
@@ -82,164 +81,75 @@ export function addVueFrontendAreas({
   });
 
   for (const vueViteConfigFile of vueViteConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueViteConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueViteConfigFile,
+      signal: 'vue-vite-config',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-vite-config'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-vite-config')) {
-      ownerCandidate.score += VUE_FRONTEND_SIGNAL_SCORES['vue-vite-config'];
-      ownerCandidate.evidence.push(vueViteConfigFile.path);
-      ownerCandidate.countedSignals.add('vue-vite-config');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const vueCliConfigFile of vueCliConfigFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueCliConfigFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueCliConfigFile,
+      signal: 'vue-cli-config',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-cli-config'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-cli-config')) {
-      ownerCandidate.score += VUE_FRONTEND_SIGNAL_SCORES['vue-cli-config'];
-      ownerCandidate.evidence.push(vueCliConfigFile.path);
-      ownerCandidate.countedSignals.add('vue-cli-config');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const vueRootComponentFile of vueRootComponentFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueRootComponentFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueRootComponentFile,
+      signal: 'vue-root-component',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-root-component'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-root-component')) {
-      ownerCandidate.score +=
-        VUE_FRONTEND_SIGNAL_SCORES['vue-root-component'];
-      ownerCandidate.evidence.push(vueRootComponentFile.path);
-      ownerCandidate.countedSignals.add('vue-root-component');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const vueMainEntryFile of vueMainEntryFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueMainEntryFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueMainEntryFile,
+      signal: 'vue-main-entry',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-main-entry'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-main-entry')) {
-      ownerCandidate.score += VUE_FRONTEND_SIGNAL_SCORES['vue-main-entry'];
-      ownerCandidate.evidence.push(vueMainEntryFile.path);
-      ownerCandidate.countedSignals.add('vue-main-entry');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const vueRouterFile of vueRouterFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueRouterFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueRouterFile,
+      signal: 'vue-router',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-router'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-router')) {
-      ownerCandidate.score += VUE_FRONTEND_SIGNAL_SCORES['vue-router'];
-      ownerCandidate.evidence.push(vueRouterFile.path);
-      ownerCandidate.countedSignals.add('vue-router');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const vueViewComponentFile of vueViewComponentFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueViewComponentFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueViewComponentFile,
+      signal: 'vue-view-component',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-view-component'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-view-component')) {
-      ownerCandidate.score += VUE_FRONTEND_SIGNAL_SCORES['vue-view-component'];
-      ownerCandidate.evidence.push(vueViewComponentFile.path);
-      ownerCandidate.countedSignals.add('vue-view-component');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const vueComponentFile of vueComponentFiles) {
-    const ownerPath = ownerPathForApplicationArea({
-      path: vueComponentFile.path,
+    countAreaRuleSignal({
+      areasByOwner: vueAreasByOwner,
+      entry: vueComponentFile,
+      signal: 'vue-component',
+      score: VUE_FRONTEND_SIGNAL_SCORES['vue-component'],
     });
-    const ownerCandidate =
-      vueAreasByOwner.get(ownerPath) ??
-      ({
-        score: 0,
-        evidence: [],
-        countedSignals: new Set<VueFrontendSignal>(),
-      } satisfies VueAreaCandidate);
-
-    if (!ownerCandidate.countedSignals.has('vue-component')) {
-      ownerCandidate.score += VUE_FRONTEND_SIGNAL_SCORES['vue-component'];
-      ownerCandidate.evidence.push(vueComponentFile.path);
-      ownerCandidate.countedSignals.add('vue-component');
-    }
-
-    vueAreasByOwner.set(ownerPath, ownerCandidate);
   }
 
   for (const [ownerPath, ownerCandidate] of vueAreasByOwner) {
     if (nuxtProofOwners.has(ownerPath)) continue;
 
-    const hasVueRoot = ownerCandidate.countedSignals.has(
-      'vue-root-component',
-    );
-    const hasVueMainEntry =
-      ownerCandidate.countedSignals.has('vue-main-entry');
+    const hasVueRoot = ownerCandidate.countedSignals.has('vue-root-component');
+    const hasVueMainEntry = ownerCandidate.countedSignals.has('vue-main-entry');
     const hasVueRouter = ownerCandidate.countedSignals.has('vue-router');
-    const hasVueCliConfig =
-      ownerCandidate.countedSignals.has('vue-cli-config');
+    const hasVueCliConfig = ownerCandidate.countedSignals.has('vue-cli-config');
 
     const hasVueAppShape = hasVueRoot && hasVueMainEntry;
     const hasVueRouterAppShape = hasVueRoot && hasVueRouter;

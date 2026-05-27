@@ -71,6 +71,27 @@ export function countAreaRuleSignal<Signal extends string>({
 }
 
 /**
+ * Returns whether any competing proof entry belongs to the same owner path.
+ * Used by broad or fallback detectors before emitting an area candidate, so
+ * framework-specific proof from the same application owner can block weaker
+ * generic evidence without affecting other owners in a monorepo.
+ */
+export function hasCompetingAreaProof({
+  ownerPath,
+  evidenceEntries,
+}: {
+  ownerPath: string;
+  evidenceEntries: Pick<RepoTreeEntry, 'path'>[];
+}): boolean {
+  for (const { path } of evidenceEntries) {
+    const evidenceOwnerPath = ownerPathForApplicationArea({ path });
+    if (ownerPath === evidenceOwnerPath) return true;
+  }
+
+  return false;
+}
+
+/**
  * Adds all owner-scoped rule candidates from a local detector map into the
  * shared detected-area candidate map.
  */
