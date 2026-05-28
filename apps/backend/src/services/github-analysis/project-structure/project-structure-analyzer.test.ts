@@ -571,6 +571,46 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  it('does not add Vue evidence to Nuxt app-entry owners', () => {
+    const result = analyze([
+      file('app.vue'),
+      directory('src'),
+      file('src/App.vue'),
+      file('src/main.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining(['app.vue']),
+    });
+    expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toContain(
+      'src/App.vue',
+    );
+  });
+
+  it('keeps Vue evidence when Nuxt proof belongs to another owner', () => {
+    const result = analyze([
+      directory('apps'),
+      directory('apps/nuxt'),
+      file('apps/nuxt/nuxt.config.ts'),
+      directory('apps/vue'),
+      directory('apps/vue/src'),
+      file('apps/vue/src/App.vue'),
+      file('apps/vue/src/main.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', 'apps/nuxt')).toMatchObject({
+      evidence: ['apps/nuxt/nuxt.config.ts'],
+    });
+    expect(areaByName(result, 'Frontend app', 'apps/vue')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'apps/vue/src/App.vue',
+        'apps/vue/src/main.ts',
+      ]),
+    });
+  });
+
   it('detects a frontend app from root React Router framework structure', () => {
     const result = analyze([
       directory('app'),
@@ -709,16 +749,14 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
-  it('detects a frontend app from React App JSX evidence alone', () => {
+  it('does not detect React from App JSX evidence alone', () => {
     const result = analyze([
       directory('src'),
       file('src/App.tsx'),
       file('package.json'),
     ]);
 
-    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
-      evidence: ['src/App.tsx'],
-    });
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
   it('does not detect React from Vite config alone', () => {
@@ -763,6 +801,7 @@ describe('analyzeProjectStructure', () => {
       directory('apps/react/src'),
       file('apps/react/src/main.tsx'),
       file('apps/react/src/App.tsx'),
+      file('apps/react/vite.config.ts'),
       file('package.json'),
     ]);
 
@@ -774,6 +813,24 @@ describe('analyzeProjectStructure', () => {
         'apps/react/index.html',
         'apps/react/src/App.tsx',
         'apps/react/src/main.tsx',
+        'apps/react/vite.config.ts',
+      ]),
+    });
+  });
+
+  it('detects React from root App JSX and component structure', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/App.tsx'),
+      directory('src/components'),
+      file('src/components/Button.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/App.tsx',
+        'src/components/Button.tsx',
       ]),
     });
   });

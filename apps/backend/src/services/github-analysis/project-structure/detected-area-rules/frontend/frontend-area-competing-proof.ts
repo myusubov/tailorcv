@@ -58,3 +58,25 @@ export function findReactRouterFrontendProofEntries({
     ...reactRouterRoutesConfigFiles,
   ];
 }
+
+/**
+ * Finds blocker-grade Nuxt proof entries for broad Vue-family detectors.
+ * Returned entries are specific enough to indicate that the owner should be
+ * treated as Nuxt instead of a generic Vue app.
+ */
+export function findNuxtFrontendProofEntries({
+  index,
+}: {
+  index: EntryIndex;
+}): Pick<RepoTreeEntry, 'path'>[] {
+  const nuxtConfigFiles = index.findFilesByNameMatching({
+    pattern: /^nuxt\.config\.(js|mjs|cjs|ts)$/,
+  });
+
+  const nuxtAppEntryFiles = index.findEntriesByPathMatching({
+    pattern:
+      /^(app\.vue|app\/app\.vue|apps\/[^/]+\/(app\.vue|app\/app\.vue)|packages\/[^/]+\/(app\.vue|app\/app\.vue))$/,
+  });
+
+  return [...nuxtConfigFiles, ...nuxtAppEntryFiles];
+}

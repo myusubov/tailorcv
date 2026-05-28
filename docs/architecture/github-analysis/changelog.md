@@ -6,12 +6,26 @@
 
 ## 2026-05-27
 
+### Vue Frontend Competing-Proof Gate
+
+- **Decision:** Move Vue's Nuxt blocker onto the shared competing-proof helper pattern used by broad frontend detectors.
+- **Problem:** Vue locally duplicated Nuxt proof lookup and owner tracking instead of using the shared same-owner competing-proof flow.
+- **Solution:** Added blocker-grade Nuxt proof lookup and updated Vue output gating to skip only owners with matching Nuxt config or app-entry proof.
+- **Outcome:** Vue keeps its existing app-shape gate while using the same competing-proof model as React for meta-framework suppression.
+
 ### React Frontend Competing-Proof Gate
 
 - **Decision:** Add the first owner-scoped competing-proof gate to the broad React frontend detector.
 - **Problem:** Generic React evidence such as `index.html` and `src/App.tsx` could merge into the same `Frontend app` candidate as stronger Next.js or React Router framework proof for the same owner.
 - **Solution:** Added blocker-grade frontend proof helpers for Next.js and React Router, finalized same-owner competing proof checks, and gated React output so those stronger framework proofs suppress only the matching owner.
 - **Outcome:** React fallback detection remains available for standalone React apps while avoiding mixed React evidence on same-owner Next.js and React Router areas.
+
+### React Frontend Shape Gate
+
+- **Decision:** Require broad React fallback evidence to form a recognized app shape before emitting a frontend area.
+- **Problem:** Single broad signals such as `src/App.tsx` could pass the global area threshold without enough surrounding React app structure.
+- **Solution:** Added final React shape checks for Vite React, CRA-style React, and structured React component/page layouts.
+- **Outcome:** React detection now stays available for common React app layouts while weak isolated React-like files no longer emit `Frontend app`.
 
 ### Frontend Area Rule Modularization
 

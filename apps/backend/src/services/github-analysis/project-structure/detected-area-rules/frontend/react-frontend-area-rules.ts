@@ -38,6 +38,41 @@ const REACT_FRONTEND_SIGNAL_SCORES = {
   'react-route-component': 1,
 } satisfies AreaRuleSignalScores<ReactFrontendSignal>;
 
+function hasReactAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<ReactFrontendSignal>;
+}): boolean {
+  const hasReactViteConfig = countedSignals.has('react-vite-config');
+  const hasReactRootIndexHtml = countedSignals.has('react-root-index-html');
+  const hasReactMainJsxEntry = countedSignals.has('react-main-jsx-entry');
+  const hasReactRootAppJsx = countedSignals.has('react-root-app-jsx');
+  const hasReactPublicIndexHtml = countedSignals.has('react-public-index-html');
+  const hasReactIndexEntry =
+    countedSignals.has('react-index-js-entry') ||
+    countedSignals.has('react-index-jsx-entry');
+  const hasReactRootApp =
+    countedSignals.has('react-root-app-js') ||
+    countedSignals.has('react-root-app-jsx');
+  const hasReactComponentJsx = countedSignals.has('react-component-jsx');
+  const hasReactRouteComponent = countedSignals.has('react-route-component');
+
+  const hasViteReactAppShape =
+    hasReactViteConfig &&
+    hasReactRootIndexHtml &&
+    hasReactMainJsxEntry &&
+    hasReactRootAppJsx;
+
+  const hasCreateReactAppShape =
+    hasReactPublicIndexHtml && hasReactIndexEntry && hasReactRootApp;
+  const hasReactStructuredAppShape =
+    hasReactRootAppJsx && (hasReactComponentJsx || hasReactRouteComponent);
+
+  return (
+    hasViteReactAppShape || hasCreateReactAppShape || hasReactStructuredAppShape
+  );
+}
+
 /**
  * Adds `Frontend app` candidates from non-framework React path evidence.
  * React-specific signals stay internal while detected areas remain role-based.
@@ -203,6 +238,10 @@ export function addReactFrontendAreas({
     });
 
     if (hasCompetingProof) continue;
+
+    if (!hasReactAppShape({ countedSignals: ownerCandidate.countedSignals })) {
+      continue;
+    }
 
     addAreaScore({
       candidates,

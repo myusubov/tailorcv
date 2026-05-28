@@ -1,11 +1,12 @@
 import {
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
+  hasCompetingAreaProof,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForApplicationArea } from '../../project-structure-path-utils';
+import { findNuxtFrontendProofEntries } from './frontend-area-competing-proof';
 
 type VueFrontendSignal =
   | 'vue-vite-config'
@@ -26,6 +27,23 @@ const VUE_FRONTEND_SIGNAL_SCORES = {
   'vue-component': 1,
 } satisfies AreaRuleSignalScores<VueFrontendSignal>;
 
+function hasVueAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<VueFrontendSignal>;
+}): boolean {
+  const hasVueRoot = countedSignals.has('vue-root-component');
+  const hasVueMainEntry = countedSignals.has('vue-main-entry');
+  const hasVueRouter = countedSignals.has('vue-router');
+  const hasVueCliConfig = countedSignals.has('vue-cli-config');
+
+  const hasVueAppShape = hasVueRoot && hasVueMainEntry;
+  const hasVueRouterAppShape = hasVueRoot && hasVueRouter;
+  const hasVueCliAppShape = hasVueCliConfig && hasVueRoot;
+
+  return hasVueAppShape || hasVueRouterAppShape || hasVueCliAppShape;
+}
+
 /**
  * Adds `Frontend app` candidates from Vue path evidence.
  * Vue-specific signals stay internal while emitted areas remain role-based.
@@ -35,22 +53,7 @@ export function addVueFrontendAreas({
   index,
 }: DetectedAreaRuleContext): void {
   const vueAreasByOwner = createAreaRuleCandidateMap<VueFrontendSignal>();
-  const nuxtProofOwners = new Set<string>();
-
-  const nuxtConfigFiles = index.findFilesByNameMatching({
-    pattern: /^nuxt\.config\.(js|mjs|cjs|ts)$/,
-  });
-
-  const nuxtAppEntryFiles = index.findEntriesByPathMatching({
-    pattern:
-      /^(app\.vue|app\/app\.vue|apps\/[^/]+\/(app\.vue|app\/app\.vue)|packages\/[^/]+\/(app\.vue|app\/app\.vue))$/,
-  });
-
-  for (const nuxtProofFile of [...nuxtConfigFiles, ...nuxtAppEntryFiles]) {
-    nuxtProofOwners.add(
-      ownerPathForApplicationArea({ path: nuxtProofFile.path }),
-    );
-  }
+  const vueCompetingProofEntries = findNuxtFrontendProofEntries({ index });
 
   const vueViteConfigFiles = index.findFilesByNameMatching({
     pattern: /^vite\.config\.(js|mjs|cjs|ts)$/,
@@ -144,18 +147,14 @@ export function addVueFrontendAreas({
   }
 
   for (const [ownerPath, ownerCandidate] of vueAreasByOwner) {
-    if (nuxtProofOwners.has(ownerPath)) continue;
+    const hasCompetingProof = hasCompetingAreaProof({
+      ownerPath,
+      evidenceEntries: vueCompetingProofEntries,
+    });
 
-    const hasVueRoot = ownerCandidate.countedSignals.has('vue-root-component');
-    const hasVueMainEntry = ownerCandidate.countedSignals.has('vue-main-entry');
-    const hasVueRouter = ownerCandidate.countedSignals.has('vue-router');
-    const hasVueCliConfig = ownerCandidate.countedSignals.has('vue-cli-config');
+    if (hasCompetingProof) continue;
 
-    const hasVueAppShape = hasVueRoot && hasVueMainEntry;
-    const hasVueRouterAppShape = hasVueRoot && hasVueRouter;
-    const hasVueCliAppShape = hasVueCliConfig && hasVueRoot;
-
-    if (!hasVueAppShape && !hasVueRouterAppShape && !hasVueCliAppShape) {
+    if (!hasVueAppShape({ countedSignals: ownerCandidate.countedSignals })) {
       continue;
     }
 
