@@ -1,9 +1,9 @@
 import {
-  addAreaRuleCandidates,
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
+import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 
 type NextFrontendSignal =
@@ -22,6 +22,18 @@ const NEXT_FRONTEND_SIGNAL_SCORES = {
   'app-router-support': 2,
   'route-directory': 1,
 } satisfies AreaRuleSignalScores<NextFrontendSignal>;
+
+function hasNextAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<NextFrontendSignal>;
+}): boolean {
+  const hasNextConfig = countedSignals.has('next-config');
+  const hasAppRouterCore = countedSignals.has('app-router-core');
+  const hasPagesRouterSpecial = countedSignals.has('pages-router-special');
+
+  return hasNextConfig || hasAppRouterCore || hasPagesRouterSpecial;
+}
 
 /**
  * Adds `Frontend app` candidates from Next.js path evidence.
@@ -114,9 +126,17 @@ export function addNextFrontendAreas({
     });
   }
 
-  addAreaRuleCandidates({
-    areasByOwner: nextAreasByOwner,
-    candidates,
-    name: 'Frontend app',
-  });
+  for (const [ownerPath, ownerCandidate] of nextAreasByOwner) {
+    if (!hasNextAppShape({ countedSignals: ownerCandidate.countedSignals })) {
+      continue;
+    }
+
+    addAreaScore({
+      candidates,
+      name: 'Frontend app',
+      path: ownerPath,
+      score: ownerCandidate.score,
+      evidence: ownerCandidate.evidence,
+    });
+  }
 }

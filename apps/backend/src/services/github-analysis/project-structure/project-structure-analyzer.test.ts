@@ -198,6 +198,31 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  it('detects a Next.js frontend app from App Router core files', () => {
+    const result = analyze([
+      directory('app'),
+      file('app/page.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining(['app/page.tsx']),
+    });
+  });
+
+  it('does not emit Next.js frontend areas from weak-only route hints', () => {
+    const result = analyze([
+      directory('app'),
+      file('app/loading.tsx'),
+      directory('src'),
+      directory('src/pages'),
+      file('src/pages/Home.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
   it('detects a frontend app from Vite config evidence', () => {
     const result = analyze([
       file('index.html'),
@@ -656,9 +681,10 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
-  it('detects a frontend app from React Router optional entry files', () => {
+  it('detects a frontend app from React Router root route and optional entry files', () => {
     const result = analyze([
       directory('app'),
+      file('app/root.tsx'),
       file('app/entry.client.tsx'),
       file('app/entry.server.tsx'),
       file('package.json'),
@@ -666,10 +692,33 @@ describe('analyzeProjectStructure', () => {
 
     expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
       evidence: expect.arrayContaining([
+        'app/root.tsx',
         'app/entry.client.tsx',
         'app/entry.server.tsx',
       ]),
     });
+  });
+
+  it('does not detect React Router from optional entry files alone', () => {
+    const result = analyze([
+      directory('app'),
+      file('app/entry.client.tsx'),
+      file('app/entry.server.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect React Router from file routes alone', () => {
+    const result = analyze([
+      directory('app'),
+      directory('app/routes'),
+      file('app/routes/_index.tsx'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
   it('does not detect React Router from routes directory alone', () => {

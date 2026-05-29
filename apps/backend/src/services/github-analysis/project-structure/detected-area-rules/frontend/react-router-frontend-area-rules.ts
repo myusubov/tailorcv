@@ -1,9 +1,9 @@
 import {
-  addAreaRuleCandidates,
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
+import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 
 type ReactRouterFrontendSignal =
@@ -26,6 +26,31 @@ const REACT_ROUTER_FRONTEND_SIGNAL_SCORES = {
   'react-router-routes-directory': 1,
   'react-router-vite-config': 1,
 } satisfies AreaRuleSignalScores<ReactRouterFrontendSignal>;
+
+function hasReactRouterAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<ReactRouterFrontendSignal>;
+}): boolean {
+  const hasReactRouterConfig = countedSignals.has('react-router-config');
+  const hasRootRoute = countedSignals.has('react-router-root-route');
+  const hasRoutesConfig = countedSignals.has('react-router-routes-config');
+  const hasFileRoute = countedSignals.has('react-router-file-route');
+  const hasEntryClient = countedSignals.has('react-router-entry-client');
+  const hasEntryServer = countedSignals.has('react-router-entry-server');
+
+  const hasRoutesConfigShape = hasRootRoute && hasRoutesConfig;
+  const hasFileRouteShape = hasRootRoute && hasFileRoute;
+  const hasCustomEntryShape =
+    hasRootRoute && (hasEntryClient || hasEntryServer);
+
+  return (
+    hasReactRouterConfig ||
+    hasRoutesConfigShape ||
+    hasFileRouteShape ||
+    hasCustomEntryShape
+  );
+}
 
 /**
  * Adds `Frontend app` candidates from React Router framework path evidence.
@@ -143,9 +168,21 @@ export function addReactRouterFrontendAreas({
     });
   }
 
-  addAreaRuleCandidates({
-    areasByOwner: reactRouterAreasByOwner,
-    candidates,
-    name: 'Frontend app',
-  });
+  for (const [ownerPath, ownerCandidate] of reactRouterAreasByOwner) {
+    if (
+      !hasReactRouterAppShape({
+        countedSignals: ownerCandidate.countedSignals,
+      })
+    ) {
+      continue;
+    }
+
+    addAreaScore({
+      candidates,
+      name: 'Frontend app',
+      path: ownerPath,
+      score: ownerCandidate.score,
+      evidence: ownerCandidate.evidence,
+    });
+  }
 }

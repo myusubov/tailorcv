@@ -6,6 +6,20 @@
 
 ## 2026-05-27
 
+### React Router Frontend Shape Gate
+
+- **Decision:** Require React Router framework output to have explicit config or root-route-based framework structure before emitting a `Frontend app` area.
+- **Problem:** Optional entry files or `app/routes` file routes could reach the global score threshold without proving a React Router framework app by themselves.
+- **Solution:** Added a final React Router app-shape gate that allows `react-router.config.*` alone or `app/root.*` combined with routes config, file routes, or custom entry files.
+- **Outcome:** React Router detection still covers common framework layouts while weak support-only evidence no longer emits frontend areas.
+
+### Next.js Frontend Shape Gate
+
+- **Decision:** Require Next.js frontend output to have strong Next-specific proof before adding a `Frontend app` area.
+- **Problem:** Weak Next-like hints such as support files, route directories, or generic `src/pages/*.tsx` files could reach the global score threshold without proving a Next.js app.
+- **Solution:** Added a final Next.js app-shape gate that allows config, App Router core files, or Pages Router special files while leaving support and generic route evidence as score/evidence boosters only.
+- **Outcome:** Next.js detection still emits for common App Router and Pages Router applications, but weak-only route hints no longer produce frontend areas.
+
 ### Vue Frontend Competing-Proof Gate
 
 - **Decision:** Move Vue's Nuxt blocker onto the shared competing-proof helper pattern used by broad frontend detectors.
