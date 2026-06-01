@@ -1,27 +1,63 @@
 import {
-  addAreaRuleCandidates,
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
+import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 
 type AngularFrontendSignal =
   | 'angular-workspace-config'
-  | 'angular-app-component'
+  | 'angular-root-component-ts'
+  | 'angular-root-component-view'
   | 'angular-app-module'
+  | 'angular-app-config'
   | 'angular-main-entry'
   | 'angular-project-config'
   | 'angular-app-directory';
 
 const ANGULAR_FRONTEND_SIGNAL_SCORES = {
   'angular-workspace-config': 4,
-  'angular-app-component': 4,
+  'angular-root-component-ts': 4,
   'angular-app-module': 3,
+  'angular-app-config': 2,
   'angular-main-entry': 2,
+  'angular-root-component-view': 1,
   'angular-project-config': 1,
   'angular-app-directory': 1,
 } satisfies AreaRuleSignalScores<AngularFrontendSignal>;
+
+function hasAngularAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<AngularFrontendSignal>;
+}): boolean {
+  const hasAngularWorkspaceConfig = countedSignals.has(
+    'angular-workspace-config',
+  );
+  const hasAngularRootComponent = countedSignals.has(
+    'angular-root-component-ts',
+  );
+  const hasAngularAppModule = countedSignals.has('angular-app-module');
+  const hasAngularAppConfig = countedSignals.has('angular-app-config');
+  const hasAngularMainEntry = countedSignals.has('angular-main-entry');
+
+  const hasRootComponentAndMainEntry =
+    hasAngularRootComponent && hasAngularMainEntry;
+  const hasRootComponentAndAppModule =
+    hasAngularRootComponent && hasAngularAppModule;
+  const hasRootComponentAndAppConfig =
+    hasAngularRootComponent && hasAngularAppConfig;
+  const hasAppModuleAndMainEntry = hasAngularAppModule && hasAngularMainEntry;
+
+  return (
+    hasAngularWorkspaceConfig ||
+    hasRootComponentAndMainEntry ||
+    hasRootComponentAndAppModule ||
+    hasRootComponentAndAppConfig ||
+    hasAppModuleAndMainEntry
+  );
+}
 
 /**
  * Adds `Frontend app` candidates from Angular path evidence.
@@ -38,12 +74,20 @@ export function addAngularFrontendAreas({
     pattern: /^angular\.json$/,
   });
 
-  const angularAppComponentFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/app\/app\.component\.(ts|html|css|scss|sass|less)$/,
+  const angularRootComponentTsFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/app\/app\.component\.ts$/,
+  });
+
+  const angularRootComponentViewFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/app\/app\.component\.(html|css|scss|sass|less)$/,
   });
 
   const angularAppModuleFiles = index.findEntriesByPathMatching({
     pattern: /(^|\/)src\/app\/app\.module\.ts$/,
+  });
+
+  const angularAppConfigFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/app\/app\.config\.ts$/,
   });
 
   const angularMainEntryFiles = index.findEntriesByPathMatching({
@@ -67,12 +111,21 @@ export function addAngularFrontendAreas({
     });
   }
 
-  for (const angularAppComponentFile of angularAppComponentFiles) {
+  for (const angularRootComponentTsFile of angularRootComponentTsFiles) {
     countAreaRuleSignal({
       areasByOwner: angularAreasByOwner,
-      entry: angularAppComponentFile,
-      signal: 'angular-app-component',
-      score: ANGULAR_FRONTEND_SIGNAL_SCORES['angular-app-component'],
+      entry: angularRootComponentTsFile,
+      signal: 'angular-root-component-ts',
+      score: ANGULAR_FRONTEND_SIGNAL_SCORES['angular-root-component-ts'],
+    });
+  }
+
+  for (const angularRootComponentViewFile of angularRootComponentViewFiles) {
+    countAreaRuleSignal({
+      areasByOwner: angularAreasByOwner,
+      entry: angularRootComponentViewFile,
+      signal: 'angular-root-component-view',
+      score: ANGULAR_FRONTEND_SIGNAL_SCORES['angular-root-component-view'],
     });
   }
 
@@ -82,6 +135,15 @@ export function addAngularFrontendAreas({
       entry: angularAppModuleFile,
       signal: 'angular-app-module',
       score: ANGULAR_FRONTEND_SIGNAL_SCORES['angular-app-module'],
+    });
+  }
+
+  for (const angularAppConfigFile of angularAppConfigFiles) {
+    countAreaRuleSignal({
+      areasByOwner: angularAreasByOwner,
+      entry: angularAppConfigFile,
+      signal: 'angular-app-config',
+      score: ANGULAR_FRONTEND_SIGNAL_SCORES['angular-app-config'],
     });
   }
 
@@ -112,9 +174,21 @@ export function addAngularFrontendAreas({
     });
   }
 
-  addAreaRuleCandidates({
-    areasByOwner: angularAreasByOwner,
-    candidates,
-    name: 'Frontend app',
-  });
+  for (const [ownerPath, ownerCandidate] of angularAreasByOwner) {
+    if (
+      !hasAngularAppShape({
+        countedSignals: ownerCandidate.countedSignals,
+      })
+    ) {
+      continue;
+    }
+
+    addAreaScore({
+      candidates,
+      name: 'Frontend app',
+      path: ownerPath,
+      score: ownerCandidate.score,
+      evidence: ownerCandidate.evidence,
+    });
+  }
 }

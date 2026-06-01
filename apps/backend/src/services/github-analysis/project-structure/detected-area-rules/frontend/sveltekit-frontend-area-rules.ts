@@ -1,27 +1,54 @@
 import {
-  addAreaRuleCandidates,
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
+import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 
 type SvelteKitFrontendSignal =
   | 'sveltekit-config'
-  | 'sveltekit-page-route'
-  | 'sveltekit-layout-route'
+  | 'sveltekit-page-component'
+  | 'sveltekit-layout-component'
+  | 'sveltekit-page-load'
+  | 'sveltekit-layout-load'
   | 'sveltekit-server-route'
   | 'sveltekit-app-template'
   | 'sveltekit-routes-directory';
 
 const SVELTEKIT_FRONTEND_SIGNAL_SCORES = {
   'sveltekit-config': 4,
-  'sveltekit-page-route': 4,
-  'sveltekit-layout-route': 4,
+  'sveltekit-page-component': 4,
+  'sveltekit-layout-component': 4,
   'sveltekit-server-route': 3,
-  'sveltekit-app-template': 3,
+  'sveltekit-page-load': 2,
+  'sveltekit-layout-load': 2,
+  'sveltekit-app-template': 2,
   'sveltekit-routes-directory': 1,
 } satisfies AreaRuleSignalScores<SvelteKitFrontendSignal>;
+
+function hasSvelteKitAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<SvelteKitFrontendSignal>;
+}): boolean {
+  const hasSvelteKitConfig = countedSignals.has('sveltekit-config');
+  const hasPageComponent = countedSignals.has('sveltekit-page-component');
+  const hasLayoutComponent = countedSignals.has('sveltekit-layout-component');
+  const hasPageLoad = countedSignals.has('sveltekit-page-load');
+  const hasLayoutLoad = countedSignals.has('sveltekit-layout-load');
+  const hasServerRoute = countedSignals.has('sveltekit-server-route');
+  const hasAppTemplate = countedSignals.has('sveltekit-app-template');
+
+  return (
+    hasSvelteKitConfig ||
+    hasPageComponent ||
+    hasLayoutComponent ||
+    (hasServerRoute && hasAppTemplate) ||
+    (hasPageLoad && hasAppTemplate) ||
+    (hasLayoutLoad && hasAppTemplate)
+  );
+}
 
 /**
  * Adds `Frontend app` candidates from SvelteKit path evidence.
@@ -38,12 +65,20 @@ export function addSvelteKitFrontendAreas({
     pattern: /^svelte\.config\.(js|mjs|ts)$/,
   });
 
-  const svelteKitPageRouteFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+page\.(svelte|js|ts)$/,
+  const svelteKitPageComponentFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+page\.svelte$/,
   });
 
-  const svelteKitLayoutRouteFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+layout\.(svelte|js|ts)$/,
+  const svelteKitLayoutComponentFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+layout\.svelte$/,
+  });
+
+  const svelteKitPageLoadFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+page\.(js|ts)$/,
+  });
+
+  const svelteKitLayoutLoadFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+layout\.(js|ts)$/,
   });
 
   const svelteKitServerRouteFiles = index.findEntriesByPathMatching({
@@ -67,21 +102,39 @@ export function addSvelteKitFrontendAreas({
     });
   }
 
-  for (const svelteKitPageRouteFile of svelteKitPageRouteFiles) {
+  for (const svelteKitPageComponentFile of svelteKitPageComponentFiles) {
     countAreaRuleSignal({
       areasByOwner: svelteKitAreasByOwner,
-      entry: svelteKitPageRouteFile,
-      signal: 'sveltekit-page-route',
-      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-page-route'],
+      entry: svelteKitPageComponentFile,
+      signal: 'sveltekit-page-component',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-page-component'],
     });
   }
 
-  for (const svelteKitLayoutRouteFile of svelteKitLayoutRouteFiles) {
+  for (const svelteKitLayoutComponentFile of svelteKitLayoutComponentFiles) {
     countAreaRuleSignal({
       areasByOwner: svelteKitAreasByOwner,
-      entry: svelteKitLayoutRouteFile,
-      signal: 'sveltekit-layout-route',
-      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-layout-route'],
+      entry: svelteKitLayoutComponentFile,
+      signal: 'sveltekit-layout-component',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-layout-component'],
+    });
+  }
+
+  for (const svelteKitPageLoadFile of svelteKitPageLoadFiles) {
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitPageLoadFile,
+      signal: 'sveltekit-page-load',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-page-load'],
+    });
+  }
+
+  for (const svelteKitLayoutLoadFile of svelteKitLayoutLoadFiles) {
+    countAreaRuleSignal({
+      areasByOwner: svelteKitAreasByOwner,
+      entry: svelteKitLayoutLoadFile,
+      signal: 'sveltekit-layout-load',
+      score: SVELTEKIT_FRONTEND_SIGNAL_SCORES['sveltekit-layout-load'],
     });
   }
 
@@ -112,9 +165,21 @@ export function addSvelteKitFrontendAreas({
     });
   }
 
-  addAreaRuleCandidates({
-    areasByOwner: svelteKitAreasByOwner,
-    candidates,
-    name: 'Frontend app',
-  });
+  for (const [ownerPath, ownerCandidate] of svelteKitAreasByOwner) {
+    if (
+      !hasSvelteKitAppShape({
+        countedSignals: ownerCandidate.countedSignals,
+      })
+    ) {
+      continue;
+    }
+
+    addAreaScore({
+      candidates,
+      name: 'Frontend app',
+      path: ownerPath,
+      score: ownerCandidate.score,
+      evidence: ownerCandidate.evidence,
+    });
+  }
 }

@@ -25,6 +25,17 @@ const NUXT_FRONTEND_SIGNAL_SCORES = {
   'nuxt-pages-directory': 1,
 } satisfies AreaRuleSignalScores<NuxtFrontendSignal>;
 
+function hasNuxtAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<NuxtFrontendSignal>;
+}): boolean {
+  const hasNuxtConfig = countedSignals.has('nuxt-config');
+  const hasNuxtAppEntry = countedSignals.has('nuxt-app-entry');
+
+  return hasNuxtConfig || hasNuxtAppEntry;
+}
+
 /**
  * Adds `Frontend app` candidates from Nuxt path evidence.
  * Nuxt-specific signals stay internal while emitted areas remain role-based.
@@ -128,11 +139,9 @@ export function addNuxtFrontendAreas({
   }
 
   for (const [ownerPath, ownerCandidate] of nuxtAreasByOwner) {
-    const hasNuxtProof =
-      ownerCandidate.countedSignals.has('nuxt-config') ||
-      ownerCandidate.countedSignals.has('nuxt-app-entry');
-
-    if (!hasNuxtProof) continue;
+    if (!hasNuxtAppShape({ countedSignals: ownerCandidate.countedSignals })) {
+      continue;
+    }
 
     addAreaScore({
       candidates,

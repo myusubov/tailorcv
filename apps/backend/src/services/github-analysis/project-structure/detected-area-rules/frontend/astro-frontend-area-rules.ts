@@ -18,12 +18,23 @@ type AstroFrontendSignal =
 const ASTRO_FRONTEND_SIGNAL_SCORES = {
   'astro-config': 4,
   'astro-page': 4,
-  'astro-layout': 3,
+  'astro-layout': 2,
   'astro-endpoint': 2,
   'astro-component': 2,
   'astro-content-page': 1,
   'astro-pages-directory': 1,
 } satisfies AreaRuleSignalScores<AstroFrontendSignal>;
+
+function hasAstroAppShape({
+  countedSignals,
+}: {
+  countedSignals: Set<AstroFrontendSignal>;
+}): boolean {
+  const hasAstroConfig = countedSignals.has('astro-config');
+  const hasAstroPage = countedSignals.has('astro-page');
+
+  return hasAstroConfig || hasAstroPage;
+}
 
 /**
  * Adds `Frontend app` candidates from Astro path evidence.
@@ -127,11 +138,9 @@ export function addAstroFrontendAreas({
   }
 
   for (const [ownerPath, ownerCandidate] of astroAreasByOwner) {
-    const hasStrongSignal = Array.from(ownerCandidate.countedSignals).some(
-      (signal) => ASTRO_FRONTEND_SIGNAL_SCORES[signal] >= 3,
-    );
-
-    if (!hasStrongSignal) continue;
+    if (!hasAstroAppShape({ countedSignals: ownerCandidate.countedSignals })) {
+      continue;
+    }
 
     addAreaScore({
       candidates,

@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-06-01
+
+### SvelteKit and Astro Frontend Shape Gates
+
+- **Decision:** Make SvelteKit and Astro output gates explicit so weak/support signals cannot emit frontend areas by score threshold alone.
+- **Problem:** SvelteKit app templates or load files and Astro layout/component files could independently cross the global frontend area threshold without enough framework app proof.
+- **Solution:** Split SvelteKit route components from load files, gated SvelteKit output on config, route components, or load/server evidence paired with `src/app.html`, and replaced Astro's score-threshold gate with explicit config or `.astro` page proof.
+- **Outcome:** SvelteKit and Astro detection now preserve strong framework conventions while support-only evidence remains non-emitting.
+
+### Angular Frontend Shape Gate
+
+- **Decision:** Require Angular frontend output to have Angular CLI workspace proof or a complete root app shape before emitting a `Frontend app` area.
+- **Problem:** The previous `angular-app-component` signal treated root component templates and styles as strong proof, so weak Angular-looking files could emit an area without TypeScript root component or bootstrap evidence.
+- **Solution:** Split Angular root component evidence into TypeScript and view signals, added standalone `app.config.ts` support, and gated output on workspace config or root component/module/standalone combinations.
+- **Outcome:** Angular detection now covers CLI, classic module-based, and standalone app layouts while support-only files remain evidence boosters instead of emit triggers.
+
 ## 2026-05-27
 
 ### React Router Frontend Shape Gate

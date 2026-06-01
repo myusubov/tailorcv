@@ -303,6 +303,92 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  it('detects a frontend app from SvelteKit config alone', () => {
+    const result = analyze([file('svelte.config.js'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: ['svelte.config.js'],
+    });
+  });
+
+  it('detects a frontend app from SvelteKit page component alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/routes'),
+      file('src/routes/+page.svelte'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining(['src/routes/+page.svelte']),
+    });
+  });
+
+  it('detects a frontend app from SvelteKit layout component alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/routes'),
+      file('src/routes/+layout.svelte'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining(['src/routes/+layout.svelte']),
+    });
+  });
+
+  it('detects a frontend app from SvelteKit server route and app template', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/app.html'),
+      directory('src/routes'),
+      file('src/routes/api/+server.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/app.html',
+        'src/routes/api/+server.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from SvelteKit page load and app template', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/app.html'),
+      directory('src/routes'),
+      file('src/routes/+page.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining(['src/app.html', 'src/routes/+page.ts']),
+    });
+  });
+
+  it('does not detect SvelteKit from app template alone', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/app.html'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect SvelteKit from page load alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/routes'),
+      file('src/routes/+page.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
   it('does not detect SvelteKit from routes directory alone', () => {
     const result = analyze([
       directory('src'),
@@ -351,6 +437,40 @@ describe('analyzeProjectStructure', () => {
         'apps/site/src/pages/index.astro',
       ]),
     });
+  });
+
+  it('detects a frontend app from Astro config alone', () => {
+    const result = analyze([file('astro.config.mjs'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: ['astro.config.mjs'],
+    });
+  });
+
+  it('detects a frontend app from an Astro page alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/pages'),
+      file('src/pages/index.astro'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining(['src/pages/index.astro']),
+    });
+  });
+
+  it('does not detect Astro from layout and component files alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/layouts'),
+      file('src/layouts/BaseLayout.astro'),
+      directory('src/components'),
+      file('src/components/Header.astro'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
   it('does not detect Astro from pages directory alone', () => {
@@ -733,6 +853,81 @@ describe('analyzeProjectStructure', () => {
 
   it('does not detect React Router from Vite config alone', () => {
     const result = analyze([file('vite.config.ts'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('detects a frontend app from Angular workspace config', () => {
+    const result = analyze([file('angular.json'), file('package.json')]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: ['angular.json'],
+    });
+  });
+
+  it('detects a frontend app from classic Angular structure', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/main.ts'),
+      directory('src/app'),
+      file('src/app/app.component.ts'),
+      file('src/app/app.module.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/app/app.component.ts',
+        'src/app/app.module.ts',
+        'src/main.ts',
+      ]),
+    });
+  });
+
+  it('detects a frontend app from standalone Angular structure', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/main.ts'),
+      directory('src/app'),
+      file('src/app/app.component.ts'),
+      file('src/app/app.config.ts'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'src/app/app.component.ts',
+        'src/app/app.config.ts',
+        'src/main.ts',
+      ]),
+    });
+  });
+
+  it('does not detect Angular from root component view files alone', () => {
+    const result = analyze([
+      directory('src'),
+      directory('src/app'),
+      file('src/app/app.component.html'),
+      file('src/app/app.component.scss'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Angular from main entry and app directory alone', () => {
+    const result = analyze([
+      directory('src'),
+      file('src/main.ts'),
+      directory('src/app'),
+      file('package.json'),
+    ]);
+
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  it('does not detect Angular from project config alone', () => {
+    const result = analyze([file('project.json'), file('package.json')]);
 
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
