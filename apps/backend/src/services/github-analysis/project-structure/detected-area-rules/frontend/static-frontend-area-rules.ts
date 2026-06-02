@@ -29,6 +29,35 @@ const STATIC_FRONTEND_SIGNAL_SCORES = {
   'static-src-style-file': 1,
 } satisfies AreaRuleSignalScores<StaticFrontendSignal>;
 
+function hasStaticContentShape({
+  countedSignals,
+}: {
+  countedSignals: Set<StaticFrontendSignal>;
+}): boolean {
+  const hasRootIndexHtml = countedSignals.has('static-root-index-html');
+  const hasRootStyleFile = countedSignals.has('static-root-style-file');
+  const hasRootHtmlPage = countedSignals.has('static-root-html-page');
+  const hasDirectoryCssFile = countedSignals.has('static-css-directory-file');
+  const hasSrcCssFile = countedSignals.has('static-src-style-file');
+  const hasViteConfigFile = countedSignals.has('static-vite-config');
+
+  const hasRootStaticPage = hasRootIndexHtml && hasRootStyleFile;
+  const hasDirectoryStaticPage = hasRootIndexHtml && hasDirectoryCssFile;
+  const hasCssEvidence =
+    hasRootStyleFile || hasDirectoryCssFile || hasSrcCssFile;
+  const hasMultiPageStaticSite =
+    hasRootIndexHtml && hasRootHtmlPage && hasCssEvidence;
+  const hasViteStaticPage =
+    hasRootIndexHtml && hasSrcCssFile && hasViteConfigFile;
+
+  return (
+    hasRootStaticPage ||
+    hasDirectoryStaticPage ||
+    hasMultiPageStaticSite ||
+    hasViteStaticPage
+  );
+}
+
 /**
  * Adds `Frontend app` candidates from plain HTML/CSS/JavaScript path evidence.
  * Static frontend signals stay internal while detected areas remain role-based.
@@ -164,38 +193,10 @@ export function addStaticFrontendAreas({
   }
 
   for (const [ownerPath, ownerCandidate] of staticAreasByOwner) {
-    const hasRootIndexHtml = ownerCandidate.countedSignals.has(
-      'static-root-index-html',
-    );
-    const hasRootStyleFile = ownerCandidate.countedSignals.has(
-      'static-root-style-file',
-    );
-    const hasRootHtmlPage = ownerCandidate.countedSignals.has(
-      'static-root-html-page',
-    );
-    const hasDirectoryCssFile = ownerCandidate.countedSignals.has(
-      'static-css-directory-file',
-    );
-    const hasSrcCssFile = ownerCandidate.countedSignals.has(
-      'static-src-style-file',
-    );
-    const hasViteConfigFile =
-      ownerCandidate.countedSignals.has('static-vite-config');
-
-    const hasRootStaticPage = hasRootIndexHtml && hasRootStyleFile;
-    const hasDirectoryStaticPage = hasRootIndexHtml && hasDirectoryCssFile;
-    const hasCssEvidence =
-      hasRootStyleFile || hasDirectoryCssFile || hasSrcCssFile;
-    const hasMultiPageStaticSite =
-      hasRootIndexHtml && hasRootHtmlPage && hasCssEvidence;
-    const hasViteStaticPage =
-      hasRootIndexHtml && hasSrcCssFile && hasViteConfigFile;
-
     if (
-      !hasRootStaticPage &&
-      !hasDirectoryStaticPage &&
-      !hasMultiPageStaticSite &&
-      !hasViteStaticPage
+      !hasStaticContentShape({
+        countedSignals: ownerCandidate.countedSignals,
+      })
     ) {
       continue;
     }
