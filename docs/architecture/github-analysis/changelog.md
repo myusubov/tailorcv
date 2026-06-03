@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-03
+
+### Next.js Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Next.js repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered individual Next.js behaviors, but the detector lacked a grouped confidence suite for common App Router, Pages Router, config-only, monorepo, and fallback-interference structures.
+- **Solution:** Added a dedicated Next.js fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Next.js detector behavior is now protected against regressions across common valid layouts, weak-only hints, owner isolation, and same-owner React/static fallback interference.
+
 ## 2026-06-01
 
 ### SvelteKit and Astro Frontend Shape Gates

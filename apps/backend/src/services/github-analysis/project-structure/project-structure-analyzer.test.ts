@@ -223,6 +223,253 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
+  describe('Next.js frontend detector realistic repo fixtures', () => {
+    it('detects a realistic App Router product app without fallback interference', () => {
+      const result = analyze([
+        directory('app'),
+        directory('app/(marketing)'),
+        file('app/(marketing)/page.tsx'),
+        directory('app/(workspace)'),
+        file('app/(workspace)/layout.tsx'),
+        directory('app/(workspace)/dashboard'),
+        file('app/(workspace)/dashboard/loading.tsx'),
+        file('app/(workspace)/dashboard/page.tsx'),
+        directory('app/api'),
+        directory('app/api/resumes'),
+        file('app/api/resumes/route.ts'),
+        file('app/globals.css'),
+        file('app/layout.tsx'),
+        file('app/page.tsx'),
+        directory('components'),
+        directory('components/navigation'),
+        file('components/navigation/sidebar.tsx'),
+        directory('components/resumes'),
+        file('components/resumes/resume-card.tsx'),
+        directory('lib'),
+        file('lib/api-client.ts'),
+        file('lib/auth.ts'),
+        file('lib/utils.ts'),
+        directory('public'),
+        file('public/favicon.ico'),
+        file('public/logo.svg'),
+        directory('styles'),
+        file('styles/tokens.css'),
+        directory('__tests__'),
+        file('__tests__/dashboard.test.tsx'),
+        directory('.github'),
+        directory('.github/workflows'),
+        file('.github/workflows/ci.yml'),
+        file('.env.example'),
+        file('README.md'),
+        file('next-env.d.ts'),
+        file('next.config.ts'),
+        file('package.json'),
+        file('postcss.config.mjs'),
+        file('tailwind.config.ts'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app',
+          'app/(marketing)/page.tsx',
+          'app/(workspace)/dashboard/loading.tsx',
+          'next.config.ts',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+      expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toEqual(
+        expect.arrayContaining([
+          'components/resumes/resume-card.tsx',
+          'styles/tokens.css',
+        ]),
+      );
+    });
+
+    it('detects a realistic src App Router repo with package and public asset noise', () => {
+      const result = analyze([
+        directory('src'),
+        directory('src/app'),
+        directory('src/app/(auth)'),
+        file('src/app/(auth)/login/page.tsx'),
+        directory('src/app/api'),
+        directory('src/app/api/health'),
+        file('src/app/api/health/route.ts'),
+        file('src/app/error.tsx'),
+        file('src/app/globals.css'),
+        file('src/app/layout.tsx'),
+        file('src/app/not-found.tsx'),
+        file('src/app/page.tsx'),
+        directory('src/components'),
+        directory('src/components/forms'),
+        file('src/components/forms/login-form.tsx'),
+        directory('src/hooks'),
+        file('src/hooks/use-session.ts'),
+        directory('src/lib'),
+        file('src/lib/env.ts'),
+        file('src/lib/server-only.ts'),
+        directory('src/styles'),
+        file('src/styles/theme.css'),
+        directory('public'),
+        file('public/apple-touch-icon.png'),
+        file('public/manifest.webmanifest'),
+        directory('docs'),
+        file('docs/deployment.md'),
+        file('middleware.ts'),
+        file('next-env.d.ts'),
+        file('next.config.mjs'),
+        file('package.json'),
+        file('pnpm-lock.yaml'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'next.config.mjs',
+          'src/app/(auth)/login/page.tsx',
+          'src/app/error.tsx',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('detects a realistic Pages Router repository with legacy Next.js structure', () => {
+      const result = analyze([
+        directory('pages'),
+        directory('pages/account'),
+        file('pages/account/settings.tsx'),
+        directory('pages/api'),
+        file('pages/api/health.ts'),
+        file('pages/_app.tsx'),
+        file('pages/_document.tsx'),
+        file('pages/404.tsx'),
+        file('pages/index.tsx'),
+        directory('components'),
+        file('components/layout.tsx'),
+        file('components/nav.tsx'),
+        directory('lib'),
+        file('lib/apollo-client.ts'),
+        file('lib/format-date.ts'),
+        directory('public'),
+        file('public/favicon.ico'),
+        file('public/logo.svg'),
+        directory('styles'),
+        file('styles/globals.css'),
+        file('styles/theme.css'),
+        directory('tests'),
+        file('tests/pages-index.test.tsx'),
+        file('.eslintrc.json'),
+        file('README.md'),
+        file('next-env.d.ts'),
+        file('next.config.js'),
+        file('package.json'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'next.config.js',
+          'pages',
+          'pages/_app.tsx',
+          'pages/account/settings.tsx',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('keeps a realistic monorepo Next.js app isolated from sibling apps', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/web'),
+        directory('apps/web/src'),
+        directory('apps/web/src/app'),
+        directory('apps/web/src/app/(dashboard)'),
+        file('apps/web/src/app/(dashboard)/page.tsx'),
+        file('apps/web/src/app/api/health/route.ts'),
+        file('apps/web/src/app/layout.tsx'),
+        file('apps/web/src/app/page.tsx'),
+        directory('apps/web/src/components'),
+        file('apps/web/src/components/app-shell.tsx'),
+        directory('apps/web/public'),
+        file('apps/web/public/logo.svg'),
+        file('apps/web/next.config.ts'),
+        file('apps/web/package.json'),
+        file('apps/web/tsconfig.json'),
+        directory('apps/react'),
+        file('apps/react/index.html'),
+        directory('apps/react/src'),
+        file('apps/react/src/App.tsx'),
+        directory('apps/react/src/components'),
+        file('apps/react/src/components/chart.tsx'),
+        file('apps/react/src/index.css'),
+        file('apps/react/src/main.tsx'),
+        file('apps/react/vite.config.ts'),
+        file('apps/react/package.json'),
+        directory('apps/api'),
+        directory('apps/api/src'),
+        directory('apps/api/src/controllers'),
+        directory('apps/api/src/routes'),
+        directory('apps/api/src/services'),
+        file('apps/api/package.json'),
+        directory('packages'),
+        directory('packages/shared'),
+        file('packages/shared/package.json'),
+        file('packages/shared/src/index.ts'),
+        file('package.json'),
+        file('turbo.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/web/next.config.ts',
+          'apps/web/src/app/(dashboard)/page.tsx',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', 'apps/react')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/react/index.html',
+          'apps/react/src/App.tsx',
+          'apps/react/src/main.tsx',
+          'apps/react/vite.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+
+    it('does not emit a frontend app for a realistic repo with only weak Next-like hints', () => {
+      const result = analyze([
+        directory('app'),
+        directory('app/dashboard'),
+        file('app/dashboard/loading.tsx'),
+        file('app/loading.tsx'),
+        file('app/template.tsx'),
+        directory('components'),
+        file('components/card.tsx'),
+        directory('docs'),
+        file('docs/routing.md'),
+        directory('lib'),
+        file('lib/routes.ts'),
+        directory('public'),
+        file('public/logo.svg'),
+        directory('src'),
+        directory('src/pages'),
+        directory('src/pages/admin'),
+        file('src/pages/about.tsx'),
+        file('src/pages/admin/users.tsx'),
+        file('package.json'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+  });
+
   it('detects a frontend app from Vite config evidence', () => {
     const result = analyze([
       file('index.html'),
