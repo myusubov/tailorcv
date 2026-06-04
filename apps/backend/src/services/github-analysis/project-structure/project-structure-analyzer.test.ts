@@ -470,6 +470,248 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('React Router frontend detector realistic repo fixtures', () => {
+    it('detects a realistic route-config framework app without fallback interference', () => {
+      const result = analyze([
+        directory('app'),
+        directory('app/auth'),
+        file('app/auth/login.tsx'),
+        directory('app/components'),
+        file('app/components/app-shell.tsx'),
+        directory('app/dashboard'),
+        file('app/dashboard.tsx'),
+        file('app/home.tsx'),
+        file('app/root.tsx'),
+        file('app/routes.ts'),
+        directory('app/styles'),
+        file('app/styles/theme.css'),
+        directory('public'),
+        file('public/favicon.ico'),
+        file('public/logo.svg'),
+        directory('tests'),
+        file('tests/routes.test.tsx'),
+        directory('docs'),
+        file('docs/deployment.md'),
+        file('.env.example'),
+        file('package.json'),
+        file('react-router.config.ts'),
+        file('tsconfig.json'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app/root.tsx',
+          'app/routes.ts',
+          'react-router.config.ts',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+      expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toEqual(
+        expect.arrayContaining([
+          'app/components/app-shell.tsx',
+          'app/styles/theme.css',
+        ]),
+      );
+    });
+
+    it('detects a realistic file-route framework app', () => {
+      const result = analyze([
+        directory('app'),
+        file('app/root.tsx'),
+        directory('app/routes'),
+        file('app/routes/_index.tsx'),
+        file('app/routes/about.tsx'),
+        directory('app/routes/dashboard'),
+        file('app/routes/dashboard.tsx'),
+        file('app/routes/dashboard.settings.tsx'),
+        file('app/routes.ts'),
+        directory('app/ui'),
+        file('app/ui/button.tsx'),
+        directory('public'),
+        file('public/avatar-placeholder.png'),
+        file('public/favicon.ico'),
+        directory('styles'),
+        file('styles/tokens.css'),
+        directory('__tests__'),
+        file('__tests__/file-routes.test.tsx'),
+        file('README.md'),
+        file('package.json'),
+        file('tsconfig.json'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app/root.tsx',
+          'app/routes',
+          'app/routes/_index.tsx',
+          'app/routes.ts',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('detects a realistic custom-entry framework app', () => {
+      const result = analyze([
+        directory('app'),
+        file('app/entry.client.tsx'),
+        file('app/entry.server.tsx'),
+        directory('app/routes'),
+        file('app/routes/_index.tsx'),
+        file('app/routes/contact.tsx'),
+        file('app/root.tsx'),
+        directory('app/server'),
+        file('app/server/context.ts'),
+        directory('app/ui'),
+        file('app/ui/document.tsx'),
+        directory('public'),
+        file('public/favicon.ico'),
+        file('public/robots.txt'),
+        file('.eslintrc.json'),
+        file('package.json'),
+        file('react-router.config.mjs'),
+        file('tsconfig.json'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app/entry.client.tsx',
+          'app/entry.server.tsx',
+          'app/root.tsx',
+          'react-router.config.mjs',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('blocks same-owner React fallback evidence when React Router proof exists', () => {
+      const result = analyze([
+        directory('app'),
+        file('app/root.tsx'),
+        file('app/routes.ts'),
+        file('index.html'),
+        directory('src'),
+        file('src/App.tsx'),
+        directory('src/components'),
+        file('src/components/chart.tsx'),
+        file('src/main.tsx'),
+        file('package.json'),
+        file('react-router.config.ts'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app/root.tsx',
+          'app/routes.ts',
+          'react-router.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toEqual(
+        expect.arrayContaining([
+          'index.html',
+          'src/App.tsx',
+          'src/main.tsx',
+          'vite.config.ts',
+        ]),
+      );
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('keeps a realistic monorepo React Router app isolated from sibling apps', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/router'),
+        directory('apps/router/app'),
+        file('apps/router/app/root.tsx'),
+        directory('apps/router/app/routes'),
+        file('apps/router/app/routes/_index.tsx'),
+        file('apps/router/app/routes/projects.tsx'),
+        file('apps/router/app/routes.ts'),
+        directory('apps/router/public'),
+        file('apps/router/public/logo.svg'),
+        file('apps/router/package.json'),
+        file('apps/router/react-router.config.ts'),
+        file('apps/router/tsconfig.json'),
+        file('apps/router/vite.config.ts'),
+        directory('apps/react'),
+        file('apps/react/index.html'),
+        directory('apps/react/src'),
+        file('apps/react/src/App.tsx'),
+        directory('apps/react/src/components'),
+        file('apps/react/src/components/chart.tsx'),
+        file('apps/react/src/index.css'),
+        file('apps/react/src/main.tsx'),
+        file('apps/react/package.json'),
+        file('apps/react/vite.config.ts'),
+        directory('apps/web'),
+        directory('apps/web/app'),
+        file('apps/web/app/page.tsx'),
+        file('apps/web/next.config.ts'),
+        file('apps/web/package.json'),
+        directory('packages'),
+        directory('packages/shared'),
+        file('packages/shared/package.json'),
+        file('packages/shared/src/index.ts'),
+        file('package.json'),
+        file('turbo.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', 'apps/router')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/router/app/root.tsx',
+          'apps/router/app/routes.ts',
+          'apps/router/react-router.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', 'apps/react')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/react/index.html',
+          'apps/react/src/App.tsx',
+          'apps/react/src/main.tsx',
+          'apps/react/vite.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', 'apps/web')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/web/app/page.tsx',
+          'apps/web/next.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+
+    it('does not emit from weak React Router-like hints alone', () => {
+      const result = analyze([
+        directory('app'),
+        directory('app/routes'),
+        file('app/routes/about.tsx'),
+        file('app/routes/dashboard.tsx'),
+        directory('components'),
+        file('components/site-header.tsx'),
+        directory('public'),
+        file('public/logo.svg'),
+        directory('styles'),
+        file('styles/theme.css'),
+        file('package.json'),
+        file('tsconfig.json'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+  });
+
   it('detects a frontend app from Vite config evidence', () => {
     const result = analyze([
       file('index.html'),
@@ -837,6 +1079,240 @@ describe('analyzeProjectStructure', () => {
     ]);
 
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  describe('Nuxt frontend detector realistic repo fixtures', () => {
+    it('detects a realistic Nuxt 4 app-directory product app', () => {
+      const result = analyze([
+        directory('app'),
+        directory('app/assets'),
+        file('app/assets/main.css'),
+        file('app/app.vue'),
+        directory('app/components'),
+        file('app/components/site-header.vue'),
+        directory('app/composables'),
+        file('app/composables/use-session.ts'),
+        directory('app/layouts'),
+        file('app/layouts/default.vue'),
+        file('app/layouts/dashboard.vue'),
+        directory('app/pages'),
+        directory('app/pages/dashboard'),
+        file('app/pages/dashboard/index.vue'),
+        file('app/pages/index.vue'),
+        directory('app/plugins'),
+        file('app/plugins/analytics.client.ts'),
+        directory('app/utils'),
+        file('app/utils/format-date.ts'),
+        directory('server'),
+        directory('server/api'),
+        file('server/api/resumes.get.ts'),
+        directory('server/routes'),
+        file('server/routes/sitemap.xml.ts'),
+        directory('public'),
+        file('public/favicon.ico'),
+        file('public/logo.svg'),
+        directory('tests'),
+        file('tests/pages.test.ts'),
+        directory('docs'),
+        file('docs/deployment.md'),
+        file('.env.example'),
+        file('nuxt.config.ts'),
+        file('package.json'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app/app.vue',
+          'app/layouts/default.vue',
+          'app/pages',
+          'app/pages/dashboard/index.vue',
+          'nuxt.config.ts',
+          'server/api/resumes.get.ts',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('detects a realistic Nuxt 3 root-directory app', () => {
+      const result = analyze([
+        file('app.vue'),
+        directory('assets'),
+        file('assets/main.css'),
+        directory('components'),
+        file('components/app-footer.vue'),
+        file('components/site-header.vue'),
+        directory('composables'),
+        file('composables/use-auth.ts'),
+        directory('layouts'),
+        file('layouts/default.vue'),
+        file('layouts/marketing.vue'),
+        directory('pages'),
+        directory('pages/blog'),
+        file('pages/blog/[slug].vue'),
+        file('pages/index.vue'),
+        directory('plugins'),
+        file('plugins/pinia.ts'),
+        directory('server'),
+        directory('server/api'),
+        file('server/api/health.ts'),
+        directory('public'),
+        file('public/favicon.ico'),
+        file('public/robots.txt'),
+        directory('__tests__'),
+        file('__tests__/home.test.ts'),
+        file('README.md'),
+        file('nuxt.config.ts'),
+        file('package.json'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'app.vue',
+          'layouts/default.vue',
+          'nuxt.config.ts',
+          'pages',
+          'pages/blog/[slug].vue',
+          'server/api/health.ts',
+        ]),
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('detects a Nuxt config-only shell with support noise', () => {
+      const result = analyze([
+        directory('docs'),
+        file('docs/architecture.md'),
+        directory('public'),
+        file('public/favicon.ico'),
+        directory('server'),
+        directory('server/api'),
+        file('server/api/health.ts'),
+        file('.env.example'),
+        file('nuxt.config.ts'),
+        file('package.json'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining(['nuxt.config.ts']),
+      });
+    });
+
+    it('blocks same-owner Vue fallback evidence when Nuxt proof exists', () => {
+      const result = analyze([
+        file('nuxt.config.ts'),
+        directory('src'),
+        file('src/App.vue'),
+        file('src/main.ts'),
+        directory('src/router'),
+        file('src/router/index.ts'),
+        file('package.json'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: ['nuxt.config.ts'],
+      });
+      expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toEqual(
+        expect.arrayContaining([
+          'src/App.vue',
+          'src/main.ts',
+          'src/router/index.ts',
+          'vite.config.ts',
+        ]),
+      );
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('keeps a realistic monorepo Nuxt app isolated from sibling Vue apps', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/nuxt'),
+        directory('apps/nuxt/app'),
+        file('apps/nuxt/app/app.vue'),
+        directory('apps/nuxt/app/components'),
+        file('apps/nuxt/app/components/app-shell.vue'),
+        directory('apps/nuxt/app/layouts'),
+        file('apps/nuxt/app/layouts/default.vue'),
+        directory('apps/nuxt/app/pages'),
+        file('apps/nuxt/app/pages/index.vue'),
+        directory('apps/nuxt/server'),
+        directory('apps/nuxt/server/api'),
+        file('apps/nuxt/server/api/health.ts'),
+        file('apps/nuxt/nuxt.config.ts'),
+        file('apps/nuxt/package.json'),
+        file('apps/nuxt/tsconfig.json'),
+        directory('apps/vue'),
+        directory('apps/vue/src'),
+        file('apps/vue/src/App.vue'),
+        file('apps/vue/src/main.ts'),
+        directory('apps/vue/src/router'),
+        file('apps/vue/src/router/index.ts'),
+        file('apps/vue/package.json'),
+        file('apps/vue/vite.config.ts'),
+        directory('apps/api'),
+        directory('apps/api/src'),
+        directory('apps/api/src/controllers'),
+        directory('apps/api/src/routes'),
+        directory('apps/api/src/services'),
+        file('apps/api/package.json'),
+        directory('packages'),
+        directory('packages/shared'),
+        file('packages/shared/package.json'),
+        file('packages/shared/src/index.ts'),
+        file('package.json'),
+        file('turbo.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', 'apps/nuxt')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/nuxt/app/app.vue',
+          'apps/nuxt/app/pages/index.vue',
+          'apps/nuxt/nuxt.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', 'apps/vue')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/vue/src/App.vue',
+          'apps/vue/src/main.ts',
+          'apps/vue/src/router/index.ts',
+          'apps/vue/vite.config.ts',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+
+    it('does not emit from realistic weak Nuxt-like hints alone', () => {
+      const result = analyze([
+        directory('components'),
+        file('components/site-header.vue'),
+        directory('docs'),
+        file('docs/routing.md'),
+        directory('layouts'),
+        file('layouts/default.vue'),
+        directory('pages'),
+        directory('pages/blog'),
+        file('pages/blog/[slug].vue'),
+        file('pages/index.vue'),
+        directory('public'),
+        file('public/logo.svg'),
+        directory('server'),
+        directory('server/api'),
+        file('server/api/health.ts'),
+        file('package.json'),
+        file('tsconfig.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
   });
 
   it('detects a frontend app from Vite Vue structure', () => {

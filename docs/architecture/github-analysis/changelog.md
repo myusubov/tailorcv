@@ -4,7 +4,23 @@
 
 ---
 
+## 2026-06-04
+
+### Nuxt Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Nuxt repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused Nuxt gates, but the detector lacked grouped confidence coverage for realistic Nuxt 3, Nuxt 4, config-only, monorepo, and Vue fallback-interference structures.
+- **Solution:** Added a dedicated Nuxt fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Nuxt detector behavior is now protected against regressions across common Nuxt layouts, weak hints, owner isolation, and same-owner Vue fallback interference.
+
 ## 2026-06-03
+
+### React Router Frontend Confidence Fixtures
+
+- **Decision:** Add realistic React Router Framework Mode repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered React Router gate behavior, but the detector lacked grouped confidence coverage for route-config, file-route, custom-entry, monorepo, and fallback-interference structures.
+- **Solution:** Added a dedicated React Router fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** React Router detector behavior is now protected against regressions across common Framework Mode layouts, weak hints, owner isolation, and same-owner React fallback interference.
 
 ### Next.js Frontend Confidence Fixtures
 
