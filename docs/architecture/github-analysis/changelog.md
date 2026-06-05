@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-06-05
+
+### React and Static Frontend Confidence Fixtures
+
+- **Decision:** Add realistic React fallback and static frontend repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused React and static gates, but the broad fallback detectors lacked grouped confidence coverage for realistic app shapes, framework interference, monorepo isolation, and weak-hint structures.
+- **Solution:** Added dedicated React and static fixture sections in `project-structure-analyzer.test.ts` that run full analyzer inputs and assert emitted `Frontend app` owners and evidence.
+- **Outcome:** The full frontend detector confidence pass now covers framework-specific, broad React fallback, and plain static frontend layouts through public analyzer output.
+
+### SvelteKit and Astro Frontend Confidence Fixtures
+
+- **Decision:** Add realistic SvelteKit and Astro repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused SvelteKit and Astro gates, but the detectors lacked grouped confidence coverage for realistic full-app, config-only, monorepo, support-evidence, and weak-hint structures.
+- **Solution:** Added dedicated SvelteKit and Astro fixture sections in `project-structure-analyzer.test.ts` that run full analyzer inputs and assert emitted `Frontend app` owners and evidence.
+- **Outcome:** SvelteKit and Astro detector behavior is now protected against regressions across common layouts, weak hints, owner isolation, and support-evidence gates.
+
+### Angular Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Angular repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused Angular gates, but the detector lacked grouped confidence coverage for CLI workspace, standalone, classic NgModule, config-only, monorepo, and weak-hint structures.
+- **Solution:** Added a dedicated Angular fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Angular detector behavior is now protected against regressions across common Angular layouts, weak hints, and owner isolation.
+
+### Vue Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Vue repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused Vue gates, but the detector lacked grouped confidence coverage for Vite Vue, Vue Router, file-based Vue Router, Vue CLI, monorepo, and Nuxt fallback-interference structures.
+- **Solution:** Added a dedicated Vue fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Vue detector behavior is now protected against regressions across common Vue layouts, weak hints, owner isolation, and same-owner Nuxt fallback interference.
+
 ## 2026-06-04
 
 ### Nuxt Frontend Confidence Fixtures
