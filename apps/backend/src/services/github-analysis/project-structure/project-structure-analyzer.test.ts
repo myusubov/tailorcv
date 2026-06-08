@@ -2850,6 +2850,117 @@ describe('analyzeProjectStructure', () => {
   });
 
   describe('Static frontend detector realistic repo fixtures', () => {
+    it('blocks same-owner static fallback evidence for recognized frontend apps', () => {
+      const frameworkResults = [
+        analyze([
+          file('next.config.ts'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+        analyze([
+          file('nuxt.config.ts'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+        analyze([
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+          directory('src'),
+          file('src/App.tsx'),
+          file('src/main.tsx'),
+          file('vite.config.ts'),
+        ]),
+        analyze([
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+          directory('src'),
+          file('src/App.vue'),
+          file('src/main.ts'),
+        ]),
+        analyze([
+          file('react-router.config.ts'),
+          directory('app'),
+          file('app/root.tsx'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+        analyze([
+          file('angular.json'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+        analyze([
+          file('svelte.config.js'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+        analyze([
+          file('astro.config.mjs'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+      ];
+
+      for (const result of frameworkResults) {
+        expect(areaByName(result, 'Frontend app', '.')).toBeDefined();
+        expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toEqual(
+          expect.arrayContaining(['script.js', 'style.css']),
+        );
+      }
+    });
+
+    it('does not let framework proof from another owner block a static site', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/next'),
+        file('apps/next/next.config.ts'),
+        directory('apps/static'),
+        file('apps/static/index.html'),
+        file('apps/static/style.css'),
+        file('apps/static/script.js'),
+        file('package.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', 'apps/next')).toMatchObject({
+        evidence: ['apps/next/next.config.ts'],
+      });
+      expect(areaByName(result, 'Frontend app', 'apps/static')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'apps/static/index.html',
+          'apps/static/script.js',
+          'apps/static/style.css',
+        ]),
+      });
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+
+    it('does not let incomplete framework hints block a static site', () => {
+      const result = analyze([
+        file('index.html'),
+        file('style.css'),
+        file('script.js'),
+        directory('src'),
+        file('src/App.tsx'),
+        file('package.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'index.html',
+          'script.js',
+          'style.css',
+        ]),
+      });
+    });
+
     it('detects a realistic static root site', () => {
       const result = analyze([
         file('index.html'),

@@ -3,7 +3,10 @@ import {
   createAreaRuleCandidateMap,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
+import {
+  addAreaScore,
+  hasAreaCandidate,
+} from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 
 type StaticFrontendSignal =
@@ -193,6 +196,14 @@ export function addStaticFrontendAreas({
   }
 
   for (const [ownerPath, ownerCandidate] of staticAreasByOwner) {
+    const hasExistingFrontendCandidate = hasAreaCandidate({
+      candidates,
+      name: 'Frontend app',
+      path: ownerPath,
+    });
+
+    if (hasExistingFrontendCandidate) continue;
+
     if (
       !hasStaticContentShape({
         countedSignals: ownerCandidate.countedSignals,

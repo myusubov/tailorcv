@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-08
+
+### Static Frontend Competing-Owner Gate
+
+- **Decision:** Treat static frontend detection as the broad fallback and block it only when the same owner satisfies an existing non-static frontend detector gate.
+- **Problem:** Framework repositories with root `index.html`, CSS, or JavaScript files could merge static evidence into the same `Frontend app` candidate even after a stronger framework detector had identified the owner.
+- **Solution:** Added a normalized candidate-presence helper in `project-structure-detected-area-candidates.ts`, moved static detection after every stronger frontend detector in `frontend-area-rules.ts`, and updated `static-frontend-area-rules.ts` to skip owners already claimed as `Frontend app`.
+- **Outcome:** Framework-owned frontend areas no longer receive static fallback evidence, while sibling static sites and sites containing incomplete framework-like hints remain detectable.
+
 ## 2026-06-05
 
 ### React and Static Frontend Confidence Fixtures

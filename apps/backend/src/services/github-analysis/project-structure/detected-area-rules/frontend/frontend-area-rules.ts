@@ -22,8 +22,8 @@ export function addFrontendAreas({
   addVueFrontendAreas({ candidates, index });
   addReactRouterFrontendAreas({ candidates, index });
   addReactFrontendAreas({ candidates, index });
-  addStaticFrontendAreas({ candidates, index });
   addAngularFrontendAreas({ candidates, index });
   addSvelteKitFrontendAreas({ candidates, index });
   addAstroFrontendAreas({ candidates, index });
-};
+  addStaticFrontendAreas({ candidates, index });
+}

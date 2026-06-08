@@ -23,6 +23,22 @@ function confidenceFromScore({ score }: { score: number }): number {
 }
 
 /**
+ * Returns whether the shared candidate map already contains the normalized
+ * area name and owner path.
+ */
+export function hasAreaCandidate({
+  candidates,
+  name,
+  path,
+}: {
+  candidates: Map<string, AreaCandidate>;
+  name: DetectedAreaName;
+  path: string;
+}): boolean {
+  return candidates.has(areaKey({ name, path }));
+}
+
+/**
  * Adds score and concrete path evidence to a detected-area candidate.
  * Empty evidence is ignored so emitted areas always remain evidence-backed.
  */
