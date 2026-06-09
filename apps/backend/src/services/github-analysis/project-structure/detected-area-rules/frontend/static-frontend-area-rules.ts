@@ -218,6 +218,8 @@ export function addStaticFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'Static Web',
+      relatedTechnologies: [],
     });
   }
 }

@@ -149,6 +149,8 @@ export function addNuxtFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'Nuxt',
+      relatedTechnologies: ['Vue'],
     });
   }
 }

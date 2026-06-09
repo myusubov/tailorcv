@@ -249,6 +249,8 @@ export function addReactFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'React',
+      relatedTechnologies: [],
     });
   }
 }

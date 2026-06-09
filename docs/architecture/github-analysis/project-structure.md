@@ -38,19 +38,20 @@ The analyzer does not fetch GitHub data, read file contents, or call AI.
 
 ## 3. Key Files & Entry Points
 
-| File                                                                                                | Purpose                                                                           | When to Read                             |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------- |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.ts`         | Public project-structure analyzer entry point and orchestration.                  | Any project-structure analyzer change    |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`   | Public input/output contracts for project structure analysis.                     | Changing analyzer input/output shape     |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-entry-index.ts`      | Path/name/extension lookup helpers built from normalized GitHub tree entries.     | Adding path-based detection rules        |
-| `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts`             | Score-based project shape detection.                                              | Changing `summary.projectShape`          |
-| `apps/backend/src/services/github-analysis/project-structure/primary-stack-detector.ts`             | Structure-inferred stack detection.                                               | Changing `summary.inferredStack`         |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`          | Builds the summary block from tree entries.                                       | Changing summary fields                  |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-areas.ts`   | Orchestrates score-based detected area generation from path evidence.             | Changing `detectedAreas` output          |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-*.ts`  | Detected-area rule, candidate, and internal type helpers.                         | Changing detected-area scoring internals |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`       | Shared path normalization and owner-path helpers for project-structure detectors. | Adding reusable path helpers             |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-score-candidates.ts` | Shared score candidate helpers for deterministic structure detectors.             | Adding score-based detector helpers      |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`    | Focused coverage for current project shape and inferred stack rules.              | Updating detection behavior              |
+| File                                                                                                             | Purpose                                                                           | When to Read                             |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------- |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.ts`                      | Public project-structure analyzer entry point and orchestration.                  | Any project-structure analyzer change    |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`                | Public input/output contracts for project structure analysis.                     | Changing analyzer input/output shape     |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-entry-index.ts`                   | Path/name/extension lookup helpers built from normalized GitHub tree entries.     | Adding path-based detection rules        |
+| `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts`                          | Score-based project shape detection.                                              | Changing `summary.projectShape`          |
+| `apps/backend/src/services/github-analysis/project-structure/primary-stack-detector.ts`                          | Structure-inferred stack detection.                                               | Changing `summary.inferredStack`         |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`                       | Builds the summary block from tree entries.                                       | Changing summary fields                  |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-areas.ts`                | Orchestrates score-based detected area generation from path evidence.             | Changing `detectedAreas` output          |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-*.ts`               | Detected-area rule, candidate, and internal type helpers.                         | Changing detected-area scoring internals |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`                    | Shared path normalization and owner-path helpers for project-structure detectors. | Adding reusable path helpers             |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-score-candidates.ts`              | Shared score candidate helpers for deterministic structure detectors.             | Adding score-based detector helpers      |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`                 | Focused coverage for current project shape and inferred stack rules.              | Updating detection behavior              |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-candidates.test.ts` | Candidate merge and inferred-technology contract coverage.                        | Updating candidate accumulation behavior |
 
 ---
 
@@ -96,6 +97,7 @@ apps/backend/src/services/github-analysis/project-structure/
 │       ├── sveltekit-frontend-area-rules.ts
 │       └── vue-frontend-area-rules.ts
 ├── project-structure-detected-area-candidates.ts
+├── project-structure-detected-area-candidates.test.ts
 ├── project-structure-detected-areas.types.ts
 ├── project-structure-path-utils.ts
 ├── project-structure-score-candidates.ts
@@ -129,6 +131,8 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
 - **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
 - **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
+- **Rule**: Every emitted detected area includes path-inferred technology metadata with one required `primary` technology and zero or more deduplicated `related` technologies. The primary is excluded from related values; internal candidates use a `Set` and public output converts it to a stable sorted array.
+- **Rule**: The first detector that creates an `(area name, owner path)` candidate owns its primary technology; later score additions preserve that primary and may only accumulate score, evidence, and related technologies.
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.

@@ -1,4 +1,7 @@
-import type { DetectedProjectArea } from './project-structure-analyzer.types';
+import type {
+  DetectedAreaTechnology,
+  DetectedProjectArea,
+} from './project-structure-analyzer.types';
 import { normalizePath } from './project-structure-path-utils';
 import type {
   AreaCandidate,
@@ -48,12 +51,16 @@ export function addAreaScore({
   path,
   score,
   evidence,
+  primaryTechnology,
+  relatedTechnologies,
 }: {
   candidates: Map<string, AreaCandidate>;
   name: DetectedAreaName;
   path: string;
   score: number;
   evidence: string[];
+  primaryTechnology: DetectedAreaTechnology;
+  relatedTechnologies: DetectedAreaTechnology[];
 }): void {
   if (evidence.length === 0) return;
 
@@ -65,10 +72,23 @@ export function addAreaScore({
       path,
       score: 0,
       evidence: new Set<string>(),
+      inferredTechnologies: {
+        primary: primaryTechnology,
+        related: new Set(
+          relatedTechnologies.filter(
+            (technology) => technology !== primaryTechnology,
+          ),
+        ),
+      },
     } satisfies AreaCandidate);
 
   candidate.score += score;
   evidence.forEach((pathEvidence) => candidate.evidence.add(pathEvidence));
+  relatedTechnologies.forEach((technology) => {
+    if (technology !== candidate.inferredTechnologies.primary) {
+      candidate.inferredTechnologies.related.add(technology);
+    }
+  });
   candidates.set(key, candidate);
 }
 
@@ -88,5 +108,11 @@ export function toDetectedProjectAreas({
       path: candidate.path,
       confidence: confidenceFromScore({ score: candidate.score }),
       evidence: [...candidate.evidence].sort((a, b) => a.localeCompare(b)),
+      inferredTechnologies: {
+        primary: candidate.inferredTechnologies.primary,
+        related: [...candidate.inferredTechnologies.related].sort((a, b) =>
+          a.localeCompare(b),
+        ),
+      },
     }));
 }

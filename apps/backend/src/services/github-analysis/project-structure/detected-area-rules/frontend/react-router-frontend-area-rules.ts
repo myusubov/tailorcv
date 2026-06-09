@@ -183,6 +183,8 @@ export function addReactRouterFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'React Router',
+      relatedTechnologies: ['React'],
     });
   }
 }

@@ -172,6 +172,68 @@ describe('analyzeProjectStructure', () => {
     ).toHaveLength(1);
   });
 
+  it.each([
+    {
+      detector: 'Next.js',
+      entries: [file('next.config.ts')],
+      expected: { primary: 'Next.js', related: ['React'] },
+    },
+    {
+      detector: 'Nuxt',
+      entries: [file('nuxt.config.ts')],
+      expected: { primary: 'Nuxt', related: ['Vue'] },
+    },
+    {
+      detector: 'Vue',
+      entries: [file('src/App.vue'), file('src/main.ts')],
+      expected: { primary: 'Vue', related: [] },
+    },
+    {
+      detector: 'React Router',
+      entries: [file('react-router.config.ts')],
+      expected: { primary: 'React Router', related: ['React'] },
+    },
+    {
+      detector: 'React',
+      entries: [
+        file('index.html'),
+        file('vite.config.ts'),
+        file('src/main.tsx'),
+        file('src/App.tsx'),
+      ],
+      expected: { primary: 'React', related: [] },
+    },
+    {
+      detector: 'Angular',
+      entries: [file('angular.json')],
+      expected: { primary: 'Angular', related: [] },
+    },
+    {
+      detector: 'SvelteKit',
+      entries: [file('svelte.config.js')],
+      expected: { primary: 'SvelteKit', related: ['Svelte'] },
+    },
+    {
+      detector: 'Astro',
+      entries: [file('astro.config.mjs')],
+      expected: { primary: 'Astro', related: [] },
+    },
+    {
+      detector: 'Static Web',
+      entries: [file('index.html'), file('style.css')],
+      expected: { primary: 'Static Web', related: [] },
+    },
+  ])(
+    'exposes inferred technologies for the $detector detector',
+    ({ entries, expected }) => {
+      const result = analyze(entries);
+
+      expect(
+        areaByName(result, 'Frontend app', '.')?.inferredTechnologies,
+      ).toEqual(expected);
+    },
+  );
+
   it('scores repeated Next.js route files once per signal type', () => {
     const result = analyze([
       directory('app'),

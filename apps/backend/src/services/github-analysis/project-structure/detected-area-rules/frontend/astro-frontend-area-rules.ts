@@ -148,6 +148,8 @@ export function addAstroFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'Astro',
+      relatedTechnologies: [],
     });
   }
 }

@@ -1,4 +1,5 @@
 import type { EntryIndex } from './project-structure-entry-index';
+import type { DetectedAreaTechnology } from './project-structure-analyzer.types';
 
 /**
  * Fixed v1 labels emitted by the project-structure detected-area analyzer.
@@ -17,6 +18,11 @@ export type DetectedAreaName =
   | 'Mobile app'
   | 'Infrastructure/config';
 
+interface InferredAreaTechnologyCandidate {
+  primary: DetectedAreaTechnology;
+  related: Set<DetectedAreaTechnology>;
+}
+
 /**
  * Internal mutable candidate accumulated while path rules add score and evidence.
  * Candidates are keyed by area name and owner path so monorepos can emit multiple areas.
@@ -26,6 +32,7 @@ export interface AreaCandidate {
   path: string;
   score: number;
   evidence: Set<string>;
+  inferredTechnologies: InferredAreaTechnologyCandidate;
 }
 
 /**

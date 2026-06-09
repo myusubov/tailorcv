@@ -1,4 +1,5 @@
 import type { RepoTreeEntry } from '../project-structure-analyzer.types';
+import type { DetectedAreaTechnology } from '../project-structure-analyzer.types';
 import { addAreaScore } from '../project-structure-detected-area-candidates';
 import type {
   AreaCandidate,
@@ -99,10 +100,14 @@ export function addAreaRuleCandidates<Signal extends string>({
   areasByOwner,
   name,
   candidates,
+  primaryTechnology,
+  relatedTechnologies,
 }: {
   areasByOwner: Map<string, AreaRuleCandidate<Signal>>;
   name: DetectedAreaName;
   candidates: Map<string, AreaCandidate>;
+  primaryTechnology: DetectedAreaTechnology;
+  relatedTechnologies: DetectedAreaTechnology[];
 }): void {
   for (const [ownerPath, ownerCandidate] of areasByOwner) {
     addAreaScore({
@@ -111,6 +116,8 @@ export function addAreaRuleCandidates<Signal extends string>({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology,
+      relatedTechnologies,
     });
   }
 }

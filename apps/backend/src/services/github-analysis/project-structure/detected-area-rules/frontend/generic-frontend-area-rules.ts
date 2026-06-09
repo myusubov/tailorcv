@@ -10,7 +10,6 @@ export function addGenericFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-
   const reactEntryFiles = index.findEntriesByPathMatching({
     pattern: /(^|\/)src\/index\.(js|jsx|ts|tsx)$/,
   });
@@ -22,6 +21,8 @@ export function addGenericFrontendAreas({
       path: ownerPathForApplicationArea({ path: entry.path }),
       score: 3,
       evidence: [entry.path],
+      primaryTechnology: 'React',
+      relatedTechnologies: [],
     });
   }
 }

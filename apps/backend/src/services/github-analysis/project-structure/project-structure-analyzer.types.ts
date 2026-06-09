@@ -69,6 +69,29 @@ export interface ProjectStructureSummary {
 }
 
 /**
+ * Technology labels inferred for a detected repository area from path evidence.
+ */
+export type DetectedAreaTechnology =
+  | 'Next.js'
+  | 'React'
+  | 'React Router'
+  | 'Nuxt'
+  | 'Vue'
+  | 'Angular'
+  | 'SvelteKit'
+  | 'Svelte'
+  | 'Astro'
+  | 'Static Web';
+
+/**
+ * Primary and related technologies exposed for a detected repository area.
+ */
+export interface InferredAreaTechnologies {
+  primary: DetectedAreaTechnology;
+  related: DetectedAreaTechnology[];
+}
+
+/**
  * Detected project area such as frontend app, backend API, shared package, docs, or tooling.
  */
 export interface DetectedProjectArea {
@@ -76,6 +99,7 @@ export interface DetectedProjectArea {
   path: string;
   confidence: number;
   evidence: string[];
+  inferredTechnologies: InferredAreaTechnologies;
 }
 
 /**

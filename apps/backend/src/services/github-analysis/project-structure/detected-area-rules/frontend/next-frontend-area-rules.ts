@@ -137,6 +137,8 @@ export function addNextFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'Next.js',
+      relatedTechnologies: ['React'],
     });
   }
 }

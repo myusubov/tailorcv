@@ -164,6 +164,8 @@ export function addVueFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'Vue',
+      relatedTechnologies: [],
     });
   }
 }

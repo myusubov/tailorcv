@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-09
+
+### Detected Area Inferred Technologies
+
+- **Decision:** Include path-inferred primary and related technology metadata on every emitted detected area.
+- **Problem:** Role labels such as `Frontend app` identified an area's purpose but discarded the framework-specific knowledge already established by the detector that created it.
+- **Solution:** Added required technology metadata to `addAreaScore`, assigned explicit primary/related values in every frontend detector, accumulated related technologies with an internal `Set`, exposed stable arrays in `DetectedProjectArea`, and added detector-matrix plus candidate-merge regression tests.
+- **Outcome:** Consumers can distinguish Next.js, React Router, Nuxt, Vue, React, Angular, SvelteKit, Astro, and static frontend areas while preserving the existing owner, score, and evidence model.
+
 ## 2026-06-08
 
 ### Static Frontend Competing-Owner Gate

@@ -189,6 +189,8 @@ export function addAngularFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'Angular',
+      relatedTechnologies: [],
     });
   }
 }

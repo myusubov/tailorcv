@@ -180,6 +180,8 @@ export function addSvelteKitFrontendAreas({
       path: ownerPath,
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
+      primaryTechnology: 'SvelteKit',
+      relatedTechnologies: ['Svelte'],
     });
   }
 }
