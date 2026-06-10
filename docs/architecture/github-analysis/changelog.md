@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-10
+
+### Standalone Svelte Frontend Detection
+
+- **Decision:** Add standalone Svelte detection and treat `svelte.config.*` as shared Svelte ecosystem support rather than sufficient SvelteKit proof.
+- **Problem:** Official Vite Svelte applications contain `svelte.config.js`, so the previous SvelteKit config-only gate classified standalone Svelte projects as SvelteKit and left no path for emitting `Svelte` as the primary technology.
+- **Solution:** Added `svelte-frontend-area-rules.ts` with owner-scoped Vite and legacy Rollup signals gated by `src/App.svelte + src/main.*`, lowered SvelteKit config evidence to support-only, added a same-owner SvelteKit proof blocker, retired the unused generic frontend detector, and expanded realistic public-analyzer fixtures.
+- **Outcome:** Standalone Svelte applications now emit `Frontend app` with primary technology `Svelte`, while SvelteKit remains primary with related technology `Svelte` and keeps precedence for the same owner.
+
 ## 2026-06-09
 
 ### Detected Area Inferred Technologies

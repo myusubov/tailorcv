@@ -6,6 +6,7 @@ import { addNuxtFrontendAreas } from './nuxt-frontend-area-rules';
 import { addReactFrontendAreas } from './react-frontend-area-rules';
 import { addReactRouterFrontendAreas } from './react-router-frontend-area-rules';
 import { addStaticFrontendAreas } from './static-frontend-area-rules';
+import { addSvelteFrontendAreas } from './svelte-frontend-area-rules';
 import { addSvelteKitFrontendAreas } from './sveltekit-frontend-area-rules';
 import { addVueFrontendAreas } from './vue-frontend-area-rules';
 
@@ -24,6 +25,7 @@ export function addFrontendAreas({
   addReactFrontendAreas({ candidates, index });
   addAngularFrontendAreas({ candidates, index });
   addSvelteKitFrontendAreas({ candidates, index });
+  addSvelteFrontendAreas({ candidates, index });
   addAstroFrontendAreas({ candidates, index });
   addStaticFrontendAreas({ candidates, index });
 }

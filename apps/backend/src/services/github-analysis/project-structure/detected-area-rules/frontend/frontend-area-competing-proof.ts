@@ -80,3 +80,24 @@ export function findNuxtFrontendProofEntries({
 
   return [...nuxtConfigFiles, ...nuxtAppEntryFiles];
 }
+
+/**
+ * Finds blocker-grade SvelteKit proof entries for the standalone Svelte
+ * detector. Shared Svelte configuration and support files are intentionally
+ * excluded because standalone Svelte projects may contain them too.
+ */
+export function findSvelteKitFrontendProofEntries({
+  index,
+}: {
+  index: EntryIndex;
+}): Pick<RepoTreeEntry, 'path'>[] {
+  const svelteKitPageComponentFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+page\.svelte$/,
+  });
+
+  const svelteKitLayoutComponentFiles = index.findEntriesByPathMatching({
+    pattern: /(^|\/)src\/routes\/(?:.*\/)?\+layout\.svelte$/,
+  });
+
+  return [...svelteKitPageComponentFiles, ...svelteKitLayoutComponentFiles];
+}

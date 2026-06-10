@@ -88,12 +88,12 @@ apps/backend/src/services/github-analysis/project-structure/
 │       ├── astro-frontend-area-rules.ts
 │       ├── frontend-area-competing-proof.ts
 │       ├── frontend-area-rules.ts
-│       ├── generic-frontend-area-rules.ts
 │       ├── next-frontend-area-rules.ts
 │       ├── nuxt-frontend-area-rules.ts
 │       ├── react-frontend-area-rules.ts
 │       ├── react-router-frontend-area-rules.ts
 │       ├── static-frontend-area-rules.ts
+│       ├── svelte-frontend-area-rules.ts
 │       ├── sveltekit-frontend-area-rules.ts
 │       └── vue-frontend-area-rules.ts
 ├── project-structure-detected-area-candidates.ts
@@ -152,11 +152,13 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Static frontend detector confidence coverage uses realistic root static, directory asset, multi-page static, Vite vanilla static, monorepo owner-isolation, same-owner framework-interference, and weak-hint fixtures through the public analyzer output.
 - **Rule**: Angular frontend area evidence is grouped by owner path and scored once per signal type: `angular.json`, root component TypeScript/view files, `app.module.ts`, standalone `app.config.ts`, `src/main.ts`, and weak `project.json`/`src/app` support hints; Angular areas emit only from workspace config or root component/module/standalone app shapes.
 - **Rule**: Angular detector confidence coverage uses realistic CLI workspace, standalone, classic NgModule, config-only, monorepo owner-isolation, and weak-hint fixtures through the public analyzer output.
-- **Rule**: SvelteKit frontend area evidence is grouped by owner path and scored once per signal type: `svelte.config.*`, strong `+page.svelte`/`+layout.svelte` route components, support `+page.*`/`+layout.*` load files, `+server.*` routes, `src/app.html`, and weak `src/routes` hints; SvelteKit areas emit only from config, route components, or load/server evidence paired with the app template.
-- **Rule**: SvelteKit detector confidence coverage uses realistic full-app, config-only, load/server support, monorepo owner-isolation, and weak-hint fixtures through the public analyzer output.
+- **Rule**: SvelteKit frontend area evidence is grouped by owner path and scored once per signal type: shared `svelte.config.*` support, strong `+page.svelte`/`+layout.svelte` route components, support `+page.*`/`+layout.*` load files, `+server.*` routes, `src/app.html`, and weak `src/routes` hints; SvelteKit areas emit only from route components or load/server evidence paired with the app template because standalone Svelte projects may also contain `svelte.config.*`.
+- **Rule**: SvelteKit detector confidence coverage uses realistic full-app, load/server support, monorepo owner-isolation, config-only non-emission, and weak-hint fixtures through the public analyzer output.
+- **Rule**: Standalone Svelte frontend evidence is grouped by owner path and scored once per signal type: `src/App.svelte`, `src/main.*`, Vite or Rollup config, shared `svelte.config.*`, root/public HTML entry files, and nested `src/components`/`src/lib` components; Svelte areas emit only from the root component plus main entry shape.
+- **Rule**: SvelteKit runs before standalone Svelte. Strong same-owner SvelteKit route proof blocks the standalone detector, while sibling owners remain independent.
+- **Rule**: Standalone Svelte detector confidence coverage uses current Vite JavaScript/TypeScript, legacy Rollup, structured component, SvelteKit interference, monorepo owner-isolation, technology metadata, and weak-hint fixtures through the public analyzer output.
 - **Rule**: Astro frontend area evidence is grouped by owner path and scored once per signal type: `astro.config.*`, strong `src/pages/*.astro` page files, weak `src/pages/*.{md,mdx,html}` content page hints, endpoint files, support `src/layouts/*.astro`/`src/components/*.astro`, and weak `src/pages` hints; Astro areas emit only from config or `.astro` page proof.
 - **Rule**: Astro detector confidence coverage uses realistic content-site, endpoint/content-rich, config-only, monorepo owner-isolation, and weak-hint fixtures through the public analyzer output.
-- **Rule**: Generic frontend area evidence includes Vite-style `vite.config.*`, `index.html`, `src/main.*`, `src/App.*`, and React SPA `src/index.*` while still emitting role-based `Frontend app` areas.
 - **Rule**: The temporary analyze endpoint can keep returning summaries while later pipeline stages consume the full internal analyzer result.
 
 ---

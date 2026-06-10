@@ -210,8 +210,13 @@ describe('analyzeProjectStructure', () => {
     },
     {
       detector: 'SvelteKit',
-      entries: [file('svelte.config.js')],
+      entries: [file('src/routes/+page.svelte')],
       expected: { primary: 'SvelteKit', related: ['Svelte'] },
+    },
+    {
+      detector: 'Svelte',
+      entries: [file('src/App.svelte'), file('src/main.ts')],
+      expected: { primary: 'Svelte', related: [] },
     },
     {
       detector: 'Astro',
@@ -861,7 +866,7 @@ describe('analyzeProjectStructure', () => {
       ).toHaveLength(1);
     });
 
-    it('detects a realistic SvelteKit config-only shell', () => {
+    it('does not detect a realistic SvelteKit config-only shell', () => {
       const result = analyze([
         directory('docs'),
         file('docs/architecture.md'),
@@ -872,9 +877,7 @@ describe('analyzeProjectStructure', () => {
         file('tsconfig.json'),
       ]);
 
-      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
-        evidence: ['svelte.config.js'],
-      });
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
     });
 
     it('detects a realistic SvelteKit load and server support app', () => {
@@ -1031,12 +1034,10 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
-  it('detects a frontend app from SvelteKit config alone', () => {
+  it('does not detect a frontend app from SvelteKit config alone', () => {
     const result = analyze([file('svelte.config.js'), file('package.json')]);
 
-    expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
-      evidence: ['svelte.config.js'],
-    });
+    expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
   it('detects a frontend app from SvelteKit page component alone', () => {
@@ -1125,6 +1126,210 @@ describe('analyzeProjectStructure', () => {
     ]);
 
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+  });
+
+  describe('Svelte frontend detector realistic repo fixtures', () => {
+    it('detects the official Vite JavaScript Svelte shape', () => {
+      const result = analyze([
+        file('index.html'),
+        directory('public'),
+        file('public/vite.svg'),
+        directory('src'),
+        file('src/App.svelte'),
+        file('src/app.css'),
+        directory('src/assets'),
+        file('src/assets/svelte.svg'),
+        directory('src/lib'),
+        file('src/lib/Counter.svelte'),
+        file('src/main.js'),
+        file('package.json'),
+        file('svelte.config.js'),
+        file('vite.config.js'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'index.html',
+          'src/App.svelte',
+          'src/lib/Counter.svelte',
+          'src/main.js',
+          'svelte.config.js',
+          'vite.config.js',
+        ]),
+        inferredTechnologies: {
+          primary: 'Svelte',
+          related: [],
+        },
+      });
+      expect(
+        result.detectedAreas.filter((area) => area.name === 'Frontend app'),
+      ).toHaveLength(1);
+    });
+
+    it('detects the official Vite TypeScript Svelte shape', () => {
+      const result = analyze([
+        file('index.html'),
+        directory('src'),
+        file('src/App.svelte'),
+        file('src/main.ts'),
+        file('package.json'),
+        file('svelte.config.js'),
+        file('tsconfig.json'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'index.html',
+          'src/App.svelte',
+          'src/main.ts',
+          'svelte.config.js',
+          'vite.config.ts',
+        ]),
+        inferredTechnologies: {
+          primary: 'Svelte',
+          related: [],
+        },
+      });
+    });
+
+    it('detects the legacy Rollup Svelte shape', () => {
+      const result = analyze([
+        directory('public'),
+        file('public/index.html'),
+        directory('src'),
+        file('src/App.svelte'),
+        file('src/main.js'),
+        file('package.json'),
+        file('rollup.config.js'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'public/index.html',
+          'rollup.config.js',
+          'src/App.svelte',
+          'src/main.js',
+        ]),
+        inferredTechnologies: {
+          primary: 'Svelte',
+          related: [],
+        },
+      });
+    });
+
+    it('detects a structured Svelte app and counts component support once', () => {
+      const result = analyze([
+        file('index.html'),
+        directory('src'),
+        file('src/App.svelte'),
+        directory('src/components'),
+        file('src/components/Header.svelte'),
+        file('src/components/Footer.svelte'),
+        directory('src/lib'),
+        file('src/lib/Button.svelte'),
+        file('src/main.ts'),
+        file('vite.config.ts'),
+      ]);
+
+      const frontendArea = areaByName(result, 'Frontend app', '.');
+
+      expect(frontendArea).toMatchObject({
+        evidence: expect.arrayContaining([
+          'src/App.svelte',
+          'src/components/Header.svelte',
+          'src/main.ts',
+        ]),
+      });
+      expect(frontendArea?.evidence).not.toEqual(
+        expect.arrayContaining([
+          'src/components/Footer.svelte',
+          'src/lib/Button.svelte',
+        ]),
+      );
+    });
+
+    it('keeps same-owner SvelteKit proof ahead of standalone Svelte', () => {
+      const result = analyze([
+        file('index.html'),
+        directory('src'),
+        file('src/App.svelte'),
+        file('src/app.html'),
+        file('src/main.ts'),
+        directory('src/routes'),
+        file('src/routes/+layout.svelte'),
+        file('src/routes/+page.svelte'),
+        file('svelte.config.js'),
+        file('vite.config.ts'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'src/routes/+layout.svelte',
+          'src/routes/+page.svelte',
+        ]),
+        inferredTechnologies: {
+          primary: 'SvelteKit',
+          related: ['Svelte'],
+        },
+      });
+      expect(areaByName(result, 'Frontend app', '.')?.evidence).not.toEqual(
+        expect.arrayContaining(['src/App.svelte', 'src/main.ts']),
+      );
+    });
+
+    it('keeps sibling SvelteKit proof from blocking standalone Svelte', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/kit'),
+        directory('apps/kit/src'),
+        directory('apps/kit/src/routes'),
+        file('apps/kit/src/routes/+page.svelte'),
+        file('apps/kit/svelte.config.js'),
+        directory('apps/svelte'),
+        file('apps/svelte/index.html'),
+        directory('apps/svelte/src'),
+        file('apps/svelte/src/App.svelte'),
+        file('apps/svelte/src/main.ts'),
+        file('apps/svelte/svelte.config.js'),
+        file('apps/svelte/vite.config.ts'),
+        file('package.json'),
+      ]);
+
+      expect(areaByName(result, 'Frontend app', 'apps/kit')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'SvelteKit',
+          related: ['Svelte'],
+        },
+      });
+      expect(areaByName(result, 'Frontend app', 'apps/svelte')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Svelte',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
+    });
+
+    it('does not emit from weak standalone Svelte hints', () => {
+      const rootComponentOnly = analyze([file('src/App.svelte')]);
+      const entryWithoutRoot = analyze([
+        file('src/main.ts'),
+        file('vite.config.ts'),
+      ]);
+      const componentsOnly = analyze([
+        file('src/components/Header.svelte'),
+        file('src/lib/Button.svelte'),
+      ]);
+      const sharedConfigOnly = analyze([file('svelte.config.js')]);
+
+      expect(
+        areaByName(rootComponentOnly, 'Frontend app', '.'),
+      ).toBeUndefined();
+      expect(areaByName(entryWithoutRoot, 'Frontend app', '.')).toBeUndefined();
+      expect(areaByName(componentsOnly, 'Frontend app', '.')).toBeUndefined();
+      expect(areaByName(sharedConfigOnly, 'Frontend app', '.')).toBeUndefined();
+    });
   });
 
   describe('Astro frontend detector realistic repo fixtures', () => {
@@ -2959,6 +3164,17 @@ describe('analyzeProjectStructure', () => {
         ]),
         analyze([
           file('svelte.config.js'),
+          directory('src'),
+          directory('src/routes'),
+          file('src/routes/+page.svelte'),
+          file('index.html'),
+          file('style.css'),
+          file('script.js'),
+        ]),
+        analyze([
+          directory('src'),
+          file('src/App.svelte'),
+          file('src/main.ts'),
           file('index.html'),
           file('style.css'),
           file('script.js'),

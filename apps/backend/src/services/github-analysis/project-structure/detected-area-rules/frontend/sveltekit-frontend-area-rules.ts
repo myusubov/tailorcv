@@ -17,7 +17,7 @@ type SvelteKitFrontendSignal =
   | 'sveltekit-routes-directory';
 
 const SVELTEKIT_FRONTEND_SIGNAL_SCORES = {
-  'sveltekit-config': 4,
+  'sveltekit-config': 1,
   'sveltekit-page-component': 4,
   'sveltekit-layout-component': 4,
   'sveltekit-server-route': 3,
@@ -32,7 +32,6 @@ function hasSvelteKitAppShape({
 }: {
   countedSignals: Set<SvelteKitFrontendSignal>;
 }): boolean {
-  const hasSvelteKitConfig = countedSignals.has('sveltekit-config');
   const hasPageComponent = countedSignals.has('sveltekit-page-component');
   const hasLayoutComponent = countedSignals.has('sveltekit-layout-component');
   const hasPageLoad = countedSignals.has('sveltekit-page-load');
@@ -41,7 +40,6 @@ function hasSvelteKitAppShape({
   const hasAppTemplate = countedSignals.has('sveltekit-app-template');
 
   return (
-    hasSvelteKitConfig ||
     hasPageComponent ||
     hasLayoutComponent ||
     (hasServerRoute && hasAppTemplate) ||
@@ -62,7 +60,7 @@ export function addSvelteKitFrontendAreas({
     createAreaRuleCandidateMap<SvelteKitFrontendSignal>();
 
   const svelteKitConfigFiles = index.findFilesByNameMatching({
-    pattern: /^svelte\.config\.(js|mjs|ts)$/,
+    pattern: /^svelte\.config\.(js|mjs|cjs|ts)$/,
   });
 
   const svelteKitPageComponentFiles = index.findEntriesByPathMatching({
