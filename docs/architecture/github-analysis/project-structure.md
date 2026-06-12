@@ -83,6 +83,15 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── project-structure-detected-area-rules.ts
 ├── detected-area-rules/
 │   ├── project-structure-area-rule-candidates.ts
+│   ├── backend/
+│   │   ├── asp-net-core-backend-area-rules.ts
+│   │   ├── backend-area-rules.ts
+│   │   ├── django-backend-area-rules.ts
+│   │   ├── generic-backend-area-rules.ts
+│   │   ├── laravel-backend-area-rules.ts
+│   │   ├── nest-backend-area-rules.ts
+│   │   ├── rails-backend-area-rules.ts
+│   │   └── spring-boot-backend-area-rules.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -134,6 +143,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Every emitted detected area includes path-inferred technology metadata with one required `primary` technology and zero or more deduplicated `related` technologies. The primary is excluded from related values; internal candidates use a `Set` and public output converts it to a stable sorted array.
 - **Rule**: The first detector that creates an `(area name, owner path)` candidate owns its primary technology; later score additions preserve that primary and may only accumulate score, evidence, and related technologies.
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
+- **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. The NestJS, Django, Spring Boot, ASP.NET Core, Laravel, and Rails modules run before the generic backend fallback; the scaffold currently contains no detection logic.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
 - **Rule**: Next.js frontend area evidence is grouped by owner path and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints; Next.js areas emit only from config, App Router core, or Pages Router special proof.
@@ -182,6 +192,8 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Structure-inferred stack detector implemented
 - [x] Focused tests added for current detection behavior
 - [x] Detected areas builder
+- [x] Backend detector module scaffold
+- [ ] Backend detector path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
 - [ ] Candidate files builder

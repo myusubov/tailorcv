@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-12
+
+### Backend Detector Module Scaffold
+
+- **Decision:** Establish the backend detected-area module structure before implementing framework-specific path rules.
+- **Problem:** The modular detected-area dispatcher only had frontend rule modules, so backend detector work lacked isolated entry points and an explicit framework-before-fallback execution order.
+- **Solution:** Added `detected-area-rules/backend/backend-area-rules.ts`, empty exported detector modules for NestJS, Django, Spring Boot, ASP.NET Core, Laravel, and Rails, an empty generic backend fallback module, and wired the backend dispatcher after frontend rules in `project-structure-detected-area-rules.ts`.
+- **Outcome:** Backend detectors now have stable file and function boundaries ready for incremental signal, scoring, gate, competing-proof, and fallback implementation without changing analyzer output.
+
 ## 2026-06-10
 
 ### Standalone Svelte Frontend Detection

@@ -1,3 +1,4 @@
+import { addBackendAreas } from './detected-area-rules/backend/backend-area-rules';
 import { addFrontendAreas } from './detected-area-rules/frontend/frontend-area-rules';
 import type { DetectedAreaRuleContext } from './project-structure-detected-areas.types';
 
@@ -10,4 +11,5 @@ export function applyDetectedAreaRules({
   index,
 }: DetectedAreaRuleContext): void {
   addFrontendAreas({ candidates, index });
+  addBackendAreas({ candidates, index });
 }
