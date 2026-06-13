@@ -3512,6 +3512,263 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Frontend app', '.')).toBeUndefined();
   });
 
+  describe('NestJS backend detector', () => {
+    it('detects the official NestJS starter shape', () => {
+      const result = analyze([
+        file('nest-cli.json'),
+        directory('src'),
+        file('src/app.controller.ts'),
+        file('src/app.module.ts'),
+        file('src/app.service.ts'),
+        file('src/main.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'nest-cli.json',
+          'src/app.controller.ts',
+          'src/app.module.ts',
+          'src/app.service.ts',
+          'src/main.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'NestJS',
+          related: [],
+        },
+      });
+    });
+
+    it('detects the canonical main-entry and root-module shape', () => {
+      const result = analyze([
+        directory('src'),
+        file('src/app.module.ts'),
+        file('src/main.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 0.67,
+        evidence: ['src/app.module.ts', 'src/main.ts'],
+        inferredTechnologies: {
+          primary: 'NestJS',
+          related: [],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'REST or microservice',
+        handlerPath: 'src/math/math.controller.ts',
+      },
+      {
+        name: 'WebSocket',
+        handlerPath: 'src/events/events.gateway.ts',
+      },
+      {
+        name: 'GraphQL',
+        handlerPath: 'src/recipes/recipes.resolver.ts',
+      },
+    ])(
+      'detects a custom $name shape from entry, feature module, and handler',
+      ({ handlerPath }) => {
+        const result = analyze([
+          directory('src'),
+          directory(handlerPath.split('/').slice(0, -1).join('/')),
+          file('src/main.ts'),
+          file(
+            `${handlerPath.split('/').slice(0, -1).join('/')}/feature.module.ts`,
+          ),
+          file(handlerPath),
+        ]);
+
+        expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+          confidence: 0.83,
+          evidence: expect.arrayContaining([
+            handlerPath,
+            'src/main.ts',
+            `${handlerPath.split('/').slice(0, -1).join('/')}/feature.module.ts`,
+          ]),
+          inferredTechnologies: {
+            primary: 'NestJS',
+            related: [],
+          },
+        });
+      },
+    );
+
+    it.each([
+      {
+        name: 'controller',
+        handlerPath: 'src/health/health.controller.ts',
+      },
+      {
+        name: 'resolver',
+        handlerPath: 'src/users/users.resolver.ts',
+      },
+    ])(
+      'detects a backend package from a root module and $name',
+      ({ handlerPath }) => {
+        const result = analyze([
+          directory('src'),
+          file('src/app.module.ts'),
+          file(handlerPath),
+        ]);
+
+        expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+          confidence: 0.83,
+          evidence: expect.arrayContaining([handlerPath, 'src/app.module.ts']),
+          inferredTechnologies: {
+            primary: 'NestJS',
+            related: [],
+          },
+        });
+      },
+    );
+
+    it('detects an Nx-style NestJS app with a nested app module', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        directory('apps/api/src'),
+        directory('apps/api/src/app'),
+        file('apps/api/src/app/app.controller.ts'),
+        file('apps/api/src/app/app.module.ts'),
+        file('apps/api/src/main.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        confidence: 0.83,
+        evidence: [
+          'apps/api/src/app/app.controller.ts',
+          'apps/api/src/app/app.module.ts',
+          'apps/api/src/main.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'NestJS',
+          related: [],
+        },
+      });
+    });
+
+    it('keeps NestJS monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        directory('apps/api/src'),
+        file('apps/api/nest-cli.json'),
+        file('apps/api/src/main.ts'),
+        directory('apps/worker'),
+        directory('apps/worker/src'),
+        file('apps/worker/src/app.module.ts'),
+        file('apps/worker/src/jobs/jobs.controller.ts'),
+        directory('apps/web'),
+        directory('apps/web/src'),
+        file('apps/web/src/main.ts'),
+        file('apps/web/src/app/app.module.ts'),
+        file('apps/web/src/app/app.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        evidence: ['apps/api/nest-cli.json', 'apps/api/src/main.ts'],
+      });
+      expect(areaByName(result, 'Backend API', 'apps/worker')).toMatchObject({
+        evidence: [
+          'apps/worker/src/app.module.ts',
+          'apps/worker/src/jobs/jobs.controller.ts',
+        ],
+      });
+      expect(areaByName(result, 'Backend API', 'apps/web')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it.each([
+      {
+        name: 'CLI configuration alone',
+        entries: [file('nest-cli.json')],
+      },
+      {
+        name: 'main entry alone',
+        entries: [file('src/main.ts')],
+      },
+      {
+        name: 'root module alone',
+        entries: [file('src/app.module.ts')],
+      },
+      {
+        name: 'controller alone',
+        entries: [file('src/users/users.controller.ts')],
+      },
+      {
+        name: 'gateway alone',
+        entries: [file('src/events/events.gateway.ts')],
+      },
+      {
+        name: 'resolver alone',
+        entries: [file('src/users/users.resolver.ts')],
+      },
+      {
+        name: 'service alone',
+        entries: [file('src/users/users.service.ts')],
+      },
+    ])('does not detect NestJS from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('does not detect Angular-like main, module, and service evidence', () => {
+      const result = analyze([
+        directory('src'),
+        directory('src/app'),
+        file('src/main.ts'),
+        file('src/app/app.module.ts'),
+        file('src/app/app.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('does not detect an unanchored controller, service, and gateway cluster', () => {
+      const result = analyze([
+        file('src/events/events.controller.ts'),
+        file('src/events/events.gateway.ts'),
+        file('src/events/events.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('does not detect a feature module, controller, and service without an anchor', () => {
+      const result = analyze([
+        file('src/users/users.controller.ts'),
+        file('src/users/users.module.ts'),
+        file('src/users/users.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated NestJS feature signals once per owner', () => {
+      const result = analyze([
+        file('src/main.ts'),
+        file('src/users/users.controller.ts'),
+        file('src/users/users.module.ts'),
+        file('src/orders/orders.controller.ts'),
+        file('src/orders/orders.module.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 0.83,
+        evidence: [
+          'src/main.ts',
+          'src/users/users.controller.ts',
+          'src/users/users.module.ts',
+        ],
+      });
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-13
+
+### NestJS Backend Area Detection
+
+- **Decision:** Detect NestJS backend owners through anchored path combinations while keeping generic service conventions score-only.
+- **Problem:** The backend detector scaffold had no NestJS behavior, and broad TypeScript conventions such as `main.ts`, `*.module.ts`, and `*.service.ts` could not safely prove NestJS without stronger same-owner structure.
+- **Solution:** Added owner-scoped NestJS signal scoring and an explicit shape gate in `detected-area-rules/backend/nest-backend-area-rules.ts`, exposed `NestJS` technology metadata, and added public-analyzer fixtures for official starter, REST/microservice, WebSocket, GraphQL, backend-package, Nx-style, monorepo, interference, weak-signal, and repeated-signal structures.
+- **Outcome:** Recognized NestJS repository shapes now emit `Backend API` with `NestJS` as the primary technology, while CLI-only, Angular-like, service-only, and unanchored generic clusters remain non-emitting.
+
 ## 2026-06-12
 
 ### Backend Detector Module Scaffold
