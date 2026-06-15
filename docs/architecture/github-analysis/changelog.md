@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-15
+
+### NestJS Runtime Metadata
+
+- **Decision:** Expose `Node.js` as related runtime context for path-detected NestJS backend areas.
+- **Problem:** NestJS detection identified the framework but omitted the broader backend runtime context useful to downstream resume analysis.
+- **Solution:** Added `Node.js` to the detected-area technology union and emitted it as a related technology from `detected-area-rules/backend/nest-backend-area-rules.ts`.
+- **Outcome:** NestJS backend areas now communicate both the specific framework and its inherent Node.js runtime without incorrectly inferring an HTTP adapter such as Express.
+
 ## 2026-06-13
 
 ### NestJS Backend Area Detection

@@ -82,7 +82,8 @@ export type DetectedAreaTechnology =
   | 'SvelteKit'
   | 'Svelte'
   | 'Astro'
-  | 'Static Web';
+  | 'Static Web'
+  | 'Node.js';
 
 /**
  * Primary and related technologies exposed for a detected repository area.

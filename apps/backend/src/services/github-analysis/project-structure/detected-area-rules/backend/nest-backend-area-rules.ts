@@ -231,7 +231,7 @@ export function addNestBackendAreas({
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
       primaryTechnology: 'NestJS',
-      relatedTechnologies: [],
+      relatedTechnologies: ['Node.js'],
     });
   }
 }
