@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-16
+
+### Django Backend Area Detection
+
+- **Decision:** Detect Django backend owners through project-level path anchors before accepting broader Django app conventions.
+- **Problem:** The Django backend detector scaffold had no behavior, and Python app files such as `models.py`, `views.py`, `admin.py`, and `apps.py` are too broad to prove Django without `manage.py`, settings, URL, WSGI, or ASGI evidence.
+- **Solution:** Added owner-scoped Django signal scoring and an explicit shape gate in `detected-area-rules/backend/django-backend-area-rules.ts`, exposed `Django` and `Python` technology metadata, and added public-analyzer fixtures for official startproject, manage-backed, split-settings, app-supported, settings-backed, monorepo, repeated-signal, weak-signal, reusable-package, documentation-sample, and Flask/FastAPI-like structures.
+- **Outcome:** Deployable Django project shapes now emit `Backend API` with `Django` as the primary technology and `Python` as related context, while weak app-only and generic Python structures remain non-emitting.
+
 ## 2026-06-15
 
 ### NestJS Runtime Metadata

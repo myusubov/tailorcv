@@ -3769,6 +3769,251 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Django backend detector', () => {
+    it('detects the official Django startproject shape', () => {
+      const result = analyze([
+        file('manage.py'),
+        directory('mysite'),
+        file('mysite/__init__.py'),
+        file('mysite/settings.py'),
+        file('mysite/urls.py'),
+        file('mysite/asgi.py'),
+        file('mysite/wsgi.py'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'manage.py',
+          'mysite/asgi.py',
+          'mysite/settings.py',
+          'mysite/urls.py',
+          'mysite/wsgi.py',
+        ],
+        inferredTechnologies: {
+          primary: 'Django',
+          related: ['Python'],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'classic settings module',
+        entries: [file('manage.py'), file('config/settings.py')],
+        evidence: ['config/settings.py', 'manage.py'],
+      },
+      {
+        name: 'root URL configuration',
+        entries: [file('manage.py'), file('config/urls.py')],
+        evidence: ['config/urls.py', 'manage.py'],
+      },
+      {
+        name: 'WSGI server entry',
+        entries: [file('manage.py'), file('config/wsgi.py')],
+        evidence: ['config/wsgi.py', 'manage.py'],
+      },
+      {
+        name: 'ASGI server entry',
+        entries: [file('manage.py'), file('config/asgi.py')],
+        evidence: ['config/asgi.py', 'manage.py'],
+      },
+    ])(
+      'detects a manage-backed Django project with $name',
+      ({ entries, evidence }) => {
+        const result = analyze(entries);
+
+        expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+          confidence: 1,
+          evidence,
+          inferredTechnologies: {
+            primary: 'Django',
+            related: ['Python'],
+          },
+        });
+      },
+    );
+
+    it('detects a Cookiecutter-style split settings project', () => {
+      const result = analyze([
+        file('manage.py'),
+        directory('config'),
+        directory('config/settings'),
+        file('config/settings/base.py'),
+        file('config/settings/production.py'),
+        file('config/urls.py'),
+        file('config/wsgi.py'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'config/settings/base.py',
+          'config/urls.py',
+          'config/wsgi.py',
+          'manage.py',
+        ],
+        inferredTechnologies: {
+          primary: 'Django',
+          related: ['Python'],
+        },
+      });
+    });
+
+    it('detects a manage-backed Django project with app evidence', () => {
+      const result = analyze([
+        file('manage.py'),
+        directory('users'),
+        file('users/apps.py'),
+        file('users/models.py'),
+        directory('users/migrations'),
+        file('users/migrations/0001_initial.py'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'manage.py',
+          'users/apps.py',
+          'users/migrations/0001_initial.py',
+          'users/models.py',
+        ],
+        inferredTechnologies: {
+          primary: 'Django',
+          related: ['Python'],
+        },
+      });
+    });
+
+    it('detects a settings-backed Django app package', () => {
+      const result = analyze([
+        file('config/settings/base.py'),
+        directory('users'),
+        file('users/apps.py'),
+        directory('users/migrations'),
+        file('users/migrations/0001_initial.py'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'config/settings/base.py',
+          'users/apps.py',
+          'users/migrations/0001_initial.py',
+        ],
+        inferredTechnologies: {
+          primary: 'Django',
+          related: ['Python'],
+        },
+      });
+    });
+
+    it('keeps Django monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/manage.py'),
+        directory('apps/api/config'),
+        file('apps/api/config/settings.py'),
+        directory('packages'),
+        directory('packages/lib'),
+        file('packages/lib/models.py'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        evidence: ['apps/api/config/settings.py', 'apps/api/manage.py'],
+        inferredTechnologies: {
+          primary: 'Django',
+          related: ['Python'],
+        },
+      });
+      expect(areaByName(result, 'Backend API', 'packages/lib')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Django app signals once per owner', () => {
+      const result = analyze([
+        file('manage.py'),
+        file('users/apps.py'),
+        file('users/models.py'),
+        file('users/migrations/0001_initial.py'),
+        file('orders/apps.py'),
+        file('orders/models.py'),
+        file('orders/migrations/0001_initial.py'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'manage.py',
+          'users/apps.py',
+          'users/migrations/0001_initial.py',
+          'users/models.py',
+        ],
+      });
+    });
+
+    it.each([
+      {
+        name: 'manage entry alone',
+        entries: [file('manage.py')],
+      },
+      {
+        name: 'settings module alone',
+        entries: [file('config/settings.py')],
+      },
+      {
+        name: 'root URL configuration alone',
+        entries: [file('config/urls.py')],
+      },
+      {
+        name: 'WSGI entry alone',
+        entries: [file('config/wsgi.py')],
+      },
+      {
+        name: 'ASGI entry alone',
+        entries: [file('config/asgi.py')],
+      },
+      {
+        name: 'generic Python module files',
+        entries: [
+          file('backend/models.py'),
+          file('backend/views.py'),
+          file('backend/admin.py'),
+        ],
+      },
+      {
+        name: 'reusable Django app without a project anchor',
+        entries: [
+          file('users/apps.py'),
+          file('users/models.py'),
+          file('users/migrations/0001_initial.py'),
+        ],
+      },
+      {
+        name: 'FastAPI or Flask-like Python project',
+        entries: [
+          file('app/main.py'),
+          file('app/models.py'),
+          file('app/views.py'),
+        ],
+      },
+      {
+        name: 'documentation sample Django project',
+        entries: [
+          file('docs/example/manage.py'),
+          file('docs/example/config/settings.py'),
+          file('docs/example/config/urls.py'),
+          file('docs/example/config/wsgi.py'),
+        ],
+      },
+    ])('does not detect Django from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

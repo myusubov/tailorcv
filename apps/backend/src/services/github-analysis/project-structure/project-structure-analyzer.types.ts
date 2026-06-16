@@ -72,8 +72,10 @@ export interface ProjectStructureSummary {
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
+  | 'Django'
   | 'NestJS'
   | 'Next.js'
+  | 'Python'
   | 'React'
   | 'React Router'
   | 'Nuxt'
