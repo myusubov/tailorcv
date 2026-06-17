@@ -4014,6 +4014,241 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Spring Boot backend detector', () => {
+    it('detects the official Spring Boot application shape', () => {
+      const result = analyze([
+        file('pom.xml'),
+        directory('src'),
+        directory('src/main'),
+        directory('src/main/java'),
+        file('src/main/java/com/example/demo/DemoApplication.java'),
+        directory('src/main/resources'),
+        file('src/main/resources/application.properties'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'pom.xml',
+          'src/main/java/com/example/demo/DemoApplication.java',
+          'src/main/resources/application.properties',
+        ],
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Java'],
+        },
+      });
+    });
+
+    it('detects a Gradle-backed Spring Boot web app', () => {
+      const result = analyze([
+        file('build.gradle'),
+        file('src/main/java/com/example/api/ApiApplication.java'),
+        file('src/main/java/com/example/api/UserController.java'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'build.gradle',
+          'src/main/java/com/example/api/ApiApplication.java',
+          'src/main/java/com/example/api/UserController.java',
+        ],
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Java'],
+        },
+      });
+    });
+
+    it('detects a JHipster-style Spring Boot REST app', () => {
+      const result = analyze([
+        file('pom.xml'),
+        file('src/main/java/io/github/app/MyApplicationApp.java'),
+        file('src/main/resources/config/application.yml'),
+        file('src/main/java/io/github/app/web/rest/UserResource.java'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'pom.xml',
+          'src/main/java/io/github/app/MyApplicationApp.java',
+          'src/main/java/io/github/app/web/rest/UserResource.java',
+          'src/main/resources/config/application.yml',
+        ],
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Java'],
+        },
+      });
+    });
+
+    it('detects a config-backed Spring Boot web app', () => {
+      const result = analyze([
+        file('src/main/resources/application.yml'),
+        file('src/main/java/com/example/web/UserController.java'),
+        file('src/main/java/com/example/service/UserService.java'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'src/main/java/com/example/service/UserService.java',
+          'src/main/java/com/example/web/UserController.java',
+          'src/main/resources/application.yml',
+        ],
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Java'],
+        },
+      });
+    });
+
+    it('detects a Kotlin Spring Boot app', () => {
+      const result = analyze([
+        file('build.gradle.kts'),
+        file('src/main/kotlin/com/example/DemoApplication.kt'),
+        file('src/main/kotlin/com/example/GreetingController.kt'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'build.gradle.kts',
+          'src/main/kotlin/com/example/DemoApplication.kt',
+          'src/main/kotlin/com/example/GreetingController.kt',
+        ],
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Kotlin'],
+        },
+      });
+    });
+
+    it('detects mixed Java and Kotlin Spring Boot evidence', () => {
+      const result = analyze([
+        file('src/main/java/com/example/DemoApplication.java'),
+        file('src/main/kotlin/com/example/GreetingController.kt'),
+        file('src/main/resources/application.yml'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Java', 'Kotlin'],
+        },
+      });
+    });
+
+    it('keeps Spring Boot monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/build.gradle'),
+        file('apps/api/src/main/java/com/example/api/ApiApplication.java'),
+        file('apps/api/src/main/resources/application.yml'),
+        directory('packages'),
+        directory('packages/lib'),
+        file('packages/lib/src/main/java/com/example/UserRepository.java'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        evidence: [
+          'apps/api/build.gradle',
+          'apps/api/src/main/java/com/example/api/ApiApplication.java',
+          'apps/api/src/main/resources/application.yml',
+        ],
+        inferredTechnologies: {
+          primary: 'Spring Boot',
+          related: ['Java'],
+        },
+      });
+      expect(areaByName(result, 'Backend API', 'packages/lib')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Spring Boot support signals once per owner', () => {
+      const result = analyze([
+        file('src/main/java/com/example/DemoApplication.java'),
+        file('src/main/resources/application.yml'),
+        file('src/main/java/com/example/users/UserController.java'),
+        file('src/main/java/com/example/orders/OrderController.java'),
+        file('src/main/java/com/example/users/UserService.java'),
+        file('src/main/java/com/example/orders/OrderService.java'),
+        file('src/main/java/com/example/users/UserRepository.java'),
+        file('src/main/java/com/example/orders/OrderRepository.java'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'src/main/java/com/example/DemoApplication.java',
+          'src/main/java/com/example/users/UserController.java',
+          'src/main/java/com/example/users/UserRepository.java',
+          'src/main/java/com/example/users/UserService.java',
+          'src/main/resources/application.yml',
+        ],
+      });
+    });
+
+    it.each([
+      {
+        name: 'Maven build file alone',
+        entries: [file('pom.xml')],
+      },
+      {
+        name: 'Gradle build file alone',
+        entries: [file('build.gradle')],
+      },
+      {
+        name: 'main application alone',
+        entries: [file('src/main/java/com/example/DemoApplication.java')],
+      },
+      {
+        name: 'application config alone',
+        entries: [file('src/main/resources/application.yml')],
+      },
+      {
+        name: 'controller, service, and repository without an anchor',
+        entries: [
+          file('src/main/java/com/example/UserController.java'),
+          file('src/main/java/com/example/UserService.java'),
+          file('src/main/java/com/example/UserRepository.java'),
+        ],
+      },
+      {
+        name: 'application plus service and repository without config or handler',
+        entries: [
+          file('src/main/java/com/example/DemoApplication.java'),
+          file('src/main/java/com/example/UserService.java'),
+          file('src/main/java/com/example/UserRepository.java'),
+        ],
+      },
+      {
+        name: 'application config plus repository and service without handler',
+        entries: [
+          file('src/main/resources/application.yml'),
+          file('src/main/java/com/example/UserRepository.java'),
+          file('src/main/java/com/example/UserService.java'),
+        ],
+      },
+      {
+        name: 'documentation sample Spring Boot project',
+        entries: [
+          file('docs/example/pom.xml'),
+          file('docs/example/src/main/java/com/example/DemoApplication.java'),
+          file('docs/example/src/main/resources/application.yml'),
+          file('docs/example/src/main/java/com/example/UserController.java'),
+        ],
+      },
+    ])('does not detect Spring Boot from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

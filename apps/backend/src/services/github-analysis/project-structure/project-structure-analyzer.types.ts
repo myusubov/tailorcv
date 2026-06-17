@@ -73,6 +73,8 @@ export interface ProjectStructureSummary {
  */
 export type DetectedAreaTechnology =
   | 'Django'
+  | 'Java'
+  | 'Kotlin'
   | 'NestJS'
   | 'Next.js'
   | 'Python'
@@ -84,6 +86,7 @@ export type DetectedAreaTechnology =
   | 'SvelteKit'
   | 'Svelte'
   | 'Astro'
+  | 'Spring Boot'
   | 'Static Web'
   | 'Node.js';
 

@@ -77,7 +77,7 @@ export function GitHubRepoSelectionToolbar({
         {hasSelection && (
           <ClearSelectionButton
             onClearSelection={onClearSelection}
-            className="h-7 shrink-0"
+            className="shrink-0"
           />
         )}
       </div>

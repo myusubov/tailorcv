@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-17
+
+### Spring Boot Backend Area Detection
+
+- **Decision:** Detect Spring Boot backend owners through path-only application shape anchors instead of generic Java file conventions.
+- **Problem:** The Spring Boot backend detector scaffold had no behavior, and most high-confidence Spring Boot proof lives inside build files or source annotations that the project-structure analyzer does not read.
+- **Solution:** Added owner-scoped Spring Boot signal scoring and an explicit shape gate in `detected-area-rules/backend/spring-boot-backend-area-rules.ts`, exposed `Spring Boot`, `Java`, and `Kotlin` technology metadata, and added public-analyzer fixtures for simple, Gradle-backed, JHipster-style, config-backed, Kotlin, mixed-language, monorepo, repeated-signal, weak-signal, and documentation-sample structures.
+- **Outcome:** Recognized Spring Boot repository shapes now emit `Backend API` with `Spring Boot` as the primary technology and Java/Kotlin as related context, while build-only, config-only, generic Java, and docs/test sample structures remain non-emitting.
+
 ## 2026-06-16
 
 ### Django Backend Area Detection
