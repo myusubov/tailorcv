@@ -137,7 +137,7 @@ export function addSpringBootBackendAreas({
     createAreaRuleCandidateMap<SpringBootBackendSignal>();
   const springBootLanguagesByOwner = new Map<
     string,
-    Set<DetectedAreaTechnology>
+    Set<"Kotlin" | "Java">
   >();
 
   const springJavaBuildFiles = index.findFilesByNameMatching({
