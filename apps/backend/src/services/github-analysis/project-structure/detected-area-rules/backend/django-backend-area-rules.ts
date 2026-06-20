@@ -37,13 +37,6 @@ const DJANGO_BACKEND_SIGNAL_SCORES = {
   'django-app-urlconf': 1,
 } satisfies AreaRuleSignalScores<DjangoBackendSignal>;
 
-const IGNORED_DJANGO_EVIDENCE_PREFIXES = [
-  'docs/',
-  'test/',
-  'tests/',
-  'fixtures/',
-] as const;
-
 function hasDjangoBackendShape({
   countedSignals,
 }: {
@@ -80,18 +73,6 @@ function hasDjangoBackendShape({
   );
 }
 
-function isIgnoredDjangoEvidencePath({
-  entry,
-}: {
-  entry: Pick<RepoTreeEntry, 'path'>;
-}): boolean {
-  const path = entry.path.toLowerCase();
-
-  return IGNORED_DJANGO_EVIDENCE_PREFIXES.some((prefix) =>
-    path.startsWith(prefix),
-  );
-}
-
 function countDjangoBackendSignal({
   areasByOwner,
   entry,
@@ -101,8 +82,6 @@ function countDjangoBackendSignal({
   entry: RepoTreeEntry;
   signal: DjangoBackendSignal;
 }): void {
-  if (isIgnoredDjangoEvidencePath({ entry })) return;
-
   countAreaRuleSignal({
     areasByOwner,
     entry,

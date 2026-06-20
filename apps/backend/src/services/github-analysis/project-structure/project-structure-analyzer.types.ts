@@ -72,6 +72,9 @@ export interface ProjectStructureSummary {
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
+  | '.NET'
+  | 'ASP.NET Core'
+  | 'C#'
   | 'Django'
   | 'Java'
   | 'Kotlin'

@@ -22,4 +22,4 @@ export function addBackendAreas({
   addLaravelBackendAreas({ candidates, index });
   addRailsBackendAreas({ candidates, index });
   addGenericBackendAreas({ candidates, index });
-};
+}

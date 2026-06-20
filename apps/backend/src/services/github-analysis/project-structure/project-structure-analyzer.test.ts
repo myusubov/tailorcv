@@ -3998,15 +3998,6 @@ describe('analyzeProjectStructure', () => {
           file('app/views.py'),
         ],
       },
-      {
-        name: 'documentation sample Django project',
-        entries: [
-          file('docs/example/manage.py'),
-          file('docs/example/config/settings.py'),
-          file('docs/example/config/urls.py'),
-          file('docs/example/config/wsgi.py'),
-        ],
-      },
     ])('does not detect Django from $name', ({ entries }) => {
       const result = analyze(entries);
 
@@ -4233,16 +4224,226 @@ describe('analyzeProjectStructure', () => {
           file('src/main/java/com/example/UserService.java'),
         ],
       },
+    ])('does not detect Spring Boot from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+  });
+
+  describe('ASP.NET Core backend detector', () => {
+    it('detects a controller Web API app', () => {
+      const result = analyze([
+        file('Api.csproj'),
+        file('Program.cs'),
+        file('appsettings.json'),
+        directory('Controllers'),
+        file('Controllers/UsersController.cs'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'Api.csproj',
+          'appsettings.json',
+          'Controllers/UsersController.cs',
+          'Program.cs',
+        ],
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+    });
+
+    it('detects a minimal API endpoint-folder app', () => {
+      const result = analyze([
+        file('Web.csproj'),
+        file('Program.cs'),
+        file('appsettings.json'),
+        file('Endpoints/TodoItems.cs'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'appsettings.json',
+          'Endpoints/TodoItems.cs',
+          'Program.cs',
+          'Web.csproj',
+        ],
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+    });
+
+    it('detects a legacy Startup ASP.NET Core app', () => {
+      const result = analyze([
+        file('Api.csproj'),
+        file('Startup.cs'),
+        file('appsettings.json'),
+        file('Controllers/HomeController.cs'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+    });
+
+    it('detects a launch-settings backed minimal host', () => {
+      const result = analyze([
+        file('Api.csproj'),
+        file('Program.cs'),
+        file('appsettings.Development.json'),
+        file('Properties/launchSettings.json'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+    });
+
+    it('detects a Razor Pages app', () => {
+      const result = analyze([
+        file('Web.csproj'),
+        file('Program.cs'),
+        file('appsettings.json'),
+        file('Pages/Index.cshtml'),
+        file('Pages/Index.cshtml.cs'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+    });
+
+    it('detects an MVC Views app', () => {
+      const result = analyze([
+        file('Web.csproj'),
+        file('Startup.cs'),
+        file('appsettings.json'),
+        file('Views/Home/Index.cshtml'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+    });
+
+    it('keeps ASP.NET Core monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/Api.csproj'),
+        file('apps/api/Program.cs'),
+        file('apps/api/appsettings.json'),
+        file('apps/api/Controllers/UsersController.cs'),
+        directory('packages'),
+        directory('packages/lib'),
+        file('packages/lib/Library.csproj'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        evidence: [
+          'apps/api/Api.csproj',
+          'apps/api/appsettings.json',
+          'apps/api/Controllers/UsersController.cs',
+          'apps/api/Program.cs',
+        ],
+        inferredTechnologies: {
+          primary: 'ASP.NET Core',
+          related: ['.NET', 'C#'],
+        },
+      });
+      expect(areaByName(result, 'Backend API', 'packages/lib')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated ASP.NET Core signals once per owner', () => {
+      const result = analyze([
+        file('Web.csproj'),
+        file('Program.cs'),
+        file('appsettings.json'),
+        file('appsettings.Development.json'),
+        file('Controllers/UsersController.cs'),
+        file('Controllers/OrdersController.cs'),
+        file('Endpoints/TodoItems.cs'),
+        file('Endpoints/TodoLists.cs'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'appsettings.Development.json',
+          'appsettings.json',
+          'Controllers/UsersController.cs',
+          'Endpoints/TodoItems.cs',
+          'Program.cs',
+          'Web.csproj',
+        ],
+      });
+    });
+
+    it.each([
       {
-        name: 'documentation sample Spring Boot project',
+        name: 'project file alone',
+        entries: [file('Api.csproj')],
+      },
+      {
+        name: 'Program entry alone',
+        entries: [file('Program.cs')],
+      },
+      {
+        name: 'Startup class alone',
+        entries: [file('Startup.cs')],
+      },
+      {
+        name: 'appsettings alone',
+        entries: [file('appsettings.json')],
+      },
+      {
+        name: 'launch settings alone',
+        entries: [file('Properties/launchSettings.json')],
+      },
+      {
+        name: 'Program and project file without config or web handler',
+        entries: [file('Api.csproj'), file('Program.cs')],
+      },
+      {
+        name: 'controller, service, and model without an anchor',
         entries: [
-          file('docs/example/pom.xml'),
-          file('docs/example/src/main/java/com/example/DemoApplication.java'),
-          file('docs/example/src/main/resources/application.yml'),
-          file('docs/example/src/main/java/com/example/UserController.java'),
+          file('Controllers/UsersController.cs'),
+          file('Services/UserService.cs'),
+          file('Models/User.cs'),
         ],
       },
-    ])('does not detect Spring Boot from $name', ({ entries }) => {
+      {
+        name: 'client wwwroot appsettings config',
+        entries: [
+          file('Client.csproj'),
+          file('Program.cs'),
+          file('wwwroot/appsettings.json'),
+        ],
+      },
+    ])('does not detect ASP.NET Core from $name', ({ entries }) => {
       const result = analyze(entries);
 
       expect(areaByName(result, 'Backend API', '.')).toBeUndefined();

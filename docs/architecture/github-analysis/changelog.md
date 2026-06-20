@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-06-20
+
+### Backend Detector Evidence Folder Policy
+
+- **Decision:** Let backend framework gates evaluate matching repository paths without a generic `docs`, `test`, `tests`, or `fixtures` exclusion policy.
+- **Problem:** Django, Spring Boot, and ASP.NET Core had backend-only folder exclusions that were not shared by frontend detectors and were not based on observed user-repository false positives.
+- **Solution:** Removed the generic ignored-prefix helpers from the three backend detectors and removed their documentation-sample negative fixtures, while preserving ASP.NET Core's signal-specific rejection of `wwwroot/appsettings*.json` as server configuration evidence.
+- **Outcome:** Backend detector precision now comes from owner-scoped signal combinations consistently, and folder exclusions can be reintroduced later only when real repository evidence demonstrates a concrete false-positive pattern.
+
+### ASP.NET Core Backend Area Detection
+
+- **Decision:** Detect ASP.NET Core backend owners through path-only web host and project shape anchors.
+- **Problem:** `.NET`/C# project files, `Program.cs`, and appsettings files are too generic to prove ASP.NET Core backend usage without same-owner web structure.
+- **Solution:** Added owner-scoped ASP.NET Core signal scoring and an explicit shape gate in `detected-area-rules/backend/asp-net-core-backend-area-rules.ts`, exposed `ASP.NET Core`, `.NET`, and `C#` technology metadata, and added public-analyzer fixtures for controller Web API, minimal endpoint, legacy Startup, launch-settings, Razor Pages, MVC Views, monorepo, repeated-signal, weak-signal, and client-config structures.
+- **Outcome:** Recognized ASP.NET Core Web API, minimal API, MVC, and Razor Pages shapes now emit `Backend API` with ASP.NET Core as the primary technology and `.NET`/`C#` as related context, while generic C# project structures remain non-emitting.
+
 ## 2026-06-17
 
 ### Spring Boot Backend Area Detection

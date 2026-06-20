@@ -8,7 +8,6 @@ import { ownerPathForApplicationArea } from '../../project-structure-path-utils'
 import {
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
-  type AreaRuleCandidate,
   type AreaRuleSignalScores,
 } from '../project-structure-area-rule-candidates';
 
@@ -34,13 +33,6 @@ const SPRING_BOOT_BACKEND_SIGNAL_SCORES = {
   'spring-service': 1,
   'spring-configuration-class': 1,
 } satisfies AreaRuleSignalScores<SpringBootBackendSignal>;
-
-const IGNORED_SPRING_BOOT_EVIDENCE_PREFIXES = [
-  'docs/',
-  'test/',
-  'tests/',
-  'fixtures/',
-] as const;
 
 function hasSpringBootBackendShape({
   countedSignals,
@@ -77,37 +69,6 @@ function hasSpringBootBackendShape({
   return hasCanonicalBootShape || hasBootWebShape || hasConfigBackedWebShape;
 }
 
-function isIgnoredSpringBootEvidencePath({
-  entry,
-}: {
-  entry: Pick<RepoTreeEntry, 'path'>;
-}): boolean {
-  const path = entry.path.toLowerCase();
-
-  return IGNORED_SPRING_BOOT_EVIDENCE_PREFIXES.some((prefix) =>
-    path.startsWith(prefix),
-  );
-}
-
-function countSpringBootBackendSignal({
-  areasByOwner,
-  entry,
-  signal,
-}: {
-  areasByOwner: Map<string, AreaRuleCandidate<SpringBootBackendSignal>>;
-  entry: RepoTreeEntry;
-  signal: SpringBootBackendSignal;
-}): void {
-  if (isIgnoredSpringBootEvidencePath({ entry })) return;
-
-  countAreaRuleSignal({
-    areasByOwner,
-    entry,
-    signal,
-    score: SPRING_BOOT_BACKEND_SIGNAL_SCORES[signal],
-  });
-}
-
 function addLanguageEvidence({
   languagesByOwner,
   entry,
@@ -115,7 +76,6 @@ function addLanguageEvidence({
   languagesByOwner: Map<string, Set<DetectedAreaTechnology>>;
   entry: RepoTreeEntry;
 }): void {
-  if (isIgnoredSpringBootEvidencePath({ entry })) return;
   if (entry.extension !== 'java' && entry.extension !== 'kt') return;
 
   const ownerPath = ownerPathForApplicationArea({ path: entry.path });
@@ -135,10 +95,7 @@ export function addSpringBootBackendAreas({
 }: DetectedAreaRuleContext): void {
   const springBootAreasByOwner =
     createAreaRuleCandidateMap<SpringBootBackendSignal>();
-  const springBootLanguagesByOwner = new Map<
-    string,
-    Set<"Kotlin" | "Java">
-  >();
+  const springBootLanguagesByOwner = new Map<string, Set<'Kotlin' | 'Java'>>();
 
   const springJavaBuildFiles = index.findFilesByNameMatching({
     pattern: /^(pom\.xml|build\.gradle|build\.gradle\.kts)$/,
@@ -185,18 +142,20 @@ export function addSpringBootBackendAreas({
   });
 
   for (const springJavaBuildFile of springJavaBuildFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springJavaBuildFile,
       signal: 'spring-java-build-file',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-java-build-file'],
     });
   }
 
   for (const springBootMainApplicationFile of springBootMainApplicationFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springBootMainApplicationFile,
       signal: 'spring-boot-main-application',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-boot-main-application'],
     });
     addLanguageEvidence({
       languagesByOwner: springBootLanguagesByOwner,
@@ -205,26 +164,30 @@ export function addSpringBootBackendAreas({
   }
 
   for (const springBootApplicationConfigFile of springBootApplicationConfigFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springBootApplicationConfigFile,
       signal: 'spring-boot-application-config',
+      score:
+        SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-boot-application-config'],
     });
   }
 
   for (const springBootProfileConfigFile of springBootProfileConfigFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springBootProfileConfigFile,
       signal: 'spring-boot-profile-config',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-boot-profile-config'],
     });
   }
 
   for (const springWebControllerFile of springWebControllerFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springWebControllerFile,
       signal: 'spring-web-controller',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-web-controller'],
     });
     addLanguageEvidence({
       languagesByOwner: springBootLanguagesByOwner,
@@ -233,10 +196,11 @@ export function addSpringBootBackendAreas({
   }
 
   for (const springRestResourceFile of springRestResourceFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springRestResourceFile,
       signal: 'spring-rest-resource',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-rest-resource'],
     });
     addLanguageEvidence({
       languagesByOwner: springBootLanguagesByOwner,
@@ -245,10 +209,11 @@ export function addSpringBootBackendAreas({
   }
 
   for (const springDataRepositoryFile of springDataRepositoryFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springDataRepositoryFile,
       signal: 'spring-data-repository',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-data-repository'],
     });
     addLanguageEvidence({
       languagesByOwner: springBootLanguagesByOwner,
@@ -257,10 +222,11 @@ export function addSpringBootBackendAreas({
   }
 
   for (const springServiceFile of springServiceFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springServiceFile,
       signal: 'spring-service',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-service'],
     });
     addLanguageEvidence({
       languagesByOwner: springBootLanguagesByOwner,
@@ -269,10 +235,11 @@ export function addSpringBootBackendAreas({
   }
 
   for (const springConfigurationClassFile of springConfigurationClassFiles) {
-    countSpringBootBackendSignal({
+    countAreaRuleSignal({
       areasByOwner: springBootAreasByOwner,
       entry: springConfigurationClassFile,
       signal: 'spring-configuration-class',
+      score: SPRING_BOOT_BACKEND_SIGNAL_SCORES['spring-configuration-class'],
     });
     addLanguageEvidence({
       languagesByOwner: springBootLanguagesByOwner,
