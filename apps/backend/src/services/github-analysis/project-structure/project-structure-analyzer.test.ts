@@ -4450,6 +4450,234 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Laravel backend detector', () => {
+    it('detects a current Laravel application', () => {
+      const result = analyze([
+        file('artisan'),
+        file('bootstrap/app.php'),
+        file('bootstrap/providers.php'),
+        file('app/Providers/AppServiceProvider.php'),
+        file('routes/web.php'),
+        file('routes/console.php'),
+        file('public/index.php'),
+        file('composer.json'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'app/Providers/AppServiceProvider.php',
+          'artisan',
+          'bootstrap/app.php',
+          'bootstrap/providers.php',
+          'composer.json',
+          'public/index.php',
+          'routes/console.php',
+          'routes/web.php',
+        ],
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['PHP'],
+        },
+      });
+    });
+
+    it('detects the canonical Laravel artisan and bootstrap pair', () => {
+      const result = analyze([file('artisan'), file('bootstrap/app.php')]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['PHP'],
+        },
+      });
+    });
+
+    it('detects a modern Laravel shape without artisan', () => {
+      const result = analyze([
+        file('bootstrap/app.php'),
+        file('bootstrap/providers.php'),
+        file('app/Providers/AppServiceProvider.php'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['PHP'],
+        },
+      });
+    });
+
+    it('detects a legacy Laravel application shape', () => {
+      const result = analyze([
+        file('bootstrap/app.php'),
+        file('app/Http/Kernel.php'),
+        file('app/Providers/RouteServiceProvider.php'),
+        file('routes/web.php'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['PHP'],
+        },
+      });
+    });
+
+    it('detects an artisan-owned Laravel API shape', () => {
+      const result = analyze([
+        file('artisan'),
+        file('app/Providers/AppServiceProvider.php'),
+        file('routes/api.php'),
+        file('app/Http/Controllers/UserController.php'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'app/Http/Controllers/UserController.php',
+          'app/Providers/AppServiceProvider.php',
+          'artisan',
+          'routes/api.php',
+        ],
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['PHP'],
+        },
+      });
+    });
+
+    it('adds Blade as related technology when the owner has Blade views', () => {
+      const result = analyze([
+        file('artisan'),
+        file('bootstrap/app.php'),
+        file('resources/views/home.blade.php'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['Blade', 'PHP'],
+        },
+      });
+    });
+
+    it('keeps Laravel monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/artisan'),
+        file('apps/api/bootstrap/app.php'),
+        file('apps/api/routes/api.php'),
+        directory('packages'),
+        directory('packages/permissions'),
+        file('packages/permissions/composer.json'),
+        file('packages/permissions/src/PermissionServiceProvider.php'),
+        file('packages/permissions/config/permission.php'),
+        file(
+          'packages/permissions/database/migrations/2024_01_01_000000_create_permissions_table.php',
+        ),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['PHP'],
+        },
+      });
+      expect(
+        areaByName(result, 'Backend API', 'packages/permissions'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Laravel signals once per owner', () => {
+      const result = analyze([
+        file('artisan'),
+        file('bootstrap/app.php'),
+        file('app/Http/Controllers/UserController.php'),
+        file('app/Http/Controllers/OrderController.php'),
+        file('app/Models/User.php'),
+        file('app/Models/Order.php'),
+        file('database/migrations/2024_01_01_000000_create_users_table.php'),
+        file('database/migrations/2024_01_02_000000_create_orders_table.php'),
+        file('resources/views/users/index.blade.php'),
+        file('resources/views/orders/index.blade.php'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'app/Http/Controllers/UserController.php',
+          'app/Models/User.php',
+          'artisan',
+          'bootstrap/app.php',
+          'database/migrations/2024_01_01_000000_create_users_table.php',
+          'resources/views/users/index.blade.php',
+        ],
+        inferredTechnologies: {
+          primary: 'Laravel',
+          related: ['Blade', 'PHP'],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'artisan alone',
+        entries: [file('artisan')],
+      },
+      {
+        name: 'bootstrap app alone',
+        entries: [file('bootstrap/app.php')],
+      },
+      {
+        name: 'Composer and Laravel-like config',
+        entries: [file('composer.json'), file('config/app.php')],
+      },
+      {
+        name: 'route files without an application anchor',
+        entries: [
+          file('routes/web.php'),
+          file('routes/api.php'),
+          file('routes/console.php'),
+        ],
+      },
+      {
+        name: 'application support files without an anchor',
+        entries: [
+          file('app/Http/Controllers/UserController.php'),
+          file('app/Models/User.php'),
+          file('database/migrations/2024_01_01_000000_create_users_table.php'),
+          file('database/seeders/DatabaseSeeder.php'),
+          file('resources/views/users/index.blade.php'),
+        ],
+      },
+      {
+        name: 'reusable Laravel package structure',
+        entries: [
+          file('composer.json'),
+          file('src/PermissionServiceProvider.php'),
+          file('config/permission.php'),
+          file(
+            'database/migrations/2024_01_01_000000_create_permissions_table.php',
+          ),
+        ],
+      },
+      {
+        name: 'generic PHP public application',
+        entries: [file('composer.json'), file('public/index.php')],
+      },
+    ])('does not detect Laravel from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

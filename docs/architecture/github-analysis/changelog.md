@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-22
+
+### Laravel Backend Area Detection
+
+- **Decision:** Detect Laravel backend owners through multi-version application bootstrap and ownership anchors instead of broad PHP conventions.
+- **Problem:** The Laravel backend detector scaffold had no behavior, while Composer manifests, controllers, models, migrations, views, and package service providers are too broad to prove a runnable Laravel application by path alone.
+- **Solution:** Added owner-scoped Laravel signal scoring and an explicit application-shape gate in `detected-area-rules/backend/laravel-backend-area-rules.ts`, exposed `Laravel`, `PHP`, and conditional `Blade` technology metadata, and added public-analyzer fixtures for current, canonical, modern, legacy, API, Blade, monorepo, package, repeated-signal, and weak PHP structures.
+- **Outcome:** Recognized Laravel application owners now emit `Backend API` with Laravel as the primary technology, PHP as related context, and Blade when directly evidenced, while generic PHP projects and reusable Laravel packages remain non-emitting.
+
 ## 2026-06-20
 
 ### Backend Detector Evidence Folder Policy
