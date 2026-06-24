@@ -4678,6 +4678,373 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Ruby on Rails backend detector', () => {
+    it('detects a Rails 8-style full application', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/boot.rb'),
+        file('config/environment.rb'),
+        file('config/environments/development.rb'),
+        file('config/routes.rb'),
+        file('config.ru'),
+        file('app/controllers/application_controller.rb'),
+        file('app/models/application_record.rb'),
+        file('app/jobs/application_job.rb'),
+        file('app/mailers/application_mailer.rb'),
+        file('config/database.yml'),
+        file('db/schema.rb'),
+        file('Gemfile'),
+        file('Rakefile'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: expect.arrayContaining([
+          'bin/rails',
+          'config/application.rb',
+          'config/boot.rb',
+          'config/environment.rb',
+          'config/routes.rb',
+        ]),
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('detects canonical Rails boot through bin and boot config', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/boot.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('detects canonical Rails boot through bin and environment entry', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/environment.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('detects a Rack-booted Rails application', () => {
+      const result = analyze([
+        file('config/application.rb'),
+        file('config/environment.rb'),
+        file('config.ru'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('detects a routed Rails application', () => {
+      const result = analyze([
+        file('config/application.rb'),
+        file('config/routes.rb'),
+        file('app/controllers/application_controller.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('detects a configured Rails application', () => {
+      const result = analyze([
+        file('config/application.rb'),
+        file('config/boot.rb'),
+        file('config/routes.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('detects an API-only Rails application without view evidence', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/boot.rb'),
+        file('config/routes.rb'),
+        file('app/controllers/application_controller.rb'),
+        file('app/controllers/api/users_controller.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it('adds ERB as related technology for server-rendered Rails views', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/boot.rb'),
+        file('app/views/users/index.html.erb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['ERB', 'Ruby'],
+        },
+      });
+    });
+
+    it('detects legacy Rails applications without ApplicationRecord', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/environment.rb'),
+        file('app/models/user.rb'),
+        file('db/migrate/20160101120000_create_users.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+    });
+
+    it.each(['db/schema.rb', 'db/structure.sql'])(
+      'counts Rails database schema evidence from %s',
+      (schemaPath) => {
+        const result = analyze([
+          file('bin/rails'),
+          file('config/application.rb'),
+          file('config/boot.rb'),
+          file(schemaPath),
+        ]);
+
+        expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+          evidence: expect.arrayContaining([schemaPath]),
+          inferredTechnologies: {
+            primary: 'Ruby on Rails',
+            related: ['Ruby'],
+          },
+        });
+      },
+    );
+
+    it('keeps Rails monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/bin/rails'),
+        file('apps/api/config/application.rb'),
+        file('apps/api/config/boot.rb'),
+        file('apps/api/config/routes.rb'),
+        directory('packages'),
+        directory('packages/engine'),
+        file('packages/engine/Gemfile'),
+        file('packages/engine/Rakefile'),
+        file('packages/engine/bin/rails'),
+        file('packages/engine/config/routes.rb'),
+        file('packages/engine/app/controllers/users_controller.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['Ruby'],
+        },
+      });
+      expect(
+        areaByName(result, 'Backend API', 'packages/engine'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Rails signals once per owner', () => {
+      const result = analyze([
+        file('bin/rails'),
+        file('config/application.rb'),
+        file('config/boot.rb'),
+        file('app/controllers/users_controller.rb'),
+        file('app/controllers/orders_controller.rb'),
+        file('app/models/user.rb'),
+        file('app/models/order.rb'),
+        file('app/views/users/index.html.erb'),
+        file('app/views/orders/index.html.erb'),
+        file('db/migrate/20240101120000_create_users.rb'),
+        file('db/migrate/20240102120000_create_orders.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'app/controllers/users_controller.rb',
+          'app/models/user.rb',
+          'app/views/users/index.html.erb',
+          'bin/rails',
+          'config/application.rb',
+          'config/boot.rb',
+          'db/migrate/20240101120000_create_users.rb',
+        ],
+        inferredTechnologies: {
+          primary: 'Ruby on Rails',
+          related: ['ERB', 'Ruby'],
+        },
+      });
+    });
+
+    it('does not combine Rails gate evidence from sibling owners', () => {
+      const result = analyze([
+        file('apps/api/bin/rails'),
+        file('apps/api/config/application.rb'),
+        file('apps/web/config/boot.rb'),
+        file('apps/web/config/routes.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', 'apps/web')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('does not promote a Devise-style nested Rails test application', () => {
+      const result = analyze([
+        file('Gemfile'),
+        file('Rakefile'),
+        file('test/rails_app/bin/rails'),
+        file('test/rails_app/config/application.rb'),
+        file('test/rails_app/config/boot.rb'),
+        file('test/rails_app/config/environment.rb'),
+        file('test/rails_app/config/routes.rb'),
+        file('test/rails_app/config.ru'),
+        file('test/rails_app/app/controllers/application_controller.rb'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('does not promote Rails framework generator templates', () => {
+      const result = analyze([
+        file('railties/lib/rails/generators/rails/app/templates/bin/rails.tt'),
+        file(
+          'railties/lib/rails/generators/rails/app/templates/config/application.rb.tt',
+        ),
+        file(
+          'railties/lib/rails/generators/rails/app/templates/config/boot.rb.tt',
+        ),
+        file(
+          'railties/lib/rails/generators/rails/app/templates/config/environment.rb.tt',
+        ),
+        file(
+          'railties/lib/rails/generators/rails/app/templates/config/routes.rb.tt',
+        ),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it.each([
+      {
+        name: 'bin entry alone',
+        entries: [file('bin/rails')],
+      },
+      {
+        name: 'application config alone',
+        entries: [file('config/application.rb')],
+      },
+      {
+        name: 'boot config alone',
+        entries: [file('config/boot.rb')],
+      },
+      {
+        name: 'environment entry alone',
+        entries: [file('config/environment.rb')],
+      },
+      {
+        name: 'routes alone',
+        entries: [file('config/routes.rb')],
+      },
+      {
+        name: 'Rack entry alone',
+        entries: [file('config.ru')],
+      },
+      {
+        name: 'bin and application config without a third anchor',
+        entries: [file('bin/rails'), file('config/application.rb')],
+      },
+      {
+        name: 'Gemfile and Rakefile',
+        entries: [file('Gemfile'), file('Rakefile')],
+      },
+      {
+        name: 'generic Rack application',
+        entries: [file('Gemfile'), file('config.ru')],
+      },
+      {
+        name: 'score-only Rails conventions',
+        entries: [
+          file('app/controllers/users_controller.rb'),
+          file('app/models/application_record.rb'),
+          file('app/models/user.rb'),
+          file('app/views/users/index.html.erb'),
+          file('db/migrate/20240101120000_create_users.rb'),
+          file('db/schema.rb'),
+          file('config/database.yml'),
+          file('app/jobs/application_job.rb'),
+          file('app/mailers/application_mailer.rb'),
+        ],
+      },
+      {
+        name: 'Rails Engine without application config',
+        entries: [
+          file('Gemfile'),
+          file('Rakefile'),
+          file('bin/rails'),
+          file('config/routes.rb'),
+          file('app/controllers/users_controller.rb'),
+          file('app/models/user.rb'),
+        ],
+      },
+    ])('does not detect Ruby on Rails from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

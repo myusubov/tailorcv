@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-24
+
+### Ruby on Rails Backend Area Detection
+
+- **Decision:** Detect Ruby on Rails application owners through root-scoped, three-part application boot and routing shapes.
+- **Problem:** The Rails detector scaffold had no behavior, while Ruby projects, Rails engines, and embedded test applications can contain Gemfiles, Rakefiles, controllers, routes, migrations, and even `bin/rails` without representing a deployable Rails application owner.
+- **Solution:** Added owner-scoped Rails signal scoring and an application-config-anchored gate in `detected-area-rules/backend/rails-backend-area-rules.ts`, restricted evidence to repository-root and recognized monorepo-owner paths, exposed `Ruby on Rails`, `Ruby`, and conditional `ERB` metadata, and added public-analyzer fixtures for full, API-only, legacy, monorepo, engine, dummy-app, generator-template, repeated-signal, and weak Ruby structures.
+- **Outcome:** Full and API-only Rails applications now emit `Backend API` with Ruby context and conditional ERB metadata, while Rails engines, generic Rack/Ruby projects, nested test applications, and weak-only file clusters remain non-emitting.
+
 ## 2026-06-22
 
 ### Laravel Backend Area Detection
