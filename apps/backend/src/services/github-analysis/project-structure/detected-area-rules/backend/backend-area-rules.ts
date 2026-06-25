@@ -1,6 +1,7 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { addAspNetCoreBackendAreas } from './asp-net-core-backend-area-rules';
 import { addDjangoBackendAreas } from './django-backend-area-rules';
+import { addExpressBackendAreas } from './express-backend-area-rules';
 import { addGenericBackendAreas } from './generic-backend-area-rules';
 import { addLaravelBackendAreas } from './laravel-backend-area-rules';
 import { addNestBackendAreas } from './nest-backend-area-rules';
@@ -21,5 +22,6 @@ export function addBackendAreas({
   addAspNetCoreBackendAreas({ candidates, index });
   addLaravelBackendAreas({ candidates, index });
   addRailsBackendAreas({ candidates, index });
+  addExpressBackendAreas({ candidates, index });
   addGenericBackendAreas({ candidates, index });
 }

@@ -5045,6 +5045,316 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Express.js backend detector', () => {
+    it('detects an Express generator application', () => {
+      const result = analyze([
+        file('app.js'),
+        file('bin/www'),
+        directory('routes'),
+        file('routes/index.js'),
+        file('routes/users.js'),
+        directory('public'),
+        directory('views'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'app.js',
+          'bin/www',
+          'public',
+          'routes',
+          'routes/index.js',
+          'views',
+        ],
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it('detects an Express generator application without views', () => {
+      const result = analyze([
+        file('app.js'),
+        file('bin/www'),
+        directory('routes'),
+        file('routes/index.js'),
+        file('routes/users.js'),
+        directory('public'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it('detects a TypeScript layered Express API', () => {
+      const result = analyze([
+        file('src/app.ts'),
+        directory('src/routes'),
+        file('src/routes/users.routes.ts'),
+        directory('src/controllers'),
+        file('src/controllers/users.controller.ts'),
+        directory('src/middlewares'),
+        file('src/middlewares/auth.middleware.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'src/app.ts',
+          'src/controllers',
+          'src/controllers/users.controller.ts',
+          'src/middlewares',
+          'src/middlewares/auth.middleware.ts',
+          'src/routes',
+          'src/routes/users.routes.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it('detects a JavaScript layered Express API with unsuffixed files', () => {
+      const result = analyze([
+        file('app.js'),
+        directory('routes'),
+        file('routes/user.js'),
+        directory('controllers'),
+        file('controllers/user.js'),
+        directory('middleware'),
+        file('middleware/auth.js'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it('detects a TailorCV-style server-owned Express API', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/backend'),
+        file('apps/backend/package.json'),
+        directory('apps/backend/src'),
+        file('apps/backend/src/server.ts'),
+        directory('apps/backend/src/routes'),
+        file('apps/backend/src/routes/github.router.ts'),
+        directory('apps/backend/src/controllers'),
+        file('apps/backend/src/controllers/github.controller.ts'),
+        directory('apps/backend/src/middleware'),
+        file('apps/backend/src/middleware/auth.ts'),
+        directory('apps/backend/src/services'),
+        file('apps/backend/src/services/github.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/backend')).toMatchObject({
+        confidence: 1,
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('detects a services-backed Express API without middleware', () => {
+      const result = analyze([
+        file('src/app.ts'),
+        directory('src/routes'),
+        file('src/routes/auth.route.ts'),
+        directory('src/controllers'),
+        file('src/controllers/auth.controller.ts'),
+        directory('src/services'),
+        file('src/services/auth.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it('keeps Express monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/src/app.ts'),
+        directory('apps/api/src/routes'),
+        file('apps/api/src/routes/users.routes.ts'),
+        directory('apps/api/src/controllers'),
+        file('apps/api/src/controllers/users.controller.ts'),
+        directory('apps/api/src/middlewares'),
+        file('apps/api/src/middlewares/auth.middleware.ts'),
+        directory('packages'),
+        directory('packages/ui'),
+        directory('packages/ui/src'),
+        directory('packages/ui/src/controllers'),
+        file('packages/ui/src/controllers/button.controller.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', 'apps/api')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+      expect(areaByName(result, 'Backend API', 'packages/ui')).toBeUndefined();
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Express signals once per owner', () => {
+      const result = analyze([
+        file('src/app.ts'),
+        directory('src/routes'),
+        file('src/routes/users.routes.ts'),
+        file('src/routes/orders.routes.ts'),
+        directory('src/controllers'),
+        file('src/controllers/users.controller.ts'),
+        file('src/controllers/orders.controller.ts'),
+        directory('src/middlewares'),
+        file('src/middlewares/auth.middleware.ts'),
+        file('src/middlewares/errors.middleware.ts'),
+        directory('src/services'),
+        file('src/services/users.service.ts'),
+        file('src/services/orders.service.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'src/app.ts',
+          'src/controllers',
+          'src/controllers/users.controller.ts',
+          'src/middlewares',
+          'src/middlewares/auth.middleware.ts',
+          'src/routes',
+          'src/routes/users.routes.ts',
+          'src/services',
+          'src/services/users.service.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Express.js',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it('does not add Express metadata when a stronger backend detector already claimed the owner', () => {
+      const result = analyze([
+        file('nest-cli.json'),
+        file('src/main.ts'),
+        file('src/app.module.ts'),
+        directory('src/routes'),
+        file('src/routes/users.routes.ts'),
+        directory('src/controllers'),
+        file('src/controllers/users.controller.ts'),
+        directory('src/middlewares'),
+        file('src/middlewares/auth.middleware.ts'),
+      ]);
+
+      expect(areaByName(result, 'Backend API', '.')).toMatchObject({
+        inferredTechnologies: {
+          primary: 'NestJS',
+          related: ['Node.js'],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'package manifest alone',
+        entries: [file('package.json')],
+      },
+      {
+        name: 'app entry alone',
+        entries: [file('app.js')],
+      },
+      {
+        name: 'src app entry alone',
+        entries: [file('src/app.ts')],
+      },
+      {
+        name: 'server entry alone',
+        entries: [file('server.js')],
+      },
+      {
+        name: 'src index with package manifest',
+        entries: [file('package.json'), file('src/index.ts')],
+      },
+      {
+        name: 'routes, controllers, and middleware without app or server',
+        entries: [
+          directory('src/routes'),
+          file('src/routes/users.routes.ts'),
+          directory('src/controllers'),
+          file('src/controllers/users.controller.ts'),
+          directory('src/middleware'),
+          file('src/middleware/auth.middleware.ts'),
+        ],
+      },
+      {
+        name: 'app entry and routes without controller',
+        entries: [file('src/app.ts'), file('src/routes/users.routes.ts')],
+      },
+      {
+        name: 'app entry, controller, and middleware without route',
+        entries: [
+          file('src/app.ts'),
+          file('src/controllers/users.controller.ts'),
+          file('src/middleware/auth.middleware.ts'),
+        ],
+      },
+      {
+        name: 'server entry, routes, and controller without package or support',
+        entries: [
+          file('src/server.ts'),
+          file('src/routes/users.routes.ts'),
+          file('src/controllers/users.controller.ts'),
+        ],
+      },
+      {
+        name: 'public and views',
+        entries: [directory('public'), directory('views')],
+      },
+      {
+        name: 'React-style frontend route and service folders',
+        entries: [
+          file('vite.config.ts'),
+          file('src/App.tsx'),
+          directory('src/routes'),
+          file('src/routes/Profile.tsx'),
+          directory('src/services'),
+          file('src/services/api.ts'),
+        ],
+      },
+      {
+        name: 'generic Node CLI package',
+        entries: [
+          file('package.json'),
+          file('src/server.ts'),
+          directory('src/services'),
+          file('src/services/jobs.service.ts'),
+        ],
+      },
+    ])('does not detect Express.js from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Backend API', '.')).toBeUndefined();
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),

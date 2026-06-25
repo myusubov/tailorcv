@@ -87,6 +87,7 @@ apps/backend/src/services/github-analysis/project-structure/
 │   │   ├── asp-net-core-backend-area-rules.ts
 │   │   ├── backend-area-rules.ts
 │   │   ├── django-backend-area-rules.ts
+│   │   ├── express-backend-area-rules.ts
 │   │   ├── generic-backend-area-rules.ts
 │   │   ├── laravel-backend-area-rules.ts
 │   │   ├── nest-backend-area-rules.ts
@@ -130,7 +131,7 @@ apps/backend/src/services/github-analysis/project-structure/
 
 - **Rule**: `summary.inferredStack` is structure-inferred only.
 - **Rule**: Do not treat it as the final stack source of truth.
-- **Rule**: Do not infer dependency-specific backend frameworks such as Express from generic folders alone; dependency/config analysis should confirm those later.
+- **Rule**: Do not infer dependency-specific backend frameworks such as Express from generic folders alone. The detected-area Express.js detector only accepts conservative generator or layered API path clusters; dependency/config analysis should confirm package-level proof later.
 - **Rule**: Path-only stack inference may include distinctive config or structure signals such as Next.js, Vite, Prisma, Docker, Turborepo, Nx, NestJS, Expo, React Native, native Android/iOS, and Flutter.
 - **Rule**: Dependency/config analyzer will later confirm stack from files such as `package.json`, lockfiles, Prisma schema, Docker config, and framework config.
 
@@ -143,7 +144,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Every emitted detected area includes path-inferred technology metadata with one required `primary` technology and zero or more deduplicated `related` technologies. The primary is excluded from related values; internal candidates use a `Set` and public output converts it to a stable sorted array.
 - **Rule**: The first detector that creates an `(area name, owner path)` candidate owns its primary technology; later score additions preserve that primary and may only accumulate score, evidence, and related technologies.
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
-- **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, and Ruby on Rails run first with implemented path rules before the scaffolded generic backend fallback.
+- **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, Ruby on Rails, and Express.js run first with implemented path rules before the scaffolded generic backend fallback.
 - **Rule**: NestJS evidence is grouped by owner and scored once per signal type across CLI config, main entry, root/default modules, controllers, services, gateways, and resolvers. Standard `src/app.*` files use dedicated buckets instead of also counting as broad feature signals.
 - **Rule**: NestJS output requires an anchored application shape: CLI config plus another gate-capable signal, main entry plus root module, main entry plus feature module and transport handler, or root module plus transport handler. Standard and feature services remain score-only evidence.
 - **Rule**: NestJS output uses `NestJS` as its primary technology and `Node.js` as related runtime context; it does not infer Express because path-only NestJS evidence cannot prove the configured HTTP adapter.
@@ -169,6 +170,11 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Rails matchers accept only repository-root, `apps/*`, and `packages/*` application paths. This prevents complete nested test applications such as `test/rails_app` and Rails generator templates from being promoted to their repository root without introducing a generic ignored-folder policy.
 - **Rule**: Ruby on Rails output uses `Ruby on Rails` as its primary technology and `Ruby` as related language context. `ERB` is added only when the proven owner contains `app/views/**/*.html.erb`; dependency-specific Rails technologies remain for later analyzers.
 - **Rule**: Ruby on Rails detector confidence coverage uses Rails 8-style, canonical boot, Rack boot, routed, configured, API-only, ERB, legacy, schema/structure, monorepo-isolation, repeated-signal, engine, nested-dummy, generator-template, sibling-isolation, isolated-anchor, generic Rack, and score-only fixtures through the public analyzer output.
+- **Rule**: Express.js evidence is grouped by owner and scored once per signal type across Express-generator `bin/www`, root or `src/app.*` entries, `server.*` entries, package manifests, route directories and route files, generator default routes, controller directories and files, middleware directories and files, service directories and files, `public`, and `views`.
+- **Rule**: Express.js output requires a conservative application shape: generator `bin/www` plus root app entry, route file, and generator support; app entry plus route, controller, and middleware/service support; or server entry plus route, controller, support, and package manifest. Generic Node entry files, package manifests, route/controller/middleware folders, `public`, and `views` never emit Express.js alone.
+- **Rule**: Express.js runs after stronger backend framework detectors and skips an owner that already has a `Backend API` candidate, preventing weak Express-like folder structure from polluting NestJS or other framework metadata.
+- **Rule**: Express.js output uses `Express.js` as its primary technology and `Node.js` as related runtime context. JavaScript and TypeScript backend extensions are supported, but `.tsx`, package contents, and source calls such as `express()` or `express.Router()` are left for later analyzers.
+- **Rule**: Express.js detector confidence coverage uses generator, generator-without-views, TypeScript layered, JavaScript unsuffixed, TailorCV-style server-owned, services-backed, monorepo-isolation, repeated-signal, stronger-framework-interference, isolated-signal, frontend-like, and generic Node fixtures through the public analyzer output.
 - **Rule**: Framework detectors do not discard evidence solely because it appears under generic `docs`, `test`, `tests`, or `fixtures` paths. Framework-specific signal combinations remain responsible for precision; directory exclusions should be introduced only from demonstrated false-positive repository shapes.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
@@ -225,6 +231,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] ASP.NET Core backend detector path rules
 - [x] Laravel backend detector path rules
 - [x] Ruby on Rails backend detector path rules
+- [x] Express.js backend detector path rules
 - [ ] Generic backend fallback path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder

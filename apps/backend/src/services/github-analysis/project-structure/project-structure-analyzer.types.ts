@@ -78,6 +78,7 @@ export type DetectedAreaTechnology =
   | 'C#'
   | 'Django'
   | 'ERB'
+  | 'Express.js'
   | 'Java'
   | 'Kotlin'
   | 'Laravel'

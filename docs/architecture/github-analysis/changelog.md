@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-25
+
+### Express.js Backend Area Detection
+
+- **Decision:** Add conservative path-only Express.js backend detection after stronger backend framework detectors.
+- **Problem:** Express is common in JavaScript/TypeScript backend repositories, but its path conventions are weak and generic Node folders such as `routes`, `controllers`, `middleware`, and `services` can appear outside Express applications.
+- **Solution:** Added owner-scoped Express.js signal scoring and a guarded generator/layered-API shape gate in `detected-area-rules/backend/express-backend-area-rules.ts`, skipped owners already claimed by stronger backend detectors, exposed `Express.js` with `Node.js` runtime metadata, and added public-analyzer fixtures for generator, layered, server-owned, monorepo, repeated-signal, framework-interference, frontend-like, and weak Node shapes.
+- **Outcome:** Conventional Express.js JavaScript and TypeScript applications now emit `Backend API`, while generic Node packages, weak folder clusters, and same-owner stronger backend framework claims remain non-emitting for Express.js.
+
 ## 2026-06-24
 
 ### Ruby on Rails Backend Area Detection
