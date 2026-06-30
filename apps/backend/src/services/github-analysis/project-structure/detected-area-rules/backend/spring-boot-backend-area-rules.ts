@@ -78,7 +78,7 @@ function addLanguageEvidence({
 }): void {
   if (entry.extension !== 'java' && entry.extension !== 'kt') return;
 
-  const ownerPath = ownerPathForApplicationArea({ path: entry.path });
+  const ownerPath = ownerPathForApplicationArea(entry.path);
   const ownerLanguages =
     languagesByOwner.get(ownerPath) ?? new Set<DetectedAreaTechnology>();
 

@@ -98,7 +98,8 @@ export type DetectedAreaTechnology =
   | 'Astro'
   | 'Spring Boot'
   | 'Static Web'
-  | 'Node.js';
+  | 'Node.js'
+  | 'Prisma'
 
 /**
  * Primary and related technologies exposed for a detected repository area.

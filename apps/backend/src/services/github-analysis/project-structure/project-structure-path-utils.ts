@@ -12,11 +12,7 @@ export function normalizePath({ path }: { path: string }): string {
  * Returns the smallest useful owning root for app/package evidence paths.
  * Monorepo paths resolve to `apps/name` or `packages/name`; root app evidence resolves to the repository root.
  */
-export function ownerPathForApplicationArea({
-  path,
-}: {
-  path: string;
-}): string {
+export function ownerPathForApplicationArea(path: string): string {
   const parts = path.split('/');
 
   if (parts[0] === 'apps' && parts[1]) {
@@ -33,7 +29,7 @@ export function ownerPathForApplicationArea({
   }
 
   return '.';
-}
+};
 
 /**
  * Returns the smallest useful owning root for backend API evidence paths.
@@ -70,30 +66,14 @@ export function ownerPathForConfigArea({ path }: { path: string }): string {
  * Returns the owner root for known database schema evidence.
  * Prisma and Drizzle schema/migration paths group under their conventional owner folders.
  */
-export function ownerPathForDatabaseArea({ path }: { path: string }): string {
+export function ownerPathForDatabaseArea(path: string): string {
   const parts = path.split('/');
-  const prismaIndex = parts.indexOf('prisma');
-  const drizzleIndex = parts.indexOf('drizzle');
-  const dbIndex = parts.indexOf('db');
-
-  if (prismaIndex >= 0) {
-    return parts.slice(0, prismaIndex + 1).join('/');
+  const prismaPathIndex = parts.indexOf("prisma");
+  if (prismaPathIndex >= 0) {
+    return parts.slice(0, prismaPathIndex + 1).join("/")
   }
-
-  if (drizzleIndex >= 0) {
-    return parts.slice(0, drizzleIndex + 1).join('/');
-  }
-
-  if (dbIndex >= 0) {
-    return parts.slice(0, dbIndex + 1).join('/');
-  }
-
-  if (parts[0] === 'migrations') {
-    return 'migrations';
-  }
-
-  return parentPathFromPath({ path });
-}
+  return ""
+};
 
 /**
  * Returns an entry's parent path when it exists, otherwise the entry path itself.
