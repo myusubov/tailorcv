@@ -69,37 +69,64 @@ export interface ProjectStructureSummary {
 }
 
 /**
+ * Frontend technology labels inferred for detected user-interface areas.
+ */
+export type FrontendDetectedAreaTechnology =
+  | 'Angular'
+  | 'Astro'
+  | 'Next.js'
+  | 'Nuxt'
+  | 'React'
+  | 'React Router'
+  | 'Svelte'
+  | 'SvelteKit'
+  | 'Static Web'
+  | 'Vue';
+
+/**
+ * Backend framework labels inferred for detected API/server areas.
+ */
+export type BackendDetectedAreaTechnology =
+  | 'ASP.NET Core'
+  | 'Django'
+  | 'Express.js'
+  | 'Laravel'
+  | 'NestJS'
+  | 'Ruby on Rails'
+  | 'Spring Boot';
+
+/**
+ * Runtime, language, and platform context attached to detected areas.
+ */
+export type RuntimeDetectedAreaTechnology =
+  | '.NET'
+  | 'C#'
+  | 'Java'
+  | 'Kotlin'
+  | 'Node.js'
+  | 'PHP'
+  | 'Python'
+  | 'Ruby';
+
+/**
+ * Template/view technology labels attached as related context.
+ */
+export type TemplateDetectedAreaTechnology = 'Blade' | 'ERB';
+
+/**
+ * Database tooling labels inferred for detected schema or migration areas.
+ */
+export type DatabaseDetectedAreaTechnology = 'Drizzle' | 'Prisma';
+
+/**
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
-  | '.NET'
-  | 'ASP.NET Core'
-  | 'Blade'
-  | 'C#'
-  | 'Django'
-  | 'ERB'
-  | 'Express.js'
-  | 'Java'
-  | 'Kotlin'
-  | 'Laravel'
-  | 'NestJS'
-  | 'Next.js'
-  | 'PHP'
-  | 'Python'
-  | 'React'
-  | 'React Router'
-  | 'Ruby'
-  | 'Ruby on Rails'
-  | 'Nuxt'
-  | 'Vue'
-  | 'Angular'
-  | 'SvelteKit'
-  | 'Svelte'
-  | 'Astro'
-  | 'Spring Boot'
-  | 'Static Web'
-  | 'Node.js'
-  | 'Prisma'
+  | FrontendDetectedAreaTechnology
+  | BackendDetectedAreaTechnology
+  | RuntimeDetectedAreaTechnology
+  | TemplateDetectedAreaTechnology
+  | DatabaseDetectedAreaTechnology;
 
 /**
  * Primary and related technologies exposed for a detected repository area.

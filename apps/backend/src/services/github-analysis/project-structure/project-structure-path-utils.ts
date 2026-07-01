@@ -29,7 +29,7 @@ export function ownerPathForApplicationArea(path: string): string {
   }
 
   return '.';
-};
+}
 
 /**
  * Returns the smallest useful owning root for backend API evidence paths.
@@ -64,15 +64,19 @@ export function ownerPathForConfigArea({ path }: { path: string }): string {
 
 /**
  * Returns the owner root for known database schema evidence.
- * Prisma and Drizzle schema/migration paths group under their conventional owner folders.
  */
 export function ownerPathForDatabaseArea(path: string): string {
   const parts = path.split('/');
-  const prismaPathIndex = parts.indexOf("prisma");
+  const prismaPathIndex = parts.indexOf('prisma');
   if (prismaPathIndex >= 0) {
-    return parts.slice(0, prismaPathIndex + 1).join("/")
+    return parts.slice(0, prismaPathIndex + 1).join('/');
   }
-  return ""
+
+  if (parts.length <= 1) {
+    return '.';
+  }
+
+  return parts.slice(0, -1).join('/');
 };
 
 /**

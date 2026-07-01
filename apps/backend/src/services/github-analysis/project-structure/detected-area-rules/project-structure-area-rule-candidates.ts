@@ -47,16 +47,17 @@ export function countAreaRuleSignal<Signal extends string>({
   entry,
   signal,
   score,
-  resolveOwnerPath
+  resolveOwnerPath,
 }: {
   areasByOwner: Map<string, AreaRuleCandidate<Signal>>;
   entry: Pick<RepoTreeEntry, 'path'>;
   signal: Signal;
   score: number;
-  resolveOwnerPath?: (path: string) => string
+  resolveOwnerPath?: (path: string) => string;
 }): void {
-  const path = entry.path
-  const ownerPath = resolveOwnerPath?.(path) ?? ownerPathForApplicationArea(path);
+  const path = entry.path;
+  const ownerPath =
+    resolveOwnerPath?.(path) ?? ownerPathForApplicationArea(path);
   const ownerCandidate =
     areasByOwner.get(ownerPath) ??
     ({

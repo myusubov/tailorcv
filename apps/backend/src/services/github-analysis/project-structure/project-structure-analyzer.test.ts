@@ -5355,6 +5355,169 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Prisma database detector', () => {
+    it('detects a conventional Prisma schema folder', () => {
+      const result = analyze([
+        directory('prisma'),
+        file('prisma/schema.prisma'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'prisma')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: ['prisma/schema.prisma'],
+        inferredTechnologies: {
+          primary: 'Prisma',
+          related: [],
+        },
+      });
+    });
+
+    it('detects a root Prisma schema file at the repository root', () => {
+      const result = analyze([file('schema.prisma')]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: ['schema.prisma'],
+        inferredTechnologies: {
+          primary: 'Prisma',
+          related: [],
+        },
+      });
+    });
+
+    it('detects Prisma migration history without a schema file', () => {
+      const result = analyze([
+        directory('prisma'),
+        directory('prisma/migrations'),
+        file('prisma/migrations/20240610120000_init/migration.sql'),
+        file('prisma/migrations/migration_lock.toml'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'prisma')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'prisma/migrations',
+          'prisma/migrations/20240610120000_init/migration.sql',
+          'prisma/migrations/migration_lock.toml',
+        ],
+        inferredTechnologies: {
+          primary: 'Prisma',
+          related: [],
+        },
+      });
+    });
+
+    it('detects config-backed Prisma schema fragments under one owner', () => {
+      const result = analyze([
+        directory('prisma'),
+        file('prisma/prisma.config.ts'),
+        directory('prisma/models'),
+        file('prisma/models/user.prisma'),
+        file('prisma/models/post.prisma'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'prisma')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: ['prisma/models/user.prisma', 'prisma/prisma.config.ts'],
+        inferredTechnologies: {
+          primary: 'Prisma',
+          related: [],
+        },
+      });
+    });
+
+    it('keeps Prisma database owners isolated in monorepos', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/backend'),
+        directory('apps/backend/prisma'),
+        file('apps/backend/prisma/schema.prisma'),
+        directory('packages'),
+        directory('packages/shared'),
+        directory('packages/shared/prisma'),
+        directory('packages/shared/prisma/models'),
+        file('packages/shared/prisma/models/example.prisma'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'apps/backend/prisma'),
+      ).toMatchObject({
+        evidence: ['apps/backend/prisma/schema.prisma'],
+        inferredTechnologies: {
+          primary: 'Prisma',
+          related: [],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'packages/shared/prisma'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Prisma signals once per owner', () => {
+      const result = analyze([
+        directory('prisma'),
+        file('prisma/schema.prisma'),
+        directory('prisma/migrations'),
+        file('prisma/migrations/20240610120000_init/migration.sql'),
+        file('prisma/migrations/20240611120000_add_users/migration.sql'),
+        file('prisma/migrations/migration_lock.toml'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'prisma')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'prisma/migrations',
+          'prisma/migrations/20240610120000_init/migration.sql',
+          'prisma/migrations/migration_lock.toml',
+          'prisma/schema.prisma',
+        ],
+        inferredTechnologies: {
+          primary: 'Prisma',
+          related: [],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'Prisma config alone',
+        entries: [file('prisma.config.ts')],
+      },
+      {
+        name: 'schema fragment alone',
+        entries: [file('prisma/models/user.prisma')],
+      },
+      {
+        name: 'migrations directory alone',
+        entries: [directory('prisma/migrations')],
+      },
+      {
+        name: 'migration lock alone',
+        entries: [file('prisma/migrations/migration_lock.toml')],
+      },
+      {
+        name: 'migrations directory with lock but no schema or migration file',
+        entries: [
+          directory('prisma/migrations'),
+          file('prisma/migrations/migration_lock.toml'),
+        ],
+      },
+      {
+        name: 'generic SQL migration outside Prisma migrations',
+        entries: [file('migrations/20240610120000_init/migration.sql')],
+      },
+    ])('does not detect Prisma from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'Prisma',
+        ),
+      ).toBe(false);
+    });
+  });
+
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
       directory('public'),
@@ -5477,33 +5640,231 @@ describe('analyzeProjectStructure', () => {
     expect(flutterResult.summary.inferredStack).toEqual(['Flutter']);
   });
 
-  it('detects conservative Drizzle database conventions', () => {
-    const result = analyze([
-      directory('src'),
-      directory('src/db'),
-      directory('drizzle'),
-      file('drizzle.config.ts'),
-      file('drizzle/0001_initial.sql'),
-      file('src/db/schema.ts'),
-      file('src/schema.ts'),
-      file('package.json'),
-      file('tsconfig.json'),
-    ]);
+  describe('Drizzle database detector', () => {
+    it('detects the documented root config and src/db schema shape', () => {
+      const result = analyze([
+        file('drizzle.config.ts'),
+        directory('src'),
+        directory('src/db'),
+        file('src/db/schema.ts'),
+      ]);
 
-    expect(areaByName(result, 'Database schema', '.')).toMatchObject({
-      evidence: expect.arrayContaining(['drizzle.config.ts']),
+      expect(areaByName(result, 'Database schema', 'src/db')).toMatchObject({
+        confidence: 1,
+        evidence: ['drizzle.config.ts', 'src/db/schema.ts'],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
     });
-    expect(areaByName(result, 'Database schema', 'drizzle')).toMatchObject({
-      evidence: expect.arrayContaining(['drizzle', 'drizzle/0001_initial.sql']),
+
+    it('detects colocated config-backed schema folders', () => {
+      const result = analyze([
+        directory('db'),
+        file('db/drizzle.config.ts'),
+        file('db/schema.ts'),
+        file('src/schema.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'db')).toMatchObject({
+        evidence: ['db/drizzle.config.ts', 'db/schema.ts'],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(
+        result.detectedAreas.some((area) =>
+          area.evidence.includes('src/schema.ts'),
+        ),
+      ).toBe(false);
     });
-    expect(areaByName(result, 'Database schema', 'src/db')).toMatchObject({
-      evidence: expect.arrayContaining(['src/db/schema.ts']),
+
+    it('detects custom config files backing common schema locations', () => {
+      const result = analyze([
+        file('drizzle-dev.config.ts'),
+        directory('lib'),
+        directory('lib/db'),
+        file('lib/db/schema.ts'),
+        directory('src'),
+        directory('src/lib'),
+        directory('src/lib/db'),
+        file('src/lib/db/schema.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'lib/db')).toMatchObject({
+        evidence: ['drizzle-dev.config.ts', 'lib/db/schema.ts'],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', 'src/lib/db')).toMatchObject({
+        evidence: ['drizzle-dev.config.ts', 'src/lib/db/schema.ts'],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
     });
-    expect(
-      result.detectedAreas.some((area) =>
-        area.evidence.includes('src/schema.ts'),
-      ),
-    ).toBe(false);
+
+    it('detects package-owned db/src schema files with package-local config', () => {
+      const result = analyze([
+        directory('packages'),
+        directory('packages/db'),
+        file('packages/db/drizzle.config.ts'),
+        directory('packages/db/src'),
+        file('packages/db/src/schema.ts'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'packages/db/src'),
+      ).toMatchObject({
+        evidence: [
+          'packages/db/drizzle.config.ts',
+          'packages/db/src/schema.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', 'packages/db')).toBeUndefined();
+    });
+
+    it('detects generated default migration sets without config', () => {
+      const result = analyze([
+        directory('drizzle'),
+        file('drizzle/0000_initial.sql'),
+        file('drizzle/0001_add_users.sql'),
+        directory('drizzle/meta'),
+        file('drizzle/meta/_journal.json'),
+        file('drizzle/meta/0000_snapshot.json'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'drizzle')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'drizzle/0000_initial.sql',
+          'drizzle/meta/0000_snapshot.json',
+          'drizzle/meta/_journal.json',
+        ],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+    });
+
+    it('detects config-backed custom migration output folders', () => {
+      const result = analyze([
+        file('drizzle.config.ts'),
+        directory('migrations'),
+        file('migrations/0000_initial.sql'),
+        directory('migrations/meta'),
+        file('migrations/meta/_journal.json'),
+        file('migrations/meta/0000_snapshot.json'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'migrations')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'drizzle.config.ts',
+          'migrations/0000_initial.sql',
+          'migrations/meta/0000_snapshot.json',
+          'migrations/meta/_journal.json',
+        ],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('keeps Drizzle owners isolated in monorepos', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/drizzle.config.ts'),
+        directory('apps/api/src'),
+        directory('apps/api/src/db'),
+        file('apps/api/src/db/schema.ts'),
+        directory('packages'),
+        directory('packages/shared'),
+        directory('packages/shared/db'),
+        file('packages/shared/db/schema.ts'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'apps/api/src/db'),
+      ).toMatchObject({
+        evidence: [
+          'apps/api/drizzle.config.ts',
+          'apps/api/src/db/schema.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'packages/shared/db'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it.each([
+      {
+        name: 'standard config alone',
+        entries: [file('drizzle.config.ts')],
+      },
+      {
+        name: 'custom config alone',
+        entries: [file('drizzle-prod.config.ts')],
+      },
+      {
+        name: 'schema file alone',
+        entries: [file('src/db/schema.ts')],
+      },
+      {
+        name: 'ambiguous root schema file with config',
+        entries: [file('drizzle.config.ts'), file('src/schema.ts')],
+      },
+      {
+        name: 'migration SQL file alone',
+        entries: [file('drizzle/0000_initial.sql')],
+      },
+      {
+        name: 'migration journal alone',
+        entries: [file('drizzle/meta/_journal.json')],
+      },
+      {
+        name: 'migration snapshot alone',
+        entries: [file('drizzle/meta/0000_snapshot.json')],
+      },
+      {
+        name: 'migration metadata without SQL or config',
+        entries: [
+          file('drizzle/meta/_journal.json'),
+          file('drizzle/meta/0000_snapshot.json'),
+        ],
+      },
+      {
+        name: 'generic SQL outside migration output folders',
+        entries: [file('sql/0000_initial.sql')],
+      },
+    ])('does not detect Drizzle from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'Drizzle',
+        ),
+      ).toBe(false);
+    });
   });
 
   it('detects a library package from package entry structure', () => {

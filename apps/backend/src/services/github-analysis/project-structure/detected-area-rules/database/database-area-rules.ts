@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { addPrismaDatabaseAreas } from './prisma-database-area-rules';
+import { addDrizzleDatabaseAreas } from './drizzle-database-area-rules';
 
 /**
  * Applies database-specific detected-area rules.
@@ -11,4 +12,5 @@ export function addDatabaseAreas({
   index,
 }: DetectedAreaRuleContext): void {
   addPrismaDatabaseAreas({ candidates, index });
+  addDrizzleDatabaseAreas({ candidates, index });
 }

@@ -93,6 +93,9 @@ apps/backend/src/services/github-analysis/project-structure/
 │   │   ├── nest-backend-area-rules.ts
 │   │   ├── rails-backend-area-rules.ts
 │   │   └── spring-boot-backend-area-rules.ts
+│   ├── database/
+│   │   ├── database-area-rules.ts
+│   │   └── prisma-database-area-rules.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -142,6 +145,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
 - **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
 - **Rule**: Every emitted detected area includes path-inferred technology metadata with one required `primary` technology and zero or more deduplicated `related` technologies. The primary is excluded from related values; internal candidates use a `Set` and public output converts it to a stable sorted array.
+- **Rule**: `DetectedAreaTechnology` is composed from frontend, backend, runtime/platform, template, and database technology unions in `project-structure-analyzer.types.ts`; keep the public union stable while adding new labels to the narrow category that owns them.
 - **Rule**: The first detector that creates an `(area name, owner path)` candidate owns its primary technology; later score additions preserve that primary and may only accumulate score, evidence, and related technologies.
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
 - **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, Ruby on Rails, and Express.js run first with implemented path rules before the scaffolded generic backend fallback.
@@ -175,6 +179,11 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Express.js runs after stronger backend framework detectors and skips an owner that already has a `Backend API` candidate, preventing weak Express-like folder structure from polluting NestJS or other framework metadata.
 - **Rule**: Express.js output uses `Express.js` as its primary technology and `Node.js` as related runtime context. JavaScript and TypeScript backend extensions are supported, but `.tsx`, package contents, and source calls such as `express()` or `express.Router()` are left for later analyzers.
 - **Rule**: Express.js detector confidence coverage uses generator, generator-without-views, TypeScript layered, JavaScript unsuffixed, TailorCV-style server-owned, services-backed, monorepo-isolation, repeated-signal, stronger-framework-interference, isolated-signal, frontend-like, and generic Node fixtures through the public analyzer output.
+- **Rule**: Database detected-area rules are dispatched from `detected-area-rules/database/database-area-rules.ts` after frontend and backend application detectors. Database areas describe persistent schema and migration ownership separately from the application owner that contains them.
+- **Rule**: Database detectors may pass a custom owner resolver into `countAreaRuleSignal` so schema evidence can emit precise paths such as `apps/backend/prisma` instead of broad application paths such as `apps/backend`.
+- **Rule**: Prisma evidence is grouped by database owner and scored once per signal type across `schema.prisma`, `.prisma` schema fragments under `prisma/`, `prisma.config.*` or `.config/prisma.*`, `prisma/migrations`, Prisma `migration.sql` files, and `migration_lock.toml`.
+- **Rule**: Prisma output emits `Database schema` with primary technology `Prisma`. It requires `schema.prisma`, a Prisma migration file, config plus schema fragment, or config plus migration lock. Config alone, fragments alone, migration directories alone, migration locks alone, and generic SQL migrations outside `prisma/migrations` do not emit Prisma.
+- **Rule**: Prisma detector confidence coverage uses conventional schema folders, root schema files, migration-history-only folders, config-backed schema fragments, monorepo owner isolation, repeated-signal evidence, and weak-signal rejection fixtures through the public analyzer output.
 - **Rule**: Framework detectors do not discard evidence solely because it appears under generic `docs`, `test`, `tests`, or `fixtures` paths. Framework-specific signal combinations remain responsible for precision; directory exclusions should be introduced only from demonstrated false-positive repository shapes.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` or conservative Drizzle paths like `drizzle.config.ts`, `drizzle/`, and `src/db/schema.ts`.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
@@ -232,6 +241,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Laravel backend detector path rules
 - [x] Ruby on Rails backend detector path rules
 - [x] Express.js backend detector path rules
+- [x] Prisma database schema detector path rules
 - [ ] Generic backend fallback path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
