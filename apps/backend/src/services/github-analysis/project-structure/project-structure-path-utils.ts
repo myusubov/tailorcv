@@ -80,6 +80,33 @@ export function ownerPathForDatabaseArea(path: string): string {
 };
 
 /**
+ * Returns the application/package owner for Drizzle evidence.
+ * Drizzle schema, config, and generated migration files may live in different
+ * folders, so path-only detection groups them under the containing repo owner.
+ */
+export function ownerPathForDrizzleDatabaseArea(path: string): string {
+  const parts = path.split('/');
+
+  if (parts[0] === 'apps' && parts[1]) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+
+  if (parts[0] === 'packages' && parts[1]) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+
+  if (parts[0] === 'services' && parts[1]) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+
+  if (parts[0] === 'libs' && parts[1]) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+
+  return '.';
+}
+
+/**
  * Returns an entry's parent path when it exists, otherwise the entry path itself.
  * Useful for file-backed areas whose owner is normally their containing folder.
  */

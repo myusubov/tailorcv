@@ -5,7 +5,7 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForDatabaseArea } from '../../project-structure-path-utils';
+import { ownerPathForDrizzleDatabaseArea } from '../../project-structure-path-utils';
 
 type DrizzleDatabaseSignal =
     | 'drizzle-config'
@@ -63,7 +63,7 @@ export function addDrizzleDatabaseAreas({
 
     const drizzleSchemaFiles = index.findEntriesByPathMatching({
         pattern:
-            /(^|\/)(?:(?:src|lib)\/db\/schema(?:\/.+)?|db\/schema(?:\/.+)?|(?:[^/]+\/)*db\/src\/schema(?:\/.+)?|internal\/db\/src\/schema(?:\/.+)?)\.(?:ts|js|mjs|cjs|mts|cts)$/,
+            /(^|\/)(?:(?:src|lib)\/db\/schema(?:\/.+)?|src\/lib\/db\/schema(?:\/.+)?|db\/schema(?:\/.+)?|(?:[^/]+\/)*db\/src\/schema(?:\/.+)?|internal\/db\/src\/schema(?:\/.+)?)\.(?:ts|js|mjs|cjs|mts|cts)$/,
     });
 
     const drizzleMigrationSqlFiles = index.findEntriesByPathMatching({
@@ -84,7 +84,7 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleConfigFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-config'],
             signal: 'drizzle-config',
-            resolveOwnerPath: ownerPathForDatabaseArea,
+            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -94,7 +94,7 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleCustomConfigFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-custom-config'],
             signal: 'drizzle-custom-config',
-            resolveOwnerPath: ownerPathForDatabaseArea,
+            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -104,7 +104,7 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleSchemaFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-schema-file'],
             signal: 'drizzle-schema-file',
-            resolveOwnerPath: ownerPathForDatabaseArea,
+            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -114,7 +114,7 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleMigrationSqlFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-migration-sql-file'],
             signal: 'drizzle-migration-sql-file',
-            resolveOwnerPath: ownerPathForDatabaseArea,
+            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -124,7 +124,7 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleMigrationJournalFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-migration-journal'],
             signal: 'drizzle-migration-journal',
-            resolveOwnerPath: ownerPathForDatabaseArea,
+            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -134,7 +134,7 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleMigrationSnapshotFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-migration-snapshot'],
             signal: 'drizzle-migration-snapshot',
-            resolveOwnerPath: ownerPathForDatabaseArea,
+            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 

@@ -5649,7 +5649,7 @@ describe('analyzeProjectStructure', () => {
         file('src/db/schema.ts'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'src/db')).toMatchObject({
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
         confidence: 1,
         evidence: ['drizzle.config.ts', 'src/db/schema.ts'],
         inferredTechnologies: {
@@ -5657,7 +5657,7 @@ describe('analyzeProjectStructure', () => {
           related: [],
         },
       });
-      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+      expect(areaByName(result, 'Database schema', 'src/db')).toBeUndefined();
     });
 
     it('detects colocated config-backed schema folders', () => {
@@ -5668,13 +5668,14 @@ describe('analyzeProjectStructure', () => {
         file('src/schema.ts'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'db')).toMatchObject({
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
         evidence: ['db/drizzle.config.ts', 'db/schema.ts'],
         inferredTechnologies: {
           primary: 'Drizzle',
           related: [],
         },
       });
+      expect(areaByName(result, 'Database schema', 'db')).toBeUndefined();
       expect(
         result.detectedAreas.some((area) =>
           area.evidence.includes('src/schema.ts'),
@@ -5682,32 +5683,23 @@ describe('analyzeProjectStructure', () => {
       ).toBe(false);
     });
 
-    it('detects custom config files backing common schema locations', () => {
+    it('detects custom config files backing src/lib/db schema locations', () => {
       const result = analyze([
         file('drizzle-dev.config.ts'),
-        directory('lib'),
-        directory('lib/db'),
-        file('lib/db/schema.ts'),
         directory('src'),
         directory('src/lib'),
         directory('src/lib/db'),
         file('src/lib/db/schema.ts'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'lib/db')).toMatchObject({
-        evidence: ['drizzle-dev.config.ts', 'lib/db/schema.ts'],
-        inferredTechnologies: {
-          primary: 'Drizzle',
-          related: [],
-        },
-      });
-      expect(areaByName(result, 'Database schema', 'src/lib/db')).toMatchObject({
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
         evidence: ['drizzle-dev.config.ts', 'src/lib/db/schema.ts'],
         inferredTechnologies: {
           primary: 'Drizzle',
           related: [],
         },
       });
+      expect(areaByName(result, 'Database schema', 'src/lib/db')).toBeUndefined();
     });
 
     it('detects package-owned db/src schema files with package-local config', () => {
@@ -5720,7 +5712,7 @@ describe('analyzeProjectStructure', () => {
       ]);
 
       expect(
-        areaByName(result, 'Database schema', 'packages/db/src'),
+        areaByName(result, 'Database schema', 'packages/db'),
       ).toMatchObject({
         evidence: [
           'packages/db/drizzle.config.ts',
@@ -5731,7 +5723,9 @@ describe('analyzeProjectStructure', () => {
           related: [],
         },
       });
-      expect(areaByName(result, 'Database schema', 'packages/db')).toBeUndefined();
+      expect(
+        areaByName(result, 'Database schema', 'packages/db/src'),
+      ).toBeUndefined();
     });
 
     it('detects generated default migration sets without config', () => {
@@ -5744,18 +5738,19 @@ describe('analyzeProjectStructure', () => {
         file('drizzle/meta/0000_snapshot.json'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'drizzle')).toMatchObject({
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
         confidence: 1,
         evidence: [
           'drizzle/0000_initial.sql',
-          'drizzle/meta/0000_snapshot.json',
           'drizzle/meta/_journal.json',
+          'drizzle/meta/0000_snapshot.json',
         ],
         inferredTechnologies: {
           primary: 'Drizzle',
           related: [],
         },
       });
+      expect(areaByName(result, 'Database schema', 'drizzle')).toBeUndefined();
     });
 
     it('detects config-backed custom migration output folders', () => {
@@ -5768,20 +5763,20 @@ describe('analyzeProjectStructure', () => {
         file('migrations/meta/0000_snapshot.json'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'migrations')).toMatchObject({
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
         confidence: 1,
         evidence: [
           'drizzle.config.ts',
           'migrations/0000_initial.sql',
-          'migrations/meta/0000_snapshot.json',
           'migrations/meta/_journal.json',
+          'migrations/meta/0000_snapshot.json',
         ],
         inferredTechnologies: {
           primary: 'Drizzle',
           related: [],
         },
       });
-      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+      expect(areaByName(result, 'Database schema', 'migrations')).toBeUndefined();
     });
 
     it('keeps Drizzle owners isolated in monorepos', () => {
@@ -5799,7 +5794,7 @@ describe('analyzeProjectStructure', () => {
       ]);
 
       expect(
-        areaByName(result, 'Database schema', 'apps/api/src/db'),
+        areaByName(result, 'Database schema', 'apps/api'),
       ).toMatchObject({
         evidence: [
           'apps/api/drizzle.config.ts',
@@ -5811,8 +5806,55 @@ describe('analyzeProjectStructure', () => {
         },
       });
       expect(
+        areaByName(result, 'Database schema', 'apps/api/src/db'),
+      ).toBeUndefined();
+      expect(
         areaByName(result, 'Database schema', 'packages/shared/db'),
       ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('keeps service-owned Drizzle evidence under service owners', () => {
+      const result = analyze([
+        directory('services'),
+        directory('services/api'),
+        file('services/api/drizzle.config.ts'),
+        directory('services/api/src'),
+        directory('services/api/src/db'),
+        file('services/api/src/db/schema.ts'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'services/api'),
+      ).toMatchObject({
+        evidence: [
+          'services/api/drizzle.config.ts',
+          'services/api/src/db/schema.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('keeps library-owned Drizzle evidence under library owners', () => {
+      const result = analyze([
+        directory('libs'),
+        directory('libs/db'),
+        file('libs/db/drizzle.config.ts'),
+        directory('libs/db/src'),
+        file('libs/db/src/schema.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'libs/db')).toMatchObject({
+        evidence: ['libs/db/drizzle.config.ts', 'libs/db/src/schema.ts'],
+        inferredTechnologies: {
+          primary: 'Drizzle',
+          related: [],
+        },
+      });
       expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
     });
 
