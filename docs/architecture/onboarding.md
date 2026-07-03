@@ -164,6 +164,27 @@ if (ok) goToNextStep();
 
 ## 10. Development Log
 
+### [2026-07-03] - GitHub Repo Results Internal Scroll
+
+- **Decision:** Make the GitHub repo picker use a bounded flex shell where only the repository results region scrolls.
+- **Problem:** Large GitHub repository lists pushed the Analyze/Back actions below the fold, and applying scroll behavior directly to the results component did not work because its parent chain did not provide a bounded flex height.
+- **Solution:**
+  1. **Bounded shell:** Updated `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` to give the GitHub picker a `100dvh`-based height with its own vertical padding.
+  2. **Flex parent chain:** Made the animated picker wrapper a `flex` column with `min-h-0`, `flex-1`, and `overflow-hidden` so child regions can shrink correctly.
+  3. **Scrollable results:** Updated `apps/frontend/app/components/onboarding/github/github-repo-selection-results.tsx` to use `flex-1`, `min-h-0`, and `overflow-y-auto` for the repo list area.
+  4. **Persistent footer:** Updated `apps/frontend/app/components/onboarding/github/github-repo-selection-actions.tsx` so the action row does not shrink into the scrollable list.
+- **Outcome:** Long GitHub repo lists now scroll inside the results region while the header/search controls and action row remain available in the picker layout.
+
+### [2026-07-03] - GitHub Animated Shell Horizontal Padding
+
+- **Decision:** Move onboarding layout padding from the route `main` element onto the keyed animated content shell, with GitHub mode using no horizontal route padding.
+- **Problem:** The shared onboarding page wrapper applied `px-4 sm:px-6` to every method, which made the GitHub repo picker unsuitable for an internal scroll layout because the eventual repo-list scrollbar would be inset by the global page padding. Switching the wrapper class directly from selected method state also caused the outgoing method-selection view to lose padding during its exit animation.
+- **Solution:**
+  1. **Neutral route landmark:** Updated `apps/frontend/app/onboarding/page.tsx` so `main` no longer owns the centered padded shell.
+  2. **Animated layout shell:** Applied the mode-specific shell class to the keyed `motion.div`, allowing the exiting screen to retain its own layout while the entering GitHub screen receives `mx-auto max-w-6xl`.
+  3. **Normal-flow preservation:** Retained `mx-auto max-w-6xl px-4 py-8 sm:px-6` for method selection, upload, and manual entry views.
+- **Outcome:** The GitHub path can own horizontal spacing inside its feature layout without inheriting global page padding, while animated transitions no longer remove padding from the outgoing onboarding screen.
+
 ### [2026-05-09] - Temporary GitHub Analyze Submit
 
 - **Decision:** Connect the GitHub repo picker Analyze action to the temporary backend analysis endpoint.

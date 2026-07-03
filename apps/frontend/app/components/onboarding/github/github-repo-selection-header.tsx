@@ -25,7 +25,7 @@ export function GitHubRepoSelectionHeader({
     connection.githubUsername.trim().charAt(0).toUpperCase() || '?';
 
   return (
-    <div className="mb-8 text-center">
+    <header className="mb-8 text-center">
       <motion.div
         className="mb-4 flex items-center justify-center gap-3"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -86,6 +86,6 @@ export function GitHubRepoSelectionHeader({
         Pick up to {maxRepos} repositories that best represent your engineering
         work.
       </motion.p>
-    </div>
+    </header>
   );
 }

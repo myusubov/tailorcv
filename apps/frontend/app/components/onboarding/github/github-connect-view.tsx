@@ -16,7 +16,7 @@ export function GitHubConnectView({
   onBack,
 }: GitHubConnectViewProps) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 sm:px-6">
       <motion.div
         className="w-full max-w-2xl"
         initial={{ opacity: 0, y: 30 }}
@@ -141,10 +141,11 @@ export function GitHubConnectView({
           </Button>
 
           <Button
-            size="lg"
             isDisabled={isConnecting}
             variant="primary"
             onPress={onConnect}
+            className="w-full sm:w-auto"
+
           >
             <Icon
               icon={
