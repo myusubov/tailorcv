@@ -102,6 +102,22 @@ export function ownerPathForDrizzleDatabaseArea(path: string): string {
   return '.';
 }
 
+/**
+ * Returns the repository or app/package owner for Knex evidence.
+ * Knex config, migrations, and seeds are configurable and commonly split
+ * across folders, so root repos emit at `.` while monorepos emit at owner root.
+ */
+export function ownerPathForKnexDatabaseArea(path: string): string {
+  const parts = path.split('/');
+
+  const databaseMonorepoOwnerPath = databaseMonorepoOwnerPathFromParts(parts);
+  if (databaseMonorepoOwnerPath) {
+    return databaseMonorepoOwnerPath;
+  }
+
+  return '.';
+}
+
 const SQLALCHEMY_DATABASE_ARTIFACT_DIRECTORIES = new Set([
   'alembic',
   'migrations',

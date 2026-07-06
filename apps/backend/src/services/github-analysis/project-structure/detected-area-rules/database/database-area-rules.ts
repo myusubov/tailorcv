@@ -4,6 +4,7 @@ import { addDrizzleDatabaseAreas } from './drizzle-database-area-rules';
 import { addSqlAlchemyDatabaseAreas } from './sqlalchemy-database-area-rules';
 import { addTypeOrmDatabaseAreas } from './typeorm-database-area-rules';
 import { addSequelizeDatabaseAreas } from './sequelize-database-area-rules';
+import { addKnexDatabaseAreas } from './knex-database-area-rules';
 
 /**
  * Applies database-specific detected-area rules.
@@ -19,4 +20,5 @@ export function addDatabaseAreas({
   addSqlAlchemyDatabaseAreas({ candidates, index });
   addTypeOrmDatabaseAreas({ candidates, index });
   addSequelizeDatabaseAreas({ candidates, index });
+  addKnexDatabaseAreas({ candidates, index });
 }

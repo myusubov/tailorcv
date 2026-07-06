@@ -6550,6 +6550,195 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Knex database detector', () => {
+    it('detects root canonical Knex migration shape', () => {
+      const result = analyze([
+        file('knexfile.js'),
+        directory('migrations'),
+        file('migrations/20201020140815_initial.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: ['knexfile.js', 'migrations/20201020140815_initial.js'],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+    });
+
+    it('detects root canonical Knex seed shape', () => {
+      const result = analyze([
+        file('knexfile.ts'),
+        directory('seeds'),
+        file('seeds/1-users.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: ['knexfile.ts', 'seeds/1-users.ts'],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+    });
+
+    it('groups nested db migration evidence at the repository owner', () => {
+      const result = analyze([
+        file('knexfile.js'),
+        directory('src'),
+        directory('src/db'),
+        directory('src/db/migrations'),
+        file('src/db/migrations/20170826111515_create_users_table.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: [
+          'knexfile.js',
+          'src/db/migrations/20170826111515_create_users_table.js',
+        ],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', 'src/db')).toBeUndefined();
+    });
+
+    it('groups database folder migration evidence at the repository owner', () => {
+      const result = analyze([
+        file('knexfile.js'),
+        directory('database'),
+        directory('database/migrations'),
+        file('database/migrations/20220717153809_create_users_table.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: [
+          'database/migrations/20220717153809_create_users_table.js',
+          'knexfile.js',
+        ],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', 'database')).toBeUndefined();
+    });
+
+    it('detects Knex from custom config and migration artifacts', () => {
+      const result = analyze([
+        directory('src'),
+        file('src/_knexfile.ts'),
+        directory('src/db'),
+        file('src/db/knex.config.ts'),
+        directory('src/db/migrations'),
+        file('src/db/migrations/001-create-users.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: [
+          'src/_knexfile.ts',
+          'src/db/migrations/001-create-users.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+    });
+
+    it('keeps Knex owners isolated in monorepos', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/knexfile.ts'),
+        directory('apps/api/db'),
+        directory('apps/api/db/migrations'),
+        file('apps/api/db/migrations/001-users.ts'),
+        directory('packages'),
+        directory('packages/shared'),
+        directory('packages/shared/db'),
+        directory('packages/shared/db/migrations'),
+        file('packages/shared/db/migrations/001-users.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'apps/api')).toMatchObject({
+        evidence: ['apps/api/db/migrations/001-users.ts', 'apps/api/knexfile.ts'],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'packages/shared'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Knex signals once per owner', () => {
+      const result = analyze([
+        file('knexfile.js'),
+        file('knexfile.ts'),
+        file('migrations/20201020140815_initial.js'),
+        file('migrations/20201020140816_add_users.js'),
+        file('seeds/1-users.ts'),
+        file('seeds/2-posts.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: [
+          'knexfile.js',
+          'migrations/20201020140815_initial.js',
+          'seeds/1-users.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Knex',
+          related: [],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'config alone',
+        entries: [file('knexfile.js')],
+      },
+      {
+        name: 'custom config alone',
+        entries: [file('src/_knexfile.ts')],
+      },
+      {
+        name: 'migration alone',
+        entries: [file('migrations/20201020140815_initial.js')],
+      },
+      {
+        name: 'seed alone',
+        entries: [file('seeds/1-users.ts')],
+      },
+      {
+        name: 'migration and seed without config',
+        entries: [
+          file('migrations/20201020140815_initial.js'),
+          file('seeds/1-users.ts'),
+        ],
+      },
+      {
+        name: 'generic db connection files',
+        entries: [file('src/db/db.js'), file('database/connection.ts')],
+      },
+    ])('does not detect Knex from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'Knex',
+        ),
+      ).toBe(false);
+    });
+  });
+
   it('detects a library package from package entry structure', () => {
     const result = analyze([
       directory('src'),

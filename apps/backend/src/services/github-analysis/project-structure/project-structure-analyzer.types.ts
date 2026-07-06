@@ -119,6 +119,7 @@ export type TemplateDetectedAreaTechnology = 'Blade' | 'ERB';
 export type DatabaseDetectedAreaTechnology =
   | 'Alembic'
   | 'Drizzle'
+  | 'Knex'
   | 'Prisma'
   | 'Sequelize'
   | 'SQLAlchemy'

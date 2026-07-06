@@ -96,6 +96,7 @@ apps/backend/src/services/github-analysis/project-structure/
 │   ├── database/
 │   │   ├── database-area-rules.ts
 │   │   ├── drizzle-database-area-rules.ts
+│   │   ├── knex-database-area-rules.ts
 │   │   ├── prisma-database-area-rules.ts
 │   │   ├── sequelize-database-area-rules.ts
 │   │   ├── sqlalchemy-database-area-rules.ts
@@ -192,6 +193,9 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Drizzle evidence is grouped by app/package/repository owner rather than a precise schema folder because Drizzle config, schema, SQL migrations, journal, and snapshots may live in separate folders. Root repos emit `Database schema` at `.`, while monorepos emit at owners such as `apps/api`, `packages/db`, `services/api`, or `libs/db`.
 - **Rule**: Drizzle output emits `Database schema` with primary technology `Drizzle`. It requires config plus schema, config plus a migration artifact, or generated migration SQL plus journal/snapshot metadata. Standard config alone, custom config alone, schema alone, SQL alone, journal alone, snapshot alone, metadata-only migrations, and generic SQL outside recognized migration output folders do not emit Drizzle.
 - **Rule**: Drizzle detector confidence coverage uses root config plus `src/db/schema`, colocated `db/schema`, custom config plus `src/lib/db/schema`, package-owned `db/src/schema`, generated `drizzle/meta` migrations, custom `migrations/meta` output, app/service/lib monorepo owner isolation, and weak-signal rejection fixtures through the public analyzer output.
+- **Rule**: Knex evidence is grouped by repository/app/package owner rather than `db` or `database` folders because `knexfile.*`, migration files, and seed files can be configured into separate locations. Root repos emit at `.`, while monorepos emit at owners such as `apps/api`, `packages/db`, `services/api`, or `libs/db`.
+- **Rule**: Knex output emits `Database schema` with primary technology `Knex`. It requires canonical or custom Knex config evidence plus migration or seed evidence under the same owner. Config alone, custom config alone, migration alone, seed alone, migration-plus-seed without Knex config, and generic database connection files do not emit Knex.
+- **Rule**: Knex detector confidence coverage uses canonical root migrations, root seeds, nested `src/db` migrations, `database/migrations`, custom Knex config files, monorepo owner isolation, repeated signal counting, and weak-signal rejection fixtures through the public analyzer output.
 - **Rule**: SQLAlchemy evidence is grouped by the nearest shared SQLAlchemy/Alembic code owner rather than the individual artifact folder. Root Alembic projects emit at `.`, FastAPI-style `backend/app/models.py` plus `backend/app/alembic/*` emits at `backend/app`, package-level `models/` plus `migrations/` emits at the package folder, and monorepo evidence emits at owners such as `apps/api`, `packages/db`, `services/api`, or `libs/db`.
 - **Rule**: SQLAlchemy output emits `Database schema` with primary technology `SQLAlchemy` and related technologies `Alembic` and `Python`. It requires Alembic env plus version history, or Alembic config/env/version evidence paired with SQLAlchemy model/session/database files. Models alone, database/session files alone, config alone, env alone, generic version folders, and SQL migration files do not emit SQLAlchemy.
 - **Rule**: SQLAlchemy detector confidence coverage uses root Alembic, FastAPI-style app-local Alembic, Superset/Airflow-style `migrations` plus `models`, Prefect-style `_migrations/versions/{dialect}`, monorepo isolation, repeated version files, and weak-signal rejection fixtures through the public analyzer output.
@@ -260,6 +264,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Express.js backend detector path rules
 - [x] Prisma database schema detector path rules
 - [x] Drizzle database schema detector path rules
+- [x] Knex database schema detector path rules
 - [x] SQLAlchemy database schema detector path rules
 - [x] TypeORM database schema detector path rules
 - [x] Sequelize database schema detector path rules
