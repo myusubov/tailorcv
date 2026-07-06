@@ -5909,6 +5909,647 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('SQLAlchemy database detector', () => {
+    it('detects a root Alembic migration environment with SQLAlchemy models', () => {
+      const result = analyze([
+        file('alembic.ini'),
+        directory('alembic'),
+        file('alembic/env.py'),
+        file('alembic/script.py.mako'),
+        directory('alembic/versions'),
+        file('alembic/versions/ae1027a6acf_init.py'),
+        file('models.py'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'alembic.ini',
+          'alembic/env.py',
+          'alembic/versions/ae1027a6acf_init.py',
+          'alembic/script.py.mako',
+          'models.py',
+        ]),
+        inferredTechnologies: {
+          primary: 'SQLAlchemy',
+          related: ['Alembic', 'Python'],
+        },
+      });
+    });
+
+    it('detects FastAPI-style app-local SQLAlchemy and Alembic ownership', () => {
+      const result = analyze([
+        file('backend/alembic.ini'),
+        directory('backend'),
+        directory('backend/app'),
+        file('backend/app/models.py'),
+        directory('backend/app/alembic'),
+        file('backend/app/alembic/env.py'),
+        directory('backend/app/alembic/versions'),
+        file('backend/app/alembic/versions/e2412789c190_initialize_models.py'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'backend/app')).toMatchObject({
+        evidence: [
+          'backend/app/alembic/env.py',
+          'backend/app/alembic/versions/e2412789c190_initialize_models.py',
+          'backend/app/models.py',
+        ],
+        inferredTechnologies: {
+          primary: 'SQLAlchemy',
+          related: ['Alembic', 'Python'],
+        },
+      });
+      expect(areaByName(result, 'Database schema', 'backend')).toBeUndefined();
+    });
+
+    it('detects Superset-style models and migrations under one package owner', () => {
+      const result = analyze([
+        directory('superset'),
+        directory('superset/models'),
+        file('superset/models/core.py'),
+        directory('superset/migrations'),
+        file('superset/migrations/env.py'),
+        file('superset/migrations/script.py.mako'),
+        directory('superset/migrations/versions'),
+        file('superset/migrations/versions/2015-09-21_17-30_4e6a06bad7a8_init.py'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'superset')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'superset/migrations/env.py',
+          'superset/migrations/versions/2015-09-21_17-30_4e6a06bad7a8_init.py',
+          'superset/migrations/script.py.mako',
+          'superset/models/core.py',
+        ]),
+        inferredTechnologies: {
+          primary: 'SQLAlchemy',
+          related: ['Alembic', 'Python'],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'superset/migrations'),
+      ).toBeUndefined();
+    });
+
+    it('detects Prefect-style database modules with nested version folders', () => {
+      const result = analyze([
+        directory('src'),
+        directory('src/prefect'),
+        directory('src/prefect/server'),
+        directory('src/prefect/server/database'),
+        file('src/prefect/server/database/alembic.ini'),
+        file('src/prefect/server/database/orm_models.py'),
+        directory('src/prefect/server/database/_migrations'),
+        file('src/prefect/server/database/_migrations/env.py'),
+        directory('src/prefect/server/database/_migrations/versions'),
+        directory('src/prefect/server/database/_migrations/versions/postgresql'),
+        file(
+          'src/prefect/server/database/_migrations/versions/postgresql/2021_01_20_122127_25f4b90a7a42_initial_migration.py',
+        ),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'src/prefect/server/database'),
+      ).toMatchObject({
+        evidence: expect.arrayContaining([
+          'src/prefect/server/database/alembic.ini',
+          'src/prefect/server/database/_migrations/env.py',
+          'src/prefect/server/database/_migrations/versions/postgresql/2021_01_20_122127_25f4b90a7a42_initial_migration.py',
+          'src/prefect/server/database/orm_models.py',
+        ]),
+        inferredTechnologies: {
+          primary: 'SQLAlchemy',
+          related: ['Alembic', 'Python'],
+        },
+      });
+    });
+
+    it('keeps SQLAlchemy owners isolated in monorepos', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        directory('apps/api/app'),
+        file('apps/api/app/models.py'),
+        directory('apps/api/app/alembic'),
+        file('apps/api/app/alembic/env.py'),
+        directory('apps/api/app/alembic/versions'),
+        file('apps/api/app/alembic/versions/ae1027a6acf_init.py'),
+        directory('packages'),
+        directory('packages/shared'),
+        file('packages/shared/models.py'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'apps/api')).toMatchObject({
+        evidence: [
+          'apps/api/app/alembic/env.py',
+          'apps/api/app/alembic/versions/ae1027a6acf_init.py',
+          'apps/api/app/models.py',
+        ],
+        inferredTechnologies: {
+          primary: 'SQLAlchemy',
+          related: ['Alembic', 'Python'],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'packages/shared'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('counts repeated SQLAlchemy migration version files once per owner', () => {
+      const result = analyze([
+        file('models.py'),
+        directory('alembic'),
+        file('alembic/env.py'),
+        directory('alembic/versions'),
+        file('alembic/versions/ae1027a6acf_init.py'),
+        file('alembic/versions/1975ea83b712_add_account_table.py'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: [
+          'alembic/env.py',
+          'alembic/versions/ae1027a6acf_init.py',
+          'models.py',
+        ],
+        inferredTechnologies: {
+          primary: 'SQLAlchemy',
+          related: ['Alembic', 'Python'],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'models file alone',
+        entries: [file('models.py')],
+      },
+      {
+        name: 'database session file alone',
+        entries: [file('database.py')],
+      },
+      {
+        name: 'Alembic config alone',
+        entries: [file('alembic.ini')],
+      },
+      {
+        name: 'Alembic env file alone',
+        entries: [file('alembic/env.py')],
+      },
+      {
+        name: 'version file outside Alembic migration paths',
+        entries: [file('versions/ae1027a6acf_init.py')],
+      },
+      {
+        name: 'generic SQL migrations',
+        entries: [file('migrations/20240610120000_init.sql')],
+      },
+      {
+        name: 'frontend TypeScript models folder',
+        entries: [
+          file('vite.config.ts'),
+          directory('src'),
+          directory('src/models'),
+          file('src/models/user.ts'),
+        ],
+      },
+    ])('does not detect SQLAlchemy from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'SQLAlchemy',
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('TypeORM database detector', () => {
+    it('detects legacy TypeORM config backed by entity files', () => {
+      const result = analyze([
+        file('ormconfig.json'),
+        directory('src'),
+        directory('src/users'),
+        file('src/users/user.entity.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: ['ormconfig.json', 'src/users/user.entity.ts'],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+    });
+
+    it('detects data-source files backed by generated migrations', () => {
+      const result = analyze([
+        directory('src'),
+        file('src/data-source.ts'),
+        directory('src/migrations'),
+        file('src/migrations/1700000000000-Init.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: ['src/data-source.ts', 'src/migrations/1700000000000-Init.ts'],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+    });
+
+    it('detects TypeORM entity and migration files without config', () => {
+      const result = analyze([
+        directory('src'),
+        directory('src/entities'),
+        file('src/entities/user.entity.ts'),
+        directory('src/migrations'),
+        file('src/migrations/Migration20240610120000.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: [
+          'src/entities/user.entity.ts',
+          'src/migrations/Migration20240610120000.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+    });
+
+    it('detects example config only when backed by entity files', () => {
+      const result = analyze([
+        file('ormconfig.json.example'),
+        directory('src'),
+        directory('src/user'),
+        file('src/user/user.entity.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: ['ormconfig.json.example', 'src/user/user.entity.ts'],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+    });
+
+    it('keeps TypeORM owners isolated in monorepos', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        directory('apps/api/src'),
+        file('apps/api/src/data-source.ts'),
+        directory('apps/api/src/entities'),
+        file('apps/api/src/entities/user.entity.ts'),
+        directory('packages'),
+        directory('packages/shared'),
+        directory('packages/shared/src'),
+        directory('packages/shared/src/entities'),
+        file('packages/shared/src/entities/user.entity.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'apps/api')).toMatchObject({
+        evidence: [
+          'apps/api/src/data-source.ts',
+          'apps/api/src/entities/user.entity.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'packages/shared'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('detects package-level TypeORM entities and migrations', () => {
+      const result = analyze([
+        directory('packages'),
+        directory('packages/db'),
+        directory('packages/db/src'),
+        directory('packages/db/src/entities'),
+        file('packages/db/src/entities/user.ts'),
+        directory('packages/db/src/migrations'),
+        directory('packages/db/src/migrations/common'),
+        file('packages/db/src/migrations/common/1620821879465-Init.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'packages/db')).toMatchObject(
+        {
+          evidence: [
+            'packages/db/src/entities/user.ts',
+            'packages/db/src/migrations/common/1620821879465-Init.ts',
+          ],
+          inferredTechnologies: {
+            primary: 'TypeORM',
+            related: [],
+          },
+        },
+      );
+      expect(
+        areaByName(result, 'Database schema', 'packages/db/src'),
+      ).toBeUndefined();
+    });
+
+    it('detects database-folder TypeORM ownership below non-monorepo roots', () => {
+      const result = analyze([
+        directory('backend'),
+        directory('backend/app'),
+        directory('backend/app/db'),
+        file('backend/app/db/data-source.ts'),
+        directory('backend/app/db/entities'),
+        file('backend/app/db/entities/user.entity.ts'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'backend/app/db'),
+      ).toMatchObject({
+        evidence: [
+          'backend/app/db/data-source.ts',
+          'backend/app/db/entities/user.entity.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+      expect(areaByName(result, 'Database schema', 'backend')).toBeUndefined();
+    });
+
+    it('counts repeated TypeORM entity and migration signals once per owner', () => {
+      const result = analyze([
+        file('src/data-source.ts'),
+        file('src/entities/user.entity.ts'),
+        file('src/entities/post.entity.ts'),
+        file('src/migrations/1700000000000-Init.ts'),
+        file('src/migrations/1700000000001-AddPost.ts'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: [
+          'src/data-source.ts',
+          'src/entities/user.entity.ts',
+          'src/migrations/1700000000000-Init.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'entity file alone',
+        entries: [file('src/users/user.entity.ts')],
+      },
+      {
+        name: 'migration file alone',
+        entries: [file('src/migrations/1700000000000-Init.ts')],
+      },
+      {
+        name: 'data source file alone',
+        entries: [file('src/data-source.ts')],
+      },
+      {
+        name: 'legacy config alone',
+        entries: [file('ormconfig.json')],
+      },
+      {
+        name: 'example config alone',
+        entries: [file('ormconfig.json.example')],
+      },
+      {
+        name: 'generic entity folder without config or migration',
+        entries: [file('src/entities/user.ts')],
+      },
+      {
+        name: 'generic migration outside migration folders',
+        entries: [file('src/db/1700000000000-Init.ts')],
+      },
+      {
+        name: 'generic schema file with data source',
+        entries: [file('src/data-source.ts'), file('src/schemas/user.schema.ts')],
+      },
+    ])('does not detect TypeORM from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'TypeORM',
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('Sequelize database detector', () => {
+    it('detects default Sequelize CLI root shape', () => {
+      const result = analyze([
+        file('.sequelizerc'),
+        directory('config'),
+        file('config/config.json'),
+        directory('models'),
+        file('models/index.js'),
+        file('models/user.js'),
+        directory('migrations'),
+        file('migrations/20211214181007-create-user.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        evidence: [
+          '.sequelizerc',
+          'config/config.json',
+          'migrations/20211214181007-create-user.js',
+          'models/index.js',
+          'models/user.js',
+        ],
+        inferredTechnologies: {
+          primary: 'Sequelize',
+          related: [],
+        },
+      });
+    });
+
+    it('detects custom Sequelize CLI paths under a dedicated sequelize folder', () => {
+      const result = analyze([
+        file('.sequelizerc'),
+        directory('sequelize'),
+        file('sequelize/config.js'),
+        directory('sequelize/migrations'),
+        file('sequelize/migrations/01-create-demo-user.js'),
+        directory('sequelize/seeders'),
+        file('sequelize/seeders/01-demo-role.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+      expect(
+        areaByName(result, 'Database schema', 'sequelize'),
+      ).toMatchObject({
+        evidence: [
+          'sequelize/config.js',
+          'sequelize/migrations/01-create-demo-user.js',
+          'sequelize/seeders/01-demo-role.js',
+        ],
+        inferredTechnologies: {
+          primary: 'Sequelize',
+          related: [],
+        },
+      });
+    });
+
+    it('detects Sequelize infrastructure folders below source trees', () => {
+      const result = analyze([
+        directory('src'),
+        directory('src/infra'),
+        directory('src/infra/sequelize'),
+        directory('src/infra/sequelize/config'),
+        file('src/infra/sequelize/config/config.js'),
+        directory('src/infra/sequelize/models'),
+        file('src/infra/sequelize/models/index.ts'),
+        file('src/infra/sequelize/models/album.js'),
+        directory('src/infra/sequelize/migrations'),
+        file('src/infra/sequelize/migrations/20190625131808-initial-migration.ts'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'src/infra/sequelize'),
+      ).toMatchObject({
+        evidence: [
+          'src/infra/sequelize/config/config.js',
+          'src/infra/sequelize/migrations/20190625131808-initial-migration.ts',
+          'src/infra/sequelize/models/album.js',
+          'src/infra/sequelize/models/index.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'Sequelize',
+          related: [],
+        },
+      });
+    });
+
+    it('does not over-broaden split DDD database and sequelize folders', () => {
+      const result = analyze([
+        directory('src'),
+        directory('src/infra'),
+        directory('src/infra/database'),
+        directory('src/infra/database/models'),
+        file('src/infra/database/models/user.js'),
+        directory('src/infra/sequelize'),
+        directory('src/infra/sequelize/migrations'),
+        file('src/infra/sequelize/migrations/001-users.js'),
+      ]);
+
+      expect(
+        areaByName(result, 'Database schema', 'src/infra/database'),
+      ).toBeUndefined();
+      expect(
+        areaByName(result, 'Database schema', 'src/infra/sequelize'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('keeps Sequelize owners isolated in monorepos', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/api'),
+        file('apps/api/.sequelizerc'),
+        directory('apps/api/models'),
+        file('apps/api/models/user.js'),
+        directory('packages'),
+        directory('packages/shared'),
+        directory('packages/shared/models'),
+        file('packages/shared/models/user.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', 'apps/api')).toMatchObject({
+        evidence: ['apps/api/.sequelizerc', 'apps/api/models/user.js'],
+        inferredTechnologies: {
+          primary: 'Sequelize',
+          related: [],
+        },
+      });
+      expect(
+        areaByName(result, 'Database schema', 'packages/shared'),
+      ).toBeUndefined();
+      expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
+    });
+
+    it('counts repeated Sequelize signals once per owner', () => {
+      const result = analyze([
+        file('.sequelizerc'),
+        file('models/index.js'),
+        file('models/user.js'),
+        file('models/post.js'),
+        file('migrations/20211214181007-create-user.js'),
+        file('migrations/20211214181008-create-post.js'),
+      ]);
+
+      expect(areaByName(result, 'Database schema', '.')).toMatchObject({
+        confidence: expect.any(Number),
+        evidence: [
+          '.sequelizerc',
+          'migrations/20211214181007-create-user.js',
+          'models/index.js',
+          'models/user.js',
+        ],
+        inferredTechnologies: {
+          primary: 'Sequelize',
+          related: [],
+        },
+      });
+    });
+
+    it.each([
+      {
+        name: 'CLI config alone',
+        entries: [file('.sequelizerc')],
+      },
+      {
+        name: 'config alone',
+        entries: [file('config/config.json')],
+      },
+      {
+        name: 'model alone',
+        entries: [file('models/user.js')],
+      },
+      {
+        name: 'migration alone',
+        entries: [file('migrations/20211214181007-create-user.js')],
+      },
+      {
+        name: 'seeder alone',
+        entries: [file('seeders/20211214190000-demo-user.js')],
+      },
+      {
+        name: 'generic model and seeder without migration or config',
+        entries: [
+          file('models/user.js'),
+          file('seeders/20211214190000-demo-user.js'),
+        ],
+      },
+      {
+        name: 'generic migration outside recognized shape',
+        entries: [file('db/20211214181007-create-user.js')],
+      },
+    ])('does not detect Sequelize from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'Sequelize',
+        ),
+      ).toBe(false);
+    });
+  });
+
   it('detects a library package from package entry structure', () => {
     const result = analyze([
       directory('src'),

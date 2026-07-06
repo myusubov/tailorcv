@@ -28,7 +28,7 @@ export function DevLogoutButton() {
     <div className="fixed right-6 bottom-6 z-50">
       <Button
         aria-label="Sign out current session"
-        size="lg"
+        isIconOnly
         onPress={handleSignOut}
         isDisabled={isSigningOut}
         className="shadow-lg transition-transform hover:scale-105 active:scale-95"
@@ -41,7 +41,6 @@ export function DevLogoutButton() {
         ) : (
           <>
             <Icon icon="lucide:log-out" className="size-4" />
-            Dev Logout
           </>
         )}
       </Button>

@@ -116,7 +116,13 @@ export type TemplateDetectedAreaTechnology = 'Blade' | 'ERB';
 /**
  * Database tooling labels inferred for detected schema or migration areas.
  */
-export type DatabaseDetectedAreaTechnology = 'Drizzle' | 'Prisma';
+export type DatabaseDetectedAreaTechnology =
+  | 'Alembic'
+  | 'Drizzle'
+  | 'Prisma'
+  | 'Sequelize'
+  | 'SQLAlchemy'
+  | 'TypeORM';
 
 /**
  * Technology labels inferred for a detected repository area from path evidence.

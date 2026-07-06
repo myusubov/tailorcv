@@ -96,7 +96,10 @@ apps/backend/src/services/github-analysis/project-structure/
 │   ├── database/
 │   │   ├── database-area-rules.ts
 │   │   ├── drizzle-database-area-rules.ts
-│   │   └── prisma-database-area-rules.ts
+│   │   ├── prisma-database-area-rules.ts
+│   │   ├── sequelize-database-area-rules.ts
+│   │   ├── sqlalchemy-database-area-rules.ts
+│   │   └── typeorm-database-area-rules.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -182,12 +185,22 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Express.js detector confidence coverage uses generator, generator-without-views, TypeScript layered, JavaScript unsuffixed, TailorCV-style server-owned, services-backed, monorepo-isolation, repeated-signal, stronger-framework-interference, isolated-signal, frontend-like, and generic Node fixtures through the public analyzer output.
 - **Rule**: Database detected-area rules are dispatched from `detected-area-rules/database/database-area-rules.ts` after frontend and backend application detectors. Database areas describe persistent schema and migration ownership separately from the application owner that contains them.
 - **Rule**: Database detectors may pass a custom owner resolver into `countAreaRuleSignal` so schema evidence can emit precise paths such as `apps/backend/prisma` instead of broad application paths such as `apps/backend`.
+- **Rule**: Database owner resolvers that group broad monorepo owners share the same `apps/*`, `packages/*`, `services/*`, and `libs/*` owner-root helper in `project-structure-path-utils.ts`; resolver-specific folder logic should run only after that shared owner check.
 - **Rule**: Prisma evidence is grouped by database owner and scored once per signal type across `schema.prisma`, `.prisma` schema fragments under `prisma/`, `prisma.config.*` or `.config/prisma.*`, `prisma/migrations`, Prisma `migration.sql` files, and `migration_lock.toml`.
 - **Rule**: Prisma output emits `Database schema` with primary technology `Prisma`. It requires `schema.prisma`, a Prisma migration file, config plus schema fragment, or config plus migration lock. Config alone, fragments alone, migration directories alone, migration locks alone, and generic SQL migrations outside `prisma/migrations` do not emit Prisma.
 - **Rule**: Prisma detector confidence coverage uses conventional schema folders, root schema files, migration-history-only folders, config-backed schema fragments, monorepo owner isolation, repeated-signal evidence, and weak-signal rejection fixtures through the public analyzer output.
 - **Rule**: Drizzle evidence is grouped by app/package/repository owner rather than a precise schema folder because Drizzle config, schema, SQL migrations, journal, and snapshots may live in separate folders. Root repos emit `Database schema` at `.`, while monorepos emit at owners such as `apps/api`, `packages/db`, `services/api`, or `libs/db`.
 - **Rule**: Drizzle output emits `Database schema` with primary technology `Drizzle`. It requires config plus schema, config plus a migration artifact, or generated migration SQL plus journal/snapshot metadata. Standard config alone, custom config alone, schema alone, SQL alone, journal alone, snapshot alone, metadata-only migrations, and generic SQL outside recognized migration output folders do not emit Drizzle.
 - **Rule**: Drizzle detector confidence coverage uses root config plus `src/db/schema`, colocated `db/schema`, custom config plus `src/lib/db/schema`, package-owned `db/src/schema`, generated `drizzle/meta` migrations, custom `migrations/meta` output, app/service/lib monorepo owner isolation, and weak-signal rejection fixtures through the public analyzer output.
+- **Rule**: SQLAlchemy evidence is grouped by the nearest shared SQLAlchemy/Alembic code owner rather than the individual artifact folder. Root Alembic projects emit at `.`, FastAPI-style `backend/app/models.py` plus `backend/app/alembic/*` emits at `backend/app`, package-level `models/` plus `migrations/` emits at the package folder, and monorepo evidence emits at owners such as `apps/api`, `packages/db`, `services/api`, or `libs/db`.
+- **Rule**: SQLAlchemy output emits `Database schema` with primary technology `SQLAlchemy` and related technologies `Alembic` and `Python`. It requires Alembic env plus version history, or Alembic config/env/version evidence paired with SQLAlchemy model/session/database files. Models alone, database/session files alone, config alone, env alone, generic version folders, and SQL migration files do not emit SQLAlchemy.
+- **Rule**: SQLAlchemy detector confidence coverage uses root Alembic, FastAPI-style app-local Alembic, Superset/Airflow-style `migrations` plus `models`, Prefect-style `_migrations/versions/{dialect}`, monorepo isolation, repeated version files, and weak-signal rejection fixtures through the public analyzer output.
+- **Rule**: TypeORM evidence is grouped by the owning app/package/database folder because TypeORM config, data-source files, entities, and migrations often live across sibling `src` folders. Root `src` evidence emits at `.`, monorepos emit at owners such as `apps/api` or `packages/db`, and explicit `db`/`database` folders stay precise.
+- **Rule**: TypeORM output emits `Database schema` with primary technology `TypeORM`. It requires legacy config or data-source evidence paired with entity or migration evidence, example config paired with entity evidence, or entity plus migration evidence under one owner. Config alone, data-source alone, example config alone, entity-only folders, migration-only folders, generic timestamp files outside migration folders, and broad `*.schema.*` files do not emit TypeORM.
+- **Rule**: TypeORM detector confidence coverage uses legacy `ormconfig.*` plus entities, data-source plus generated migrations, entity plus migration without config, example config support, monorepo isolation, package-level entities and migrations, explicit database-folder ownership, repeated signal counting, and weak-signal rejection fixtures through the public analyzer output.
+- **Rule**: Sequelize evidence is grouped by the owning app/package/database folder because Sequelize CLI config, model files, migrations, and seeders may live in split root folders or under explicit `sequelize`, `db`, or `database` folders. Root CLI shapes emit at `.`, monorepos emit at owners such as `apps/api`, and explicit database folders stay precise.
+- **Rule**: Sequelize output emits `Database schema` with primary technology `Sequelize`. It requires `.sequelizerc` plus model, migration, or seeder evidence; config plus model and migration evidence; model plus migration evidence; or config plus migration and seeder evidence. CLI config alone, config alone, model alone, migration alone, seeder alone, generic model-plus-seeder clusters, and timestamp files outside recognized migration folders do not emit Sequelize.
+- **Rule**: Sequelize detector confidence coverage uses default CLI root folders, dedicated `sequelize/` folders, `src/infra/sequelize` folders, split DDD database/sequelize folders, monorepo isolation, repeated signal counting, and weak-signal rejection fixtures through the public analyzer output.
 - **Rule**: Framework detectors do not discard evidence solely because it appears under generic `docs`, `test`, `tests`, or `fixtures` paths. Framework-specific signal combinations remain responsible for precision; directory exclusions should be introduced only from demonstrated false-positive repository shapes.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` under a `prisma` database owner or Drizzle split artifacts under the owning app/package/repository path.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
@@ -247,6 +260,9 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Express.js backend detector path rules
 - [x] Prisma database schema detector path rules
 - [x] Drizzle database schema detector path rules
+- [x] SQLAlchemy database schema detector path rules
+- [x] TypeORM database schema detector path rules
+- [x] Sequelize database schema detector path rules
 - [ ] Generic backend fallback path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder

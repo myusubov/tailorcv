@@ -1,6 +1,9 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { addPrismaDatabaseAreas } from './prisma-database-area-rules';
 import { addDrizzleDatabaseAreas } from './drizzle-database-area-rules';
+import { addSqlAlchemyDatabaseAreas } from './sqlalchemy-database-area-rules';
+import { addTypeOrmDatabaseAreas } from './typeorm-database-area-rules';
+import { addSequelizeDatabaseAreas } from './sequelize-database-area-rules';
 
 /**
  * Applies database-specific detected-area rules.
@@ -13,4 +16,7 @@ export function addDatabaseAreas({
 }: DetectedAreaRuleContext): void {
   addPrismaDatabaseAreas({ candidates, index });
   addDrizzleDatabaseAreas({ candidates, index });
+  addSqlAlchemyDatabaseAreas({ candidates, index });
+  addTypeOrmDatabaseAreas({ candidates, index });
+  addSequelizeDatabaseAreas({ candidates, index });
 }
