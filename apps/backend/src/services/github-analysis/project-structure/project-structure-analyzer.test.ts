@@ -65,18 +65,23 @@ describe('analyzeProjectStructure', () => {
       directory('apps/backend'),
       directory('apps/backend/src'),
       directory('apps/backend/src/routes'),
+      file('apps/backend/src/routes/users.ts'),
       directory('apps/backend/src/controllers'),
+      file('apps/backend/src/controllers/users.controller.ts'),
       directory('apps/backend/src/services'),
+      file('apps/backend/src/app.ts'),
       directory('apps/backend/prisma'),
       file('apps/backend/prisma/schema.prisma'),
       directory('packages'),
       directory('packages/shared'),
+      file('packages/shared/package.json'),
       file('turbo.json'),
     ]);
 
     expect(result.summary.projectShape).toBe('full-stack monorepo');
     expect(result.summary.inferredStack).toEqual([
       'Next.js',
+      'Node.js/TypeScript',
       'Prisma',
       'Turborepo',
     ]);
@@ -90,8 +95,9 @@ describe('analyzeProjectStructure', () => {
     expect(areaByName(result, 'Backend API', 'apps/backend')).toMatchObject({
       confidence: expect.any(Number),
       evidence: expect.arrayContaining([
-        'apps/backend/src/routes',
-        'apps/backend/src/controllers',
+        'apps/backend/src/app.ts',
+        'apps/backend/src/routes/users.ts',
+        'apps/backend/src/controllers/users.controller.ts',
         'apps/backend/src/services',
       ]),
     });
@@ -101,11 +107,16 @@ describe('analyzeProjectStructure', () => {
       confidence: expect.any(Number),
       evidence: expect.arrayContaining(['apps/backend/prisma/schema.prisma']),
     });
-    expect(
-      areaByName(result, 'Shared package', 'packages/shared'),
-    ).toMatchObject({
+    expect(areaByName(result, 'Shared package', 'packages')).toMatchObject({
       confidence: expect.any(Number),
-      evidence: expect.arrayContaining(['packages/shared']),
+      evidence: expect.arrayContaining([
+        'packages/shared',
+        'packages/shared/package.json',
+      ]),
+      inferredTechnologies: {
+        primary: 'Node.js',
+        related: [],
+      },
     });
   });
 
@@ -121,8 +132,11 @@ describe('analyzeProjectStructure', () => {
       directory('services/api'),
       directory('services/api/src'),
       directory('services/api/src/routes'),
+      file('services/api/src/routes/users.ts'),
       directory('services/api/src/controllers'),
+      file('services/api/src/controllers/users.controller.ts'),
       directory('services/api/src/services'),
+      file('services/api/src/app.ts'),
       directory('libs'),
       directory('libs/shared'),
       file('libs/shared/project.json'),
@@ -138,13 +152,194 @@ describe('analyzeProjectStructure', () => {
     });
     expect(areaByName(result, 'Backend API', 'services/api')).toMatchObject({
       evidence: expect.arrayContaining([
-        'services/api/src/routes',
-        'services/api/src/controllers',
+        'services/api/src/app.ts',
+        'services/api/src/routes/users.ts',
+        'services/api/src/controllers/users.controller.ts',
         'services/api/src/services',
       ]),
     });
-    expect(areaByName(result, 'Shared package', 'libs/shared')).toMatchObject({
-      evidence: expect.arrayContaining(['libs/shared']),
+    expect(areaByName(result, 'Shared package', 'libs')).toMatchObject({
+      evidence: expect.arrayContaining([
+        'libs/shared',
+        'libs/shared/project.json',
+      ]),
+      inferredTechnologies: {
+        primary: 'Node.js',
+        related: [],
+      },
+    });
+  });
+
+  describe('JS/TS shared package detector', () => {
+    it('detects packages container from shared package manifest and entrypoint', () => {
+      const result = analyze([
+        directory('packages'),
+        directory('packages/shared'),
+        directory('packages/shared/src'),
+        file('packages/shared/package.json'),
+        file('packages/shared/src/index.ts'),
+      ]);
+
+      expect(areaByName(result, 'Shared package', 'packages')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'packages/shared',
+          'packages/shared/package.json',
+          'packages/shared/src/index.ts',
+        ]),
+        inferredTechnologies: {
+          primary: 'Node.js',
+          related: [],
+        },
+      });
+    });
+
+    it('detects scoped packages under packages container', () => {
+      const result = analyze([
+        directory('packages'),
+        directory('packages/@tailorcv'),
+        directory('packages/@tailorcv/ui'),
+        directory('packages/@tailorcv/ui/src'),
+        file('packages/@tailorcv/ui/package.json'),
+        file('packages/@tailorcv/ui/src/index.tsx'),
+      ]);
+
+      expect(areaByName(result, 'Shared package', 'packages')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'packages/@tailorcv/ui',
+          'packages/@tailorcv/ui/package.json',
+          'packages/@tailorcv/ui/src/index.tsx',
+        ]),
+      });
+    });
+
+    it('detects libs container from project manifest evidence', () => {
+      const result = analyze([
+        directory('libs'),
+        directory('libs/types'),
+        file('libs/types/project.json'),
+        file('libs/types/index.ts'),
+      ]);
+
+      expect(areaByName(result, 'Shared package', 'libs')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'libs/types',
+          'libs/types/project.json',
+          'libs/types/index.ts',
+        ]),
+      });
+    });
+
+    it('detects modules container from shared package evidence', () => {
+      const result = analyze([
+        directory('modules'),
+        directory('modules/schemas'),
+        directory('modules/schemas/src'),
+        file('modules/schemas/package.json'),
+        file('modules/schemas/src/index.mts'),
+      ]);
+
+      expect(areaByName(result, 'Shared package', 'modules')).toMatchObject({
+        evidence: expect.arrayContaining([
+          'modules/schemas',
+          'modules/schemas/package.json',
+          'modules/schemas/src/index.mts',
+        ]),
+      });
+    });
+
+    it.each([
+      {
+        ownerPath: 'shared',
+        entries: [
+          directory('shared'),
+          file('shared/package.json'),
+          file('shared/index.ts'),
+        ],
+      },
+      {
+        ownerPath: 'common',
+        entries: [
+          directory('common'),
+          directory('common/src'),
+          file('common/project.json'),
+          file('common/src/index.cts'),
+        ],
+      },
+    ])(
+      'detects root $ownerPath shared-package area',
+      ({ ownerPath, entries }) => {
+        const result = analyze(entries);
+
+        expect(areaByName(result, 'Shared package', ownerPath)).toMatchObject({
+          evidence: expect.arrayContaining(
+            entries
+              .filter((entry) => entry.path !== `${ownerPath}/src`)
+              .map((entry) => entry.path),
+          ),
+        });
+      },
+    );
+
+    it('counts repeated JS/TS shared package signals once per owner', () => {
+      const result = analyze([
+        directory('packages'),
+        directory('packages/ui'),
+        directory('packages/ui/src'),
+        file('packages/ui/package.json'),
+        file('packages/ui/src/index.ts'),
+        directory('packages/types'),
+        directory('packages/types/src'),
+        file('packages/types/package.json'),
+        file('packages/types/src/index.ts'),
+      ]);
+
+      expect(areaByName(result, 'Shared package', 'packages')).toMatchObject({
+        confidence: 1,
+        evidence: expect.arrayContaining([
+          'packages/ui',
+          'packages/ui/package.json',
+          'packages/ui/src/index.ts',
+        ]),
+      });
+    });
+
+    it.each([
+      {
+        name: 'shared-looking package directory alone',
+        entries: [directory('packages/ui')],
+      },
+      {
+        name: 'manifest without package directory evidence',
+        entries: [file('packages/ui/package.json')],
+      },
+      {
+        name: 'entrypoint without package directory evidence',
+        entries: [file('packages/ui/src/index.ts')],
+      },
+      {
+        name: 'app-internal shared module',
+        entries: [
+          directory('apps'),
+          directory('apps/web'),
+          directory('apps/web/src'),
+          directory('apps/web/src/shared'),
+          file('apps/web/src/shared/index.ts'),
+        ],
+      },
+      {
+        name: 'top-level utils folder',
+        entries: [
+          directory('utils'),
+          file('utils/package.json'),
+          file('utils/index.ts'),
+        ],
+      },
+    ])('does not detect JS/TS shared package from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some((area) => area.name === 'Shared package'),
+      ).toBe(false);
     });
   });
 
@@ -3534,7 +3729,7 @@ describe('analyzeProjectStructure', () => {
         ],
         inferredTechnologies: {
           primary: 'NestJS',
-          related: [],
+          related: ['Node.js'],
         },
       });
     });
@@ -3551,7 +3746,7 @@ describe('analyzeProjectStructure', () => {
         evidence: ['src/app.module.ts', 'src/main.ts'],
         inferredTechnologies: {
           primary: 'NestJS',
-          related: [],
+          related: ['Node.js'],
         },
       });
     });
@@ -3591,7 +3786,7 @@ describe('analyzeProjectStructure', () => {
           ]),
           inferredTechnologies: {
             primary: 'NestJS',
-            related: [],
+            related: ['Node.js'],
           },
         });
       },
@@ -3620,7 +3815,7 @@ describe('analyzeProjectStructure', () => {
           evidence: expect.arrayContaining([handlerPath, 'src/app.module.ts']),
           inferredTechnologies: {
             primary: 'NestJS',
-            related: [],
+            related: ['Node.js'],
           },
         });
       },
@@ -3646,7 +3841,7 @@ describe('analyzeProjectStructure', () => {
         ],
         inferredTechnologies: {
           primary: 'NestJS',
-          related: [],
+          related: ['Node.js'],
         },
       });
     });
@@ -5520,12 +5715,14 @@ describe('analyzeProjectStructure', () => {
 
   it('does not treat frontend routes and services as a backend API', () => {
     const result = analyze([
+      file('index.html'),
       directory('public'),
       directory('src'),
       directory('src/routes'),
       directory('src/services'),
       directory('src/lib'),
       directory('src/lib/db'),
+      file('src/index.css'),
       file('src/lib/db/schema.ts'),
       file('drizzle.config.ts'),
       file('vite.config.ts'),
@@ -5542,10 +5739,10 @@ describe('analyzeProjectStructure', () => {
       evidence: expect.arrayContaining(['vite.config.ts']),
     });
     expect(areaByName(result, 'Database schema', '.')).toMatchObject({
-      evidence: expect.arrayContaining(['drizzle.config.ts']),
-    });
-    expect(areaByName(result, 'Database schema', 'src/lib/db')).toMatchObject({
-      evidence: expect.arrayContaining(['src/lib/db/schema.ts']),
+      evidence: expect.arrayContaining([
+        'drizzle.config.ts',
+        'src/lib/db/schema.ts',
+      ]),
     });
     expect(
       result.detectedAreas.some((area) => area.name === 'Backend API'),
@@ -5556,8 +5753,11 @@ describe('analyzeProjectStructure', () => {
     const result = analyze([
       directory('src'),
       directory('src/routes'),
+      file('src/routes/users.ts'),
       directory('src/controllers'),
+      file('src/controllers/users.controller.ts'),
       directory('src/services'),
+      file('src/app.ts'),
       directory('prisma'),
       directory('prisma/migrations'),
       file('prisma/schema.prisma'),
@@ -5570,10 +5770,11 @@ describe('analyzeProjectStructure', () => {
       'Node.js/TypeScript',
       'Prisma',
     ]);
-    expect(areaByName(result, 'Backend API', 'src')).toMatchObject({
+    expect(areaByName(result, 'Backend API', '.')).toMatchObject({
       evidence: expect.arrayContaining([
-        'src/routes',
-        'src/controllers',
+        'src/app.ts',
+        'src/routes/users.ts',
+        'src/controllers/users.controller.ts',
         'src/services',
       ]),
     });
@@ -5699,7 +5900,9 @@ describe('analyzeProjectStructure', () => {
           related: [],
         },
       });
-      expect(areaByName(result, 'Database schema', 'src/lib/db')).toBeUndefined();
+      expect(
+        areaByName(result, 'Database schema', 'src/lib/db'),
+      ).toBeUndefined();
     });
 
     it('detects package-owned db/src schema files with package-local config', () => {
@@ -5776,7 +5979,9 @@ describe('analyzeProjectStructure', () => {
           related: [],
         },
       });
-      expect(areaByName(result, 'Database schema', 'migrations')).toBeUndefined();
+      expect(
+        areaByName(result, 'Database schema', 'migrations'),
+      ).toBeUndefined();
     });
 
     it('keeps Drizzle owners isolated in monorepos', () => {
@@ -5793,13 +5998,8 @@ describe('analyzeProjectStructure', () => {
         file('packages/shared/db/schema.ts'),
       ]);
 
-      expect(
-        areaByName(result, 'Database schema', 'apps/api'),
-      ).toMatchObject({
-        evidence: [
-          'apps/api/drizzle.config.ts',
-          'apps/api/src/db/schema.ts',
-        ],
+      expect(areaByName(result, 'Database schema', 'apps/api')).toMatchObject({
+        evidence: ['apps/api/drizzle.config.ts', 'apps/api/src/db/schema.ts'],
         inferredTechnologies: {
           primary: 'Drizzle',
           related: [],
@@ -5948,7 +6148,9 @@ describe('analyzeProjectStructure', () => {
         file('backend/app/alembic/versions/e2412789c190_initialize_models.py'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'backend/app')).toMatchObject({
+      expect(
+        areaByName(result, 'Database schema', 'backend/app'),
+      ).toMatchObject({
         evidence: [
           'backend/app/alembic/env.py',
           'backend/app/alembic/versions/e2412789c190_initialize_models.py',
@@ -5971,7 +6173,9 @@ describe('analyzeProjectStructure', () => {
         file('superset/migrations/env.py'),
         file('superset/migrations/script.py.mako'),
         directory('superset/migrations/versions'),
-        file('superset/migrations/versions/2015-09-21_17-30_4e6a06bad7a8_init.py'),
+        file(
+          'superset/migrations/versions/2015-09-21_17-30_4e6a06bad7a8_init.py',
+        ),
       ]);
 
       expect(areaByName(result, 'Database schema', 'superset')).toMatchObject({
@@ -6002,7 +6206,9 @@ describe('analyzeProjectStructure', () => {
         directory('src/prefect/server/database/_migrations'),
         file('src/prefect/server/database/_migrations/env.py'),
         directory('src/prefect/server/database/_migrations/versions'),
-        directory('src/prefect/server/database/_migrations/versions/postgresql'),
+        directory(
+          'src/prefect/server/database/_migrations/versions/postgresql',
+        ),
         file(
           'src/prefect/server/database/_migrations/versions/postgresql/2021_01_20_122127_25f4b90a7a42_initial_migration.py',
         ),
@@ -6152,7 +6358,10 @@ describe('analyzeProjectStructure', () => {
       ]);
 
       expect(areaByName(result, 'Database schema', '.')).toMatchObject({
-        evidence: ['src/data-source.ts', 'src/migrations/1700000000000-Init.ts'],
+        evidence: [
+          'src/data-source.ts',
+          'src/migrations/1700000000000-Init.ts',
+        ],
         inferredTechnologies: {
           primary: 'TypeORM',
           related: [],
@@ -6241,18 +6450,18 @@ describe('analyzeProjectStructure', () => {
         file('packages/db/src/migrations/common/1620821879465-Init.ts'),
       ]);
 
-      expect(areaByName(result, 'Database schema', 'packages/db')).toMatchObject(
-        {
-          evidence: [
-            'packages/db/src/entities/user.ts',
-            'packages/db/src/migrations/common/1620821879465-Init.ts',
-          ],
-          inferredTechnologies: {
-            primary: 'TypeORM',
-            related: [],
-          },
+      expect(
+        areaByName(result, 'Database schema', 'packages/db'),
+      ).toMatchObject({
+        evidence: [
+          'packages/db/src/entities/user.ts',
+          'packages/db/src/migrations/common/1620821879465-Init.ts',
+        ],
+        inferredTechnologies: {
+          primary: 'TypeORM',
+          related: [],
         },
-      );
+      });
       expect(
         areaByName(result, 'Database schema', 'packages/db/src'),
       ).toBeUndefined();
@@ -6337,7 +6546,10 @@ describe('analyzeProjectStructure', () => {
       },
       {
         name: 'generic schema file with data source',
-        entries: [file('src/data-source.ts'), file('src/schemas/user.schema.ts')],
+        entries: [
+          file('src/data-source.ts'),
+          file('src/schemas/user.schema.ts'),
+        ],
       },
     ])('does not detect TypeORM from $name', ({ entries }) => {
       const result = analyze(entries);
@@ -6390,9 +6602,7 @@ describe('analyzeProjectStructure', () => {
       ]);
 
       expect(areaByName(result, 'Database schema', '.')).toBeUndefined();
-      expect(
-        areaByName(result, 'Database schema', 'sequelize'),
-      ).toMatchObject({
+      expect(areaByName(result, 'Database schema', 'sequelize')).toMatchObject({
         evidence: [
           'sequelize/config.js',
           'sequelize/migrations/01-create-demo-user.js',
@@ -6416,7 +6626,9 @@ describe('analyzeProjectStructure', () => {
         file('src/infra/sequelize/models/index.ts'),
         file('src/infra/sequelize/models/album.js'),
         directory('src/infra/sequelize/migrations'),
-        file('src/infra/sequelize/migrations/20190625131808-initial-migration.ts'),
+        file(
+          'src/infra/sequelize/migrations/20190625131808-initial-migration.ts',
+        ),
       ]);
 
       expect(
@@ -6637,10 +6849,7 @@ describe('analyzeProjectStructure', () => {
       ]);
 
       expect(areaByName(result, 'Database schema', '.')).toMatchObject({
-        evidence: [
-          'src/_knexfile.ts',
-          'src/db/migrations/001-create-users.ts',
-        ],
+        evidence: ['src/_knexfile.ts', 'src/db/migrations/001-create-users.ts'],
         inferredTechnologies: {
           primary: 'Knex',
           related: [],
@@ -6664,7 +6873,10 @@ describe('analyzeProjectStructure', () => {
       ]);
 
       expect(areaByName(result, 'Database schema', 'apps/api')).toMatchObject({
-        evidence: ['apps/api/db/migrations/001-users.ts', 'apps/api/knexfile.ts'],
+        evidence: [
+          'apps/api/db/migrations/001-users.ts',
+          'apps/api/knexfile.ts',
+        ],
         inferredTechnologies: {
           primary: 'Knex',
           related: [],
@@ -6760,7 +6972,7 @@ describe('analyzeProjectStructure', () => {
     expect(result.detectedAreas).toEqual([]);
   });
 
-  it('detects support areas from repository tooling paths', () => {
+  it('does not emit support areas before support-area rule groups are implemented', () => {
     const result = analyze([
       directory('.github'),
       directory('.github/workflows'),
@@ -6777,22 +6989,12 @@ describe('analyzeProjectStructure', () => {
 
     expect(
       areaByName(result, 'CI/CD workflows', '.github/workflows'),
-    ).toMatchObject({
-      evidence: expect.arrayContaining(['.github/workflows/ci.yml']),
-    });
-    expect(areaByName(result, 'Documentation', 'docs')).toMatchObject({
-      evidence: expect.arrayContaining(['docs', 'docs/architecture.md']),
-    });
-    expect(areaByName(result, 'Test suite', 'tests')).toMatchObject({
-      evidence: expect.arrayContaining(['tests/user-flow.test.ts']),
-    });
-    expect(areaByName(result, 'Containerization', '.')).toMatchObject({
-      evidence: expect.arrayContaining(['Dockerfile', 'docker-compose.yml']),
-    });
+    ).toBeUndefined();
+    expect(areaByName(result, 'Documentation', 'docs')).toBeUndefined();
+    expect(areaByName(result, 'Test suite', 'tests')).toBeUndefined();
+    expect(areaByName(result, 'Containerization', '.')).toBeUndefined();
     expect(
       areaByName(result, 'Infrastructure/config', 'terraform'),
-    ).toMatchObject({
-      evidence: expect.arrayContaining(['terraform/main.tf']),
-    });
+    ).toBeUndefined();
   });
 });

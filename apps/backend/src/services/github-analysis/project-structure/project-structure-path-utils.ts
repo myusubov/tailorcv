@@ -84,7 +84,7 @@ export function ownerPathForDatabaseArea(path: string): string {
   }
 
   return parts.slice(0, -1).join('/');
-};
+}
 
 /**
  * Returns the application/package owner for Drizzle evidence.
@@ -198,6 +198,14 @@ const SEQUELIZE_DATABASE_OWNER_FILES = new Set([
   'database.mts',
 ]);
 
+const SHARED_PACKAGE_AREA_DIRECTORY_NAMES = new Set([
+  'packages',
+  'libs',
+  'shared',
+  'common',
+  'modules',
+]);
+
 /**
  * Returns the shared SQLAlchemy/Alembic database owner path.
  * Alembic environments and SQLAlchemy model/session files can be split across
@@ -300,6 +308,25 @@ export function ownerPathForSequelizeDatabaseArea(path: string): string {
     }
 
     return parts.slice(0, -1).join('/');
+  }
+
+  return '.';
+}
+
+/**
+ * Returns the nearest shared-package container owner for reusable package evidence.
+ * Evidence under containers such as `packages`, `libs`, `shared`, `common`, or
+ * `modules` is grouped at that container so sibling reusable packages form one area.
+ */
+export function ownerPathForSharedPackageArea(path: string): string {
+  const parts = path.split('/');
+
+  const sharedPackageDirectoryIndex = parts.findIndex((part) =>
+    SHARED_PACKAGE_AREA_DIRECTORY_NAMES.has(part),
+  );
+
+  if (sharedPackageDirectoryIndex >= 0) {
+    return parts.slice(0, sharedPackageDirectoryIndex + 1).join('/');
   }
 
   return '.';

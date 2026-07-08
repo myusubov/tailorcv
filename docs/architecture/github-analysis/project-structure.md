@@ -101,6 +101,9 @@ apps/backend/src/services/github-analysis/project-structure/
 │   │   ├── sequelize-database-area-rules.ts
 │   │   ├── sqlalchemy-database-area-rules.ts
 │   │   └── typeorm-database-area-rules.ts
+│   ├── shared-package/
+│   │   ├── js-ts-shared-package-area-rules.ts
+│   │   └── shared-package-area-rules.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -148,12 +151,16 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: `detectedAreas` identifies meaningful repository regions from path evidence only.
 - **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
 - **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
-- **Rule**: Root-level app or config evidence uses `path: "."`; monorepo evidence uses owners such as `apps/frontend`, `apps/backend`, or `packages/shared`.
+- **Rule**: Root-level app or config evidence uses `path: "."`; monorepo app evidence uses owners such as `apps/frontend` or `apps/backend`; shared-package evidence uses container owners such as `packages`, `libs`, `modules`, `shared`, or `common`.
 - **Rule**: Every emitted detected area includes path-inferred technology metadata with one required `primary` technology and zero or more deduplicated `related` technologies. The primary is excluded from related values; internal candidates use a `Set` and public output converts it to a stable sorted array.
 - **Rule**: `DetectedAreaTechnology` is composed from frontend, backend, runtime/platform, template, and database technology unions in `project-structure-analyzer.types.ts`; keep the public union stable while adding new labels to the narrow category that owns them.
 - **Rule**: The first detector that creates an `(area name, owner path)` candidate owns its primary technology; later score additions preserve that primary and may only accumulate score, evidence, and related technologies.
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
 - **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, Ruby on Rails, and Express.js run first with implemented path rules before the scaffolded generic backend fallback.
+- **Rule**: Shared package detected-area rules are dispatched from `detected-area-rules/shared-package/shared-package-area-rules.ts`. Language-specific shared-package detectors live in separate modules, starting with the implemented JavaScript/TypeScript workspace-package detector.
+- **Rule**: JavaScript/TypeScript shared-package evidence is grouped at the repo-level shared container, not the individual package leaf. Evidence under `packages/shared`, `packages/ui`, `libs/types`, or `modules/schemas` emits at `packages`, `libs`, or `modules`; root `shared` and `common` emit at themselves.
+- **Rule**: JavaScript/TypeScript shared-package output emits `Shared package` with primary technology `Node.js`. It requires a shared-looking package/container name plus either a workspace manifest (`package.json` or `project.json`) or a public entrypoint (`index.*` or `src/index.*`). Package name alone, manifest alone, entrypoint alone, app-internal `src/shared`, and top-level `utils` remain non-emitting.
+- **Rule**: JavaScript/TypeScript shared-package detector confidence coverage uses `packages`, scoped `packages/@scope/*`, `libs`, `modules`, root `shared`, root `common`, repeated signal counting, and weak-signal rejection fixtures through the public analyzer output.
 - **Rule**: NestJS evidence is grouped by owner and scored once per signal type across CLI config, main entry, root/default modules, controllers, services, gateways, and resolvers. Standard `src/app.*` files use dedicated buckets instead of also counting as broad feature signals.
 - **Rule**: NestJS output requires an anchored application shape: CLI config plus another gate-capable signal, main entry plus root module, main entry plus feature module and transport handler, or root module plus transport handler. Standard and feature services remain score-only evidence.
 - **Rule**: NestJS output uses `NestJS` as its primary technology and `Node.js` as related runtime context; it does not infer Express because path-only NestJS evidence cannot prove the configured HTTP adapter.
@@ -268,6 +275,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] SQLAlchemy database schema detector path rules
 - [x] TypeORM database schema detector path rules
 - [x] Sequelize database schema detector path rules
+- [x] Shared package detector path rules
 - [ ] Generic backend fallback path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
