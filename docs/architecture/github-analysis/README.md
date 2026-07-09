@@ -28,8 +28,8 @@
 
 ### 2.1 Read Order
 
-1. [pipeline.md](pipeline.md) for GitHub API orchestration, protected endpoints, and cross-domain integration.
-2. [project-structure.md](project-structure.md) for the implemented project structure analyzer, score rules, and output contracts.
+1. [pipeline/README.md](pipeline/README.md) for GitHub API orchestration, protected endpoints, and cross-domain integration.
+2. [project-structure/README.md](project-structure/README.md) for the implemented project structure analyzer, score rules, and output contracts.
 3. [changelog.md](changelog.md) for historical implementation decisions and dev log entries.
 
 ### 2.2 High-Level Map
@@ -49,8 +49,8 @@ GitHub repo IDs selected by user
 
 | File                                                     | Purpose                                                                  | When to Read                              |
 | -------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------- |
-| `docs/architecture/github-analysis/pipeline.md`          | Endpoint, service, GitHub connection, and orchestration documentation    | GitHub route/service/request changes      |
-| `docs/architecture/github-analysis/project-structure.md` | Project structure analyzer contracts, modules, scoring rules, and status | Any analyzer summary/detected-area change |
+| `docs/architecture/github-analysis/pipeline/README.md`          | Endpoint, service, GitHub connection, and orchestration documentation    | GitHub route/service/request changes      |
+| `docs/architecture/github-analysis/project-structure/README.md` | Project structure analyzer contracts, modules, scoring rules, and status | Any analyzer summary/detected-area change |
 | `docs/architecture/github-analysis/changelog.md`         | Historical dev log for GitHub analysis decisions                         | Understanding why current rules exist     |
 
 ---
@@ -59,8 +59,8 @@ GitHub repo IDs selected by user
 
 ### 4.1 Domain Split
 
-- `pipeline.md`: GitHub connection boundary, analyze endpoint flow, tree fetching, service orchestration.
-- `project-structure.md`: normalized tree input, project shape, inferred stack, detected areas, project-structure modules.
+- `pipeline/README.md`: GitHub connection boundary, analyze endpoint flow, tree fetching, service orchestration.
+- `project-structure/README.md`: normalized tree input, project shape, inferred stack, detected areas, project-structure modules.
 - `changelog.md`: implementation history and decision record.
 
 ---
@@ -72,9 +72,16 @@ docs/architecture/
 ├── README.md
 └── github-analysis/
     ├── README.md              # This hub doc
-    ├── pipeline.md            # GitHub endpoint/service orchestration
-    ├── project-structure.md   # Implemented project structure analyzer
-    └── changelog.md           # Historical dev log entries
+    ├── changelog.md           # Historical dev log entries
+    ├── adr/                   # Durable GitHub analysis decisions
+    ├── pipeline/              # GitHub endpoint/service orchestration
+    │   ├── README.md
+    │   ├── changelog.md
+    │   └── adr/
+    └── project-structure/     # Implemented project structure analyzer
+        ├── README.md
+        ├── changelog.md
+        └── adr/
 ```
 
 ---
@@ -83,8 +90,8 @@ docs/architecture/
 
 ### 6.1 Documentation Pattern
 
-- Keep endpoint/service orchestration in `pipeline.md`.
-- Keep analyzer internals and scoring rules in `project-structure.md`.
+- Keep endpoint/service orchestration in `pipeline/README.md`.
+- Keep analyzer internals and scoring rules in `project-structure/README.md`.
 - Keep long historical entries in `changelog.md`.
 - When a change spans orchestration and analyzer internals, update both focused sub-docs and cross-link them here.
 
@@ -144,14 +151,7 @@ docs/architecture/
 
 ---
 
-## 10. Development Log
+## 10. History & Decisions
 
-### [2026-05-15] - GitHub Analysis Doc Split
-
-- **Decision:** Split the oversized GitHub analysis doc into a hub plus focused sub-docs for pipeline orchestration, project-structure analysis, and history.
-- **Problem:** `docs/architecture/github-analysis.md` reached 521 lines and mixed endpoint orchestration, analyzer internals, and a long dev log, which crossed the project documentation split threshold.
-- **Solution:**
-  1. **Hub doc:** Created `docs/architecture/github-analysis/README.md` as the first-read overview and navigation point.
-  2. **Focused docs:** Moved orchestration guidance to `pipeline.md`, analyzer rules/status to `project-structure.md`, and historical entries to `changelog.md`.
-  3. **Index update:** Updated `docs/architecture/README.md` so GitHub analysis points to the new hub and supporting docs.
-- **Outcome:** GitHub analysis documentation is below the effective retrieval threshold per file and easier to update without mixing unrelated concerns.
+- **Changelog:** [changelog.md](changelog.md)
+- **Architecture decisions:** [adr/](adr/)

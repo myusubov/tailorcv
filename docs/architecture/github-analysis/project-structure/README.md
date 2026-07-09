@@ -295,6 +295,8 @@ apps/backend/src/services/github-analysis/project-structure/
 
 ---
 
-## 10. Development Log
+## 10. History & Decisions
 
-See [changelog.md](changelog.md) for historical project-structure implementation entries.
+- **Changelog:** [changelog.md](changelog.md)
+- **Architecture decisions:** [adr/](adr/)
+- Historical domain-level entries may also live in the parent changelog.

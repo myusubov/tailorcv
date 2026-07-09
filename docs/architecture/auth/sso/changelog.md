@@ -1,179 +1,12 @@
-# AUTH SSO
+# Auth SSO Changelog
 
-> Google and Apple OAuth start flows, Clerk callback handling, transfer logic, and retired `/sso-continue` guard behavior.
-
----
-
-## 1. Core Philosophy
-
-- Treat OAuth as a separate state machine from password auth
-- Let Clerk state determine OAuth outcome instead of relying on local intent markers
-- Fail closed on public callback and retired continuation routes
-- Keep OAuth start pages thin and put Clerk orchestration in hooks
+> Chronological implementation history for Auth SSO. Add new entries at the top.
 
 ---
 
-## 2. Architecture Overview
+## 2026-04-21
 
-```
-User clicks "Continue with Google/Apple"
-  -> signIn.create({ strategy, redirectUrl, actionCompleteRedirectUrl })
-  -> window.location.assign(signIn.firstFactorVerification.externalVerificationRedirectURL)
-  -> /sso-callback
-  -> useSSOCallback()
-     -> finalize sign-in
-     -> transfer sign-in/sign-up
-     -> redirect to /login with auth_reason
-     -> surface configuration drift if Clerk still reports missing requirements
-     -> setActive(existingSession)
-
-/sso-continue
-  -> redirect('/register') defensive route only
-```
-
----
-
-## 3. Key Files & Entry Points
-
-| File | Purpose | When to Read |
-| ---- | ------- | ------------ |
-| `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts` | Core v7 SSO callback hook — all OAuth finalization logic | Any SSO flow change |
-| `apps/frontend/app/sso-callback/page.tsx` | SSO callback page — delegates to `useSSOCallback` | SSO flow changes |
-| `apps/frontend/app/(auth)/sso-continue/page.tsx` | Retired continuation route that redirects to registration | Defensive route behavior changes |
-| `apps/frontend/lib/auth/reset-clerk-auth-resource.ts` | Runtime-compatible reset helper for clearing stale Clerk sign-in/sign-up attempts before OAuth | OAuth provider switching or cancellation issues |
-| `apps/frontend/lib/auth/login-auth-reason.ts` | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in | OAuth fallback UX changes |
-| `apps/frontend/proxy.ts` | Clerk middleware — public/auth/protected route matchers | Route protection changes |
-
----
-
-## 4. Data Flow
-
-### 4.1 SSO Sign-In/Sign-Up Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant L as Login/Register Page
-    participant O as OAuth Provider
-    participant CB as /sso-callback
-    participant Hook as useSSOCallback
-
-    U->>L: Click "Continue with Google"
-    L->>O: signIn.create({ redirectUrl: '/sso-callback', actionCompleteRedirectUrl })
-    L->>O: window.location.assign(externalVerificationRedirectURL)
-    O-->>CB: Redirect after OAuth
-    CB->>Hook: useSSOCallback()
-    alt signIn complete
-        Hook->>Hook: signIn.finalize({ navigate: decorateUrl })
-    else signIn transferable
-        Hook->>Hook: signUp.create({ transfer: true })
-        Hook->>Hook: signUp.finalize({ navigate: decorateUrl })
-    else signUp missing_requirements
-        Hook-->>U: Show configuration-drift error
-    else existingSession
-        Hook->>Hook: clerk.setActive({ session, navigate: decorateUrl })
-    end
-```
-
----
-
-## 5. Component / Module Structure
-
-```
-app/components/auth/
-└── sso-callback/
-    └── use-sso-callback.ts
-```
-
----
-
-## 6. Patterns & Conventions
-
-### 6.1 SSO Initiation (Sign-In)
-
-```typescript
-await resetClerkAuthResource({ resource: signIn });
-const { error } = await signIn.create({
-  strategy: 'oauth_google',
-  redirectUrl: '/sso-callback',
-  actionCompleteRedirectUrl: config.auth.afterSignInUrl,
-});
-
-if (!error) {
-  window.location.assign(signIn.firstFactorVerification.externalVerificationRedirectURL);
-}
-```
-
-### 6.2 SSO Initiation (Register Social Buttons)
-
-```typescript
-const { error } = await signIn.create({
-  strategy: 'oauth_google',
-  redirectUrl: '/sso-callback',
-  actionCompleteRedirectUrl: config.auth.afterSignUpUrl,
-});
-
-if (!error) {
-  window.location.assign(signIn.firstFactorVerification.externalVerificationRedirectURL);
-}
-```
-
-Registration social buttons intentionally start with `signIn.create()` instead of
-`signUp.sso()`. Unknown users are transferred to sign-up by `/sso-callback`, while
-existing users complete as sign-in.
-
-### 6.3 OAuth Fallback Redirect Context
-
-```typescript
-router.push(buildLoginUrl({ reason: 'primary_required' }));
-```
-
-- `primary_required`: OAuth is not the account's primary sign-in method here
-- `second_factor_required`: Clerk requires a second step after password sign-in
-- `reset_password_required`: Clerk requires a password reset before sign-in can complete
-
----
-
-## 7. Integration Points
-
-| Domain | Relationship | Key Interface |
-| ------ | ------------ | ------------- |
-| Login | OAuth callback can send users back to `/login` with context | `buildLoginUrl()` |
-| Onboarding | OAuth sign-up finalization lands here | `config.auth.afterSignUpUrl` |
-| Dashboard | OAuth sign-in finalization lands here | `config.auth.afterSignInUrl` |
-| Middleware (`proxy.ts`) | `/sso-continue` remains public only so the retired route can redirect defensively | public route config + `redirect('/register')` |
-
----
-
-## 8. Implementation Status
-
-- [x] Google OAuth sign-in
-- [x] Apple OAuth sign-in
-- [x] Google OAuth sign-up
-- [x] Apple OAuth sign-up
-- [x] SSO callback hook
-- [x] Retired `/sso-continue` redirect route
-- [x] Direct-navigation guard for `/sso-callback`
-
----
-
-## 9. Risks & Mitigations
-
-| Risk | Mitigation |
-| ---- | ---------- |
-| Legacy `sso()` redirect params mixed into the current `signIn.create()` flow | Current social auth uses `signIn.create({ redirectUrl, actionCompleteRedirectUrl })`, then navigates to `firstFactorVerification.externalVerificationRedirectURL`; do not confuse `externalVerificationRedirectURL` with legacy `redirectCallbackUrl`, and keep the param order shown in the examples above |
-| Clerk still requires first/last name after app removal | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled |
-| Cancelled OAuth attempt reuses the previous provider on the next click | Start OAuth through `signIn.create()` and manually navigate to `firstFactorVerification.externalVerificationRedirectURL`; avoid `signIn.sso()` and `signUp.sso()` for social buttons |
-| Transferred sign-up reports `missing_requirements` while the external account is still verifying | Defer the configuration-drift error until `signUp.verifications.externalAccount.status === 'verified'` |
-| React StrictMode double-execution on SSO callback | `hasRun = useRef(false)` guard in `useSSOCallback` |
-| Direct navigation to `/sso-callback` with no usable Clerk callback state | Fall through to `/login` instead of relying on a local sessionStorage marker |
-| Direct navigation to `/sso-continue` | Redirect to `/register`; the continuation form has been retired |
-
----
-
-## 10. Development Log
-
-### [2026-04-21] - Manual OAuth Start Avoids Abandoned Provider Resume
+### Manual OAuth Start Avoids Abandoned Provider Resume
 
 - **Decision:** Start both login and register social auth through `signIn.create()` and manually navigate to Clerk's external provider redirect URL.
 - **Problem:** After a user cancelled an OAuth provider by navigating back, Clerk could auto-resume the abandoned provider on the next social-button click. `signIn.sso()`, `signUp.sso()`, resource reset, client reset, cache clear, and short delays did not reliably create a fresh provider attempt; manual testing showed `signIn.create()` did.
@@ -183,7 +16,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   3. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Updated OAuth tests to assert fresh `signIn.create()` attempts and provider redirects instead of `sso()` calls.
 - **Outcome:** Provider-back cancellation no longer leaks the abandoned provider into the next Google/Apple click on login or register; social registration relies on the existing callback transfer path for new users.
 
-### [2026-04-21] - Clear Stale OAuth Errors Before Retry
+## 2026-04-21
+
+### Clear Stale OAuth Errors Before Retry
 
 - **Decision:** Clear the visible inline auth error before every Google or Apple OAuth start.
 - **Problem:** If an OAuth attempt failed and the user retried or switched providers, the previous `globalError` could remain visible during a fresh SSO attempt, making the UI look like the new provider flow had already failed.
@@ -193,7 +28,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   3. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Added stale-error retry coverage and invocation-order assertions proving Clerk resource reset runs before each `sso()` call.
 - **Outcome:** OAuth retries and provider switches now start with a clean inline-error state while still guarding against stale Clerk provider attempts.
 
-### [2026-04-20] - Defer Missing Requirements Until External Verification
+## 2026-04-20
+
+### Defer Missing Requirements Until External Verification
 
 - **Decision:** Only surface OAuth `missing_requirements` configuration drift after Clerk reports the external account as verified.
 - **Problem:** During sign-in to sign-up transfer, Clerk can temporarily report `signUp.status === 'missing_requirements'` while `signUp.verifications.externalAccount.status` is still pending. Showing the missing-fields error at that point incorrectly interrupts a valid OAuth verification.
@@ -202,7 +39,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   2. **`apps/frontend/app/components/auth/sso-callback/use-sso-callback.test.tsx`**: Added coverage that transfers a sign-in to sign-up with an unverified external account and confirms the callback does not show the configuration-drift error or redirect.
 - **Outcome:** OAuth transfers now wait for Clerk's external-account verification state before deciding that remaining missing requirements are app configuration drift.
 
-### [2026-04-20] - Reset OAuth Resource Before Provider Redirect
+## 2026-04-20
+
+### Reset OAuth Resource Before Provider Redirect
 
 - **Decision:** Reset the active Clerk sign-in/sign-up resource before each Google or Apple SSO start.
 - **Problem:** If a user cancelled one OAuth provider and then clicked the other provider, Clerk could reuse the stale provider attempt from the cancelled flow, sending Apple clicks to Google or Google clicks to Apple until browser storage was cleared.
@@ -213,7 +52,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   4. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Added provider-switching regressions that click Google then Apple and assert the requested provider is used after each reset.
 - **Outcome:** Cancelled OAuth attempts no longer leak provider choice into the next social-login click.
 
-### [2026-04-20] - Account Name Removal And SSO Continue Retirement
+## 2026-04-20
+
+### Account Name Removal And SSO Continue Retirement
 
 - **Decision:** Stop collecting account first/last name in auth flows and retire the SSO continuation form.
 - **Problem:** OAuth from `/login` can legitimately become sign-up when Clerk reports a transferable sign-in, but requiring profile names forced unknown users into `/sso-continue`; refreshing that page could leave stale local SSO marker state and send users back into registration with confusing Clerk state.
@@ -224,7 +65,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   4. **`apps/backend/src/utils/clerk.ts`**: Stopped writing Clerk profile names into app users while leaving nullable database columns available for future reintroduction.
 - **Outcome:** OAuth sign-in/sign-up no longer depends on account profile names or sessionStorage intent markers; Clerk dashboard first/last-name requirements must remain optional or disabled.
 
-### [2026-04-07] - SSO Continue Controller Hook Extraction
+## 2026-04-07
+
+### SSO Continue Controller Hook Extraction
 
 - **Decision:** Move the SSO missing-requirements page logic into a dedicated hook and keep the route component limited to rendering the existing continuation form plus Clerk captcha mount.
 - **Problem:** `apps/frontend/app/(auth)/sso-continue/page.tsx` still mixed RHF setup, stale/direct-access guard logic, Clerk sign-up updates, finalize navigation, and page rendering, and the only coverage was a source-string check for the captcha div.
@@ -234,7 +77,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   3. **`apps/frontend/app/(auth)/sso-continue/page.test.tsx` + `apps/frontend/app/components/auth/sso-continue/use-sso-continue-flow.test.tsx`**: Replaced the source-level captcha assertion with direct page-boundary and hook-behavior coverage.
 - **Outcome:** The SSO continuation route now follows the same controller/view split as the rest of the auth stack, and its redirect, prefill, Clerk update, and finalize paths have fast regression coverage instead of relying on source inspection alone.
 
-### [2026-04-06] - SSO Page Guards & Stale-State Fix
+## 2026-04-06
+
+### SSO Page Guards & Stale-State Fix
 
 - **Decision:** Gate OAuth return pages on a short-lived tab-scoped SSO marker plus Clerk's external-account verification state.
 - **Problem:** Both pages are public routes. A user with no active OAuth flow could visit them directly, and Clerk's persisted `signUp` object could make a stale `missing_requirements` state look valid.
@@ -244,7 +89,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   3. **`sso-continue/page.tsx`**: Requires the active SSO marker, `missing_requirements`, and a verified external account before rendering the continuation form.
 - **Outcome:** Direct navigation to `/sso-callback` and `/sso-continue` now fails closed, and stale persisted Clerk state no longer reopens `/sso-continue` unless the current browser tab just completed a real OAuth redirect.
 
-### [2026-04-06] - Login Redirect Context For OAuth Fallbacks
+## 2026-04-06
+
+### Login Redirect Context For OAuth Fallbacks
 
 - **Decision:** Preserve Clerk fallback reasons in the `/login` URL so users see a stable inline explanation when SSO cannot complete sign-in on its own.
 - **Problem:** The SSO callback redirected users back to `/login` with no context when Clerk required the primary factor, a second factor, or a password reset, which made the fallback feel like a broken loop.
@@ -254,7 +101,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
   3. **`apps/frontend/app/(auth)/login/page.tsx` + `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Reads the query param and renders a contextual inline banner, including a reset-password action when Clerk requires a password change.
 - **Outcome:** OAuth fallback redirects now explain the exact next step on the login page, so users can recover without guessing why SSO stopped.
 
-### [2026-04-04] - Clerk v7 SSO Full Implementation & Bug Fixes
+## 2026-04-04
+
+### Clerk v7 SSO Full Implementation & Bug Fixes
 
 - **Decision:** Implement complete Clerk v7 custom SSO flow replacing deprecated v6 `AuthenticateWithRedirectCallback` approach.
 - **Problem:** Google/Apple sign-in and sign-up were broken. `redirectUrl`/`redirectCallbackUrl` were swapped in all 4 SSO call sites, no SSO callback logic existed (only deprecated component), and no `/sso-continue` page existed for handling missing OAuth fields. Additionally, `SignUpFutureResource.update()` was found to construct incorrect API URLs (missing sign_up ID → 405).

@@ -573,7 +573,7 @@
 ### GitHub Analysis Architecture Doc
 
 - **Decision:** Document the GitHub analysis domain and add it to the architecture index.
-- **Problem:** GitHub analysis files existed without a first-read domain doc.
+- **Problem:** GitHub analysis files existed without a first-read domain README.
 - **Solution:** Added the original GitHub analysis architecture doc and index entry.
 - **Outcome:** Future GitHub analysis work had an architecture entry point and progress history.
 
@@ -612,3 +612,17 @@
 - **Problem:** The new GitHub analysis direction needed clear backend entry points without committing to queueing, AI prompts, or final orchestration yet.
 - **Solution:** Added analyzer placeholders for project structure, dependency/config, source code, tests, README/docs, CI/CD, commits, and pull requests.
 - **Outcome:** The backend has a clear place to build the GitHub analyzer pipeline incrementally.
+
+---
+
+## 2026-05-15
+
+### GitHub Analysis Doc Split
+
+- **Decision:** Split the oversized GitHub analysis doc into a hub plus focused sub-docs for pipeline orchestration, project-structure analysis, and history.
+- **Problem:** `docs/architecture/github-analysis.md` reached 521 lines and mixed endpoint orchestration, analyzer internals, and a long dev log, which crossed the project documentation split threshold.
+- **Solution:**
+  1. **Hub doc:** Created `docs/architecture/github-analysis/README.md` as the first-read overview and navigation point.
+  2. **Focused docs:** Moved orchestration guidance to `pipeline/README.md`, analyzer rules/status to `project-structure/README.md`, and historical entries to `changelog.md`.
+  3. **Index update:** Updated `docs/architecture/README.md` so GitHub analysis points to the new hub and supporting docs.
+- **Outcome:** GitHub analysis documentation is below the effective retrieval threshold per file and easier to update without mixing unrelated concerns.

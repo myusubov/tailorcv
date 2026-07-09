@@ -7,12 +7,12 @@
 Before any code implementation:
 
 - Read `docs/architecture/README.md`.
-- Read the relevant domain doc if one exists.
-- If no relevant domain doc exists, create/update one before the work is considered complete.
+- Read the relevant domain folder if one exists.
+- If no relevant domain folder exists, create/update one before the work is considered complete.
 
 After any source/config change under `apps/`, `packages/`, or root project config:
 
-- Update the relevant `docs/architecture` doc and dev log in the same work session.
+- Update the relevant `docs/architecture` README/changelog/ADR files in the same work session.
 - Do not claim completion, commit, or open a PR until the architecture docs are current.
 
 ## Tech Stack
@@ -41,7 +41,7 @@ tailorcv/
 ├── apps/backend/          # Express API server (services, controllers, routes, workers)
 ├── apps/frontend/         # Next.js app (App Router, Server Actions, React Query)
 ├── packages/shared/       # Shared types, Zod schemas, utilities
-└── docs/architecture/     # Architecture documentation (domain docs)
+└── docs/architecture/     # Architecture documentation (domain folders)
 ```
 
 ## Commands
@@ -87,7 +87,7 @@ npm run prisma:studio          # visual DB browser
 
 - Use chat-based planning and the platform's plan mode by default for multi-step work.
 - Do not create a repo-local `PLAN.md` unless a human explicitly asks for a file-based plan artifact.
-- When a reusable implementation pattern changes, update this `CLAUDE.md`; when feature architecture changes, update the relevant doc under `docs/architecture/`.
+- When a reusable implementation pattern changes, update this `CLAUDE.md`; when feature architecture changes, update the relevant domain folder under `docs/architecture/`.
 
 ---
 
