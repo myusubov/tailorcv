@@ -104,6 +104,9 @@ apps/backend/src/services/github-analysis/project-structure/
 │   ├── shared-package/
 │   │   ├── js-ts-shared-package-area-rules.ts
 │   │   └── shared-package-area-rules.ts
+│   ├── containerization/
+│   │   ├── containerization-area-rules.ts
+│   │   └── docker-containerization-area-rules.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -158,6 +161,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
 - **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, Ruby on Rails, and Express.js run first with implemented path rules before the scaffolded generic backend fallback.
 - **Rule**: Shared package detected-area rules are dispatched from `detected-area-rules/shared-package/shared-package-area-rules.ts`. Language-specific shared-package detectors live in separate modules, starting with the implemented JavaScript/TypeScript workspace-package detector.
+- **Rule**: Containerization detected-area rules are dispatched from `detected-area-rules/containerization/containerization-area-rules.ts`. Runtime-specific containerization detectors live in separate modules, starting with the scaffolded Docker detector boundary.
 - **Rule**: JavaScript/TypeScript shared-package evidence is grouped at the repo-level shared container, not the individual package leaf. Evidence under `packages/shared`, `packages/ui`, `libs/types`, or `modules/schemas` emits at `packages`, `libs`, or `modules`; root `shared` and `common` emit at themselves.
 - **Rule**: JavaScript/TypeScript shared-package output emits `Shared package` with primary technology `Node.js`. It requires a shared-looking package/container name plus either a workspace manifest (`package.json` or `project.json`) or a public entrypoint (`index.*` or `src/index.*`). Package name alone, manifest alone, entrypoint alone, app-internal `src/shared`, and top-level `utils` remain non-emitting.
 - **Rule**: JavaScript/TypeScript shared-package detector confidence coverage uses `packages`, scoped `packages/@scope/*`, `libs`, `modules`, root `shared`, root `common`, repeated signal counting, and weak-signal rejection fixtures through the public analyzer output.
@@ -276,6 +280,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] TypeORM database schema detector path rules
 - [x] Sequelize database schema detector path rules
 - [x] Shared package detector path rules
+- [x] Containerization detector module scaffold
 - [ ] Generic backend fallback path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder

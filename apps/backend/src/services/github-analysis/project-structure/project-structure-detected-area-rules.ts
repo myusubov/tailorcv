@@ -1,4 +1,5 @@
 import { addBackendAreas } from './detected-area-rules/backend/backend-area-rules';
+import { addContainerizationAreas } from './detected-area-rules/containerization/containerization-area-rules';
 import { addDatabaseAreas } from './detected-area-rules/database/database-area-rules';
 import { addFrontendAreas } from './detected-area-rules/frontend/frontend-area-rules';
 import { addSharedPackageAreas } from './detected-area-rules/shared-package/shared-package-area-rules';
@@ -16,4 +17,5 @@ export function applyDetectedAreaRules({
   addBackendAreas({ candidates, index });
   addDatabaseAreas({ candidates, index });
   addSharedPackageAreas({ candidates, index });
+  addContainerizationAreas({ candidates, index });
 }
