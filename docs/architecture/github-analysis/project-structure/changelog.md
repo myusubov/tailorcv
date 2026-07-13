@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-07-14
+
+### Docker Containerization Matcher Prep
+
+- **Decision:** Keep Docker Bake out of the detector for now while tightening the existing Dockerfile, ignore-file, Compose, and devcontainer path matchers.
+- **Problem:** The Docker detector scaffold started counting Docker path signals, but the matcher patterns did not align with the analyzer's lowercase normalized paths and missed Compose variants such as `compose.prod.yml`.
+- **Solution:**
+  1. Updated Dockerfile matching to use lowercase normalized filenames such as `dockerfile`, `api.dockerfile`, and environment-suffixed variants.
+  2. Updated `.dockerignore` matching to align with lowercase normalized Dockerfile names.
+  3. Updated Compose matching to recognize both `compose.*` and `docker-compose.*` YAML variants.
+  4. Left Docker Bake matching out of the code so it can be added separately.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
+- **Outcome:** Docker path signal collection is broader and normalized-path-safe, while the detector gate still controls whether any `Containerization` area is emitted.
+
+### Containerization Technology Type Cleanup
+
+- **Decision:** Keep Docker in a dedicated containerization technology category while preserving the public `DetectedAreaTechnology` union shape.
+- **Problem:** The initial Docker technology type used inconsistent union formatting and the project-structure README still described the composed technology union without the new containerization category.
+- **Solution:**
+  1. Normalized `ContainerizationDetectedAreaTechnology` to the single literal alias `Docker`.
+  2. Updated the JSDoc to describe containerization-area technology labels.
+  3. Updated the project-structure README rule that lists the composed technology categories.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
+- **Outcome:** Docker remains available to detected-area candidates through a clearly named containerization technology category.
+
 ## 2026-07-09
 
 ### Containerization Detector Module Scaffold

@@ -96,6 +96,11 @@ export type BackendDetectedAreaTechnology =
   | 'Spring Boot';
 
 /**
+ * Containerization tool labels inferred for detected containerization areas.
+ */
+export type ContainerizationDetectedAreaTechnology = 'Docker';
+
+/**
  * Runtime, language, and platform context attached to detected areas.
  */
 export type RuntimeDetectedAreaTechnology =
@@ -131,6 +136,7 @@ export type DatabaseDetectedAreaTechnology =
 export type DetectedAreaTechnology =
   | FrontendDetectedAreaTechnology
   | BackendDetectedAreaTechnology
+  | ContainerizationDetectedAreaTechnology
   | RuntimeDetectedAreaTechnology
   | TemplateDetectedAreaTechnology
   | DatabaseDetectedAreaTechnology;
