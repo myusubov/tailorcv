@@ -6,17 +6,31 @@
 
 ## 2026-07-14
 
-### Docker Containerization Matcher Prep
+### Docker Containerization Signal Prep
 
-- **Decision:** Keep Docker Bake out of the detector for now while tightening the existing Dockerfile, ignore-file, Compose, and devcontainer path matchers.
-- **Problem:** The Docker detector scaffold started counting Docker path signals, but the matcher patterns did not align with the analyzer's lowercase normalized paths and missed Compose variants such as `compose.prod.yml`.
+- **Decision:** Collect basename-only Docker signals through filename matching, keep devcontainer config path-scoped, and count Docker Bake as conservative Docker-specific build evidence.
+- **Problem:** The Docker detector scaffold started counting Docker path signals, but basename-only files were using full-path regexes, the matcher patterns did not align with the analyzer's lowercase normalized paths, Compose variants such as `compose.prod.yml` were missing, and Docker Bake was not counted.
 - **Solution:**
-  1. Updated Dockerfile matching to use lowercase normalized filenames such as `dockerfile`, `api.dockerfile`, and environment-suffixed variants.
-  2. Updated `.dockerignore` matching to align with lowercase normalized Dockerfile names.
-  3. Updated Compose matching to recognize both `compose.*` and `docker-compose.*` YAML variants.
-  4. Left Docker Bake matching out of the code so it can be added separately.
+  1. Updated Dockerfile matching to use filename evidence such as `dockerfile`, `api.dockerfile`, and environment-suffixed variants.
+  2. Updated `.dockerignore` matching to use filename evidence aligned with lowercase normalized Dockerfile names.
+  3. Updated Compose matching to use filename evidence for both `compose.*` and `docker-compose.*` YAML variants.
+  4. Added Docker Bake filename evidence for `docker-bake.hcl`, `docker-bake.json`, and their `.override` variants with score `3`.
+  5. Kept `.devcontainer/devcontainer.json` as path-scoped evidence because the directory is part of that signal.
 - **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
-- **Outcome:** Docker path signal collection is broader and normalized-path-safe, while the detector gate still controls whether any `Containerization` area is emitted.
+- **Outcome:** Docker signal collection is broader and uses filename matching where directory context is unnecessary, while the detector gate still controls whether any `Containerization` area is emitted.
+
+### Docker Containerization Owner Resolution
+
+- **Decision:** Resolve Docker containerization evidence to the repo area being containerized rather than the Docker config folder by default.
+- **Problem:** Docker evidence can live at repo root, inside app/service/package owners, under generic config folders such as `docker/` or `deploy/`, or in simple local owners such as `backend/`; the detector needed stable owner paths before enabling Docker area emission.
+- **Solution:**
+  1. Added `ownerPathForDockerContainerizationArea` in `project-structure-path-utils.ts`.
+  2. Resolved monorepo evidence to `apps/*`, `services/*`, `packages/*`, or `libs/*`.
+  3. Collapsed root-level and generic config-folder evidence such as `docker/Dockerfile`, `deploy/docker/Dockerfile`, and `.devcontainer/devcontainer.json` to `.`.
+  4. Used parent-folder fallback for simple local owners such as `backend/Dockerfile`, `api/docker-compose.yml`, and `worker/docker-bake.override.hcl`.
+  5. Routed every Docker signal count through the Docker owner resolver and added focused path utility coverage.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
+- **Outcome:** Docker signal evidence now groups under the intended containerized repo area, while the detector gate still controls whether `Containerization` areas emit.
 
 ### Containerization Technology Type Cleanup
 

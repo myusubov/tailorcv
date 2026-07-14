@@ -7,6 +7,13 @@ const DATABASE_MONOREPO_OWNER_DIRECTORIES = new Set([
   'libs',
 ]);
 
+const CONTAINERIZATION_MONOREPO_OWNER_DIRECTORIES = new Set([
+  'apps',
+  'packages',
+  'services',
+  'libs',
+]);
+
 /**
  * Normalizes repository tree paths for case-insensitive matching.
  * Keeps all path-based analyzers aligned on forward-slash lowercase lookups.
@@ -206,6 +213,17 @@ const SHARED_PACKAGE_AREA_DIRECTORY_NAMES = new Set([
   'modules',
 ]);
 
+const DOCKER_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES = new Set([
+  '.devcontainer',
+  '.docker',
+  'deploy',
+  'deployment',
+  'deployments',
+  'devops',
+  'docker',
+  'ops',
+]);
+
 /**
  * Returns the shared SQLAlchemy/Alembic database owner path.
  * Alembic environments and SQLAlchemy model/session files can be split across
@@ -333,6 +351,33 @@ export function ownerPathForSharedPackageArea(path: string): string {
 }
 
 /**
+ * Returns the repo area owner for Docker containerization evidence.
+ * Docker config can live at repo root, inside app/service/package owners, or
+ * under generic config folders, so evidence resolves to the nearest meaningful
+ * app-like owner instead of the Docker artifact folder itself.
+ */
+export function ownerPathForDockerContainerizationArea(path: string): string {
+  const parts = path.split('/');
+
+  const containerizationMonorepoOwnerPath =
+    containerizationMonorepoOwnerPathFromParts(parts);
+  if (containerizationMonorepoOwnerPath) {
+    return containerizationMonorepoOwnerPath;
+  }
+
+  const topLevelDirectory = parts[0];
+  if (
+    parts.length <= 1 ||
+    (topLevelDirectory &&
+      DOCKER_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES.has(topLevelDirectory))
+  ) {
+    return '.';
+  }
+
+  return parentPathFromPath({ path });
+}
+
+/**
  * Returns an entry's parent path when it exists, otherwise the entry path itself.
  * Useful for file-backed areas whose owner is normally their containing folder.
  */
@@ -353,6 +398,19 @@ function databaseMonorepoOwnerPathFromParts(parts: string[]): string | null {
   }
 
   return DATABASE_MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)
+    ? `${ownerRoot}/${ownerName}`
+    : null;
+}
+
+function containerizationMonorepoOwnerPathFromParts(
+  parts: string[],
+): string | null {
+  const [ownerRoot, ownerName] = parts;
+  if (!ownerRoot || !ownerName) {
+    return null;
+  }
+
+  return CONTAINERIZATION_MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)
     ? `${ownerRoot}/${ownerName}`
     : null;
 }

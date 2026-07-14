@@ -1,5 +1,6 @@
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
+import { ownerPathForDockerContainerizationArea } from '../../project-structure-path-utils';
 import {
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
@@ -10,11 +11,13 @@ type DockerContainerizationSignal =
   | 'docker-build-file'
   | 'docker-ignore-file'
   | 'docker-compose-file'
-  | 'devcontainer-config';
+  | 'devcontainer-config'
+  | 'docker-bake-file';
 
 const DOCKER_CONTAINERIZATION_SIGNAL_SCORES = {
   'docker-build-file': 4,
   'docker-compose-file': 4,
+  'docker-bake-file': 3,
   'docker-ignore-file': 2,
   'devcontainer-config': 2,
 } satisfies AreaRuleSignalScores<DockerContainerizationSignal>;
@@ -37,20 +40,24 @@ export function addDockerContainerizationAreas({
   const dockerContainerizationAreasByOwner =
     createAreaRuleCandidateMap<DockerContainerizationSignal>();
 
-  const dockerBuildFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)(?:dockerfile|[^/]+\.dockerfile)(?:\.[^/]+)?$/,
+  const dockerBuildFiles = index.findFilesByNameMatching({
+    pattern: /^(?:dockerfile|[^/]+\.dockerfile)(?:\.[^/]+)?$/,
   });
 
-  const dockerIgnoreFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)(?:\.dockerignore|[^/]+\.dockerfile\.dockerignore)$/,
+  const dockerIgnoreFiles = index.findFilesByNameMatching({
+    pattern: /^(?:\.dockerignore|[^/]+\.dockerfile\.dockerignore)$/,
   });
 
-  const dockerComposeFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)(?:docker-)?compose(?:\.[^/]+)?\.(?:yml|yaml)$/,
+  const dockerComposeFiles = index.findFilesByNameMatching({
+    pattern: /^(?:docker-)?compose(?:\.[^/]+)?\.(?:yml|yaml)$/,
   });
 
   const devcontainerConfigFiles = index.findEntriesByPathMatching({
     pattern: /(^|\/)\.devcontainer\/devcontainer\.json$/,
+  });
+
+  const dockerBakeFiles = index.findFilesByNameMatching({
+    pattern: /^docker-bake(?:\.override)?\.(?:hcl|json)$/,
   });
 
   for (const dockerBuildFile of dockerBuildFiles) {
@@ -59,6 +66,7 @@ export function addDockerContainerizationAreas({
       entry: dockerBuildFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-build-file'],
       signal: 'docker-build-file',
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
@@ -68,6 +76,7 @@ export function addDockerContainerizationAreas({
       entry: dockerIgnoreFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-ignore-file'],
       signal: 'docker-ignore-file',
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
@@ -77,6 +86,17 @@ export function addDockerContainerizationAreas({
       entry: dockerComposeFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-compose-file'],
       signal: 'docker-compose-file',
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
+    });
+  }
+
+  for (const dockerBakeFile of dockerBakeFiles) {
+    countAreaRuleSignal({
+      areasByOwner: dockerContainerizationAreasByOwner,
+      entry: dockerBakeFile,
+      score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-bake-file'],
+      signal: 'docker-bake-file',
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
@@ -86,6 +106,7 @@ export function addDockerContainerizationAreas({
       entry: devcontainerConfigFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['devcontainer-config'],
       signal: 'devcontainer-config',
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
