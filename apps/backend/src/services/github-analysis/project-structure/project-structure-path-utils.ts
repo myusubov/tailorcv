@@ -1,13 +1,6 @@
 import type { RepoTreeEntry } from './project-structure-analyzer.types';
 
-const DATABASE_MONOREPO_OWNER_DIRECTORIES = new Set([
-  'apps',
-  'packages',
-  'services',
-  'libs',
-]);
-
-const CONTAINERIZATION_MONOREPO_OWNER_DIRECTORIES = new Set([
+const MONOREPO_OWNER_DIRECTORIES = new Set([
   'apps',
   'packages',
   'services',
@@ -351,14 +344,21 @@ export function ownerPathForSharedPackageArea(path: string): string {
 }
 
 /**
- * Returns the repo area owner for Docker containerization evidence.
- * Docker config can live at repo root, inside app/service/package owners, or
- * under generic config folders, so evidence resolves to the nearest meaningful
- * app-like owner instead of the Docker artifact folder itself.
+ * Resolves a matched Docker evidence path to the repository area that owns the
+ * inferred containerization configuration.
+ *
+ * @param path - Repository-relative path already classified as Docker evidence.
+ * @returns The monorepo member, monorepo root, repository root, or local parent
+ * directory that most conservatively owns the evidence.
+ *
+ * @remarks This pure path-only resolver does not inspect Docker configuration
+ * contents. Exact artifact locations remain available as candidate evidence;
+ * this function returns their logical area owner and has no side effects.
  */
 export function ownerPathForDockerContainerizationArea(path: string): string {
   const parts = path.split('/');
 
+  // Known monorepo roots use a stricter member-or-root ownership contract.
   const containerizationMonorepoOwnerPath =
     containerizationMonorepoOwnerPathFromParts(parts);
   if (containerizationMonorepoOwnerPath) {
@@ -366,6 +366,7 @@ export function ownerPathForDockerContainerizationArea(path: string): string {
   }
 
   const topLevelDirectory = parts[0];
+  // Root evidence and repository-level config folders describe the whole repo.
   if (
     parts.length <= 1 ||
     (topLevelDirectory &&
@@ -374,6 +375,7 @@ export function ownerPathForDockerContainerizationArea(path: string): string {
     return '.';
   }
 
+  // Non-monorepo evidence falls back to the directory containing the artifact.
   return parentPathFromPath({ path });
 }
 
@@ -397,22 +399,44 @@ function databaseMonorepoOwnerPathFromParts(parts: string[]): string | null {
     return null;
   }
 
-  return DATABASE_MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)
+  return MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)
     ? `${ownerRoot}/${ownerName}`
     : null;
 }
 
+/**
+ * Resolves Docker evidence under a recognized monorepo container to either the
+ * container root or its named member.
+ *
+ * @param parts - Ordered path segments from a matched Docker evidence path.
+ * @returns The recognized monorepo root/member owner, or `null` when the path
+ * does not begin with a supported monorepo container.
+ *
+ * @remarks Two-segment paths are known matched files directly under the
+ * monorepo root. Generic Docker config directories in the second segment also
+ * belong to that root. Other second segments are treated as arbitrary member
+ * names. This path-only heuristic has no side effects and cannot distinguish an
+ * application literally named `docker` from a Docker config directory.
+ */
 function containerizationMonorepoOwnerPathFromParts(
   parts: string[],
 ): string | null {
   const [ownerRoot, ownerName] = parts;
-  if (!ownerRoot || !ownerName) {
+  // Reject ordinary nested paths so they retain local parent-path ownership.
+  if (!ownerRoot || !ownerName || !MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)) {
     return null;
   }
 
-  return CONTAINERIZATION_MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)
-    ? `${ownerRoot}/${ownerName}`
-    : null;
+  // Direct evidence and generic config folders belong to the monorepo root.
+  if (
+    parts.length === 2 ||
+    DOCKER_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES.has(ownerName)
+  ) {
+    return ownerRoot;
+  }
+
+  // Any other second segment is accepted as the arbitrary monorepo member name.
+  return `${ownerRoot}/${ownerName}`;
 }
 
 /**

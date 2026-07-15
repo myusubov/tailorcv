@@ -17,6 +17,34 @@ describe('project structure path utils', () => {
     });
 
     it.each([
+      ['apps/Dockerfile', 'apps'],
+      ['services/compose.yml', 'services'],
+      ['packages/docker-bake.hcl', 'packages'],
+      ['libs/.dockerignore', 'libs'],
+    ])(
+      'returns monorepo root for direct Docker evidence %s',
+      (path, expectedOwnerPath) => {
+        expect(ownerPathForDockerContainerizationArea(path)).toBe(
+          expectedOwnerPath,
+        );
+      },
+    );
+
+    it.each([
+      ['apps/docker/Dockerfile', 'apps'],
+      ['apps/.devcontainer/devcontainer.json', 'apps'],
+      ['services/deploy/docker-compose.yml', 'services'],
+      ['packages/ops/docker-bake.hcl', 'packages'],
+    ])(
+      'returns monorepo root for Docker config directory evidence %s',
+      (path, expectedOwnerPath) => {
+        expect(ownerPathForDockerContainerizationArea(path)).toBe(
+          expectedOwnerPath,
+        );
+      },
+    );
+
+    it.each([
       ['Dockerfile', '.'],
       ['docker-compose.yml', '.'],
       ['docker-bake.hcl', '.'],
