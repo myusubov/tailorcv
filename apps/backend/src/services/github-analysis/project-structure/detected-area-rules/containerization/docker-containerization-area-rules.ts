@@ -22,10 +22,29 @@ const DOCKER_CONTAINERIZATION_SIGNAL_SCORES = {
   'devcontainer-config': 2,
 } satisfies AreaRuleSignalScores<DockerContainerizationSignal>;
 
+/**
+ * Determines whether one owner's path evidence proves Docker application
+ * build or runtime containerization strongly enough to emit an area.
+ *
+ * @param countedSignals - Docker signal types counted once for one owner.
+ * @returns `true` when the owner has a Dockerfile, Compose file, or Bake file;
+ * otherwise `false`.
+ *
+ * @remarks Docker build, Compose, and Bake files independently define Docker
+ * workflows. `.dockerignore` and devcontainer configuration remain supporting
+ * score/evidence only and cannot unlock emission, even together. This pure
+ * path-only gate has no side effects and cannot validate file contents.
+ */
 function hasDockerContainerizationAreaShape(
   countedSignals: Set<DockerContainerizationSignal>,
 ): boolean {
-  return false;
+  // Each anchor independently defines a Docker build or container runtime flow.
+  const hasDockerBuildFile = countedSignals.has('docker-build-file');
+  const hasDockerComposeFile = countedSignals.has('docker-compose-file');
+  const hasDockerBakeFile = countedSignals.has('docker-bake-file');
+
+  // Support-only ignore/devcontainer signals can raise confidence but not emit.
+  return hasDockerBuildFile || hasDockerComposeFile || hasDockerBakeFile;
 }
 
 /**
@@ -66,7 +85,7 @@ export function addDockerContainerizationAreas({
       entry: dockerBuildFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-build-file'],
       signal: 'docker-build-file',
-      resolveOwnerPath: ownerPathForDockerContainerizationArea
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
@@ -76,7 +95,7 @@ export function addDockerContainerizationAreas({
       entry: dockerIgnoreFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-ignore-file'],
       signal: 'docker-ignore-file',
-      resolveOwnerPath: ownerPathForDockerContainerizationArea
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
@@ -86,7 +105,7 @@ export function addDockerContainerizationAreas({
       entry: dockerComposeFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-compose-file'],
       signal: 'docker-compose-file',
-      resolveOwnerPath: ownerPathForDockerContainerizationArea
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 
@@ -96,8 +115,8 @@ export function addDockerContainerizationAreas({
       entry: dockerBakeFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-bake-file'],
       signal: 'docker-bake-file',
-      resolveOwnerPath: ownerPathForDockerContainerizationArea
-    })
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
+    });
   }
 
   for (const devcontainerConfigFile of devcontainerConfigFiles) {
@@ -106,7 +125,7 @@ export function addDockerContainerizationAreas({
       entry: devcontainerConfigFile,
       score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['devcontainer-config'],
       signal: 'devcontainer-config',
-      resolveOwnerPath: ownerPathForDockerContainerizationArea
+      resolveOwnerPath: ownerPathForDockerContainerizationArea,
     });
   }
 

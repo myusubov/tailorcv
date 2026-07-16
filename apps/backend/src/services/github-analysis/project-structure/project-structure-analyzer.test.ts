@@ -6972,7 +6972,116 @@ describe('analyzeProjectStructure', () => {
     expect(result.detectedAreas).toEqual([]);
   });
 
-  it('does not emit support areas before support-area rule groups are implemented', () => {
+  describe('Docker containerization detector', () => {
+    it.each([
+      {
+        name: 'Dockerfile',
+        entries: [file('Dockerfile')],
+        expectedEvidence: ['Dockerfile'],
+        expectedConfidence: 0.67,
+      },
+      {
+        name: 'Compose file',
+        entries: [file('compose.yaml')],
+        expectedEvidence: ['compose.yaml'],
+        expectedConfidence: 0.67,
+      },
+      {
+        name: 'Bake file',
+        entries: [file('docker-bake.hcl')],
+        expectedEvidence: ['docker-bake.hcl'],
+        expectedConfidence: 0.5,
+      },
+    ])(
+      'detects Docker containerization from a decisive $name',
+      ({ entries, expectedEvidence, expectedConfidence }) => {
+        const result = analyze(entries);
+
+        expect(areaByName(result, 'Containerization', '.')).toMatchObject({
+          confidence: expectedConfidence,
+          evidence: expectedEvidence,
+          inferredTechnologies: {
+            primary: 'Docker',
+            related: [],
+          },
+        });
+      },
+    );
+
+    it.each([
+      {
+        name: 'Docker ignore file',
+        entries: [file('.dockerignore')],
+      },
+      {
+        name: 'devcontainer config',
+        entries: [
+          directory('.devcontainer'),
+          file('.devcontainer/devcontainer.json'),
+        ],
+      },
+      {
+        name: 'Docker ignore and devcontainer support files',
+        entries: [
+          file('.dockerignore'),
+          directory('.devcontainer'),
+          file('.devcontainer/devcontainer.json'),
+        ],
+      },
+    ])('does not detect Docker from $name alone', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(areaByName(result, 'Containerization', '.')).toBeUndefined();
+    });
+
+    it('adds support evidence and confidence after a decisive signal passes the gate', () => {
+      const result = analyze([
+        file('Dockerfile'),
+        file('.dockerignore'),
+        directory('.devcontainer'),
+        file('.devcontainer/devcontainer.json'),
+      ]);
+
+      expect(areaByName(result, 'Containerization', '.')).toMatchObject({
+        confidence: 1,
+        evidence: [
+          '.devcontainer/devcontainer.json',
+          '.dockerignore',
+          'Dockerfile',
+        ],
+        inferredTechnologies: {
+          primary: 'Docker',
+          related: [],
+        },
+      });
+    });
+
+    it('keeps decisive and support-only monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/web'),
+        file('apps/web/Dockerfile'),
+        directory('apps/api'),
+        file('apps/api/.dockerignore'),
+        directory('apps/api/.devcontainer'),
+        file('apps/api/.devcontainer/devcontainer.json'),
+      ]);
+
+      expect(areaByName(result, 'Containerization', 'apps/web')).toMatchObject({
+        confidence: 0.67,
+        evidence: ['apps/web/Dockerfile'],
+        inferredTechnologies: {
+          primary: 'Docker',
+          related: [],
+        },
+      });
+      expect(
+        areaByName(result, 'Containerization', 'apps/api'),
+      ).toBeUndefined();
+    });
+  });
+
+  it('does not emit unfinished support areas before their rule groups are implemented', () => {
     const result = analyze([
       directory('.github'),
       directory('.github/workflows'),
@@ -6981,8 +7090,6 @@ describe('analyzeProjectStructure', () => {
       file('docs/architecture.md'),
       directory('tests'),
       file('tests/user-flow.test.ts'),
-      file('Dockerfile'),
-      file('docker-compose.yml'),
       file('terraform/main.tf'),
       file('package.json'),
     ]);
@@ -6992,7 +7099,6 @@ describe('analyzeProjectStructure', () => {
     ).toBeUndefined();
     expect(areaByName(result, 'Documentation', 'docs')).toBeUndefined();
     expect(areaByName(result, 'Test suite', 'tests')).toBeUndefined();
-    expect(areaByName(result, 'Containerization', '.')).toBeUndefined();
     expect(
       areaByName(result, 'Infrastructure/config', 'terraform'),
     ).toBeUndefined();
