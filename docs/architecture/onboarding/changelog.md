@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-07-17
+
+### Minimal Global Loading Overlay
+
+- **Decision:** Use one reusable body-level loading portal for blocking page prerequisites while preserving progressive skeletons for structured repository data.
+- **Problem:** The initial GitHub connection check used a feature-specific skeleton constrained by the onboarding layout, so it could not reliably cover the viewport or be reused by other application flows.
+- **Solution:**
+  1. **Reusable portal:** Added `apps/frontend/app/components/ui/global-loading.tsx` with customizable status copy, hydration-safe `document.body` portal placement, accessible status semantics, and body-scroll restoration.
+  2. **GitHub connection state:** Updated `apps/frontend/app/components/onboarding/github/github-step.tsx` to render `GlobalLoading` only while `isLoadingConnection` is true, and removed the obsolete `github-loading-view.tsx` without changing progressive repository-grid loading.
+  3. **Focused regression coverage:** Added `apps/frontend/app/components/ui/global-loading.test.tsx` to verify portal ownership, custom copy, status attributes, and scroll cleanup.
+- **Outcome:** Blocking application work can present a minimal full-viewport loading state that escapes local layout boundaries, while GitHub repository results continue loading progressively in place.
+
 ## 2026-07-03
 
 ### GitHub Repo Results Internal Scroll

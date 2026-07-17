@@ -48,9 +48,16 @@ function hasDockerContainerizationAreaShape(
 }
 
 /**
- * Applies Docker containerization rules.
- * This scaffold reserves the Docker-specific detector boundary; concrete
- * path evidence and scoring gates will be added in a follow-up change.
+ * Detects owner-scoped Docker containerization areas from repository paths.
+ *
+ * @param context - Shared detected-area candidates and the normalized project
+ * entry index used to find Docker evidence.
+ * @returns Nothing; qualifying Docker candidates are added to the shared map.
+ *
+ * @remarks Dockerfile, Compose, and Bake paths independently unlock emission.
+ * Docker ignore and devcontainer paths only strengthen an already qualifying
+ * owner. Signals are counted once per resolved owner, and this path-only
+ * detector does not read or validate file contents.
  */
 export function addDockerContainerizationAreas({
   candidates,

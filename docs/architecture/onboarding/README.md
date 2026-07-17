@@ -48,8 +48,8 @@ app/onboarding/page.tsx
 | `apps/frontend/app/components/onboarding/github/github-step.tsx`                | Handles GitHub connection/repo loading and temporary repo analysis submit.                            | GitHub onboarding path changes.                             |
 | `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` | Coordinates GitHub repo search query param, selection limit, clear selection, and analyze handoff.    | GitHub repo picker behavior changes.                        |
 | `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`              | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components.           | GitHub repo picker presentation changes.                    |
-| `apps/frontend/app/components/onboarding/github/github-loading-view.tsx`        | Skeleton UI for GitHub connection and repository loading states.                                      | GitHub onboarding loading-state UI changes.                 |
 | `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx`  | Shared skeleton grid used while GitHub repositories are loading.                                      | GitHub repo loading-state UI changes.                       |
+| `apps/frontend/app/components/ui/global-loading.tsx`                            | Body-level blocking loading portal with customizable status copy.                                     | Full-viewport loading-state UI changes.                     |
 | `apps/frontend/app/components/onboarding/upload/upload-step.tsx`                | Handles upload view submission and placeholder file analysis submit.                                  | Upload onboarding path changes.                             |
 | `apps/frontend/app/components/onboarding/progress-bar.tsx`                      | Non-interactive manual-entry step progress indicator.                                                 | Manual-entry progress UI changes.                           |
 | `apps/frontend/app/components/onboarding/steps/onboarding-item-section.tsx`     | Shared repeatable-item section wrapper for manual entry cards.                                        | Experience, projects, or education list-section UI changes. |
@@ -84,17 +84,20 @@ flowchart TD
 ## 5. Component / Module Structure
 
 ```text
-apps/frontend/app/components/onboarding/
-├── manual-entry-form.tsx       # Manual flow orchestration
-├── progress-bar.tsx            # Manual step status UI
-├── progress-bar.test.tsx       # Progress UI contract test
-├── github/                     # GitHub onboarding flow views and repo picker components
-│   ├── github-step.tsx
-│   ├── github-connect-view.tsx
-│   ├── github-repo-selection-view.tsx
-│   └── github-repo-*.tsx
-├── upload/                     # Upload onboarding flow views
-└── steps/                      # Manual-entry step components
+apps/frontend/app/components/
+├── onboarding/
+│   ├── manual-entry-form.tsx       # Manual flow orchestration
+│   ├── progress-bar.tsx            # Manual step status UI
+│   ├── progress-bar.test.tsx       # Progress UI contract test
+│   ├── github/                     # GitHub onboarding flow views and repo picker components
+│   │   ├── github-step.tsx
+│   │   ├── github-connect-view.tsx
+│   │   ├── github-repo-selection-view.tsx
+│   │   └── github-repo-*.tsx
+│   ├── upload/                     # Upload onboarding flow views
+│   └── steps/                      # Manual-entry step components
+└── ui/
+    └── global-loading.tsx          # Body-level blocking loading portal
 ```
 
 ---
@@ -116,6 +119,12 @@ if (ok) goToNextStep();
 - **Rule**: Use one primary visual progress model per viewport: full labeled stepper on larger screens, compact current-step summary on mobile.
 - **Rule**: Explain the required-field marker once at the manual-entry form level instead of repeating optional helper text under individual fields.
 - **Anti-pattern**: Do not show percentage, a progress bar, and step labels together for the five-step manual form.
+
+### 6.3 Loading States
+
+- **Rule**: Use `GlobalLoading` only while a blocking page-level prerequisite, such as the initial GitHub connection check, is unresolved.
+- **Rule**: Keep repository fetching progressive by rendering the picker shell and skeleton-loading only the repository grid.
+- **Anti-pattern**: Do not replace structured repository loading with the full-viewport overlay after the connection is known.
 
 ---
 

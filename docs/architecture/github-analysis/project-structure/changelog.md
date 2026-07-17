@@ -6,6 +6,16 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-07-17
+
+### Docker Detector JSDoc Correction
+
+- **Problem:** The implemented Docker detector still described itself as a scaffold with future path evidence and scoring work, which contradicted its active matching, owner grouping, gate, and emission behavior.
+- **Solution:**
+  1. Replaced the stale scaffold text above `addDockerContainerizationAreas` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts` with JSDoc covering its purpose, input context, map mutation, decisive and support-only signal invariant, once-per-owner grouping, and path-only limitation.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** The detector's source documentation now accurately describes its implemented contract and no longer suggests Docker emission remains unfinished.
+
 ## 2026-07-16
 
 ### Docker Containerization Emission Gate

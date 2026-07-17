@@ -2,9 +2,7 @@
 
 import { defineAction } from './_action';
 
-export interface AnalyzeGithubReposInput {
-  repoIds: number[];
-}
+export type AnalyzeGithubReposInput = number[]
 
 export interface AnalyzeGithubReposOutput {
   summaries: Array<{

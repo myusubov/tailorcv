@@ -8,8 +8,8 @@ import {
 } from '@/lib/http/github-client';
 import { analyzeGithubReposAction } from '@/lib/actions/github.actions';
 import { useActionMutation } from '@/lib/hooks/use-action-mutation';
+import { GlobalLoading } from '@/app/components/ui/global-loading';
 import { GitHubConnectView } from './github-connect-view';
-import { GitHubLoadingView } from './github-loading-view';
 import { GitHubRepoSelectionView } from './github-repo-selection-view';
 import { env } from '@/lib/config';
 import { useQueryStates, parseAsString } from 'nuqs';
@@ -19,6 +19,14 @@ interface GitHubStepProps {
   onBack: () => void;
 }
 
+/**
+ * Coordinates GitHub connection, repository loading, and repository analysis.
+ *
+ * The component accepts the parent flow's back handler and returns the view for
+ * the current GitHub onboarding state. It performs query, OAuth redirect, toast,
+ * and analysis-mutation side effects; only the initial connection check blocks
+ * the full viewport, while repository loading remains progressive.
+ */
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const analyzeMutation = useActionMutation(analyzeGithubReposAction, {
@@ -76,12 +84,17 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    analyzeMutation.mutate({ repoIds: selectedRepoIds });
+    analyzeMutation.mutate(selectedRepoIds);
   };
 
   // Show loading state while checking connection status
   if (isLoadingConnection) {
-    return <GitHubLoadingView />;
+    return (
+      <GlobalLoading
+        title="Checking your GitHub connection"
+        description="This should only take a moment."
+      />
+    );
   }
 
   // If connected and we have repos, show the selection view
