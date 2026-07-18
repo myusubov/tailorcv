@@ -1,6 +1,6 @@
 'use client';
 
-import { Spinner, cn } from '@heroui/react';
+import { Spinner, cn, useIsHydrated } from '@heroui/react';
 import { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -10,12 +10,6 @@ export interface GlobalLoadingProps {
   className?: string;
 }
 
-/**
- * Provides the stable no-op subscription required for a hydration snapshot.
- */
-function subscribeToHydration() {
-  return () => undefined;
-}
 
 /**
  * Renders a blocking, full-viewport loading status directly under the document body.
@@ -30,11 +24,8 @@ export function GlobalLoading({
   description,
   className,
 }: GlobalLoadingProps) {
-  const isHydrated = useSyncExternalStore(
-    subscribeToHydration,
-    () => true,
-    () => false,
-  );
+
+  const isHydrated = useIsHydrated()
 
   useEffect(() => {
     if (!isHydrated) return undefined;
@@ -57,7 +48,7 @@ export function GlobalLoading({
       aria-busy="true"
       aria-atomic="true"
       className={cn(
-        'bg-background fixed inset-0 z-[100] flex h-dvh w-full items-center justify-center px-6',
+        'bg-background fixed inset-0 z-100 flex h-dvh w-full items-center justify-center px-6',
         className,
       )}
     >

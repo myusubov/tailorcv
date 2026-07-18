@@ -16,7 +16,7 @@ export function GitHubConnectView({
   onBack,
 }: GitHubConnectViewProps) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 sm:px-6">
+    <div className="flex min-h-svh flex-col items-center justify-center py-8 px-4 sm:px-6">
       <motion.div
         className="w-full max-w-2xl"
         initial={{ opacity: 0, y: 30 }}
@@ -32,7 +32,7 @@ export function GitHubConnectView({
             transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
           >
             <div className="bg-surface-secondary flex size-16 items-center justify-center rounded-2xl shadow-lg">
-              <Icon icon="mdi:github" className="text-foreground size-9" />
+              <Icon aria-hidden="true" icon="mdi:github" className="text-foreground size-9" />
             </div>
           </motion.div>
 
@@ -74,9 +74,9 @@ export function GitHubConnectView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <h3 className="text-foreground mb-4 text-sm font-semibold">
+          <h2 className="text-foreground mb-4 text-sm font-semibold">
             What GitHub can reveal
-          </h3>
+          </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               {
@@ -153,7 +153,7 @@ export function GitHubConnectView({
               }
               className="size-5"
             />
-            {isConnecting ? 'Connecting...' : 'Connect GitHub Account'}
+            {isConnecting ? 'Connecting…' : 'Connect GitHub Account'}
           </Button>
         </motion.div>
       </motion.div>
