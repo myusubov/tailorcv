@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { addDockerContainerizationAreas } from './docker-containerization-area-rules';
+import { addPodmanOciContainerizationAreas } from './podman-oci-containerization-area-rules';
 
 /**
  * Applies containerization-specific detected-area rules.
@@ -11,4 +12,5 @@ export function addContainerizationAreas({
   index,
 }: DetectedAreaRuleContext): void {
   addDockerContainerizationAreas({ candidates, index });
+  addPodmanOciContainerizationAreas({ candidates, index });
 }

@@ -6,6 +6,30 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-07-21
+
+### Podman/OCI Basename Signal Matching
+
+- **Problem:** The Podman/OCI detector's planned signal variables still used placeholder full-path entry queries, which neither represented the researched Quadlet/OCI filenames nor guaranteed that returned entries were files.
+- **Solution:**
+  1. Replaced every placeholder query in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts` with file-only basename matching for `.container`, `.pod`, `.kube`, `.build`, `.image`, `.network`, `.volume`, `.artifact`, `Containerfile` variants, and `.containerignore`.
+  2. Kept directory placement optional during collection so root-level and nested real-world Quadlet layouts remain discoverable, while leaving path exclusions and ownership resolution for their dedicated implementation stage.
+  3. Updated `docs/architecture/github-analysis/project-structure/README.md` and the detector JSDoc to describe the implemented collection boundary and still-disabled output behavior.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** The inert Podman/OCI detector now discovers its planned evidence as files across valid repository layouts without yet resolving owners, counting signals, or emitting containerization areas.
+
+## 2026-07-20
+
+### Podman/OCI Containerization Detector Scaffold
+
+- **Problem:** Containerization dispatch supported Docker only, so Podman/OCI research had no isolated detector boundary in which evidence, ownership, scoring, and gate behavior could be developed without prematurely changing analyzer output.
+- **Solution:**
+  1. Added the inert `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts` module with an example-only signal type, example score, always-false gate, and side-effect-free detector entry point.
+  2. Dispatched the scaffold after Docker from `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/containerization-area-rules.ts` while leaving matching, owner resolution, technology attribution, candidate scoring, and emission unimplemented.
+  3. Documented the new detector boundary and implementation status in `docs/architecture/github-analysis/project-structure/README.md`.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** Podman/OCI detector work now has a dedicated, dispatched module that cannot alter analyzer results until real path signals, ownership rules, and emission criteria are implemented.
+
 ## 2026-07-17
 
 ### Docker Detector JSDoc Correction

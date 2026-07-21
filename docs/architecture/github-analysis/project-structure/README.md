@@ -106,7 +106,8 @@ apps/backend/src/services/github-analysis/project-structure/
 │   │   └── shared-package-area-rules.ts
 │   ├── containerization/
 │   │   ├── containerization-area-rules.ts
-│   │   └── docker-containerization-area-rules.ts
+│   │   ├── docker-containerization-area-rules.ts
+│   │   └── podman-oci-containerization-area-rules.ts
 │   └── frontend/
 │       ├── angular-frontend-area-rules.ts
 │       ├── astro-frontend-area-rules.ts
@@ -161,7 +162,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
 - **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, Ruby on Rails, and Express.js run first with implemented path rules before the scaffolded generic backend fallback.
 - **Rule**: Shared package detected-area rules are dispatched from `detected-area-rules/shared-package/shared-package-area-rules.ts`. Language-specific shared-package detectors live in separate modules, starting with the implemented JavaScript/TypeScript workspace-package detector.
-- **Rule**: Containerization detected-area rules are dispatched from `detected-area-rules/containerization/containerization-area-rules.ts`. Runtime-specific containerization detectors live in separate modules, starting with the implemented Docker detector.
+- **Rule**: Containerization detected-area rules are dispatched from `detected-area-rules/containerization/containerization-area-rules.ts`. Runtime-specific containerization detectors live in separate modules: Docker is implemented, while Podman/OCI currently collects basename-only Quadlet unit, `Containerfile`, and `.containerignore` evidence without ownership, signal counting, technology attribution, or emission behavior.
 - **Rule**: Docker containerization matching recognizes basename-only Dockerfile variants, `.dockerignore` variants, Compose files such as `compose.yaml`, `compose.prod.yaml`, `docker-compose.yml`, and `docker-compose.prod.yml`, Docker Bake files such as `docker-bake.hcl` and `docker-bake.override.json`, and path-scoped `.devcontainer/devcontainer.json`.
 - **Rule**: Dockerfile, Compose, and Bake signals independently unlock `Containerization` emission because each defines a Docker build or runtime workflow. `.dockerignore` and devcontainer signals remain support-only: they can increase score and evidence for an anchored owner but cannot unlock emission alone or together. See [ADR 0001](adr/0001-docker-containerization-gate.md).
 - **Rule**: Docker containerization owner resolution points at the repo area being containerized: evidence under a named monorepo member resolves to `apps/*`, `services/*`, `packages/*`, or `libs/*`; evidence directly under one of those monorepo roots, or under its generic config folders such as `docker/`, `deploy/`, and `.devcontainer/`, resolves to the monorepo root itself; repository-root generic config folders resolve to `.`; simple local owners such as `backend/Dockerfile` fall back to the parent folder.
@@ -285,6 +286,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Sequelize database schema detector path rules
 - [x] Shared package detector path rules
 - [x] Docker containerization detector path rules
+- [x] Podman/OCI containerization detector module scaffold
 - [ ] Generic backend fallback path rules
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
