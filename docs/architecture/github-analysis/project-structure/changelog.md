@@ -6,6 +6,30 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-07-22
+
+### Podman/OCI Conservative Combination Gate
+
+- **Decision:** Require corroborating owner-scoped Podman/OCI path signals instead of allowing any basename-only Quadlet extension to emit independently.
+- **Problem:** Quadlet extensions such as `.container`, `.pod`, `.kube`, and especially `.build` can collide with unrelated file formats when the path-only analyzer cannot inspect their sections, so treating score-4 files as independent proof would create false-positive Podman containerization areas.
+- **Solution:**
+  1. Reduced core Quadlet scores from `4` to `3`, `.image` from `3` to `2`, and network, volume, artifact, and `Containerfile` support scores from `2` to `1` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`.
+  2. Implemented runtime-plus-companion and build-plus-compatible-companion combinations in `hasPodmanOciContainerizationAreaShape`, while keeping individual signals, support-resource-only groups, `.containerignore`-assisted singles, generic OCI-only evidence, and `.build` plus only network evidence non-emitting.
+  3. Added public analyzer regression coverage for seven accepted combinations and eight rejected weak shapes in `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`.
+  4. Documented the gate contract in `docs/architecture/github-analysis/project-structure/README.md` and recorded the durable precision-over-recall decision in `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`, `docs/architecture/github-analysis/project-structure/adr/README.md`, `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`.
+- **Outcome:** Podman/OCI areas can now emit from coherent path-only deployment or build shapes without allowing a single ambiguous extension or accumulated weak support evidence to claim Podman usage.
+
+### Podman/OCI Owner Signal Counting
+
+- **Problem:** Podman/OCI evidence collections were incorrectly routed through final candidate emission inside each file loop, so individual evidence files were not assigned their signal type and score in the owner-scoped candidate map.
+- **Solution:**
+  1. Routed all ten Podman/OCI evidence collections through `countAreaRuleSignal` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, pairing every entry with its exact signal literal and configured score.
+  2. Preserved once-per-owner signal deduplication through the shared candidate map and kept the existing final gated emission block separate from evidence collection.
+  3. Updated `docs/architecture/github-analysis/project-structure/README.md` to describe the implemented provisional owner-scoped counting stage and the still-unfinished Podman-specific ownership and gate behavior.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** Every planned Podman/OCI file signal now contributes its configured score and evidence once to its provisional owner without bypassing the detector's final emission gate.
+
 ## 2026-07-21
 
 ### Podman/OCI Basename Signal Matching

@@ -111,7 +111,7 @@ export function addAreaRuleCandidates<Signal extends string>({
   name: DetectedAreaName;
   candidates: Map<string, AreaCandidate>;
   primaryTechnology: DetectedAreaTechnology;
-  relatedTechnologies: DetectedAreaTechnology[];
+  relatedTechnologies?: DetectedAreaTechnology[];
 }): void {
   for (const [ownerPath, ownerCandidate] of areasByOwner) {
     addAreaScore({
@@ -121,7 +121,7 @@ export function addAreaRuleCandidates<Signal extends string>({
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
       primaryTechnology,
-      relatedTechnologies,
+      relatedTechnologies: relatedTechnologies ?? [],
     });
   }
 }

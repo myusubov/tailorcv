@@ -7081,6 +7081,115 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Podman/OCI containerization detector', () => {
+    it.each([
+      {
+        name: 'container and pod units',
+        entries: [file('api.container'), file('api.pod')],
+        expectedEvidence: ['api.container', 'api.pod'],
+        expectedConfidence: 1,
+      },
+      {
+        name: 'container and network units',
+        entries: [file('api.container'), file('api.network')],
+        expectedEvidence: ['api.container', 'api.network'],
+        expectedConfidence: 0.67,
+      },
+      {
+        name: 'container unit and Containerfile',
+        entries: [file('api.container'), file('Containerfile')],
+        expectedEvidence: ['api.container', 'Containerfile'],
+        expectedConfidence: 0.67,
+      },
+      {
+        name: 'pod and volume units',
+        entries: [file('api.pod'), file('api.volume')],
+        expectedEvidence: ['api.pod', 'api.volume'],
+        expectedConfidence: 0.67,
+      },
+      {
+        name: 'kube and image units',
+        entries: [file('api.kube'), file('api.image')],
+        expectedEvidence: ['api.image', 'api.kube'],
+        expectedConfidence: 0.83,
+      },
+      {
+        name: 'build unit and Containerfile',
+        entries: [file('api.build'), file('Containerfile')],
+        expectedEvidence: ['api.build', 'Containerfile'],
+        expectedConfidence: 0.67,
+      },
+      {
+        name: 'build and image units',
+        entries: [file('api.build'), file('api.image')],
+        expectedEvidence: ['api.build', 'api.image'],
+        expectedConfidence: 0.83,
+      },
+    ])(
+      'detects Podman/OCI from a coherent $name shape',
+      ({ entries, expectedEvidence, expectedConfidence }) => {
+        const result = analyze(entries);
+
+        expect(areaByName(result, 'Containerization', '.')).toMatchObject({
+          confidence: expectedConfidence,
+          evidence: expectedEvidence,
+          inferredTechnologies: {
+            primary: 'Podman/OCI',
+            related: ['Quadlet'],
+          },
+        });
+      },
+    );
+
+    it.each([
+      {
+        name: 'container unit alone',
+        entries: [file('api.container')],
+      },
+      {
+        name: 'pod unit alone',
+        entries: [file('api.pod')],
+      },
+      {
+        name: 'kube unit alone',
+        entries: [file('api.kube')],
+      },
+      {
+        name: 'build unit alone',
+        entries: [file('api.build')],
+      },
+      {
+        name: 'support-only Quadlet units',
+        entries: [
+          file('api.image'),
+          file('api.network'),
+          file('api.volume'),
+          file('api.artifact'),
+        ],
+      },
+      {
+        name: 'generic OCI build files',
+        entries: [file('Containerfile'), file('.containerignore')],
+      },
+      {
+        name: 'container unit with only an ignore file',
+        entries: [file('api.container'), file('.containerignore')],
+      },
+      {
+        name: 'build unit with only a network unit',
+        entries: [file('api.build'), file('api.network')],
+      },
+    ])('does not detect Podman/OCI from $name', ({ entries }) => {
+      const result = analyze(entries);
+
+      expect(
+        result.detectedAreas.some(
+          (area) => area.inferredTechnologies.primary === 'Podman/OCI',
+        ),
+      ).toBe(false);
+    });
+  });
+
   it('does not emit unfinished support areas before their rule groups are implemented', () => {
     const result = analyze([
       directory('.github'),

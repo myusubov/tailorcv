@@ -98,7 +98,10 @@ export type BackendDetectedAreaTechnology =
 /**
  * Containerization tool labels inferred for detected containerization areas.
  */
-export type ContainerizationDetectedAreaTechnology = 'Docker';
+export type ContainerizationDetectedAreaTechnology =
+  | 'Docker'
+  | 'Podman/OCI'
+  | 'Quadlet';
 
 /**
  * Runtime, language, and platform context attached to detected areas.
