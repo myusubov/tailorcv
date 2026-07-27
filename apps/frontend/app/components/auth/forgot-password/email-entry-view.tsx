@@ -16,6 +16,7 @@ import { motion } from 'framer-motion';
 
 import { AnimatedError } from '@/app/components/ui';
 import { ForgotPasswordFormValues } from '@/lib/schemas/auth';
+import { AuthLogo } from '../auth-logo';
 
 interface EmailEntryViewProps {
   control: Control<ForgotPasswordFormValues>;
@@ -24,6 +25,12 @@ interface EmailEntryViewProps {
   globalError: string;
 }
 
+/**
+ * Renders the forgot-password email step with responsive brand treatments.
+ *
+ * @param props - Form control, submission state, submit callback, and global error.
+ * @returns The desktop marketing panel and email-entry form.
+ */
 export function EmailEntryView({
   control,
   isSubmitting,
@@ -51,15 +58,7 @@ export function EmailEntryView({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <NextLink
-              href="/"
-              className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner ring-1 ring-white/20 backdrop-blur-md">
-                <Icon icon="lucide:file-text" className="size-6 text-white" />
-              </div>
-              TailorCV
-            </NextLink>
+            <AuthLogo variant="inverse" />
           </motion.div>
 
           <motion.div
@@ -113,15 +112,7 @@ export function EmailEntryView({
             transition={{ duration: 0.4, delay: 0.1 }}
             className="mb-8 flex justify-center lg:hidden"
           >
-            <NextLink
-              href="/"
-              className="text-foreground flex items-center gap-2.5 text-2xl font-bold transition-opacity hover:opacity-80"
-            >
-              <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-xl">
-                <Icon icon="lucide:file-text" className="size-5" />
-              </div>
-              TailorCV
-            </NextLink>
+            <AuthLogo className="text-foreground" />
           </motion.div>
 
           <motion.div

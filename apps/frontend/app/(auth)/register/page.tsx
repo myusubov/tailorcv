@@ -1,12 +1,17 @@
 'use client';
 
-import NextLink from 'next/link';
-import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
+import { AuthLogo } from '@/app/components/auth/auth-logo';
 import { AuthMarketingPanel } from '@/app/components/auth/auth-marketing-panel';
 import { RegisterForm } from '@/app/components/auth/register';
 
+/**
+ * Renders the responsive registration route with shared TailorCV branding and
+ * the custom Clerk-backed registration form.
+ *
+ * @returns The registration marketing and form layout.
+ */
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -27,15 +32,7 @@ export default function RegisterPage() {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="mb-8 flex justify-center lg:hidden"
           >
-            <NextLink
-              href="/"
-              className="text-foreground flex items-center gap-2.5 text-2xl font-bold transition-opacity hover:opacity-80"
-            >
-              <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-xl">
-                <Icon icon="lucide:file-text" className="size-5" />
-              </div>
-              TailorCV
-            </NextLink>
+            <AuthLogo className="text-foreground" />
           </motion.div>
 
           <motion.div

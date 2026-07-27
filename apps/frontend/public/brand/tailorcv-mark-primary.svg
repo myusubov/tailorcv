@@ -1,0 +1,16 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="242 242 770 770"
+  role="img"
+  aria-labelledby="tailorcv-mark-primary-title"
+>
+  <title id="tailorcv-mark-primary-title">TailorCV logo mark</title>
+  <path
+    fill="#059669"
+    d="M346 282H439L603 378V483H418V557L552 616V972L374 865C367 861 363 854 363 846V606L317 566C309 559 304 549 304 539V327C304 302 323 282 346 282Z"
+  />
+  <path
+    fill="#059669"
+    d="M908 282H787L632 378V483H816V557L684 616V972L879 865C886 861 890 854 890 846V606L936 566C944 559 949 549 949 539V327C949 302 931 282 908 282Z"
+  />
+</svg>

@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
-import NextLink from 'next/link';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
-import { LOGOS } from '@/lib/config';
 
+import { AuthLogo } from '../auth-logo';
+
+/**
+ * Renders the desktop login brand panel with a dark-background logo treatment.
+ *
+ * @returns The animated, desktop-only login marketing panel.
+ */
 export function LoginBranding() {
   return (
     <motion.div
@@ -24,23 +28,7 @@ export function LoginBranding() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <NextLink
-            href="/"
-            className="inline-flex items-center gap-3 text-2xl font-bold tracking-tight transition-opacity hover:opacity-90"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner ring-1 ring-white/20 backdrop-blur-md">
-              <Image
-                src={LOGOS.TAILORCV}
-                alt="TailorCV Logo"
-                width={40}
-                height={40}
-                priority
-                quality={100}
-                loading="eager"
-              />
-            </div>
-            TailorCV
-          </NextLink>
+          <AuthLogo variant="inverse" />
         </motion.div>
 
         <motion.div

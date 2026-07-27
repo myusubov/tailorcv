@@ -53,6 +53,10 @@
 | `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts` | Forgot-password page controller hook that owns Clerk reset state transitions | App-layer forgot-password controller changes |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step | Forgot-password form-structure changes |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx` | Local reset-step form controller that owns RHF wiring for code verification / password reset UI | Forgot-password form-structure changes |
+| `apps/frontend/app/components/auth/auth-logo.tsx` | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes | Auth logo behavior, variants, sizing, or accessibility changes |
+| `apps/frontend/app/components/auth/auth-marketing-panel.tsx` | Shared desktop registration brand panel and inverse logo treatment | Register branding or marketing-panel changes |
+| `apps/frontend/public/brand/tailorcv-mark-*.svg` | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark | Auth logo geometry, color, or contrast changes |
+| `apps/frontend/lib/config/constants.ts` | Stable public paths for the shared logo variants | Adding or renaming brand assets |
 | `apps/frontend/lib/auth/clerk-flow.ts` | Small Clerk-status decision helpers for login and forgot-password custom flows | Auditing or changing Clerk state handling |
 | `apps/frontend/lib/schemas/auth.ts` | Zod schemas: login, register, forgotPassword, and resetPassword | Adding/changing form fields |
 
@@ -196,6 +200,22 @@ router.push(buildLoginUrl({ reason: 'second_factor_required' }));
 
 Email/password registration validates `password` and `confirmPassword` locally in `registerSchema` before Clerk submission. `useRegisterFlow()` still sends only `emailAddress` and `password` to `signUp.password()`, so confirmation remains a local guard and is never sent to Clerk or the backend.
 
+### 6.6 Responsive Auth Brand Marks
+
+Auth surfaces use one shield/T silhouette from `apps/frontend/public/brand/`
+with contrast-specific variants:
+
+- `tailorcv-mark-primary.svg` on light backgrounds
+- `tailorcv-mark-inverse.svg` on the dark desktop marketing panels
+- `tailorcv-mark-monochrome.svg` when a neutral one-color treatment is required
+
+`AuthLogo` owns the variant-to-asset mapping, the 32px and 40px auth display
+sizes, and the accessible home-link contract. Its default is the primary mark;
+dark marketing panels must request the inverse variant explicitly.
+
+The adjacent `TailorCV` text supplies the accessible link name, so decorative
+mark images use empty alternative text and do not repeat the brand name.
+
 ---
 
 ## 7. Integration Points
@@ -216,6 +236,7 @@ Email/password registration validates `password` and `confirmPassword` locally i
 - [x] Registration verification controller/view split
 - [x] Forgot-password controller/view split
 - [x] Clerk status helper coverage for login and forgot-password
+- [x] Shared primary/inverse shield mark across login, register, and password recovery
 
 ---
 

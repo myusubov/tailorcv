@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-07-27
+
+### Shared TailorCV Shield Mark
+
+- **Decision:** Use the supplied shield/T concept as one deterministic SVG silhouette with primary, inverse, and monochrome color variants across the custom auth journey.
+- **Problem:** Login had begun using a generic document/T mark while registration and password-recovery screens still used Lucide file icons, and the shared registration marketing panel referenced a removed logo constant that prevented frontend typecheck from succeeding.
+- **Solution:**
+  1. **Vector reconstruction — `apps/frontend/public/brand/tailorcv-mark-primary.svg`, `tailorcv-mark-inverse.svg`, and `tailorcv-mark-monochrome.svg`**: Reconstructed the approved shield/T geometry as compact SVG paths and retained the established emerald, white, and zinc treatments.
+  2. **Configurable brand-link component — `apps/frontend/app/components/auth/auth-logo.tsx` and `auth-logo.test.tsx`**: Centralized variant selection, supported auth sizing, decorative-image semantics, and the accessible home-link contract with focused regression coverage.
+  3. **Contrast-aware auth integration — `apps/frontend/app/components/auth/login/branding-view.tsx`, `auth-marketing-panel.tsx`, `apps/frontend/app/(auth)/register/page.tsx`, and forgot-password views**: Applied inverse marks to dark marketing panels and primary marks to light/mobile surfaces through the shared component.
+  4. **Asset contract repair — `apps/frontend/lib/config/constants.ts` consumers**: Replaced the stale `LOGOS.TAILORCV` usage with the named primary/inverse variants so all auth branding resolves through the current asset contract.
+- **Outcome:** Login, registration, forgot-password entry, and password reset now share one recognizable TailorCV mark with appropriate contrast, and the frontend asset references typecheck again.
+
 ## 2026-04-20
 
 ### Register Password Confirmation

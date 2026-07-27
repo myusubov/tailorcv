@@ -18,6 +18,7 @@ import { motion } from 'framer-motion';
 
 import { AnimatedError } from '@/app/components/ui';
 import { ResetPasswordFormValues } from '@/lib/schemas/auth';
+import { AuthLogo } from '../auth-logo';
 
 type ResetPasswordStep = 'verify-code' | 'set-password';
 
@@ -37,6 +38,12 @@ interface ResetPasswordViewProps {
   isVerifyingCode: boolean;
 }
 
+/**
+ * Renders reset-code verification and new-password entry with shared branding.
+ *
+ * @param props - Reset flow state, form control, and transition callbacks.
+ * @returns The active reset-password step inside a centered card.
+ */
 export function ResetPasswordView({
   control,
   isSubmitting,
@@ -66,15 +73,7 @@ export function ResetPasswordView({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <NextLink
-          href="/"
-          className="mb-8 flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-80"
-        >
-          <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
-            <Icon icon="lucide:file-text" className="size-5" />
-          </div>
-          TailorCV
-        </NextLink>
+        <AuthLogo size={32} className="text-foreground mb-8" />
       </motion.div>
 
       <motion.div
