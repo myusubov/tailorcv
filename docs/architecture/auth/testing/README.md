@@ -40,21 +40,22 @@ Real Clerk reset coverage
 
 ## 3. Key Files & Entry Points
 
-| File | Purpose | When to Read |
-| ---- | ------- | ------------ |
-| `apps/frontend/playwright.config.ts` | Frontend browser automation config for auth smoke tests | Auth E2E changes |
-| `apps/frontend/e2e/auth-smoke.spec.ts` | Smoke suite for signed-out auth pages and direct-navigation guards | Auth browser automation changes |
-| `apps/frontend/e2e/login.real.spec.ts` | Real Clerk login browser coverage for a dedicated fixed-password Clerk test user and optional Client Trust completion | Real login-flow changes |
-| `apps/frontend/e2e/forgot-password.real.spec.ts` | Real Clerk forgot-password browser coverage for the single `A -> B -> A` happy-path cycle | Real reset-flow changes |
-| `apps/frontend/e2e/forgot-password-policy.real.spec.ts` | Real Clerk forgot-password password-policy coverage | Real reset-policy changes |
-| `apps/frontend/e2e/signup.real.spec.ts` | Real Clerk sign-up browser coverage for a unique `+clerk_test` email and fixed OTP verification | Real sign-up flow changes |
-| `apps/frontend/e2e/helpers/auth/otp.ts` | Shared OTP interaction helper for Clerk auth challenges | OTP UI changes in auth E2E |
-| `apps/frontend/e2e/helpers/auth/login-recovery.ts` | Login/session recovery helpers, public login outcomes, and password rotation detection | Real auth login-state setup changes |
-| `apps/frontend/e2e/helpers/auth/forgot-password-flow.ts` | Forgot-password page orchestration helpers | Real forgot-password browser-flow changes |
-| `apps/frontend/e2e/helpers/auth/forgot-password.ts` | Thin barrel that re-exports public forgot-password auth helpers | Spec-facing auth helper imports |
-| `apps/frontend/e2e/helpers/env.ts` | E2E env loader for Clerk/Gmail test configuration | Real auth test setup changes |
-| `apps/frontend/lib/auth/login-recovery.test.ts` | Focused unit coverage for password rotation selection logic | Fast auth-helper regression coverage |
-| `apps/frontend/lib/auth/clerk-mail.test.ts` | Focused unit coverage for Clerk reset-mail fallback behavior | Fast mail-helper regression coverage |
+| File                                                                                  | Purpose                                                                                                                                                         | When to Read                                   |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `apps/frontend/playwright.config.ts`                                                  | Frontend browser automation config for auth smoke tests                                                                                                         | Auth E2E changes                               |
+| `apps/frontend/e2e/auth-smoke.spec.ts`                                                | Smoke suite for signed-out auth pages and direct-navigation guards                                                                                              | Auth browser automation changes                |
+| `apps/frontend/e2e/login.real.spec.ts`                                                | Real Clerk login browser coverage for a dedicated fixed-password Clerk test user and optional Client Trust completion                                           | Real login-flow changes                        |
+| `apps/frontend/e2e/forgot-password.real.spec.ts`                                      | Real Clerk forgot-password browser coverage for the single `A -> B -> A` happy-path cycle                                                                       | Real reset-flow changes                        |
+| `apps/frontend/e2e/forgot-password-policy.real.spec.ts`                               | Real Clerk forgot-password password-policy coverage                                                                                                             | Real reset-policy changes                      |
+| `apps/frontend/e2e/signup.real.spec.ts`                                               | Real Clerk sign-up browser coverage for a unique `+clerk_test` email and fixed OTP verification                                                                 | Real sign-up flow changes                      |
+| `apps/frontend/e2e/helpers/auth/otp.ts`                                               | Shared OTP interaction helper for Clerk auth challenges                                                                                                         | OTP UI changes in auth E2E                     |
+| `apps/frontend/e2e/helpers/auth/login-recovery.ts`                                    | Login/session recovery helpers, public login outcomes, and password rotation detection                                                                          | Real auth login-state setup changes            |
+| `apps/frontend/e2e/helpers/auth/forgot-password-flow.ts`                              | Forgot-password page orchestration helpers                                                                                                                      | Real forgot-password browser-flow changes      |
+| `apps/frontend/e2e/helpers/auth/forgot-password.ts`                                   | Thin barrel that re-exports public forgot-password auth helpers                                                                                                 | Spec-facing auth helper imports                |
+| `apps/frontend/e2e/helpers/env.ts`                                                    | E2E env loader for Clerk/Gmail test configuration                                                                                                               | Real auth test setup changes                   |
+| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx` | Focused hook coverage for reset state, Clerk send orchestration, cooldown persistence/restoration, timer progression, expiration failures, and interval cleanup | Forgot-password controller or cooldown changes |
+| `apps/frontend/lib/auth/login-recovery.test.ts`                                       | Focused unit coverage for password rotation selection logic                                                                                                     | Fast auth-helper regression coverage           |
+| `apps/frontend/lib/auth/clerk-mail.test.ts`                                           | Focused unit coverage for Clerk reset-mail fallback behavior                                                                                                    | Fast mail-helper regression coverage           |
 
 ---
 
@@ -94,6 +95,9 @@ apps/frontend/e2e/
 │   ├── env.ts
 │   └── mail/
 └── utils/auth.ts
+
+apps/frontend/app/components/auth/forgot-password/
+└── use-forgot-password-flow.test.tsx # Fast controller-hook coverage
 ```
 
 ---
@@ -157,9 +161,9 @@ npm run test:e2e:frontend:real-auth
 
 ## 7. Integration Points
 
-| Domain | Relationship | Key Interface |
-| ------ | ------------ | ------------- |
-| Frontend app | Playwright boots the local auth UI and route guards | `apps/frontend/playwright.config.ts` |
+| Domain           | Relationship                                                                                                                                                                           | Key Interface                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Frontend app     | Playwright boots the local auth UI and route guards                                                                                                                                    | `apps/frontend/playwright.config.ts`                 |
 | Clerk test users | Login and reset coverage use separate test accounts so the login flow stays fixed while reset flow can still rotate passwords, while sign-up uses a fresh `+clerk_test` email each run | `.env.e2e.local`, `apps/frontend/e2e/helpers/env.ts` |
 
 ---
@@ -171,18 +175,24 @@ npm run test:e2e:frontend:real-auth
 - [x] Real Clerk forgot-password E2E
 - [x] Real Clerk sign-up E2E
 - [x] Focused helper unit coverage for reset email and password rotation logic
+- [x] Focused initial-send cooldown persistence coverage for the forgot-password hook
+- [x] Valid-future cooldown restoration and initial remaining-seconds coverage
+- [x] Empty and expired storage restoration plus storage-read failure coverage
+- [x] Countdown progression, expiration cleanup, removal-failure, and interval-unmount coverage
+- [ ] Malformed stored values, storage-write failure, and successful-resend renewal coverage
 
 ---
 
 ## 9. Risks & Mitigations
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| OTP UI interactions diverge between flows | Reuse the shared OTP helper for reset and verification steps |
-| External services slow down the suite | Keep real auth tests separate from fast Vitest and smoke runs |
-| Shared real-auth user collides across specs | Run the combined real-auth command with one Playwright worker so password rotation and reset state stay serial |
-| Sign-up coverage becomes non-repeatable because the test email already exists | Generate a fresh Clerk test email per run instead of reusing a fixed sign-up account |
-| Google/Apple provider automation becomes brittle | Keep OAuth coverage at the app-owned hook/guard layer and verify provider-controlled flows manually |
+| Risk                                                                          | Mitigation                                                                                                          |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| OTP UI interactions diverge between flows                                     | Reuse the shared OTP helper for reset and verification steps                                                        |
+| External services slow down the suite                                         | Keep real auth tests separate from fast Vitest and smoke runs                                                       |
+| Partial cooldown tests imply the full resend UX is covered                    | Track untested malformed-storage, storage-write failure, and resend-renewal branches until the feature is completed |
+| Shared real-auth user collides across specs                                   | Run the combined real-auth command with one Playwright worker so password rotation and reset state stay serial      |
+| Sign-up coverage becomes non-repeatable because the test email already exists | Generate a fresh Clerk test email per run instead of reusing a fixed sign-up account                                |
+| Google/Apple provider automation becomes brittle                              | Keep OAuth coverage at the app-owned hook/guard layer and verify provider-controlled flows manually                 |
 
 ---
 

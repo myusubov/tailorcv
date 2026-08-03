@@ -15,10 +15,10 @@ import {
 import { Icon } from '@iconify/react';
 import { Control, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
+import { maskEmail2 } from 'maskdata';
 
 import { AnimatedError } from '@/app/components/ui';
 import { ResetPasswordFormValues } from '@/lib/schemas/auth';
-import { AuthLogo } from '../auth-logo';
 
 type ResetPasswordStep = 'verify-code' | 'set-password';
 
@@ -39,10 +39,10 @@ interface ResetPasswordViewProps {
 }
 
 /**
- * Renders reset-code verification and new-password entry with shared branding.
+ * Renders reset-code verification and new-password entry in a centered recovery card.
  *
  * @param props - Reset flow state, form control, and transition callbacks.
- * @returns The active reset-password step inside a centered card.
+ * @returns The active reset-password step with masked email context.
  */
 export function ResetPasswordView({
   control,
@@ -60,27 +60,20 @@ export function ResetPasswordView({
   isVerifyingCode,
 }: ResetPasswordViewProps) {
   const isVerifyStep = step === 'verify-code';
+  const maskedEmail = email ? maskEmail2(email) : '';
   const description = isVerifyStep
-    ? `We sent a 6-digit code to ${email}`
+    ? `We sent a 6-digit code to ${maskedEmail}`
     : email
-      ? `Enter a new password for ${email}`
+      ? `Enter a new password for ${maskedEmail}`
       : 'Enter your new password to finish resetting your account';
 
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <AuthLogo size={32} className="text-foreground mb-8" />
-      </motion.div>
-
-      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full max-w-[440px]"
+        className="w-full max-w-110"
       >
         <Card className="w-full">
           <Card.Header className="flex flex-col gap-1 text-center">
@@ -153,10 +146,7 @@ export function ResetPasswordView({
                 </motion.div>
               </Form>
             ) : (
-              <Form
-                onSubmit={onSetPassword}
-                className="flex flex-col gap-6"
-              >
+              <Form onSubmit={onSetPassword} className="flex flex-col gap-6">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}

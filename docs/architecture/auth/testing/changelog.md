@@ -4,6 +4,40 @@
 
 ---
 
+## 2026-08-03
+
+### Resend Cooldown Restoration And Timer Coverage
+
+- **Problem:** Valid-future restoration coverage did not protect the cooldown's empty/expired storage fallbacks, storage-error behavior, interval progression, expiry cleanup, or effect cleanup on unmount.
+- **Solution:**
+  1. **Restoration matrix — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Added focused cases for empty storage, expired timestamps, and storage-read exceptions alongside the existing valid-future case.
+  2. **Deterministic countdown lifecycle — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Advances Vitest's fake clock to verify per-second recalculation, expiration state/storage cleanup, and fail-open state cleanup when expired storage removal throws.
+  3. **Effect cleanup contract — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Unmounts the rendered hook and verifies that its active interval is cleared, with spies restored before fake timers are returned to real timers.
+  4. **Coverage boundary — `docs/architecture/auth/testing/README.md`**: Narrows the remaining cooldown gaps to malformed stored values, storage-write failure, and successful-resend renewal.
+- **Outcome:** The implemented restoration and timer lifecycle now have focused deterministic coverage, including their current failure and cleanup boundaries, without implying coverage for the unfinished resend integration.
+
+## 2026-08-01
+
+### Valid-Future Cooldown Restoration Coverage
+
+- **Problem:** Initial-send coverage proved that the hook writes a cooldown, but it did not prove that a refreshed hook restores a valid future timestamp or derives the expected rounded remaining seconds.
+- **Solution:**
+  1. **Deterministic clock — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Uses Vitest fake timers and a fixed system time so restoration assertions do not depend on real elapsed time.
+  2. **Pre-existing browser state — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Preloads the exported storage key before rendering and asserts the hook's restored timestamp and remaining seconds.
+  3. **Explicit coverage boundary — `docs/architecture/auth/testing/README.md`**: Keeps invalid-storage, failure, timer-progression, expiration, and resend-renewal scenarios listed as pending.
+- **Outcome:** The valid-future restoration path now has deterministic focused coverage, while the remaining cooldown branches stay visible instead of being implied by one passing test.
+
+## 2026-07-31
+
+### Forgot-Password Initial Cooldown Hook Coverage
+
+- **Problem:** The new session-storage cooldown boundary could regress without a fast test proving that a successful initial Clerk code request both advances the flow and persists resend availability.
+- **Solution:**
+  1. **Isolated Clerk boundary — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Mocks the Clerk sign-in resource, Next.js router, and auth config required by the hook without exercising external auth state.
+  2. **Meaningful controller assertions — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Covers the initial email step and verifies the successful create/send sequence, session-storage write, and transition to code verification.
+  3. **Coverage boundary — `docs/architecture/auth/testing/README.md`**: Records the restoration, invalid-storage, failure, countdown, and resend-renewal branches that remain uncovered.
+- **Outcome:** The first implemented cooldown persistence boundary has focused regression coverage without overstating coverage for the unfinished cooldown behavior.
+
 ## 2026-04-09
 
 ### Real Clerk Sign-Up E2E Coverage
@@ -86,7 +120,6 @@
   2. **`apps/frontend/e2e/login.real.spec.ts`**: Added a serial real-auth login suite that opportunistically asserts the reset-required redirect when the shared Clerk user is currently in that state and otherwise recovers the account via the existing forgot-password flow before proving a successful password login.
   3. **`apps/frontend/package.json` + `CLAUDE.md` + `docs/architecture/auth/testing/README.md`**: Wired the new spec into the real-auth command surface, forced the shared-user real-auth suite to run serially, documented the manual social-auth policy, and made chat-based planning the default over repo-local `PLAN.md` files.
 - **Outcome:** The auth test stack now has real Clerk browser coverage for the password-login journey, including live Client Trust handling and honest reset-required behavior, without trying to automate brittle Google or Apple provider flows.
-
 
 ## 2026-04-06
 

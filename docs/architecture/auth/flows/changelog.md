@@ -4,6 +4,64 @@
 
 ---
 
+## 2026-08-03
+
+### Successful Reset-Code Resend Feedback
+
+- **Problem:** A successful reset-code resend completed silently, leaving users unsure whether Clerk accepted the request and whether they should check their inbox.
+- **Solution:**
+  1. **Success-only toast — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Shows a Sonner confirmation only after Clerk returns a successful resend result, while returned and thrown errors continue through the existing global-error path.
+  2. **Current-state boundary — `docs/architecture/auth/flows/README.md`**: Records the implemented feedback separately from the still-pending resend disabling, cooldown renewal, and flow-exit cleanup.
+- **Outcome:** Users receive clear confirmation after a successful reset-code resend without implying that the unfinished cooldown enforcement is complete.
+
+## 2026-08-01
+
+### Single-Owner Cooldown Countdown
+
+- **Problem:** Cooldown restoration and the ticking effect both calculated the initial remaining seconds, while the interval callback returned the updater function instead of invoking it, so the apparent initial state could hide a countdown that never advanced.
+- **Solution:**
+  1. **Separated effect ownership — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Limits the restoration effect to validating and restoring the absolute timestamp, while the dependent countdown effect exclusively derives remaining seconds immediately and on each interval tick.
+  2. **Shared persistence contract — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts` and `use-forgot-password-flow.test.tsx`**: Exports and reuses `AVAILABLE_AT_STORAGE_KEY` instead of duplicating the storage-key literal in focused tests.
+  3. **Valid-future restoration coverage — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Freezes time, preloads a future timestamp, renders the hook, and verifies the restored timestamp plus rounded remaining seconds.
+  4. **Current-state documentation — `docs/architecture/auth/flows/README.md` and the existing cooldown ADR**: Records that countdown state now ticks while resend-control integration and lifecycle cleanup remain pending.
+- **Outcome:** Remaining seconds now have one calculation owner, update from the absolute timestamp every second, and have focused coverage for valid future restoration without claiming that the complete resend UX is finished.
+
+## 2026-07-31
+
+### Forgot-Password Resend Cooldown Groundwork
+
+- **Decision:** Persist the UI-only resend cooldown as one absolute availability timestamp in per-tab session storage while Clerk remains the authoritative server-side rate limiter.
+- **Problem:** A successfully requested password-reset code had no persisted UI cooldown, and returned Clerk errors from identifier creation or code sending could be missed before the flow advanced.
+- **Solution:**
+  1. **Clerk result handling — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Treats returned errors from both `signIn.create()` and `sendCode()` as terminal failures before entering verification.
+  2. **Best-effort cooldown persistence — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Stores an absolute 60-second resend-availability timestamp after the initial send succeeds, restores only valid future safe-integer values, and still clears expired in-memory state when removing session storage throws.
+  3. **Focused hook coverage — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Proves the initial state and the successful initial-send boundary that stores the cooldown and advances to code verification.
+  4. **Persistence decision — `docs/architecture/auth/flows/adr/0001-use-session-storage-for-ui-resend-cooldown.md`**: Records why session storage owns this UX state and why Clerk, rather than browser state, remains responsible for abuse prevention.
+  5. **Current-state contract — `docs/architecture/auth/flows/README.md`**: Records that live countdown updates, resend disabling, successful-resend renewal, and lifecycle cleanup remain unfinished.
+- **Outcome:** The flow can persist and restore the initial resend-availability timestamp without misclassifying browser-storage failures as Clerk failures, while the remaining UI cooldown work stays explicitly tracked as incomplete.
+
+### Password-Recovery Privacy And Focused Branding
+
+- **Problem:** Password-recovery guidance exposed the complete submitted email, and mobile/reset-card logos added visual weight without helping users complete the focused recovery task.
+- **Solution:**
+  1. **Masked recovery context — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Uses `maskdata` for user-facing verification and new-password descriptions while retaining the real email inside the flow.
+  2. **Focused recovery surfaces — `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx` and `reset-password-view.tsx`**: Removes the narrow-screen and reset-card logo treatments while preserving the desktop split-layout brand panel.
+  3. **Native width utility — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Replaces the arbitrary 440px card width with Tailwind's equivalent `max-w-110` spacing token.
+- **Outcome:** Password recovery reveals less account-identifying text and presents a simpler task-focused layout on narrow screens without removing desktop brand context.
+
+## 2026-07-28
+
+### Shared Responsive Auth Form Panel
+
+- **Problem:** Login, registration, and forgot-password email entry repeated the same responsive form-column background, flex centering, viewport height, width, and padding classes, so layout changes could drift across the split auth routes.
+- **Solution:**
+  1. **Semantic Tailwind utility — `apps/frontend/app/globals.css`**: Replaced the minimum-height-only helper with `auth-form-panel`, which owns the complete responsive split-layout form-column contract.
+  2. **Native spacing-scale content utility — `apps/frontend/app/globals.css`**: Added `auth-form-content` for the repeated centered inner width and vertical rhythm, replacing the arbitrary `440px` maximum with the equivalent native Tailwind `max-w-110` rem-based utility.
+  3. **Mobile logo placement utility — `apps/frontend/app/globals.css`**: Added `auth-form-mobile-logo` for the centered small-screen logo treatment shared by login and registration.
+  4. **Shared auth layout adoption — `apps/frontend/app/components/auth/login/login-form-view.tsx`, `apps/frontend/app/(auth)/register/page.tsx`, and `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx`**: Replaced each duplicated outer and inner layout recipe with the shared utilities while keeping the mobile logo limited to login and registration.
+  5. **Architecture contract — `docs/architecture/auth/flows/README.md`**: Documented the utility boundaries and the styling responsibilities that remain local to each auth view.
+- **Outcome:** All three split-layout auth routes now share one responsive form-panel contract, including small-screen viewport centering, without forcing the distinct reset-password and verification layouts into the same abstraction.
+
 ## 2026-07-27
 
 ### Shared TailorCV Shield Mark

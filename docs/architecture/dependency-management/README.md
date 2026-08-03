@@ -8,11 +8,11 @@
 
 ### 1.1 Design Pillars
 
-| Pillar | Description |
-| ------ | ----------- |
-| **Workspace ownership** | Each app declares the packages its source imports so installs, deploys, and audits are attributable to the correct workspace. |
-| **Root as coordinator** | The root `package.json` owns monorepo scripts, workspaces, shared dev tooling, and rare overrides that are safe across the repo. |
-| **No forced major audit fixes** | Security fixes are applied as targeted updates unless the audit fix requires a major migration. |
+| Pillar                          | Description                                                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Workspace ownership**         | Each app declares the packages its source imports so installs, deploys, and audits are attributable to the correct workspace.    |
+| **Root as coordinator**         | The root `package.json` owns monorepo scripts, workspaces, shared dev tooling, and rare overrides that are safe across the repo. |
+| **No forced major audit fixes** | Security fixes are applied as targeted updates unless the audit fix requires a major migration.                                  |
 
 ### 1.2 Key Decisions
 
@@ -36,13 +36,13 @@ package.json                 # workspace scripts, shared tooling, verified overr
 
 > **For AI**: When asked to work on dependency placement or audit remediation, start by reading these files.
 
-| File | Purpose | When to Read |
-| ---- | ------- | ------------ |
-| `package.json` | Root workspace scripts, shared dev dependencies, and verified overrides | Any monorepo-level dependency or audit change |
-| `apps/frontend/package.json` | Frontend runtime and test dependencies | Any dependency imported by frontend code |
-| `apps/backend/package.json` | Backend runtime, Prisma, and backend test dependencies | Any dependency imported by backend code |
-| `packages/shared/package.json` | Shared package runtime and test dependencies | Any dependency imported by shared package code |
-| `package-lock.json` | Resolved workspace dependency tree | Any audit or package resolution change |
+| File                           | Purpose                                                                 | When to Read                                   |
+| ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------- |
+| `package.json`                 | Root workspace scripts, shared dev dependencies, and verified overrides | Any monorepo-level dependency or audit change  |
+| `apps/frontend/package.json`   | Frontend runtime and test dependencies                                  | Any dependency imported by frontend code       |
+| `apps/backend/package.json`    | Backend runtime, Prisma, and backend test dependencies                  | Any dependency imported by backend code        |
+| `packages/shared/package.json` | Shared package runtime and test dependencies                            | Any dependency imported by shared package code |
+| `package-lock.json`            | Resolved workspace dependency tree                                      | Any audit or package resolution change         |
 
 ---
 
@@ -100,11 +100,12 @@ tailorcv/
 
 > How this domain connects to other domains. Update this when dependencies change.
 
-| Domain | Relationship | Key Interface |
-| ------ | ------------ | ------------- |
-| Auth | Clerk packages are split between frontend and backend workspaces | `@clerk/nextjs`, `@clerk/express`, `@clerk/backend` |
-| Backend Data | Prisma packages must stay aligned in the backend workspace | `prisma`, `@prisma/client`, `@prisma/adapter-pg` |
-| Frontend UI | Next.js and React packages belong to the frontend workspace | `next`, `react`, `react-dom` |
+| Domain           | Relationship                                                                    | Key Interface                                       |
+| ---------------- | ------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Auth             | Clerk packages are split between frontend and backend workspaces                | `@clerk/nextjs`, `@clerk/express`, `@clerk/backend` |
+| Auth recovery UI | Email masking is owned by the frontend workspace that renders recovery guidance | `maskdata` in `apps/frontend/package.json`          |
+| Backend Data     | Prisma packages must stay aligned in the backend workspace                      | `prisma`, `@prisma/client`, `@prisma/adapter-pg`    |
+| Frontend UI      | Next.js and React packages belong to the frontend workspace                     | `next`, `react`, `react-dom`                        |
 
 ---
 
@@ -113,6 +114,7 @@ tailorcv/
 ### Phase 1: Dependency Ownership Cleanup
 
 - [x] Frontend direct imports are declared in `apps/frontend/package.json`
+- [x] Password-recovery email masking is declared in the frontend workspace that imports it
 - [x] Backend direct imports are declared in `apps/backend/package.json`
 - [x] Root app-only dependencies removed from `package.json`
 - [x] High-risk `js-cookie` finding remediated through Clerk patch/update and verified override
@@ -127,11 +129,12 @@ tailorcv/
 
 ## 9. Risks & Mitigations
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| Forced audit fixes downgrade or major-upgrade core tooling | Review each audit path and avoid `npm audit fix --force` unless the migration is intentional |
-| Root overrides give a false sense of safety | Keep only overrides verified by `npm ls` |
-| Workspace source relies on undeclared root dependencies | Search direct imports and move dependencies to the owning workspace |
+| Risk                                                                               | Mitigation                                                                                                       |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Forced audit fixes downgrade or major-upgrade core tooling                         | Review each audit path and avoid `npm audit fix --force` unless the migration is intentional                     |
+| Root overrides give a false sense of safety                                        | Keep only overrides verified by `npm ls`                                                                         |
+| Workspace source relies on undeclared root dependencies                            | Search direct imports and move dependencies to the owning workspace                                              |
+| Installing one package silently refreshes unrelated compatible transitive versions | Review lockfile package additions, removals, and version changes separately from the requested direct dependency |
 
 ---
 

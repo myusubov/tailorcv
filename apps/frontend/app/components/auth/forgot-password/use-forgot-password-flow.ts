@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { resolveForgotPasswordCompletion } from '@/lib/auth/clerk-flow';
 import { config } from '@/lib/config';
@@ -10,14 +11,25 @@ import { getClerkErrorMessage } from '@/lib/utils/utils';
 
 export type ResetStep = 'email' | 'verify-code' | 'set-password';
 
+/** Session-storage key shared by the cooldown controller and its focused tests. */
+export const AVAILABLE_AT_STORAGE_KEY = 'forgot-password-resend-available-at';
+
+const RESEND_COOLDOWN_MS = 60_000;
+
 interface SetPasswordArgs {
   password: string;
 }
 
 /**
  * Controls the custom forgot-password flow across email entry, code verification,
- * and new-password submission. The hook owns Clerk reset state, transitions between
- * local steps, and finalizes sign-in when the reset completes successfully.
+ * and new-password submission.
+ *
+ * @returns Render state and callbacks for the forgot-password controllers, including
+ * the best-effort resend-cooldown restoration state.
+ * @remarks The hook owns Clerk calls, local step transitions, navigation after a
+ * successful reset, and session-storage access for the UI-only cooldown. Clerk's
+ * server-side rate limit remains authoritative. Countdown state updates are owned
+ * here, while view-level resend enforcement is not yet implemented.
  */
 export function useForgotPasswordFlow() {
   const { signIn, fetchStatus } = useSignIn();
@@ -29,12 +41,95 @@ export function useForgotPasswordFlow() {
   const [globalError, setGlobalError] = useState('');
   const [isResending, setIsResending] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [resendAvailableAt, setResendAvailableAt] = useState<
+    number | null | undefined
+  >(undefined);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
   useEffect(() => {
     if (signIn?.status === 'needs_new_password') {
       setStep('set-password');
     }
   }, [signIn]);
+
+  // Restore only trustworthy future timestamps. Storage is a best-effort UX aid,
+  // so missing, invalid, expired, or inaccessible data deliberately fails open.
+  useEffect(() => {
+    try {
+      const storedAvailableAt = sessionStorage.getItem(
+        AVAILABLE_AT_STORAGE_KEY,
+      );
+      if (storedAvailableAt !== null) {
+        const parsedAvailableAt = Number(storedAvailableAt);
+
+        const isValid =
+          storedAvailableAt.trim() !== '' &&
+          Number.isFinite(parsedAvailableAt) &&
+          Number.isSafeInteger(parsedAvailableAt);
+
+        const now = Date.now();
+
+        if (isValid && parsedAvailableAt > now) {
+          setResendAvailableAt(parsedAvailableAt);
+        } else {
+          sessionStorage.removeItem(AVAILABLE_AT_STORAGE_KEY);
+          setResendAvailableAt(null);
+          setRemainingSeconds(null);
+        }
+      } else {
+        setResendAvailableAt(null);
+        setRemainingSeconds(null);
+      }
+    } catch (err: unknown) {
+      console.warn(
+        'Failed to retrieve resend cooldown from sessionStorage',
+        err,
+      );
+      setResendAvailableAt(null);
+      setRemainingSeconds(null);
+    }
+  }, []);
+
+  // Regularly update the remaining seconds until the resend cooldown expires.
+
+  useEffect(() => {
+    if (resendAvailableAt === null || resendAvailableAt === undefined) {
+      return;
+    }
+
+    /**
+     * Recalculates the cooldown from its absolute timestamp.
+     *
+     * @returns Nothing. Updates countdown state and removes expired best-effort
+     * session storage as side effects.
+     */
+    const updateRemainingSeconds = () => {
+      const remaining = Math.ceil((resendAvailableAt - Date.now()) / 1000);
+      if (remaining <= 0) {
+        try {
+          sessionStorage.removeItem(AVAILABLE_AT_STORAGE_KEY);
+        } catch (err: unknown) {
+          console.warn(
+            'Failed to remove expired resend cooldown from sessionStorage',
+            err,
+          );
+        }
+
+        setRemainingSeconds(null);
+        setResendAvailableAt(null);
+      } else {
+        setRemainingSeconds(remaining);
+      }
+    };
+
+    updateRemainingSeconds();
+
+    const intervalId = setInterval(() => updateRemainingSeconds(), 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [resendAvailableAt]);
 
   const finalizeReset = async () => {
     if (!signIn) return;
@@ -59,13 +154,54 @@ export function useForgotPasswordFlow() {
     }
   };
 
+  /**
+   * Starts Clerk's email-code reset flow and records the first resend availability.
+   *
+   * @param emailAddress - Validated address that should receive the reset code.
+   * @returns A promise that settles after Clerk and best-effort storage work finish.
+   * @remarks Advances to verification only after both Clerk calls succeed. A storage
+   * failure is logged but does not turn a successfully sent code into a failed request.
+   */
   const handleEmailSubmit = async (emailAddress: string) => {
     if (fetchStatus === 'fetching' || !signIn) return;
     setGlobalError('');
 
     try {
-      await signIn.create({ identifier: emailAddress });
-      await signIn.resetPasswordEmailCode.sendCode();
+      const { error: createError } = await signIn.create({
+        identifier: emailAddress,
+      });
+
+      if (createError) {
+        console.error(JSON.stringify(createError, null, 2));
+        const clerkError = getClerkErrorMessage(createError);
+        setGlobalError(clerkError || 'Failed to send reset code');
+        return;
+      }
+
+      const { error: sendCodeError } =
+        await signIn.resetPasswordEmailCode.sendCode();
+
+      if (sendCodeError) {
+        console.error(JSON.stringify(sendCodeError, null, 2));
+        const clerkError = getClerkErrorMessage(sendCodeError);
+        setGlobalError(clerkError || 'Failed to send reset code');
+        return;
+      }
+
+      const availableAt = Date.now() + RESEND_COOLDOWN_MS;
+
+      setResendAvailableAt(availableAt);
+
+      // Preserve the successful Clerk result even when browser storage is unavailable.
+      try {
+        sessionStorage.setItem(
+          AVAILABLE_AT_STORAGE_KEY,
+          availableAt.toString(),
+        );
+      } catch (err: unknown) {
+        console.warn('Failed to store resend cooldown in sessionStorage', err);
+      }
+
       setEmail(emailAddress);
       setStep('verify-code');
     } catch (err: unknown) {
@@ -75,6 +211,13 @@ export function useForgotPasswordFlow() {
     }
   };
 
+  /**
+   * Requests another reset code for the active Clerk reset attempt.
+   *
+   * @returns A promise that settles after the resend attempt and UI state cleanup.
+   * @remarks Shows a success toast only when Clerk reports success. This handler does
+   * not yet restart or enforce the local cooldown.
+   */
   const handleResend = async () => {
     if (fetchStatus === 'fetching' || !signIn || !email) return;
     setIsResending(true);
@@ -86,7 +229,9 @@ export function useForgotPasswordFlow() {
         console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
         setGlobalError(clerkError || 'Failed to send reset code');
+        return;
       }
+      toast.success('A new verification code was sent. Check your email.');
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
@@ -107,7 +252,9 @@ export function useForgotPasswordFlow() {
       });
 
       if (error) {
-        setGlobalError(getClerkErrorMessage(error) || 'Failed to verify reset code');
+        setGlobalError(
+          getClerkErrorMessage(error) || 'Failed to verify reset code',
+        );
         return;
       }
 
@@ -121,9 +268,7 @@ export function useForgotPasswordFlow() {
     }
   };
 
-  const handleSetPassword = async ({
-    password,
-  }: SetPasswordArgs) => {
+  const handleSetPassword = async ({ password }: SetPasswordArgs) => {
     if (fetchStatus === 'fetching' || !signIn) return;
     setGlobalError('');
 
@@ -133,7 +278,9 @@ export function useForgotPasswordFlow() {
       });
 
       if (error) {
-        setGlobalError(getClerkErrorMessage(error) || 'Failed to set your new password');
+        setGlobalError(
+          getClerkErrorMessage(error) || 'Failed to set your new password',
+        );
         return;
       }
 
@@ -177,6 +324,8 @@ export function useForgotPasswordFlow() {
     globalError,
     isResending,
     isVerifyingCode,
+    resendAvailableAt,
+    remainingSeconds,
     handleBack,
     handleEmailSubmit,
     handleResend,

@@ -346,6 +346,21 @@
   --spacing-ai-header: 3.5rem;
 }
 
+/* Shared form column for auth routes that pair mobile forms with a desktop marketing panel. */
+@utility auth-form-panel {
+  @apply bg-background flex min-h-svh w-full flex-col justify-center p-6 lg:min-h-auto lg:w-[55%] lg:px-24 lg:py-12;
+}
+
+/* Shared content width and vertical rhythm inside split-layout auth form panels. */
+@utility auth-form-content {
+  @apply mx-auto w-full max-w-110 space-y-10;
+}
+
+/* Shared small-screen logo placement for auth forms that retain mobile branding. */
+@utility auth-form-mobile-logo {
+  @apply mb-8 flex justify-center lg:hidden;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
  * HEROUI COMPONENT OVERRIDES
  * HeroUI's default secondary and tertiary buttons share the same background.

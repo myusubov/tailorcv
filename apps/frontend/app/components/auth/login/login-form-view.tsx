@@ -48,21 +48,22 @@ export function LoginFormView({
   onGoogleSignIn,
   onAppleSignIn,
 }: LoginFormViewProps) {
-  const isAnyAuthActionInProgress = isSubmitting || googleLoading || appleLoading;
+  const isAnyAuthActionInProgress =
+    isSubmitting || googleLoading || appleLoading;
   return (
-    <div className="bg-background flex w-full flex-col justify-center p-6 lg:w-[55%] lg:px-24 lg:py-12">
+    <div className="auth-form-panel">
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="mx-auto w-full max-w-[440px] space-y-10"
+        className="auth-form-content"
       >
         {/* Mobile Logo - Centered */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="mb-8 flex justify-center lg:hidden"
+          className="auth-form-mobile-logo"
         >
           <AuthLogo className="text-foreground" />
         </motion.div>
@@ -95,8 +96,12 @@ export function LoginFormView({
                 <Icon icon="lucide:shield-alert" className="size-5" />
               </div>
               <div className="space-y-1 text-left">
-                <p className="text-foreground font-semibold">{authNotice.title}</p>
-                <p className="text-muted-foreground text-sm">{authNotice.description}</p>
+                <p className="text-foreground font-semibold">
+                  {authNotice.title}
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  {authNotice.description}
+                </p>
               </div>
             </div>
 
@@ -125,7 +130,11 @@ export function LoginFormView({
               name="email"
               control={control}
               render={({ field, fieldState }) => (
-                <TextField isRequired className="w-full" isInvalid={!!fieldState.error}>
+                <TextField
+                  isRequired
+                  className="w-full"
+                  isInvalid={!!fieldState.error}
+                >
                   <Label className="text-base">Email</Label>
                   <Input
                     {...field}

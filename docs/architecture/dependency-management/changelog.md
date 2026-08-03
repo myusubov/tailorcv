@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-07-29
+
+### Frontend Email-Masking Dependency
+
+- **Problem:** The frontend did not have a reusable package for masking email addresses in privacy-sensitive UI such as password-recovery screens.
+- **Solution:**
+  1. **Frontend workspace ownership — `apps/frontend/package.json`**: Added `maskdata` as a frontend runtime dependency beside the password-recovery UI that imports it.
+  2. **Recovery UI consumption — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Uses the package's email-masking API for verification and new-password guidance.
+  3. **Reproducible resolution — `package-lock.json`**: Records `maskdata` and the dependency graph produced by the install; because that lockfile diff also refreshes many existing transitive versions, it requires broader review than the one-line manifest change.
+- **Outcome:** Password-recovery UI can mask the submitted email through a declared frontend dependency, while the unusually broad lockfile re-resolution remains visible as a review risk rather than being attributed solely to `maskdata`.
+
 ## 2026-05-23
 
 ### Low-Risk Audit Cleanup and Workspace Dependency Ownership
