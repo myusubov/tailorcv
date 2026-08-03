@@ -15,6 +15,7 @@ vi.mock('@heroui/react', () => ({
   ),
   cn: (...classNames: Array<string | undefined>) =>
     classNames.filter(Boolean).join(' '),
+  useIsHydrated: () => true,
 }));
 
 afterEach(() => {
@@ -39,7 +40,7 @@ describe('GlobalLoading', () => {
     expect(status.getAttribute('aria-busy')).toBe('true');
     expect(status.classList.contains('fixed')).toBe(true);
     expect(status.classList.contains('inset-0')).toBe(true);
-    expect(status.classList.contains('z-[100]')).toBe(true);
+    expect(status.classList.contains('z-100')).toBe(true);
     expect(status.classList.contains('custom-loading-class')).toBe(true);
     expect(
       screen.getByText('Checking your GitHub connection').textContent,

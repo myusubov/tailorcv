@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-08-03
+
+### Global Loading Test Alignment
+
+- **Problem:** The `GlobalLoading` regression test mocked HeroUI without the hydration hook used by the component and still expected the previous arbitrary z-index class, causing the frontend suite to fail before exercising the portal behavior.
+- **Solution:**
+  1. **Hydration boundary mock — `apps/frontend/app/components/ui/global-loading.test.tsx`**: Added a deterministic `useIsHydrated()` mock so the test renders the client-only portal state.
+  2. **Current class contract — `apps/frontend/app/components/ui/global-loading.test.tsx`**: Updated the assertion to the component's native `z-100` utility while preserving its accessibility, portal, and scroll-lock checks.
+- **Outcome:** The focused test exercises the implemented hydrated loading overlay contract instead of failing on stale test infrastructure.
+
 ## 2026-07-17
 
 ### Minimal Global Loading Overlay
