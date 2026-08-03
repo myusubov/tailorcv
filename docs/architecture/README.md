@@ -6,17 +6,18 @@
 
 ## Quick Reference Table
 
-| **Use Case**                                   | **Primary Doc**                                                              | **Supporting Docs**                                                                                       |
-| ---------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| SSO / OAuth login or signup changes            | [auth/README.md](auth/README.md)                                             | [auth/sso/README.md](auth/sso/README.md), `proxy.ts`, `lib/config.ts`                                     |
-| Email/password auth changes                    | [auth/README.md](auth/README.md)                                             | [auth/flows/README.md](auth/flows/README.md), `lib/schemas/auth.ts`                                       |
-| Auth browser automation / E2E                  | [auth/README.md](auth/README.md)                                             | [auth/testing/README.md](auth/testing/README.md), `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/` |
-| Real forgot-password E2E setup                 | [auth/testing/README.md](auth/testing/README.md)                             | `apps/frontend/e2e/helpers/mail/`, `apps/frontend/.env.e2e.local.example`                                 |
-| Route protection / middleware                  | [auth/README.md](auth/README.md)                                             | [auth/sso/README.md](auth/sso/README.md), `proxy.ts`                                                      |
-| Onboarding method or manual-entry flow changes | [onboarding/README.md](onboarding/README.md)                                 | `apps/frontend/app/onboarding/page.tsx`, `apps/frontend/app/components/onboarding/`                       |
-| GitHub repository analysis pipeline changes    | [github-analysis/README.md](github-analysis/README.md)                       | [github-analysis/pipeline/README.md](github-analysis/pipeline/README.md), [onboarding/README.md](onboarding/README.md) |
-| GitHub project structure analyzer changes      | [github-analysis/project-structure/README.md](github-analysis/project-structure/README.md) | `apps/backend/src/services/github-analysis/project-structure/`                                            |
-| Dependency placement or audit remediation      | [dependency-management/README.md](dependency-management/README.md)           | `package.json`, `apps/*/package.json`, `packages/*/package.json`, `package-lock.json`                     |
+| **Use Case**                                     | **Primary Doc**                                                                            | **Supporting Docs**                                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| SSO / OAuth login or signup changes              | [auth/README.md](auth/README.md)                                                           | [auth/sso/README.md](auth/sso/README.md), `proxy.ts`, `lib/config.ts`                                                  |
+| Email/password auth changes                      | [auth/README.md](auth/README.md)                                                           | [auth/flows/README.md](auth/flows/README.md), `lib/schemas/auth.ts`                                                    |
+| Auth browser automation / E2E                    | [auth/README.md](auth/README.md)                                                           | [auth/testing/README.md](auth/testing/README.md), `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/`           |
+| Real forgot-password E2E setup                   | [auth/testing/README.md](auth/testing/README.md)                                           | `apps/frontend/e2e/helpers/mail/`, `apps/frontend/.env.e2e.local.example`                                              |
+| Route protection / middleware                    | [auth/README.md](auth/README.md)                                                           | [auth/sso/README.md](auth/sso/README.md), `proxy.ts`                                                                   |
+| Onboarding method or manual-entry flow changes   | [onboarding/README.md](onboarding/README.md)                                               | `apps/frontend/app/onboarding/page.tsx`, `apps/frontend/app/components/onboarding/`                                    |
+| GitHub repository analysis pipeline changes      | [github-analysis/README.md](github-analysis/README.md)                                     | [github-analysis/pipeline/README.md](github-analysis/pipeline/README.md), [onboarding/README.md](onboarding/README.md) |
+| GitHub project structure analyzer changes        | [github-analysis/project-structure/README.md](github-analysis/project-structure/README.md) | `apps/backend/src/services/github-analysis/project-structure/`                                                         |
+| Dependency placement or audit remediation        | [dependency-management/README.md](dependency-management/README.md)                         | `package.json`, `apps/*/package.json`, `packages/*/package.json`, `package-lock.json`                                  |
+| Local frontend development access or LAN origins | [development-environment/README.md](development-environment/README.md)                     | `apps/frontend/next.config.ts`, host firewall and WSL networking configuration                                         |
 
 ---
 
@@ -61,6 +62,7 @@
 ### Utilities & Patterns
 
 - [dependency-management/README.md](dependency-management/README.md) - Workspace dependency ownership, audit remediation, and verified override rules
+- [development-environment/README.md](development-environment/README.md) - Local Next.js development access across WSL, Windows, and LAN boundaries
 
 ---
 
@@ -95,11 +97,11 @@
 
 ## Documentation Health
 
-| Metric | Status |
-| ------ | ------ |
-| **Top-level domain folders** | 4 |
-| **Last structure migration** | 2026-07-09 |
-| **Domains needing split** | None |
+| Metric                       | Status     |
+| ---------------------------- | ---------- |
+| **Top-level domain folders** | 5          |
+| **Last structure migration** | 2026-07-31 |
+| **Domains needing split**    | None       |
 
 <!--
   MAINTENANCE RULES FOR AI:
