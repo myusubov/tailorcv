@@ -50,7 +50,7 @@
 | `apps/frontend/app/components/auth/registration-verification.tsx`                   | Thin registration verification controller                                                                                | Email verification composition changes                         |
 | `apps/frontend/app/components/auth/use-registration-verification-flow.ts`           | Email OTP verification flow hook                                                                                         | Verification behavior changes                                  |
 | `apps/frontend/app/(auth)/forgot-password/page.tsx`                                 | Thin forgot-password route controller                                                                                    | Forgot-password page composition changes                       |
-| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`     | Forgot-password page controller hook that owns Clerk reset state transitions and best-effort resend-cooldown persistence | App-layer forgot-password controller changes                   |
+| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`     | Forgot-password page controller hook that owns Clerk reset state transitions and the in-memory resend cooldown           | App-layer forgot-password controller changes                   |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step                                 | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`       | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                          | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/auth-logo.tsx`                                   | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes                    | Auth logo behavior, variants, sizing, or accessibility changes |
@@ -91,7 +91,7 @@ sequenceDiagram
     U->>F: Submit email address
     F->>C: signIn.create({ identifier })
     F->>C: resetPasswordEmailCode.sendCode()
-    F->>F: Store UI resend available-at timestamp
+    F->>F: Start in-memory resend cooldown
     U->>F: Enter reset code
     F->>C: resetPasswordEmailCode.verifyCode({ code })
     C-->>F: status = needs_new_password
@@ -243,22 +243,26 @@ it in verification and new-password guidance. The flow hook retains the real
 email because Clerk resend calls still require the active reset attempt; only
 the user-facing description receives the masked value.
 
-### 6.9 Resend Cooldown Groundwork
+### 6.9 In-Memory Resend Cooldown
 
-After the initial reset code is successfully sent, `useForgotPasswordFlow()`
-stores one absolute `available-at` timestamp in `sessionStorage` under
-`forgot-password-resend-available-at`. On hydration the hook accepts only a
-non-empty, finite, safe-integer timestamp that is still in the future. Missing,
-invalid, expired, or inaccessible storage fails open and removes unusable data
-when possible.
+After Clerk successfully sends the initial reset code,
+`useForgotPasswordFlow()` records one absolute resend-availability timestamp in
+React state and initializes the visible remaining seconds. A dependent effect
+recalculates the countdown from that timestamp every second and clears both
+values when the cooldown expires.
 
-This is UI-only state; Clerk remains the security rate-limit authority. A second
-effect owns the derived countdown: it calculates immediately from the restored
-absolute timestamp, recalculates every second, and clears expired state and
-best-effort storage. A successful resend produces a confirmation toast only
-after Clerk reports success. The flow does not yet disable the resend control,
-restart the cooldown after that successful resend, or clear it when the user
-changes email or verifies the code.
+The cooldown is deliberately not persisted. Reloading `/forgot-password`
+restarts the local flow at email entry, so restoring only the timer would not
+restore a usable Clerk reset attempt or verification screen. Clerk remains the
+authoritative security rate limiter if a reload or other client-controlled action
+discards this UI state.
+
+`handleResend()` rejects calls while the timestamp is still in the future or a
+resend request is already pending. A successful resend renews the full cooldown
+and shows confirmation feedback; a failed resend leaves both cooldown values
+`null` so the user can retry. The route passes `remainingSeconds` through the
+reset controller to `ResetPasswordView`, which disables the resend control and
+renders either the countdown, the pending-request state, or the available action.
 
 ---
 
@@ -282,9 +286,9 @@ changes email or verifies the code.
 - [x] Clerk status helper coverage for login and forgot-password
 - [x] Shared primary/inverse shield mark across login and registration, plus the desktop password-recovery marketing panel
 - [x] Masked email context in password-recovery verification and password entry
-- [x] Resend timestamp persistence, valid-future restoration, and ticking countdown state
+- [x] In-memory resend timestamp and ticking countdown state
 - [x] Success feedback after Clerk confirms a reset-code resend
-- [ ] Connect cooldown state to resend disabling, renewal, and flow-exit cleanup
+- [x] Cooldown-aware resend disabling, successful renewal, failure retry, and duplicate-request protection
 
 ---
 
@@ -294,8 +298,9 @@ changes email or verifies the code.
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | Client Trust incorrectly handled as generic second factor    | Treat `needs_client_trust` as its own Clerk state and use `signIn.mfa.*` email-code APIs                        |
 | Forgot-password silently stalls after successful Clerk calls | Treat returned `{ error }` payloads and unexpected post-submit statuses as first-class UI states                |
-| Session storage is mistaken for security enforcement         | Treat the stored cooldown as best-effort UI state and leave authoritative abuse protection to Clerk             |
-| Partial cooldown state is exposed before the UI consumes it  | Keep the incomplete status explicit until disabling, resend renewal, and flow-exit cleanup are wired end to end |
+| In-memory cooldown is mistaken for security enforcement      | Treat the countdown as mounted-flow feedback and leave authoritative abuse protection to Clerk                  |
+| Reload discards the visible cooldown                         | Restart the local recovery flow at email entry and rely on Clerk for authoritative resend limits                |
+| Duplicate reset-code requests overlap                        | Disable the view while pending and guard both active cooldown and in-flight state inside the flow hook           |
 | View files start re-owning RHF setup                         | Keep RHF/schema wiring in flow hooks or local controllers, not render-only view files                           |
 
 ---
@@ -305,5 +310,6 @@ changes email or verifies the code.
 ## 10. History & Decisions
 
 - **Changelog:** [changelog.md](changelog.md)
-- **Architecture decisions:** [adr/0001-use-session-storage-for-ui-resend-cooldown.md](adr/0001-use-session-storage-for-ui-resend-cooldown.md)
+- **Active architecture decision:** [ADR 0002: Keep UI Resend Cooldown In Memory](adr/0002-keep-ui-resend-cooldown-in-memory.md)
+- **Superseded decision:** [ADR 0001: Use Session Storage For UI Resend Cooldown](adr/0001-use-session-storage-for-ui-resend-cooldown.md)
 - Historical domain-level entries may also live in the parent changelog.

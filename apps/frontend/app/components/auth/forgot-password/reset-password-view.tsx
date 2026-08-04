@@ -36,6 +36,7 @@ interface ResetPasswordViewProps {
   globalError: string;
   isResending: boolean;
   isVerifyingCode: boolean;
+  remainingSeconds: number | null;
 }
 
 /**
@@ -58,6 +59,7 @@ export function ResetPasswordView({
   globalError,
   isResending,
   isVerifyingCode,
+  remainingSeconds,
 }: ResetPasswordViewProps) {
   const isVerifyStep = step === 'verify-code';
   const maskedEmail = email ? maskEmail2(email) : '';
@@ -235,7 +237,7 @@ export function ResetPasswordView({
             )}
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-            {isVerifyStep ? (
+            {isVerifyStep && (
               <p className="text-muted-foreground text-center text-sm">
                 Didn&apos;t receive the code?{' '}
                 <button
@@ -243,12 +245,16 @@ export function ResetPasswordView({
                   aria-label="Resend reset code"
                   className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={onResend}
-                  disabled={isResending}
+                  disabled={isResending || remainingSeconds !== null}
                 >
-                  {isResending ? 'Resending...' : 'Resend code'}
+                  {isResending
+                    ? 'Resending...'
+                    : remainingSeconds !== null
+                      ? `Resend in ${remainingSeconds}s`
+                      : 'Resend'}
                 </button>
               </p>
-            ) : null}
+            )}
             <p className="text-muted-foreground text-center text-sm">
               <button
                 type="button"

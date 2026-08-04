@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-08-04
+
+### In-Memory Forgot-Password Resend Cooldown
+
+- **Decision:** Keep the UI resend cooldown in the mounted forgot-password flow instead of restoring it from browser storage; Clerk remains the authoritative resend limiter.
+- **Problem:** Session storage restored only a timer while a page reload reset the complete local recovery flow to email entry, and the verification UI still did not consume the cooldown state to prevent repeated requests.
+- **Solution:**
+  1. **In-memory cooldown ownership — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Removes session-storage restoration and persistence, derives the countdown from an absolute React-state timestamp, blocks active or overlapping resend attempts, renews the cooldown only after Clerk confirms success, and leaves resend available after failure.
+  2. **Render-safe cooldown wiring — `apps/frontend/app/(auth)/forgot-password/page.tsx`, `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`, and `reset-password-view.tsx`**: Passes remaining seconds into the verification view and renders disabled countdown, pending-request, and available resend states.
+  3. **Focused behavior coverage — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx` and `forgot-password-reset.test.tsx`**: Replaces storage-restoration cases with deterministic ticking, expiry, blocking, renewal, failure, duplicate-request, and UI-state coverage.
+  4. **Decision supersession — `docs/architecture/auth/flows/README.md` and `adr/0002-keep-ui-resend-cooldown-in-memory.md`**: Records the mounted-flow ownership boundary and supersedes the earlier session-storage decision without rewriting its history.
+- **Outcome:** The verification screen now gives immediate, countdown-based resend feedback and prevents accidental repeated requests during the mounted flow without pretending browser state is authoritative or preserving a timer after the rest of the recovery flow has reset.
+
 ## 2026-08-03
 
 ### Successful Reset-Code Resend Feedback

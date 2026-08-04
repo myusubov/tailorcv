@@ -33,8 +33,7 @@ vi.mock('@/lib/config', () => ({
   },
 }));
 
-const { useForgotPasswordFlow, AVAILABLE_AT_STORAGE_KEY } =
-  await import('./use-forgot-password-flow');
+const { useForgotPasswordFlow } = await import('./use-forgot-password-flow');
 
 describe('useForgotPasswordFlow', () => {
   beforeEach(() => {
@@ -44,8 +43,6 @@ describe('useForgotPasswordFlow', () => {
     clerkMocks.create.mockResolvedValue({ error: null });
 
     clerkMocks.sendCode.mockResolvedValue({ error: null });
-
-    sessionStorage.removeItem(AVAILABLE_AT_STORAGE_KEY);
   });
 
   afterEach(() => {
@@ -59,7 +56,7 @@ describe('useForgotPasswordFlow', () => {
     expect(result.current.step).toBe('email');
   });
 
-  it('stores a cooldown after successfully sending the initial code', async () => {
+  it('starts a cooldown after successfully sending the initial code', async () => {
     const { result } = renderHook(() => useForgotPasswordFlow());
 
     await act(async () => {
@@ -72,70 +69,20 @@ describe('useForgotPasswordFlow', () => {
 
     expect(clerkMocks.sendCode).toHaveBeenCalledOnce();
 
-    expect(sessionStorage.getItem(AVAILABLE_AT_STORAGE_KEY)).not.toBeNull();
-
     expect(result.current.step).toBe('verify-code');
   });
 
-  it('restores cooldown state from a valid future timestamp', () => {
+  it('recalculates remaining seconds as time advances', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
 
-    const availableAt = Date.now() + 42_500;
-
-    sessionStorage.setItem(AVAILABLE_AT_STORAGE_KEY, availableAt.toString());
-
     const { result } = renderHook(() => useForgotPasswordFlow());
 
-    expect(result.current.resendAvailableAt).toBe(availableAt);
-    expect(result.current.remainingSeconds).toBe(43);
-  });
-
-  it('initializes with no cooldown when session storage is empty', () => {
-    const { result } = renderHook(() => useForgotPasswordFlow());
-
-    expect(result.current.resendAvailableAt).toBeNull();
-    expect(result.current.remainingSeconds).toBeNull();
-  });
-
-  it('removes an expired timestamp and initializes with no cooldown', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
-
-    const availableAt = Date.now() - 60_000;
-
-    sessionStorage.setItem(AVAILABLE_AT_STORAGE_KEY, availableAt.toString());
-
-    const { result } = renderHook(() => useForgotPasswordFlow());
-
-    expect(result.current.resendAvailableAt).toBeNull();
-    expect(result.current.remainingSeconds).toBeNull();
-    expect(sessionStorage.getItem(AVAILABLE_AT_STORAGE_KEY)).toBeNull();
-  });
-
-  it('fails open when reading session storage throws', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementationOnce(() => {
-      throw new Error('Session storage unavailable');
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
     });
 
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const { result } = renderHook(() => useForgotPasswordFlow());
-
-    expect(result.current.resendAvailableAt).toBeNull();
-    expect(result.current.remainingSeconds).toBeNull();
-  });
-
-  it('recalculates remaining seconds as time advances', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
-
-    const availableAt = Date.now() + 60_000;
-
-    sessionStorage.setItem(AVAILABLE_AT_STORAGE_KEY, availableAt.toString());
-
-    const { result } = renderHook(() => useForgotPasswordFlow());
-
+    expect(result.current.resendAvailableAt).toBe(Date.now() + 60_000);
     expect(result.current.remainingSeconds).toBe(60);
 
     act(() => {
@@ -145,74 +92,140 @@ describe('useForgotPasswordFlow', () => {
     expect(result.current.remainingSeconds).toBe(59);
   });
 
-  it('clears the cooldown state and storage when the countdown expires', () => {
+  it('clears the cooldown state when the countdown expires', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
 
-    const availableAt = Date.now() + 2_000;
-
-    sessionStorage.setItem(AVAILABLE_AT_STORAGE_KEY, availableAt.toString());
-
     const { result } = renderHook(() => useForgotPasswordFlow());
 
-    expect(result.current.remainingSeconds).toBe(2);
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
+    });
+
+    expect(result.current.remainingSeconds).toBe(60);
+    expect(result.current.resendAvailableAt).toBe(Date.now() + 60_000);
 
     act(() => {
-      vi.advanceTimersByTime(2_000);
+      vi.advanceTimersByTime(60_000);
     });
 
     expect(result.current.resendAvailableAt).toBeNull();
     expect(result.current.remainingSeconds).toBeNull();
-    expect(sessionStorage.getItem(AVAILABLE_AT_STORAGE_KEY)).toBeNull();
   });
 
-  it('still clears cooldown state when removing expired storage throws', () => {
+  it('blocks resend during cooldown and allows it after expiry', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
 
-    const availableAt = Date.now() + 2_000;
-
-    sessionStorage.setItem(AVAILABLE_AT_STORAGE_KEY, availableAt.toString());
-
     const { result } = renderHook(() => useForgotPasswordFlow());
 
-    expect(result.current.remainingSeconds).toBe(2);
-
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementationOnce(() => {
-      throw new Error('Session storage unavailable');
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
     });
 
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const initialAvailableAt = result.current.resendAvailableAt;
 
     act(() => {
-      vi.advanceTimersByTime(2_000);
+      vi.advanceTimersByTime(5_000);
+    });
+
+    expect(result.current.remainingSeconds).toBe(55);
+
+    await act(async () => {
+      await result.current.handleResend();
+    });
+
+    expect(clerkMocks.sendCode).toHaveBeenCalledOnce();
+    expect(result.current.resendAvailableAt).toBe(initialAvailableAt);
+    expect(result.current.remainingSeconds).toBe(55);
+
+    act(() => {
+      vi.advanceTimersByTime(55_000);
     });
 
     expect(result.current.resendAvailableAt).toBeNull();
     expect(result.current.remainingSeconds).toBeNull();
 
-    // Removal failed, so the stored value should still exist.
-    expect(sessionStorage.getItem(AVAILABLE_AT_STORAGE_KEY)).toBe(
-      availableAt.toString(),
-    );
+    await act(async () => {
+      await result.current.handleResend();
+    });
+
+    expect(clerkMocks.sendCode).toHaveBeenCalledTimes(2);
+    expect(result.current.resendAvailableAt).toBe(Date.now() + 60_000);
+    expect(result.current.remainingSeconds).toBe(60);
   });
 
-  it('clears the countdown interval when the hook unmounts', () => {
+  it('keeps resend available when the resend request fails', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
 
-    const availableAt = Date.now() + 60_000;
+    const { result } = renderHook(() => useForgotPasswordFlow());
 
-    sessionStorage.setItem(AVAILABLE_AT_STORAGE_KEY, availableAt.toString());
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
+    });
 
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
 
-    const { unmount } = renderHook(() => useForgotPasswordFlow());
+    clerkMocks.sendCode.mockResolvedValueOnce({
+      error: new Error('Clerk sendCode is not available'),
+    });
 
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
+    await act(async () => {
+      await result.current.handleResend();
+    });
 
-    unmount();
+    expect(clerkMocks.sendCode).toHaveBeenCalledTimes(2);
+    expect(result.current.resendAvailableAt).toBeNull();
+    expect(result.current.remainingSeconds).toBeNull();
+  });
 
-    expect(clearIntervalSpy).toHaveBeenCalledOnce();
+  it('blocks duplicate resend requests while a resend is in progress', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-01T12:00:00.000Z'));
+
+    const { result } = renderHook(() => useForgotPasswordFlow());
+
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(result.current.resendAvailableAt).toBeNull();
+    expect(result.current.remainingSeconds).toBeNull();
+
+    let resolveResend!: (value: { error: null }) => void;
+    const pendingResend = new Promise<{ error: null }>((resolve) => {
+      resolveResend = resolve;
+    });
+
+    clerkMocks.sendCode.mockReturnValueOnce(pendingResend);
+
+    let resendRequest!: Promise<void>;
+
+    act(() => {
+      resendRequest = result.current.handleResend();
+    });
+
+    expect(result.current.isResending).toBe(true);
+
+    await act(async () => {
+      await result.current.handleResend();
+    });
+
+    // Initial code request plus one pending resend request.
+    expect(clerkMocks.sendCode).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resolveResend({ error: null });
+      await resendRequest;
+    });
+
+    expect(result.current.isResending).toBe(false);
   });
 });

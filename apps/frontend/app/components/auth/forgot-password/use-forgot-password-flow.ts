@@ -11,9 +11,6 @@ import { getClerkErrorMessage } from '@/lib/utils/utils';
 
 export type ResetStep = 'email' | 'verify-code' | 'set-password';
 
-/** Session-storage key shared by the cooldown controller and its focused tests. */
-export const AVAILABLE_AT_STORAGE_KEY = 'forgot-password-resend-available-at';
-
 const RESEND_COOLDOWN_MS = 60_000;
 
 interface SetPasswordArgs {
@@ -41,9 +38,9 @@ export function useForgotPasswordFlow() {
   const [globalError, setGlobalError] = useState('');
   const [isResending, setIsResending] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
-  const [resendAvailableAt, setResendAvailableAt] = useState<
-    number | null | undefined
-  >(undefined);
+  const [resendAvailableAt, setResendAvailableAt] = useState<number | null>(
+    null,
+  );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
   useEffect(() => {
@@ -52,48 +49,10 @@ export function useForgotPasswordFlow() {
     }
   }, [signIn]);
 
-  // Restore only trustworthy future timestamps. Storage is a best-effort UX aid,
-  // so missing, invalid, expired, or inaccessible data deliberately fails open.
-  useEffect(() => {
-    try {
-      const storedAvailableAt = sessionStorage.getItem(
-        AVAILABLE_AT_STORAGE_KEY,
-      );
-      if (storedAvailableAt !== null) {
-        const parsedAvailableAt = Number(storedAvailableAt);
-
-        const isValid =
-          storedAvailableAt.trim() !== '' &&
-          Number.isFinite(parsedAvailableAt) &&
-          Number.isSafeInteger(parsedAvailableAt);
-
-        const now = Date.now();
-
-        if (isValid && parsedAvailableAt > now) {
-          setResendAvailableAt(parsedAvailableAt);
-        } else {
-          sessionStorage.removeItem(AVAILABLE_AT_STORAGE_KEY);
-          setResendAvailableAt(null);
-          setRemainingSeconds(null);
-        }
-      } else {
-        setResendAvailableAt(null);
-        setRemainingSeconds(null);
-      }
-    } catch (err: unknown) {
-      console.warn(
-        'Failed to retrieve resend cooldown from sessionStorage',
-        err,
-      );
-      setResendAvailableAt(null);
-      setRemainingSeconds(null);
-    }
-  }, []);
-
   // Regularly update the remaining seconds until the resend cooldown expires.
 
   useEffect(() => {
-    if (resendAvailableAt === null || resendAvailableAt === undefined) {
+    if (resendAvailableAt === null) {
       return;
     }
 
@@ -106,15 +65,6 @@ export function useForgotPasswordFlow() {
     const updateRemainingSeconds = () => {
       const remaining = Math.ceil((resendAvailableAt - Date.now()) / 1000);
       if (remaining <= 0) {
-        try {
-          sessionStorage.removeItem(AVAILABLE_AT_STORAGE_KEY);
-        } catch (err: unknown) {
-          console.warn(
-            'Failed to remove expired resend cooldown from sessionStorage',
-            err,
-          );
-        }
-
         setRemainingSeconds(null);
         setResendAvailableAt(null);
       } else {
@@ -191,17 +141,7 @@ export function useForgotPasswordFlow() {
       const availableAt = Date.now() + RESEND_COOLDOWN_MS;
 
       setResendAvailableAt(availableAt);
-
-      // Preserve the successful Clerk result even when browser storage is unavailable.
-      try {
-        sessionStorage.setItem(
-          AVAILABLE_AT_STORAGE_KEY,
-          availableAt.toString(),
-        );
-      } catch (err: unknown) {
-        console.warn('Failed to store resend cooldown in sessionStorage', err);
-      }
-
+      setRemainingSeconds(Math.ceil((availableAt - Date.now()) / 1000));
       setEmail(emailAddress);
       setStep('verify-code');
     } catch (err: unknown) {
@@ -219,7 +159,18 @@ export function useForgotPasswordFlow() {
    * not yet restart or enforce the local cooldown.
    */
   const handleResend = async () => {
-    if (fetchStatus === 'fetching' || !signIn || !email) return;
+    const isCooldownActive =
+      resendAvailableAt !== null && resendAvailableAt > Date.now();
+    if (
+      fetchStatus === 'fetching' ||
+      !signIn ||
+      !email ||
+      isCooldownActive ||
+      isResending
+    ) {
+      return;
+    }
+
     setIsResending(true);
     setGlobalError('');
 
@@ -231,6 +182,12 @@ export function useForgotPasswordFlow() {
         setGlobalError(clerkError || 'Failed to send reset code');
         return;
       }
+
+      const availableAt = Date.now() + RESEND_COOLDOWN_MS;
+
+      setResendAvailableAt(availableAt);
+      setRemainingSeconds(Math.ceil((availableAt - Date.now()) / 1000));
+
       toast.success('A new verification code was sent. Check your email.');
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));

@@ -24,6 +24,7 @@ interface ForgotPasswordResetProps {
   globalError: string;
   isResending: boolean;
   isVerifyingCode: boolean;
+  remainingSeconds: number | null;
 }
 
 export function ForgotPasswordReset({
@@ -38,6 +39,7 @@ export function ForgotPasswordReset({
   globalError,
   isResending,
   isVerifyingCode,
+  remainingSeconds,
 }: ForgotPasswordResetProps) {
   const {
     control,
@@ -71,6 +73,7 @@ export function ForgotPasswordReset({
       globalError={globalError}
       isResending={isResending}
       isVerifyingCode={isVerifyingCode}
+      remainingSeconds={remainingSeconds}
     />
   );
 }

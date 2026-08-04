@@ -14,6 +14,7 @@ export default function ForgotPasswordPage() {
     globalError,
     isResending,
     isVerifyingCode,
+    remainingSeconds,
     handleBack,
     handleEmailSubmit,
     handleResend,
@@ -36,6 +37,7 @@ export default function ForgotPasswordPage() {
         globalError={globalError}
         isResending={isResending}
         isVerifyingCode={isVerifyingCode}
+        remainingSeconds={remainingSeconds}
       />
     );
   }

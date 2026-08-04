@@ -1,9 +1,10 @@
 # ADR 0001: Use Session Storage For UI Resend Cooldown
 
-- **Status:** Accepted
+- **Status:** Superseded
 - **Date:** 2026-07-31
 - **Domain:** `docs/architecture/auth/flows/`
 - **Related changelog entry:** [Forgot-Password Resend Cooldown Groundwork](../changelog.md#forgot-password-resend-cooldown-groundwork)
+- **Superseded by:** [ADR 0002: Keep UI Resend Cooldown In Memory](0002-keep-ui-resend-cooldown-in-memory.md)
 
 ---
 
