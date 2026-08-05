@@ -33,21 +33,25 @@ is pending. Successful resends renew the full cooldown; failed resends leave the
 cooldown inactive so the user can retry. The verification view receives only
 `remainingSeconds`, `isResending`, and the resend callback needed to render and
 enforce its UI state. Reloading deliberately restarts both the local flow and its
-cooldown; Clerk remains authoritative across reloads.
+cooldown. Do not restore a later UI step from Clerk's persisted sign-in status.
+Before starting again with an email, or when the user chooses a different email,
+reset the current Clerk sign-in attempt so the new local flow does not inherit a
+stale `needs_new_password` state. Clerk remains authoritative across reloads.
 
 ## Considered Options
 
-| Option | Tradeoff |
-| ------ | -------- |
-| In-memory absolute timestamp | Matches the mounted flow lifecycle, keeps countdown arithmetic stable, and adds no partial restoration state; reload discards the UI cooldown. |
-| Absolute timestamp in `sessionStorage` | Restores the timer within a tab but not the Clerk attempt or verification step, creating storage validation and cleanup work for an incomplete recovery state. |
-| Persist the complete recovery flow or add a continuation route | Could make refresh recovery coherent, but requires a broader Clerk-attempt restoration design that the current single-route flow does not need. |
-| Backend or Redis cooldown | Would provide an authoritative application limit, but duplicates Clerk's existing server-side responsibility for a UI-feedback requirement. |
+| Option                                                         | Tradeoff                                                                                                                                                       |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| In-memory absolute timestamp                                   | Matches the mounted flow lifecycle, keeps countdown arithmetic stable, and adds no partial restoration state; reload discards the UI cooldown.                 |
+| Absolute timestamp in `sessionStorage`                         | Restores the timer within a tab but not the Clerk attempt or verification step, creating storage validation and cleanup work for an incomplete recovery state. |
+| Persist the complete recovery flow or add a continuation route | Could make refresh recovery coherent, but requires a broader Clerk-attempt restoration design that the current single-route flow does not need.                |
+| Backend or Redis cooldown                                      | Would provide an authoritative application limit, but duplicates Clerk's existing server-side responsibility for a UI-feedback requirement.                    |
 
 ## Consequences
 
 - The mounted verification flow displays an accurate countdown derived from one absolute timestamp.
 - Reloading or leaving the route discards the local cooldown together with the rest of the local recovery flow.
+- A new email submission explicitly resets Clerk's prior sign-in attempt before creating the replacement attempt.
 - A user can discard browser cooldown state, so no documentation or enforcement may treat it as a security boundary.
 - Failed resends do not impose a new local wait, while successful and in-flight requests disable duplicate actions.
 - Hook tests own timer and request-state behavior; reset-view tests own disabled, countdown, pending, and available UI states.

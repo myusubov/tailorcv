@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-08-05
+
+### Fresh-Attempt Clerk Fixture Alignment
+
+- **Problem:** The forgot-password hook now resets Clerk before starting another recovery attempt, but its mocked sign-in resource returned no reset result, causing existing cooldown tests to fail before reaching their assertions.
+- **Solution:**
+  1. **Reset-capable fixture — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Adds `signIn.reset()` to the Clerk mock and initializes its standard successful `{ error: null }` result for each test.
+  2. **Honest coverage boundary — `docs/architecture/auth/testing/README.md`**: Replaces the obsolete session-storage coverage matrix with the implemented in-memory cooldown scenarios and keeps reset ordering, reset failures, and different-email cleanup explicitly pending.
+- **Outcome:** Existing hook scenarios can exercise the updated fresh-attempt entry path without overstating direct coverage of the new reset lifecycle.
+
 ## 2026-08-03
 
 ### Resend Cooldown Restoration And Timer Coverage

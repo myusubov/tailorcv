@@ -40,12 +40,6 @@ export function useForgotPasswordFlow() {
   );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (signIn?.status === 'needs_new_password') {
-      setStep('set-password');
-    }
-  }, [signIn]);
-
   // Regularly update the remaining seconds until the resend cooldown expires.
 
   useEffect(() => {
@@ -119,6 +113,15 @@ export function useForgotPasswordFlow() {
    */
   const handleEmailSubmit = async (emailAddress: string) => {
     if (fetchStatus === 'fetching' || !signIn) return;
+    const { error: resetError } = await signIn.reset();
+
+    if (resetError) {
+      toast.danger(
+        getClerkErrorMessage(resetError) || 'Failed to restart password reset',
+      );
+      return;
+    }
+
     try {
       const { error: createError } = await signIn.create({
         identifier: emailAddress,
@@ -286,12 +289,31 @@ export function useForgotPasswordFlow() {
   /**
    * Returns the mounted recovery flow to its initial email step.
    *
-   * @returns Nothing. Clears the email and verification-code state.
+   * @returns A promise that settles after Clerk reset handling and local state cleanup.
+   * @remarks Clears the email, verification code, and resend cooldown even when
+   * Clerk cannot reset its current sign-in attempt.
    */
-  const handleBack = () => {
-    setStep('email');
-    setEmail('');
-    setCode('');
+  const handleBack = async () => {
+    try {
+      const { error: resetError } = await signIn.reset();
+
+      if (resetError) {
+        toast.danger(
+          getClerkErrorMessage(resetError) ||
+            'Failed to restart password reset',
+        );
+      }
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      toast.danger(clerkError || 'Failed to restart password reset');
+    } finally {
+      setStep('email');
+      setEmail('');
+      setCode('');
+      setResendAvailableAt(null);
+      setRemainingSeconds(null);
+    }
   };
 
   return {

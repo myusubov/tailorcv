@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-05
+
+### Fresh Forgot-Password Attempt Restart
+
+- **Problem:** Clerk can retain an in-progress sign-in attempt across a reload, so restoring the UI from `needs_new_password` reopened password entry even though the application deliberately does not persist the rest of the recovery flow.
+- **Solution:**
+  1. **Non-persistent route entry — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Removes status-driven password-step restoration so a remounted route begins at email entry.
+  2. **Explicit Clerk attempt reset — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Resets Clerk before creating a new email attempt and when the user chooses a different email, while clearing local email, code, and cooldown state on flow exit.
+  3. **Clerk fixture alignment — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Adds the Clerk `reset()` method and successful result to the hook fixture so existing cooldown scenarios can enter the updated flow.
+  4. **Lifecycle contract — `docs/architecture/auth/flows/README.md` and `adr/0002-keep-ui-resend-cooldown-in-memory.md`**: Records that local and Clerk attempt state are deliberately restarted together rather than partially restored.
+- **Outcome:** Reloading or abandoning recovery returns users to email entry, and the next submission begins from a fresh Clerk sign-in attempt instead of inheriting a stale password-reset status.
+
 ## 2026-08-04
 
 ### HeroUI 3.2 Registration Terms Composition
