@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-05
+
+### Fresh-Attempt Clerk Fixture And Rejection Coverage
+
+- **Problem:** The forgot-password hook now resets Clerk before starting another recovery attempt, but its mocked sign-in resource returned no reset result and did not prove that a rejected reset stops the new attempt with visible feedback.
+- **Solution:**
+  1. **Reset-capable fixture — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Adds `signIn.reset()` to the Clerk mock and initializes its standard successful `{ error: null }` result for each test.
+  2. **Rejected-reset behavior — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx`**: Rejects the Clerk reset promise and verifies that the flow shows danger feedback without creating another sign-in attempt.
+  3. **Honest coverage boundary — `docs/architecture/auth/testing/README.md`**: Records rejected-reset handling as covered while keeping reset ordering, returned reset errors, and different-email cleanup explicitly pending.
+- **Outcome:** The hook suite now proves that a rejected Clerk reset cannot leak or start a replacement attempt, without overstating coverage of the remaining reset lifecycle branches.
+
 ## 2026-08-03
 
 ### Resend Cooldown Restoration And Timer Coverage

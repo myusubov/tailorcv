@@ -4,6 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 const clerkMocks = vi.hoisted(() => ({
   create: vi.fn(),
   sendCode: vi.fn(),
+  reset: vi.fn(),
 }));
 
 const toastMocks = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ vi.mock('@clerk/nextjs', () => ({
       resetPasswordEmailCode: {
         sendCode: clerkMocks.sendCode,
       },
+      reset: clerkMocks.reset,
     },
   }),
 }));
@@ -50,10 +52,11 @@ describe('useForgotPasswordFlow', () => {
     clerkMocks.sendCode.mockReset();
     toastMocks.danger.mockReset();
     toastMocks.success.mockReset();
+    clerkMocks.reset.mockReset();
 
     clerkMocks.create.mockResolvedValue({ error: null });
-
     clerkMocks.sendCode.mockResolvedValue({ error: null });
+    clerkMocks.reset.mockResolvedValue({ error: null });
   });
 
   afterEach(() => {
@@ -65,6 +68,19 @@ describe('useForgotPasswordFlow', () => {
     const { result } = renderHook(() => useForgotPasswordFlow());
 
     expect(result.current.step).toBe('email');
+  });
+
+  it('shows a restart error and does not create a sign-in attempt when Clerk reset rejects', async () => {
+    clerkMocks.reset.mockRejectedValueOnce(new Error('Clerk reset failed'));
+
+    const { result } = renderHook(() => useForgotPasswordFlow());
+
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
+    });
+
+    expect(clerkMocks.create).not.toHaveBeenCalled();
+    expect(toastMocks.danger).toHaveBeenCalledOnce();
   });
 
   it('starts a cooldown after successfully sending the initial code', async () => {
