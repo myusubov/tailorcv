@@ -6,6 +6,11 @@ const clerkMocks = vi.hoisted(() => ({
   sendCode: vi.fn(),
 }));
 
+const toastMocks = vi.hoisted(() => ({
+  danger: vi.fn(),
+  success: vi.fn(),
+}));
+
 vi.mock('@clerk/nextjs', () => ({
   useSignIn: () => ({
     fetchStatus: 'idle',
@@ -17,6 +22,10 @@ vi.mock('@clerk/nextjs', () => ({
       },
     },
   }),
+}));
+
+vi.mock('@heroui/react', () => ({
+  toast: toastMocks,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -39,6 +48,8 @@ describe('useForgotPasswordFlow', () => {
   beforeEach(() => {
     clerkMocks.create.mockReset();
     clerkMocks.sendCode.mockReset();
+    toastMocks.danger.mockReset();
+    toastMocks.success.mockReset();
 
     clerkMocks.create.mockResolvedValue({ error: null });
 

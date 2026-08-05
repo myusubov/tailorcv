@@ -107,12 +107,21 @@ vi.mock('@heroui/react', () => ({
   Checkbox: Object.assign(
     ({
       children,
-      isSelected: _isSelected,
-      onChange: _onChange,
+      isSelected,
+      onChange,
     }: ChildrenProps & {
       isSelected?: boolean;
       onChange?: (isSelected: boolean) => void;
-    }): ReactElement => <label>{children}</label>,
+    }): ReactElement => (
+      <label>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(event) => onChange?.(event.currentTarget.checked)}
+        />
+        {children}
+      </label>
+    ),
     {
       Content: ({ children }: ChildrenProps): ReactElement => <span>{children}</span>,
       Control: ({ children }: ChildrenProps): ReactElement => <span>{children}</span>,
@@ -286,6 +295,18 @@ function ExperienceItemContentHarness({
 }
 
 describe('ExperienceItemContent', () => {
+  it('clears the end date when the experience becomes current', () => {
+    render(<ExperienceItemContentHarness endDate="2026-05" />);
+
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'I currently work here' }),
+    );
+
+    expect(screen.getByTestId('experience-end-date-value').textContent).toBe(
+      'null',
+    );
+  });
+
   it('clears end date to null from the clear button', () => {
     render(<ExperienceItemContentHarness endDate="2026-05" />);
 

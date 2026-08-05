@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-04
+
+### Exact HeroUI 3.2.3 Dependency Contract
+
+- **Decision:** Keep HeroUI React and Styles on matching exact versions and leave React Aria peers lockfile-managed unless source ownership or an unmet peer requires direct declarations.
+- **Problem:** The frontend's beta-era caret ranges could admit unreviewed component and styling changes, while HeroUI 3.2 externalized React Aria packages into its peer contract.
+- **Solution:**
+  1. **Frontend ownership — `apps/frontend/package.json`**: Pins `@heroui/react` and `@heroui/styles` to `3.2.3` and aligns `@internationalized/date` with the upgraded date-component graph.
+  2. **Reproducible peer resolution — `package-lock.json`**: Records HeroUI 3.2.3, Tailwind Variants 3.3.0, and the compatible React Aria peer packages without adding unused direct application dependencies.
+  3. **Durable upgrade policy — `docs/architecture/ui/adr/0001-pin-heroui-exact-versions.md`**: Requires synchronized exact pins and deliberate release, composition, dependency, and behavior review.
+- **Outcome:** Routine installs cannot silently advance HeroUI, and future upgrades have an explicit owner and verification boundary.
+
 ## 2026-07-29
 
 ### Frontend Email-Masking Dependency

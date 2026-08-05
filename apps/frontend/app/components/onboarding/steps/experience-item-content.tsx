@@ -360,10 +360,10 @@ export function ExperienceItemContent({
                     }
                   }}
                 >
-                  <Checkbox.Control className="size-5">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
+                    <Checkbox.Control className="size-5">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <span className="text-sm">I currently work here</span>
                   </Checkbox.Content>
                 </Checkbox>

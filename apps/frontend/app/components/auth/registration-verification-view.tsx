@@ -74,6 +74,7 @@ export function RegistrationVerificationView({
                   onChange={onCodeChange}
                   pattern="^[0-9]*$"
                   inputMode="numeric"
+                  className='justify-center'
                 >
                   <InputOTP.Group>
                     <InputOTP.Slot index={0} />

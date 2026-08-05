@@ -339,11 +339,11 @@ export function ProjectCard({
                   }
                 }}
               >
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label className="text-sm font-normal">Active project</Label>
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <span className="text-sm font-normal">Active project</span>
                 </Checkbox.Content>
               </Checkbox>
             )}

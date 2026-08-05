@@ -357,13 +357,13 @@ export function EducationCard({
               }}
               className="pb-2"
             >
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
-                <Label className="text-sm font-normal">
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <span className="text-sm font-normal">
                   Currently studying
-                </Label>
+                </span>
               </Checkbox.Content>
             </Checkbox>
           )}

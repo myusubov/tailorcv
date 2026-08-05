@@ -46,6 +46,7 @@
 | `apps/frontend/app/components/auth/login/use-login-flow.ts`                         | Login controller hook — Clerk sign-in orchestration, auth notices, Client Trust, and SSO start handlers                  | Any login behavior or redirect change                          |
 | `apps/frontend/app/components/auth/register/register-form.tsx`                      | Register form — email/password + Google/Apple SSO handlers                                                               | Any register change                                            |
 | `apps/frontend/app/components/auth/register/use-register-flow.ts`                   | Register controller hook for email/password sign-up, SSO initiation, and OTP verification                                | Register controller changes                                    |
+| `apps/frontend/app/components/auth/register/register-terms-field.tsx`               | Controlled, accessible HeroUI terms agreement with independently reachable legal links                                   | Registration terms or Checkbox composition changes             |
 | `apps/frontend/app/components/auth/registration-verification-view.tsx`              | Render-only email OTP verification view                                                                                  | Email verification UI changes                                  |
 | `apps/frontend/app/components/auth/registration-verification.tsx`                   | Thin registration verification controller                                                                                | Email verification composition changes                         |
 | `apps/frontend/app/components/auth/use-registration-verification-flow.ts`           | Email OTP verification flow hook                                                                                         | Verification behavior changes                                  |
@@ -264,6 +265,19 @@ and shows confirmation feedback; a failed resend leaves both cooldown values
 reset controller to `ResetPasswordView`, which disables the resend control and
 renders either the countdown, the pending-request state, or the available action.
 
+### 6.10 Toast-Only Forgot-Password Feedback
+
+The forgot-password flow reports Clerk and flow-level failures through HeroUI
+toasts owned by `useForgotPasswordFlow()`. The route, form controllers, and views
+do not carry a separate `globalError` value or render a duplicate global-error
+surface. React Hook Form and Zod validation errors remain inline beside their
+corresponding fields because they identify input the user can correct directly.
+
+Retryable failures use the standard toast duration. Terminal failures that occur
+after password submission, including MFA-required, unexpected Clerk status, and
+session-finalization outcomes, use persistent toasts so the explanation remains
+available until the user dismisses it.
+
 ---
 
 ## 7. Integration Points
@@ -289,6 +303,7 @@ renders either the countdown, the pending-request state, or the available action
 - [x] In-memory resend timestamp and ticking countdown state
 - [x] Success feedback after Clerk confirms a reset-code resend
 - [x] Cooldown-aware resend disabling, successful renewal, failure retry, and duplicate-request protection
+- [x] Toast-only Clerk and flow feedback with inline field validation retained
 
 ---
 
@@ -301,6 +316,7 @@ renders either the countdown, the pending-request state, or the available action
 | In-memory cooldown is mistaken for security enforcement      | Treat the countdown as mounted-flow feedback and leave authoritative abuse protection to Clerk                  |
 | Reload discards the visible cooldown                         | Restart the local recovery flow at email entry and rely on Clerk for authoritative resend limits                |
 | Duplicate reset-code requests overlap                        | Disable the view while pending and guard both active cooldown and in-flight state inside the flow hook           |
+| Terminal reset outcome disappears before it can be understood | Keep terminal HeroUI error toasts visible until the user dismisses them                                          |
 | View files start re-owning RHF setup                         | Keep RHF/schema wiring in flow hooks or local controllers, not render-only view files                           |
 
 ---

@@ -22,12 +22,19 @@ export function getClerkErrorMessage(error: unknown): string {
   if (isClerkAPIResponseError(error)) {
     // Access the first error message from the errors array
     if (error.errors && error.errors.length > 0) {
+      if (error.errors[0].code === 'form_code_incorrect') {
+        return 'The verification code you entered is incorrect. Please check your email and try again.';
+      }
       return error.errors[0].longMessage || error.errors[0].message;
     }
   }
 
   if (isClerkFlowError(error)) {
-    return error.longMessage || error.message || 'Something went wrong. Please try again.';
+    return (
+      error.longMessage ||
+      error.message ||
+      'Something went wrong. Please try again.'
+    );
   }
 
   if (error instanceof Error) {

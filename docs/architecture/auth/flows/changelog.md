@@ -6,6 +6,24 @@
 
 ## 2026-08-04
 
+### HeroUI 3.2 Registration Terms Composition
+
+- **Problem:** HeroUI 3.2 requires Checkbox controls to live inside `Checkbox.Content`, while the registration terms field still used the beta-era sibling composition.
+- **Solution:**
+  1. **Current compound structure — `apps/frontend/app/components/auth/register/register-terms-field.tsx`**: Moves the control into the content wrapper while preserving React Hook Form ownership, validation, and independently reachable terms/privacy links.
+  2. **Interaction coverage — `apps/frontend/app/components/auth/register/register-terms-field.test.tsx`**: Proves the visible legal text names the checkbox, toggling updates the controlled form value, and both links remain addressable.
+- **Outcome:** Registration terms remain accessible and functional on HeroUI 3.2.3 without retaining the obsolete Checkbox structure.
+
+### Toast-Only Forgot-Password Feedback
+
+- **Problem:** Forgot-password failures were moving to HeroUI toasts while the route and views still carried an unused `globalError` state and rendered or retained inline global-error surfaces, creating two competing feedback paths.
+- **Solution:**
+  1. **Single feedback owner — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Reports Clerk and flow-level failures through HeroUI toasts, keeps terminal MFA, unexpected-status, and finalization messages visible until dismissed, and removes the obsolete global-error state.
+  2. **Prop-chain removal — `apps/frontend/app/(auth)/forgot-password/page.tsx`, `forgot-password-email-entry.tsx`, `email-entry-view.tsx`, `forgot-password-reset.tsx`, and `reset-password-view.tsx`**: Removes `globalError` from controller and view contracts and removes both global `AnimatedError` surfaces while retaining field-level validation messages.
+  3. **Focused fixture alignment — `apps/frontend/app/(auth)/forgot-password/page.test.tsx`, `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.test.tsx`, `forgot-password-reset.test.tsx`, and `use-forgot-password-flow.test.tsx`**: Removes obsolete `globalError` values from component fixtures and isolates the hook from HeroUI's shared toast queue.
+  4. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records toast ownership, the field-validation boundary, and persistent terminal feedback.
+- **Outcome:** Password-recovery errors now have one user-facing delivery path, while actionable form validation remains attached to the relevant fields and terminal outcomes stay readable until dismissed.
+
 ### In-Memory Forgot-Password Resend Cooldown
 
 - **Decision:** Keep the UI resend cooldown in the mounted forgot-password flow instead of restoring it from browser storage; Clerk remains the authoritative resend limiter.

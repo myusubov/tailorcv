@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import '@heroui/styles';
+@import '@heroui/styles/css';
 
 /**
  * TailorCV Color Theme
@@ -142,6 +142,9 @@
    * ═══════════════════════════════════════════════════════════════════════════ */
   --code-bg: #f4f4f5;
   --code-border: #e4e4e7;
+
+  /* Preserve the immediate-close interaction used before HeroUI 3.2. */
+  --tooltip-close-delay: 0ms;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

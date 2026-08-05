@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-08-04
+
+### HeroUI 3.2 Current-Item Checkboxes
+
+- **Problem:** Education, experience, and project item forms still used HeroUI's beta-era Checkbox sibling composition, which no longer matches the 3.2.3 compound-component contract.
+- **Solution:**
+  1. **Current Checkbox structure — `education-item-content.tsx`, `experience-item-content.tsx`, and `project-item-content.tsx`**: Moves each `Checkbox.Control` inside `Checkbox.Content` while preserving controlled values and end-date clearing.
+  2. **Behavior-focused mocks and coverage — `experience-item-content.test.tsx` and `project-item-content.test.tsx`**: Makes the Checkbox mock expose a real accessible checkbox and proves selecting the current-item option clears the saved end date.
+- **Outcome:** Manual-entry current-item controls target HeroUI 3.2.3 while retaining their form-state behavior and accessible visible labels.
+
 ## 2026-08-03
 
 ### Global Loading Test Alignment

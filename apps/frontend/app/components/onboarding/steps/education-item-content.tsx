@@ -397,10 +397,10 @@ export function EducationItemContent({
                     }
                   }}
                 >
-                  <Checkbox.Control className="size-5">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
+                    <Checkbox.Control className="size-5">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <span className="text-sm">
                       I am currently studying here
                     </span>

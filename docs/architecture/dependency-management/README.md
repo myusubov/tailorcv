@@ -18,6 +18,7 @@
 
 - **App dependencies live in apps**: Frontend packages such as React, Next.js, and date utilities belong in `apps/frontend/package.json`; backend packages such as Clerk Express and Prisma belong in `apps/backend/package.json`.
 - **Overrides must be verified**: A root override is kept only when `npm ls` confirms the installed tree actually resolves to the intended version.
+- **HeroUI stays exact and synchronized**: `@heroui/react` and `@heroui/styles` use the same exact version so component and CSS contracts cannot move independently or through a routine install.
 
 ---
 
@@ -94,6 +95,12 @@ tailorcv/
 - **Rule**: Use root `overrides` only after confirming `npm ls <package>` shows the override applied.
 - **Anti-pattern**: Running `npm audit fix --force` when npm proposes major downgrades or toolchain migrations.
 
+### 6.3 Component-Library Upgrades
+
+- **Rule**: Update HeroUI React and Styles together at exact matching versions.
+- **Rule**: Treat React Aria as lockfile-managed peer infrastructure unless frontend source imports a package directly or npm reports an unmet peer.
+- **Rule**: Inspect intervening release notes and the resolved peer tree before delivery.
+
 ---
 
 ## 7. Integration Points
@@ -105,7 +112,7 @@ tailorcv/
 | Auth             | Clerk packages are split between frontend and backend workspaces                | `@clerk/nextjs`, `@clerk/express`, `@clerk/backend` |
 | Auth recovery UI | Email masking is owned by the frontend workspace that renders recovery guidance | `maskdata` in `apps/frontend/package.json`          |
 | Backend Data     | Prisma packages must stay aligned in the backend workspace                      | `prisma`, `@prisma/client`, `@prisma/adapter-pg`    |
-| Frontend UI      | Next.js and React packages belong to the frontend workspace                     | `next`, `react`, `react-dom`                        |
+| Frontend UI      | Next.js, React, HeroUI, and Tailwind packages belong to the frontend workspace   | `next`, `react`, `@heroui/react`, `@heroui/styles`  |
 
 ---
 
@@ -118,6 +125,7 @@ tailorcv/
 - [x] Backend direct imports are declared in `apps/backend/package.json`
 - [x] Root app-only dependencies removed from `package.json`
 - [x] High-risk `js-cookie` finding remediated through Clerk patch/update and verified override
+- [x] HeroUI React and Styles pinned together at `3.2.3`
 
 ### Phase 2: Deferred Major/Upstream Items
 
@@ -135,6 +143,7 @@ tailorcv/
 | Root overrides give a false sense of safety                                        | Keep only overrides verified by `npm ls`                                                                         |
 | Workspace source relies on undeclared root dependencies                            | Search direct imports and move dependencies to the owning workspace                                              |
 | Installing one package silently refreshes unrelated compatible transitive versions | Review lockfile package additions, removals, and version changes separately from the requested direct dependency |
+| A component-library range admits an unreviewed UI contract change                   | Keep HeroUI packages exactly pinned and migrate them through the UI upgrade workflow                              |
 
 ---
 

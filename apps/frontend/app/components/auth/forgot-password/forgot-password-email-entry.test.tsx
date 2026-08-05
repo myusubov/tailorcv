@@ -26,7 +26,7 @@ describe('ForgotPasswordEmailEntry', () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
-    render(<ForgotPasswordEmailEntry onSubmit={onSubmit} globalError="" />);
+    render(<ForgotPasswordEmailEntry onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText('Email'), 'user@example.com');
     await user.click(screen.getByRole('button', { name: 'Send Reset Code' }));

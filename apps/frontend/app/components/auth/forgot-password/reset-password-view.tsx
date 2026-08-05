@@ -17,7 +17,6 @@ import { Control, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { maskEmail2 } from 'maskdata';
 
-import { AnimatedError } from '@/app/components/ui';
 import { ResetPasswordFormValues } from '@/lib/schemas/auth';
 
 type ResetPasswordStep = 'verify-code' | 'set-password';
@@ -33,7 +32,6 @@ interface ResetPasswordViewProps {
   onSetPassword: () => void;
   onResend: () => Promise<void>;
   onBack: () => void;
-  globalError: string;
   isResending: boolean;
   isVerifyingCode: boolean;
   remainingSeconds: number | null;
@@ -56,7 +54,6 @@ export function ResetPasswordView({
   onSetPassword,
   onResend,
   onBack,
-  globalError,
   isResending,
   isVerifyingCode,
   remainingSeconds,
@@ -104,6 +101,7 @@ export function ResetPasswordView({
                     onChange={onCodeChange}
                     pattern="^[0-9]*$"
                     inputMode="numeric"
+                    className='justify-center'
                   >
                     <InputOTP.Group>
                       <InputOTP.Slot index={0} />
@@ -117,8 +115,6 @@ export function ResetPasswordView({
                     </InputOTP.Group>
                   </InputOTP>
                 </motion.div>
-
-                <AnimatedError message={globalError} />
 
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -204,8 +200,6 @@ export function ResetPasswordView({
                     )}
                   />
                 </motion.div>
-
-                <AnimatedError message={globalError} />
 
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

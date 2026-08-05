@@ -107,12 +107,21 @@ vi.mock('@heroui/react', () => ({
   Checkbox: Object.assign(
     ({
       children,
-      isSelected: _isSelected,
-      onChange: _onChange,
+      isSelected,
+      onChange,
     }: ChildrenProps & {
       isSelected?: boolean;
       onChange?: (isSelected: boolean) => void;
-    }): ReactElement => <label>{children}</label>,
+    }): ReactElement => (
+      <label>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(event) => onChange?.(event.currentTarget.checked)}
+        />
+        {children}
+      </label>
+    ),
     {
       Content: ({ children }: ChildrenProps): ReactElement => <span>{children}</span>,
       Control: ({ children }: ChildrenProps): ReactElement => <span>{children}</span>,
@@ -288,6 +297,20 @@ function ProjectItemContentHarness({
 }
 
 describe('ProjectItemContent', () => {
+  it('clears the end date when the project becomes current', () => {
+    render(<ProjectItemContentHarness endDate="2026-05" />);
+
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'I am currently working on this',
+      }),
+    );
+
+    expect(screen.getByTestId('project-end-date-value').textContent).toBe(
+      'null',
+    );
+  });
+
   it('marks project dates as required only when date context needs them', () => {
     const { unmount } = render(<ProjectItemContentHarness />);
 

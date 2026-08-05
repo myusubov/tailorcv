@@ -2,6 +2,9 @@
   "name": "tailorcv",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -45,7 +48,7 @@
     "db:reset": "npm run db:reset -w backend"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "baseline-browser-mapping": "^2.10.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",

@@ -32,12 +32,12 @@ After any source/config change under `apps/`, `packages/`, or root project confi
 
 | Layer         | Technology                         | Version                     |
 | ------------- | ---------------------------------- | --------------------------- |
-| Runtime       | Node.js                            | 20.x                        |
+| Runtime       | Node.js                            | 22.x                        |
 | Frontend      | Next.js (App Router)               | 16.x                        |
 | Backend       | Express.js                         | 4.x                         |
 | Database      | PostgreSQL + Prisma                | Prisma 7.x                  |
 | Auth          | Clerk                              | v7 (frontend), v1 (backend) |
-| UI            | HeroUI v3 Beta + Tailwind CSS 4    | -                           |
+| UI            | HeroUI v3.2.3 + Tailwind CSS 4     | -                           |
 | Icons         | Iconify (`@iconify/react`)         | -                           |
 | AI            | OpenAI (Responses API) + Anthropic | -                           |
 | Queue         | BullMQ + Redis                     | -                           |
@@ -437,6 +437,7 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 - Never import from `@tanstack/react-query` directly for data fetching -- use `defineQuery` / `defineAction` / `useActionMutation`
 - Never use `useState` for streamed data -- write directly to React Query cache (cache-direct pattern)
 - Always use `@iconify/react` for icons -- no other icon libraries
+- Import HeroUI's global stylesheet through `@heroui/styles/css` immediately after Tailwind so Turbopack resolves the explicit CSS export rather than retaining a stale package-root style entry across upgrades.
 - All interactive elements must have `aria-label` or semantic roles (HeroUI handles most)
 - Backend types for request/response bodies go in `src/types/`, not inline
 - Frontend types go in `lib/types/`, never in component directories

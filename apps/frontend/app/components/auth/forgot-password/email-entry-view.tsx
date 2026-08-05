@@ -14,7 +14,6 @@ import { Icon } from '@iconify/react';
 import { Control, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
 
-import { AnimatedError } from '@/app/components/ui';
 import { ForgotPasswordFormValues } from '@/lib/schemas/auth';
 import { AuthLogo } from '../auth-logo';
 
@@ -22,20 +21,18 @@ interface EmailEntryViewProps {
   control: Control<ForgotPasswordFormValues>;
   isSubmitting: boolean;
   onSubmit: () => void;
-  globalError: string;
 }
 
 /**
  * Renders the forgot-password email step with responsive brand treatments.
  *
- * @param props - Form control, submission state, submit callback, and global error.
+ * @param props - Form control, submission state, and submit callback.
  * @returns The desktop marketing panel and email-entry form.
  */
 export function EmailEntryView({
   control,
   isSubmitting,
   onSubmit,
-  globalError,
 }: EmailEntryViewProps) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -58,7 +55,7 @@ export function EmailEntryView({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <AuthLogo variant="inverse" />
+            <AuthLogo />
           </motion.div>
 
           <motion.div
@@ -147,8 +144,6 @@ export function EmailEntryView({
                 )}
               />
             </motion.div>
-
-            <AnimatedError message={globalError} />
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

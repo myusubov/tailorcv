@@ -58,7 +58,8 @@ app/onboarding/page.tsx
 | `apps/frontend/lib/utils/resume-date.ts`                                        | Shared DatePicker parser/serializer for resume date strings.                                          | Resume date picker behavior changes.                        |
 | `packages/shared/src/schemas/resume.ts`                                         | Single source of truth for onboarding resume validation.                                              | Resume data validation changes.                             |
 | `apps/frontend/app/components/onboarding/steps/projects-step.test.tsx`          | Locks the projects and skills guidance, empty-state, and skill chip UI contracts.                     | Projects & Skills step UI changes.                          |
-| `apps/frontend/app/components/onboarding/steps/project-item-content.test.tsx`   | Locks project item header and date picker behavior.                                                   | Project item UI changes.                                    |
+| `apps/frontend/app/components/onboarding/steps/project-item-content.test.tsx`   | Locks project item date and current-project checkbox behavior.                                        | Project item UI changes.                                    |
+| `apps/frontend/app/components/onboarding/steps/experience-item-content.test.tsx` | Locks experience end-date clearing through date and current-role controls.                            | Experience item UI changes.                                 |
 | `apps/frontend/app/components/onboarding/steps/education-step.test.tsx`         | Locks the final education empty-state UI contract.                                                    | Education empty-state UI changes.                           |
 | `apps/frontend/app/components/onboarding/steps/`                                | Individual manual-entry form steps.                                                                   | Field-level manual-entry changes.                           |
 
@@ -138,6 +139,7 @@ if (ok) goToNextStep();
 | GitHub analysis   | GitHub Analyze calls the temporary backend analysis endpoint and logs project-structure summaries.    | `analyzeGithubReposAction`, `POST /api/v1/auth/github/analyze` |
 | Resume generation | Upload and manual submit handlers are placeholders until the next generation pipeline is implemented. | Placeholder toasts in upload and manual paths                  |
 | Shared schemas    | Manual entry validates against the shared onboarding form schema.                                     | `onboardingSchema`, `OnboardingFormInput`                      |
+| UI system         | HeroUI supplies form, date, modal, chip, and Checkbox primitives used by onboarding.                   | `@heroui/react`, `docs/architecture/ui/README.md`              |
 
 ---
 

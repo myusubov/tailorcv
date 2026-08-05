@@ -14,6 +14,7 @@
 | Real forgot-password E2E setup                   | [auth/testing/README.md](auth/testing/README.md)                                           | `apps/frontend/e2e/helpers/mail/`, `apps/frontend/.env.e2e.local.example`                                              |
 | Route protection / middleware                    | [auth/README.md](auth/README.md)                                                           | [auth/sso/README.md](auth/sso/README.md), `proxy.ts`                                                                   |
 | Onboarding method or manual-entry flow changes   | [onboarding/README.md](onboarding/README.md)                                               | `apps/frontend/app/onboarding/page.tsx`, `apps/frontend/app/components/onboarding/`                                    |
+| HeroUI components, theme, or version changes     | [ui/README.md](ui/README.md)                                                               | `apps/frontend/package.json`, `apps/frontend/app/globals.css`, [ui/adr/](ui/adr/)                                      |
 | GitHub repository analysis pipeline changes      | [github-analysis/README.md](github-analysis/README.md)                                     | [github-analysis/pipeline/README.md](github-analysis/pipeline/README.md), [onboarding/README.md](onboarding/README.md) |
 | GitHub project structure analyzer changes        | [github-analysis/project-structure/README.md](github-analysis/project-structure/README.md) | `apps/backend/src/services/github-analysis/project-structure/`                                                         |
 | Dependency placement or audit remediation        | [dependency-management/README.md](dependency-management/README.md)                         | `package.json`, `apps/*/package.json`, `packages/*/package.json`, `package-lock.json`                                  |
@@ -40,6 +41,7 @@
 
 ### UI Layer
 
+- [ui/README.md](ui/README.md) - HeroUI version, compound-component, theme, provider, and upgrade contracts
 - [onboarding/README.md](onboarding/README.md) - Onboarding method selection, manual-entry flow, progress UI, and generation job handoff
 
 ---
@@ -99,7 +101,7 @@
 
 | Metric                       | Status     |
 | ---------------------------- | ---------- |
-| **Top-level domain folders** | 5          |
+| **Top-level domain folders** | 6          |
 | **Last structure migration** | 2026-07-31 |
 | **Domains needing split**    | None       |
 

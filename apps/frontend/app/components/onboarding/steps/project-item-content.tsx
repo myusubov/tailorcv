@@ -383,10 +383,10 @@ export function ProjectItemContent({
                       });
                   }}
                 >
-                  <Checkbox.Control className="size-5">
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
                   <Checkbox.Content>
+                    <Checkbox.Control className="size-5">
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
                     <span className="text-sm">
                       I am currently working on this
                     </span>
