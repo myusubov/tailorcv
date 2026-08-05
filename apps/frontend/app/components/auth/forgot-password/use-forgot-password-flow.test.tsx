@@ -70,6 +70,19 @@ describe('useForgotPasswordFlow', () => {
     expect(result.current.step).toBe('email');
   });
 
+  it('shows a restart error and does not create a sign-in attempt when Clerk reset rejects', async () => {
+    clerkMocks.reset.mockRejectedValueOnce(new Error('Clerk reset failed'));
+
+    const { result } = renderHook(() => useForgotPasswordFlow());
+
+    await act(async () => {
+      await result.current.handleEmailSubmit('user@example.com');
+    });
+
+    expect(clerkMocks.create).not.toHaveBeenCalled();
+    expect(toastMocks.danger).toHaveBeenCalledOnce();
+  });
+
   it('starts a cooldown after successfully sending the initial code', async () => {
     const { result } = renderHook(() => useForgotPasswordFlow());
 

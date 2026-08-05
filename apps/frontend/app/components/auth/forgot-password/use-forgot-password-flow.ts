@@ -113,16 +113,18 @@ export function useForgotPasswordFlow() {
    */
   const handleEmailSubmit = async (emailAddress: string) => {
     if (fetchStatus === 'fetching' || !signIn) return;
-    const { error: resetError } = await signIn.reset();
-
-    if (resetError) {
-      toast.danger(
-        getClerkErrorMessage(resetError) || 'Failed to restart password reset',
-      );
-      return;
-    }
 
     try {
+      const { error: resetError } = await signIn.reset();
+
+      if (resetError) {
+        toast.danger(
+          getClerkErrorMessage(resetError) ||
+            'Failed to restart password reset',
+        );
+        return;
+      }
+
       const { error: createError } = await signIn.create({
         identifier: emailAddress,
       });

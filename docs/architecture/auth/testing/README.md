@@ -179,7 +179,8 @@ npm run test:e2e:frontend:real-auth
 - [x] Deterministic countdown progression and expiration cleanup coverage
 - [x] Cooldown blocking followed by resend availability and renewal after expiry
 - [x] Failed-resend retry availability and duplicate in-flight request protection
-- [ ] Fresh-attempt reset ordering, reset-error handling, and different-email cleanup coverage
+- [x] Rejected Clerk reset stops fresh-attempt creation and surfaces error feedback
+- [ ] Fresh-attempt reset ordering, returned reset-error handling, and different-email cleanup coverage
 
 ---
 
@@ -189,7 +190,7 @@ npm run test:e2e:frontend:real-auth
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | OTP UI interactions diverge between flows                                     | Reuse the shared OTP helper for reset and verification steps                                                   |
 | External services slow down the suite                                         | Keep real auth tests separate from fast Vitest and smoke runs                                                  |
-| Fresh-attempt fixture support is mistaken for behavior coverage               | Keep reset ordering, error handling, and different-email cleanup listed as pending until asserted directly     |
+| Partial fresh-attempt coverage is mistaken for the complete reset contract    | Keep reset ordering, returned errors, and different-email cleanup listed as pending until asserted directly    |
 | Shared real-auth user collides across specs                                   | Run the combined real-auth command with one Playwright worker so password rotation and reset state stay serial |
 | Sign-up coverage becomes non-repeatable because the test email already exists | Generate a fresh Clerk test email per run instead of reusing a fixed sign-up account                           |
 | Google/Apple provider automation becomes brittle                              | Keep OAuth coverage at the app-owned hook/guard layer and verify provider-controlled flows manually            |
