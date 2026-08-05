@@ -1,4 +1,4 @@
-import { GitHubConnection, GitHubRepo } from 'shared';
+import type { GitHubConnectionResponse, GitHubRepo } from 'shared';
 
 export type GetGithubConnectionInput = {
   params: {
@@ -6,7 +6,7 @@ export type GetGithubConnectionInput = {
   };
 };
 
-export type GetGithubConnectionOutput = GitHubConnection;
+export type GetGithubConnectionOutput = GitHubConnectionResponse | null;
 
 export type GetGithubReposInput = {
   params: {

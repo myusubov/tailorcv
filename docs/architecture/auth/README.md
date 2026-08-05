@@ -29,19 +29,19 @@
 
 ### 2.1 Read Order
 
-1. [flows.md](flows.md) for login, register, and forgot-password behavior
-2. [sso.md](sso.md) for OAuth callback and retired `/sso-continue` guard behavior
-3. [testing.md](testing.md) for Playwright, Gmail IMAP, and real-auth setup
+1. [flows/README.md](flows/README.md) for login, register, and forgot-password behavior
+2. [sso/README.md](sso/README.md) for OAuth callback and retired `/sso-continue` guard behavior
+3. [testing/README.md](testing/README.md) for Playwright, Gmail IMAP, and real-auth setup
 
 ### 2.2 High-Level Map
 
 ```
-Email/password login            -> flows.md
-Email/password sign-up          -> flows.md
-Forgot-password                 -> flows.md + testing.md
-Google/Apple OAuth              -> sso.md
-SSO callback / retired guard    -> sso.md
-Auth smoke / real auth testing  -> testing.md
+Email/password login            -> flows/README.md
+Email/password sign-up          -> flows/README.md
+Forgot-password                 -> flows/README.md + testing/README.md
+Google/Apple OAuth              -> sso/README.md
+SSO callback / retired guard    -> sso/README.md
+Auth smoke / real auth testing  -> testing/README.md
 ```
 
 ---
@@ -50,9 +50,9 @@ Auth smoke / real auth testing  -> testing.md
 
 | File | Purpose | When to Read |
 | ---- | ------- | ------------ |
-| `docs/architecture/auth/flows.md` | Main doc for login, register, forgot-password, and shared auth-controller patterns | Any non-SSO auth UI or flow change |
-| `docs/architecture/auth/sso.md` | Main doc for OAuth start/callback/continuation behavior | Any Google/Apple auth or SSO routing change |
-| `docs/architecture/auth/testing.md` | Main doc for auth browser automation, Gmail polling, and test env setup | Any auth test or E2E change |
+| `docs/architecture/auth/flows/README.md` | Main doc for login, register, forgot-password, and shared auth-controller patterns | Any non-SSO auth UI or flow change |
+| `docs/architecture/auth/sso/README.md` | Main doc for OAuth start/callback/continuation behavior | Any Google/Apple auth or SSO routing change |
+| `docs/architecture/auth/testing/README.md` | Main doc for auth browser automation, Gmail polling, and test env setup | Any auth test or E2E change |
 
 ---
 
@@ -60,9 +60,9 @@ Auth smoke / real auth testing  -> testing.md
 
 ### 4.1 Domain Split
 
-- `flows.md`: email/password sign-in, sign-up verification, forgot-password, Client Trust
-- `sso.md`: OAuth start, callback, transfer handling, retired `/sso-continue`
-- `testing.md`: auth smoke, real forgot-password E2E, helper topology
+- `flows/README.md`: email/password sign-in, sign-up verification, forgot-password, Client Trust
+- `sso/README.md`: OAuth start, callback, transfer handling, retired `/sso-continue`
+- `testing/README.md`: auth smoke, real forgot-password E2E, helper topology
 
 ---
 
@@ -73,9 +73,20 @@ docs/architecture/
 ├── README.md                  # Global architecture index
 └── auth/
     ├── README.md              # This hub doc
-    ├── flows.md               # Login / register / forgot-password
-    ├── sso.md                 # OAuth callback / continuation
-    └── testing.md             # Auth smoke / real auth / Gmail helpers
+    ├── changelog.md           # Auth hub history
+    ├── adr/                   # Durable auth architecture decisions
+    ├── flows/                 # Login / register / forgot-password
+    │   ├── README.md
+    │   ├── changelog.md
+    │   └── adr/
+    ├── sso/                   # OAuth callback / continuation
+    │   ├── README.md
+    │   ├── changelog.md
+    │   └── adr/
+    └── testing/               # Auth smoke / real auth / Gmail helpers
+        ├── README.md
+        ├── changelog.md
+        └── adr/
 ```
 
 ---
@@ -84,9 +95,9 @@ docs/architecture/
 
 ### 6.1 Documentation Pattern
 
-- Keep reusable auth flow/controller patterns in `flows.md`
-- Keep OAuth-specific state machines in `sso.md`
-- Keep test harnesses, env requirements, and inbox helpers in `testing.md`
+- Keep reusable auth flow/controller patterns in `flows/README.md`
+- Keep OAuth-specific state machines in `sso/README.md`
+- Keep test harnesses, env requirements, and inbox helpers in `testing/README.md`
 - When a change spans multiple auth sub-systems, update all affected sub-docs and cross-link them here
 
 ---
@@ -132,18 +143,11 @@ docs/architecture/
 | ---- | ---------- |
 | Auth guidance grows too large to retrieve reliably | Keep flows, SSO, and testing in separate sub-docs with a stable hub |
 | OAuth behavior and password flows drift apart in docs | Link all auth entry points back to this hub and update cross-doc references together |
-| Test helper history overwhelms implementation guidance | Keep test setup and E2E history isolated in `testing.md` |
+| Test helper history overwhelms implementation guidance | Keep test setup and E2E history isolated in `testing/README.md` |
 
 ---
 
-## 10. Development Log
+## 10. History & Decisions
 
-### [2026-04-07] - Auth Doc Split
-
-- **Decision:** Split the oversized auth domain doc into a hub plus focused sub-docs for flows, SSO, and testing.
-- **Problem:** `docs/architecture/AUTH.md` had grown to nearly 600 lines and mixed three distinct auth sub-systems, which reduced retrieval quality for both humans and AI and crossed the project's split threshold.
-- **Solution:**
-  1. **`docs/architecture/auth/README.md`**: Created a hub doc that keeps the high-level auth philosophy, status, and navigation.
-  2. **`docs/architecture/auth/flows.md` + `docs/architecture/auth/sso.md` + `docs/architecture/auth/testing.md`**: Moved implementation details into focused sub-docs by concern.
-  3. **`docs/architecture/README.md`**: Updated the architecture index so the new auth hub is the single entry point.
-- **Outcome:** Auth documentation is now split by concern, below the effective retrieval threshold per file, and easier to update without mixing unrelated flow, SSO, and testing detail.
+- **Changelog:** [changelog.md](changelog.md)
+- **Architecture decisions:** [adr/](adr/)

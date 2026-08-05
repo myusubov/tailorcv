@@ -8,6 +8,11 @@ interface RegisterTermsFieldProps {
   control: Control<RegisterFormValues>;
 }
 
+/**
+ * Renders the registration terms agreement bound to the provided form control.
+ * The checkbox owns the boolean `terms` value and exposes independently
+ * reachable links for the terms and privacy policy.
+ */
 export function RegisterTermsField({ control }: RegisterTermsFieldProps) {
   return (
     <motion.div
@@ -27,24 +32,32 @@ export function RegisterTermsField({ control }: RegisterTermsFieldProps) {
               isInvalid={!!fieldState.error}
               {...field}
             >
-              <Checkbox.Control className="size-5">
-                <Checkbox.Indicator />
-              </Checkbox.Control>
               <Checkbox.Content>
+                <Checkbox.Control className="size-5">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
                 <span className="text-muted-foreground text-sm leading-snug">
                   I agree to the{' '}
-                  <Link href="#" className="text-primary hover:text-primary/80 font-bold">
+                  <Link
+                    href="#"
+                    className="text-primary hover:text-primary/80 font-bold"
+                  >
                     Terms
                   </Link>{' '}
                   and{' '}
-                  <Link href="#" className="text-primary hover:text-primary/80 font-bold">
+                  <Link
+                    href="#"
+                    className="text-primary hover:text-primary/80 font-bold"
+                  >
                     Privacy Policy
                   </Link>
                 </span>
               </Checkbox.Content>
             </Checkbox>
             {fieldState.error ? (
-              <span className="text-tiny text-danger">{fieldState.error.message}</span>
+              <span className="text-tiny text-danger">
+                {fieldState.error.message}
+              </span>
             ) : null}
           </div>
         )}

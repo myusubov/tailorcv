@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Base image
-ARG NODE_VERSION=20.19.0
+ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-slim AS base
 WORKDIR /app
 ENV NODE_ENV=production

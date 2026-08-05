@@ -15,8 +15,8 @@ import {
 import { Icon } from '@iconify/react';
 import { Control, Controller } from 'react-hook-form';
 import { motion } from 'framer-motion';
+import { maskEmail2 } from 'maskdata';
 
-import { AnimatedError } from '@/app/components/ui';
 import { ResetPasswordFormValues } from '@/lib/schemas/auth';
 
 type ResetPasswordStep = 'verify-code' | 'set-password';
@@ -32,11 +32,17 @@ interface ResetPasswordViewProps {
   onSetPassword: () => void;
   onResend: () => Promise<void>;
   onBack: () => void;
-  globalError: string;
   isResending: boolean;
   isVerifyingCode: boolean;
+  remainingSeconds: number | null;
 }
 
+/**
+ * Renders reset-code verification and new-password entry in a centered recovery card.
+ *
+ * @param props - Reset flow state, form control, and transition callbacks.
+ * @returns The active reset-password step with masked email context.
+ */
 export function ResetPasswordView({
   control,
   isSubmitting,
@@ -48,40 +54,25 @@ export function ResetPasswordView({
   onSetPassword,
   onResend,
   onBack,
-  globalError,
   isResending,
   isVerifyingCode,
+  remainingSeconds,
 }: ResetPasswordViewProps) {
   const isVerifyStep = step === 'verify-code';
+  const maskedEmail = email ? maskEmail2(email) : '';
   const description = isVerifyStep
-    ? `We sent a 6-digit code to ${email}`
+    ? `We sent a 6-digit code to ${maskedEmail}`
     : email
-      ? `Enter a new password for ${email}`
+      ? `Enter a new password for ${maskedEmail}`
       : 'Enter your new password to finish resetting your account';
 
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <NextLink
-          href="/"
-          className="mb-8 flex items-center gap-2 text-xl font-bold transition-opacity hover:opacity-80"
-        >
-          <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
-            <Icon icon="lucide:file-text" className="size-5" />
-          </div>
-          TailorCV
-        </NextLink>
-      </motion.div>
-
-      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full max-w-[440px]"
+        className="w-full max-w-110"
       >
         <Card className="w-full">
           <Card.Header className="flex flex-col gap-1 text-center">
@@ -110,6 +101,7 @@ export function ResetPasswordView({
                     onChange={onCodeChange}
                     pattern="^[0-9]*$"
                     inputMode="numeric"
+                    className='justify-center'
                   >
                     <InputOTP.Group>
                       <InputOTP.Slot index={0} />
@@ -123,8 +115,6 @@ export function ResetPasswordView({
                     </InputOTP.Group>
                   </InputOTP>
                 </motion.div>
-
-                <AnimatedError message={globalError} />
 
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -154,10 +144,7 @@ export function ResetPasswordView({
                 </motion.div>
               </Form>
             ) : (
-              <Form
-                onSubmit={onSetPassword}
-                className="flex flex-col gap-6"
-              >
+              <Form onSubmit={onSetPassword} className="flex flex-col gap-6">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -214,8 +201,6 @@ export function ResetPasswordView({
                   />
                 </motion.div>
 
-                <AnimatedError message={globalError} />
-
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -246,7 +231,7 @@ export function ResetPasswordView({
             )}
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-            {isVerifyStep ? (
+            {isVerifyStep && (
               <p className="text-muted-foreground text-center text-sm">
                 Didn&apos;t receive the code?{' '}
                 <button
@@ -254,12 +239,16 @@ export function ResetPasswordView({
                   aria-label="Resend reset code"
                   className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={onResend}
-                  disabled={isResending}
+                  disabled={isResending || remainingSeconds !== null}
                 >
-                  {isResending ? 'Resending...' : 'Resend code'}
+                  {isResending
+                    ? 'Resending...'
+                    : remainingSeconds !== null
+                      ? `Resend in ${remainingSeconds}s`
+                      : 'Resend'}
                 </button>
               </p>
-            ) : null}
+            )}
             <p className="text-muted-foreground text-center text-sm">
               <button
                 type="button"

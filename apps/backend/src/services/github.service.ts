@@ -123,7 +123,10 @@ export async function exchangeCodeForToken(
 
   const response = await githubApiPolicy.execute(async () => {
     // Chaos: GITHUB_CHAOS_FAKE_FAIL=token or all
-    if (env.GITHUB_CHAOS_FAKE_FAIL === 'token' || env.GITHUB_CHAOS_FAKE_FAIL === 'all') {
+    if (
+      env.GITHUB_CHAOS_FAKE_FAIL === 'token' ||
+      env.GITHUB_CHAOS_FAKE_FAIL === 'all'
+    ) {
       throw new Error('Chaos: simulated GitHub API failure (token)');
     }
     const res = await fetch(tokenUrl, {
@@ -232,7 +235,10 @@ export async function fetchGithubRepos(
 ): Promise<GitHubRepo[]> {
   const response = await githubApiPolicy.execute(async () => {
     // Chaos: GITHUB_CHAOS_FAKE_FAIL=repos or all
-    if (env.GITHUB_CHAOS_FAKE_FAIL === 'repos' || env.GITHUB_CHAOS_FAKE_FAIL === 'all') {
+    if (
+      env.GITHUB_CHAOS_FAKE_FAIL === 'repos' ||
+      env.GITHUB_CHAOS_FAKE_FAIL === 'all'
+    ) {
       throw new Error('Chaos: simulated GitHub API failure (repos)');
     }
     const res = await fetch(
@@ -261,22 +267,9 @@ export async function fetchGithubRepos(
 export async function getGithubConnection(
   userId: string,
 ): Promise<GitHubConnection | null> {
-  /*   throw new AppError(
-    `Failed to fetch GitHub connection`,
-    ErrorCode.GITHUB_CONNECTION_FETCH_FAILED,
-    502
-  ); */
-  const githubConnection = await prisma.gitHubConnection.findUnique({
+  return await prisma.gitHubConnection.findUnique({
     where: { userId },
   });
-  if (!githubConnection) {
-    throw new AppError(
-      `Failed to fetch GitHub connection`,
-      ErrorCode.GITHUB_CONNECTION_FETCH_FAILED,
-      502,
-    );
-  }
-  return githubConnection;
 }
 
 /**

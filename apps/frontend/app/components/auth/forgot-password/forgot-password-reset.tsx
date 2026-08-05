@@ -21,11 +21,17 @@ interface ForgotPasswordResetProps {
   onSetPassword: ({ password }: { password: string }) => Promise<void>;
   onResend: () => Promise<void>;
   onBack: () => void;
-  globalError: string;
   isResending: boolean;
   isVerifyingCode: boolean;
+  remainingSeconds: number | null;
 }
 
+/**
+ * Connects reset-password form validation to the active recovery step.
+ *
+ * @param props - Reset flow state and callbacks owned by the flow hook.
+ * @returns The controlled verification or new-password view.
+ */
 export function ForgotPasswordReset({
   email,
   step,
@@ -35,9 +41,9 @@ export function ForgotPasswordReset({
   onSetPassword,
   onResend,
   onBack,
-  globalError,
   isResending,
   isVerifyingCode,
+  remainingSeconds,
 }: ForgotPasswordResetProps) {
   const {
     control,
@@ -68,9 +74,9 @@ export function ForgotPasswordReset({
       onSetPassword={handleSubmit(handleFormSubmit)}
       onResend={onResend}
       onBack={onBack}
-      globalError={globalError}
       isResending={isResending}
       isVerifyingCode={isVerifyingCode}
+      remainingSeconds={remainingSeconds}
     />
   );
 }

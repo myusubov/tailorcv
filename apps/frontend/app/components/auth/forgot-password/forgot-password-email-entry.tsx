@@ -12,12 +12,16 @@ import { EmailEntryView } from './email-entry-view';
 
 interface ForgotPasswordEmailEntryProps {
   onSubmit: (email: string) => Promise<void>;
-  globalError: string;
 }
 
+/**
+ * Connects the forgot-password email form to its validated submit callback.
+ *
+ * @param props - Callback that starts the reset flow with a validated email.
+ * @returns The controlled email-entry view.
+ */
 export function ForgotPasswordEmailEntry({
   onSubmit,
-  globalError,
 }: ForgotPasswordEmailEntryProps) {
   const {
     control,
@@ -40,7 +44,6 @@ export function ForgotPasswordEmailEntry({
       control={control}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit(handleFormSubmit)}
-      globalError={globalError}
     />
   );
 }

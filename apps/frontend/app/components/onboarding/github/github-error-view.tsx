@@ -10,12 +10,12 @@ interface GithubErrorViewProps {
 
 const GithubErrorView = ({ error, onRetry, goBack }: GithubErrorViewProps) => {
   return (
-    <ErrorState
-      error={error}
-      title="Failed to fetch repositories"
-      onRetry={onRetry}
-      onBack={goBack}
-    />
+      <ErrorState
+        error={error}
+        title="Failed to fetch repositories"
+        onRetry={onRetry}
+        onBack={goBack}
+      />
   );
 };
 

@@ -1,8 +1,9 @@
 'use client';
 
-import { Button, Input, Tooltip } from '@heroui/react';
+import { Button, Tooltip, SearchField, Label } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
+import type { KeyboardEvent } from 'react';
 
 interface GitHubRepoSelectionToolbarProps {
   searchQuery: string;
@@ -28,6 +29,14 @@ export function GitHubRepoSelectionToolbar({
     ? 'text-warning'
     : 'text-muted-foreground';
 
+  const handleEscapeKey = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      onSearchChange('');
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -36,18 +45,19 @@ export function GitHubRepoSelectionToolbar({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        <div className="relative w-full sm:max-w-xs">
-          <Icon
-            icon="lucide:search"
-            className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
-          />
-          <Input
-            placeholder="Search repositories..."
-            value={searchQuery}
-            onChange={(event) => onSearchChange(event.target.value)}
-            className="w-full pl-10"
-          />
-        </div>
+        <SearchField name="repository-search"
+        >
+          <Label className="sr-only">Search repositories</Label>
+
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input onKeyDown={(event) => {
+              handleEscapeKey(event);
+            }} value={searchQuery} onChange={(event) => onSearchChange(event.target.value)} placeholder="Search..." />
+            <SearchField.ClearButton onPress={() => onSearchChange('')} />
+          </SearchField.Group>
+        </SearchField>
+
         <div className="hidden items-center gap-2 sm:flex">
           <span className={`text-sm font-medium ${selectedCountClassName}`}>
             {selectedCount}/{maxRepos} selected
@@ -77,7 +87,7 @@ export function GitHubRepoSelectionToolbar({
         {hasSelection && (
           <ClearSelectionButton
             onClearSelection={onClearSelection}
-            className="h-7 shrink-0"
+            className="shrink-0"
           />
         )}
       </div>

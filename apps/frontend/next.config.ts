@@ -1,6 +1,10 @@
 import path from 'path';
 import type { NextConfig } from 'next';
 
+/**
+ * Configures the frontend build, Turbopack workspace root, remote images, and the
+ * current Windows-host LAN origin allowed to access the Next.js development server.
+ */
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ['shared'],
@@ -29,7 +33,9 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    qualities: [100, 75],
   },
+  allowedDevOrigins: ['192.168.1.65'],
 };
 
 export default nextConfig;

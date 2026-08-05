@@ -55,7 +55,7 @@ export function GitHubRepoCard({
     >
       <Card.Content className="flex flex-col gap-2.5">
         <div className="min-w-0">
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2">
             <Icon
               icon={repo.private ? 'lucide:lock' : 'lucide:book-open'}
               className="text-muted-foreground mt-0.5 size-4 shrink-0"

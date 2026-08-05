@@ -1,7 +1,7 @@
 # apps/frontend/Dockerfile
 # Context: Must be run from the repository root (e.g. docker build -f apps/frontend/Dockerfile .)
 
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # 1. Install dependencies only when needed
 FROM base AS deps

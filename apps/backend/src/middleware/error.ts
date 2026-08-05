@@ -14,9 +14,9 @@ import { handleResilienceError } from '../lib/resilience';
 
 export const errorHandler = (
   err: any,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ) => {
   // Log the error for debugging
   console.error(`[Error] ${err.name}: ${err.message}`);
@@ -29,13 +29,19 @@ export const errorHandler = (
     err instanceof BrokenCircuitError ||
     err instanceof TaskCancelledError ||
     err instanceof BulkheadRejectedError ||
-    ['BrokenCircuitError', 'TaskCancelledError', 'BulkheadRejectedError', 'BulkheadRejectedException'].includes(
-      err.name,
-    );
+    [
+      'BrokenCircuitError',
+      'TaskCancelledError',
+      'BulkheadRejectedError',
+      'BulkheadRejectedException',
+    ].includes(err.name);
 
   let errorToHandle = err;
   if (isResilienceError && !(err instanceof AppError)) {
-    errorToHandle = handleResilienceError(err, err.context || 'External Service');
+    errorToHandle = handleResilienceError(
+      err,
+      err.context || 'External Service',
+    );
   }
 
   // Handle AppError (operational errors)

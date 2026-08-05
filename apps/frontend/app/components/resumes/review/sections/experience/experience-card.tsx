@@ -334,11 +334,11 @@ export function ExperienceCard({
                   }
                 }}
               >
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
                 <Checkbox.Content>
-                  <Label className="text-sm font-normal">Current role</Label>
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <span className="text-sm font-normal">Current role</span>
                 </Checkbox.Content>
               </Checkbox>
             )}

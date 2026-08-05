@@ -18,7 +18,6 @@ describe('ForgotPasswordPage', () => {
   it('renders the email-entry controller on the first step', () => {
     mockUseForgotPasswordFlow.mockReturnValue({
       step: 'email',
-      globalError: '',
       handleEmailSubmit: vi.fn(),
     });
 
@@ -33,7 +32,6 @@ describe('ForgotPasswordPage', () => {
       step: 'verify-code',
       email: 'user@example.com',
       code: '123456',
-      globalError: '',
       isResending: false,
       isVerifyingCode: false,
       handleBack: vi.fn(),

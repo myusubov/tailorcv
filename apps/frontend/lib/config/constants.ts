@@ -5,8 +5,9 @@
 export const ASSETS = {
   // Brand logos and images
   LOGOS: {
-    TAILORCV:
-      'https://9nghnaawajmv9mqf.public.blob.vercel-storage.com/tailorcv-logo',
+    TAILORCV_PRIMARY: '/brand/tailorcv-mark-primary.svg',
+    TAILORCV_INVERSE: '/brand/tailorcv-mark-inverse.svg',
+    TAILORCV_MONOCHROME: '/brand/tailorcv-mark-monochrome.svg',
   },
 
   // Common icons or other reusable images can be added here

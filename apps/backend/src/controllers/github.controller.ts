@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { analyzeGithubRepositories } from '../services/github-analysis.service';
 import {
   exchangeCodeForToken,
   fetchGithubRepos,
@@ -8,7 +9,9 @@ import {
   saveGitHubConnection,
   verifyOAuthState,
 } from '../services/github.service';
-import { ClerkLocals } from '../types/locals';
+import { mapGitHubConnectionToResponse } from '../mappers/github.mapper';
+import type { ClerkLocals, GitHubConnectionLocals } from '../types/locals';
+import type { AnalyzeGithubReposRequestBody } from '../schemas/github.schema';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
@@ -69,9 +72,11 @@ export async function handleGithubCallback(
     res.redirect(
       `${env.FRONTEND_URL}/onboarding?method=github&status=connected`,
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     const appError =
-      error instanceof AppError ? error : handleResilienceError(error, 'GitHub');
+      error instanceof AppError
+        ? error
+        : handleResilienceError(error, 'GitHub');
     console.error('GitHub Callback Error:', error); // Log the real error
     const errorMessage = appError.errorCode.toLowerCase(); // Use the standardized error code
     res.redirect(
@@ -82,13 +87,12 @@ export async function handleGithubCallback(
 
 export async function getGithubRepos(
   req: Request,
-  res: Response<any, ClerkLocals>,
+  res: Response<any, GitHubConnectionLocals>,
   next: NextFunction,
 ) {
   try {
-    const { clerkUserId } = res.locals;
-    const githubConnection = await getGithubConnection(clerkUserId);
-    const repos = await fetchGithubRepos(githubConnection!.accessToken);
+    const { githubConnection } = res.locals;
+    const repos = await fetchGithubRepos(githubConnection.accessToken);
     return successResponse(res, repos, 200);
   } catch (error) {
     next(error);
@@ -103,7 +107,32 @@ export async function fetchGithubConnection(
   try {
     const { clerkUserId } = res.locals;
     const githubConnection = await getGithubConnection(clerkUserId);
-    return successResponse(res, githubConnection, 200);
+    return successResponse(
+      res,
+      githubConnection
+        ? mapGitHubConnectionToResponse({ githubConnection })
+        : null,
+      200,
+    );
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function analyzeGithubRepos(
+  req: Request<unknown, unknown, AnalyzeGithubReposRequestBody>,
+  res: Response<unknown, GitHubConnectionLocals>,
+  next: NextFunction,
+) {
+  try {
+    const { clerkUserId, githubConnection } = res.locals;
+    const { repoIds } = req.body;
+    const result = await analyzeGithubRepositories({
+      clerkUserId,
+      accessToken: githubConnection.accessToken,
+      repoIds,
+    });
+    return successResponse(res, result, 200);
   } catch (error) {
     next(error);
   }

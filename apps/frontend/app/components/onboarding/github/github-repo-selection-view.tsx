@@ -3,27 +3,21 @@
 import { motion } from 'framer-motion';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useMemo, useState } from 'react';
-import type { GitHubConnection, GitHubRepo } from 'shared';
-import { GitHubRepoCard } from './github-repo-card';
-import { GitHubRepoGridSkeleton } from './github-repo-grid-skeleton';
+import type { GitHubConnectionResponse, GitHubRepo } from 'shared';
 import { GitHubRepoSelectionActions } from './github-repo-selection-actions';
-import { GitHubRepoSelectionEmptyState } from './github-repo-selection-empty-state';
 import { GitHubRepoSelectionHeader } from './github-repo-selection-header';
+import { GitHubRepoSelectionResults } from './github-repo-selection-results';
 import { GitHubRepoSelectionToolbar } from './github-repo-selection-toolbar';
 
 const MAX_REPOS = 3;
 
 interface GitHubRepoSelectionViewProps {
   repos: GitHubRepo[];
-  connection: GitHubConnection;
+  connection: GitHubConnectionResponse;
   onBack: () => void;
   onAnalyze: (selectedRepoIds: number[]) => void;
   isLoading?: boolean;
-  isReposLoading?: boolean;
-}
-
-interface ToggleRepoInput {
-  repoId: number;
+  isReposLoading: boolean;
 }
 
 /**
@@ -57,7 +51,7 @@ export function GitHubRepoSelectionView({
     );
   }, [repos, searchQuery]);
 
-  const toggleRepo = ({ repoId }: ToggleRepoInput) => {
+  const toggleRepo = (repoId: number) => {
     setSelectedRepos((prev) => {
       const next = new Set(prev);
       if (next.has(repoId)) {
@@ -78,56 +72,36 @@ export function GitHubRepoSelectionView({
   };
 
   return (
-    <div className="flex min-h-[60vh] flex-col">
+    <div className="flex max-h-dvh min-h-0 flex-col py-8">
       <motion.div
-        className="mx-auto w-full max-w-3xl"
+        className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <GitHubRepoSelectionHeader
-          connection={connection}
-          repositoryCount={repos.length}
+        <div className="shrink-0 px-4 sm:px-6">
+          <GitHubRepoSelectionHeader
+            connection={connection}
+            repositoryCount={repos.length}
+            maxRepos={MAX_REPOS}
+            isRepositoryCountLoading={isReposLoading}
+          />
+
+          <GitHubRepoSelectionToolbar
+            searchQuery={searchQuery}
+            selectedCount={selectedRepos.size}
+            maxRepos={MAX_REPOS}
+            onSearchChange={setSearchQuery}
+            onClearSelection={clearSelection}
+          />
+        </div>
+        <GitHubRepoSelectionResults
+          isReposLoading={isReposLoading}
+          repos={filteredRepos}
+          selectedRepos={selectedRepos}
+          onToggleRepo={toggleRepo}
           maxRepos={MAX_REPOS}
-          isRepositoryCountLoading={isReposLoading}
         />
-
-        <GitHubRepoSelectionToolbar
-          searchQuery={searchQuery}
-          selectedCount={selectedRepos.size}
-          maxRepos={MAX_REPOS}
-          onSearchChange={setSearchQuery}
-          onClearSelection={clearSelection}
-        />
-
-        {isReposLoading ? (
-          <GitHubRepoGridSkeleton />
-        ) : (
-          <motion.div
-            className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            {filteredRepos.map((repo) => {
-              const isSelected = selectedRepos.has(repo.id);
-              const isDisabled =
-                !isSelected && selectedRepos.size >= MAX_REPOS;
-
-              return (
-                <GitHubRepoCard
-                  key={repo.id}
-                  repo={repo}
-                  isSelected={isSelected}
-                  isDisabled={isDisabled}
-                  onToggle={() => toggleRepo({ repoId: repo.id })}
-                />
-              );
-            })}
-
-            {filteredRepos.length === 0 && <GitHubRepoSelectionEmptyState />}
-          </motion.div>
-        )}
 
         <GitHubRepoSelectionActions
           selectedCount={selectedRepos.size}

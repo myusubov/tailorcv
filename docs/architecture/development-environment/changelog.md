@@ -1,0 +1,29 @@
+# Development Environment Changelog
+
+> Chronological implementation and documentation history for the development environment. Add new entries at the top.
+
+---
+
+## 2026-08-04
+
+### Repository-Wide Node 22 Runtime
+
+- **Decision:** Use Node 22 consistently across local development, workspace types, CI, Docker, and Vercel's package-engine selection.
+- **Problem:** HeroUI 3.2.3 requires Node 22 while the repository still declared Node 20 across tooling and container boundaries, which could make installs and builds depend on the environment used.
+- **Solution:**
+  1. **Local and deployment contract — `package.json` and `.nvmrc`**: Declares Node `22.x` for package-manager/deployment selection and provides a local version-manager default.
+  2. **Workspace type alignment — root, frontend, and backend `package.json` files**: Moves every direct `@types/node` declaration to the Node 22 line.
+  3. **Automation and containers — `.github/workflows/ci.yml`, `Dockerfile`, and `apps/frontend/Dockerfile`**: Uses Node 22 for CI plus backend and frontend images.
+  4. **Project convention — `CLAUDE.md`**: Updates the documented runtime and supported HeroUI release.
+- **Outcome:** Repository-owned environments now share one Node major suitable for HeroUI 3.2.3; command, Docker, and deployment verification remain pending authorization.
+
+## 2026-07-31
+
+### Explicit Next.js LAN Development Origin
+
+- **Problem:** Opening the WSL2-hosted frontend through the Windows host LAN address required Next.js to recognize that development origin, while no architecture domain documented the repository-owned part of the network path.
+- **Solution:**
+  1. **Narrow app allowlist — `apps/frontend/next.config.ts`**: Added `192.168.1.65` to `allowedDevOrigins` for the Windows host address used by the current local network.
+  2. **Environment ownership — `docs/architecture/development-environment/README.md`**: Separates the Next.js allowlist from external WSL2 networking and Windows firewall responsibilities and records that the private address can become stale.
+  3. **Architecture routing — `docs/architecture/README.md`**: Registers the development-environment domain for future local-access changes.
+- **Outcome:** The repository now records both the current Next.js LAN-origin configuration and the boundaries that still require host-side setup and endpoint verification.

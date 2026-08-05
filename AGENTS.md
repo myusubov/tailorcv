@@ -1,1 +1,1 @@
-/home/muryash/Github/tailorcv/CLAUDE.md
+CLAUDE.md
