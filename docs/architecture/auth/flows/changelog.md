@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-06
+
+### Shared Desktop Auth Brand Panel
+
+- **Problem:** Login, registration, and forgot-password used separate desktop branding treatments, while fixed percentage columns and centered form content created inconsistent spacing and an oversized gap on wide login screens.
+- **Solution:**
+  1. **Shared inset surface — `apps/frontend/app/components/auth/auth-brand-panel.tsx`**: Adds one desktop-only primary panel with inverse branding, rounded inset edges, clamped width, and a theme-independent faded grid.
+  2. **Cross-route adoption — `apps/frontend/app/(auth)/login/page.tsx`, `apps/frontend/app/(auth)/register/page.tsx`, and `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx`**: Replaces the route-specific desktop branding sections with the shared panel while preserving each route's mobile and authentication behavior.
+  3. **Flexible form ownership — `apps/frontend/app/globals.css` and `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Lets shared form panels fill the remaining desktop width and gives login a clamped leading inset so its fixed-width form stays visually connected to the brand panel on wide screens.
+- **Outcome:** The three desktop auth entry surfaces now share one reusable brand panel and responsive width contract, while login keeps a deliberate panel-to-form relationship without stretching controls or changing authentication behavior.
+
 ## 2026-08-05
 
 ### Fresh Forgot-Password Attempt Restart

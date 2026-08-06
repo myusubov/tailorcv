@@ -3,8 +3,8 @@
 import { motion } from 'framer-motion';
 
 import { AuthLogo } from '@/app/components/auth/auth-logo';
-import { AuthMarketingPanel } from '@/app/components/auth/auth-marketing-panel';
 import { RegisterForm } from '@/app/components/auth/register';
+import { AuthBrandPanel } from '@/app/components/auth/auth-brand-panel';
 
 /**
  * Renders the responsive registration route with shared TailorCV branding and
@@ -15,7 +15,7 @@ import { RegisterForm } from '@/app/components/auth/register';
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <AuthMarketingPanel />
+      <AuthBrandPanel />
 
       {/* Right Panel - Form */}
       <div className="auth-form-panel">

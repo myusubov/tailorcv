@@ -51,12 +51,12 @@ export function LoginFormView({
   const isAnyAuthActionInProgress =
     isSubmitting || googleLoading || appleLoading;
   return (
-    <div className="auth-form-panel">
+    <div className="auth-form-panel min-w-0 lg:pe-12 lg:ps-[clamp(3rem,6vw,7rem)]">
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="auth-form-content"
+        className="auth-form-content lg:mx-0"
       >
         {/* Mobile Logo - Centered */}
         <motion.div

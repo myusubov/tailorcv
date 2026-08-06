@@ -351,7 +351,7 @@
 
 /* Shared form column for auth routes that pair mobile forms with a desktop marketing panel. */
 @utility auth-form-panel {
-  @apply bg-background flex min-h-svh w-full flex-col justify-center p-6 lg:min-h-auto lg:w-[55%] lg:px-24 lg:py-12;
+  @apply bg-background flex min-h-svh w-full flex-col justify-center p-6 lg:min-h-auto lg:flex-1 lg:py-12;
 }
 
 /* Shared content width and vertical rhythm inside split-layout auth form panels. */

@@ -55,6 +55,7 @@
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step                       | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`       | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/auth-logo.tsx`                                   | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes          | Auth logo behavior, variants, sizing, or accessibility changes |
+| `apps/frontend/app/components/auth/auth-brand-panel.tsx`                            | Shared desktop auth brand panel with the primary surface, inverse logo, and decorative grid treatment           | Desktop auth brand-panel composition or styling changes        |
 | `apps/frontend/app/components/auth/auth-marketing-panel.tsx`                        | Shared desktop registration brand panel and inverse logo treatment                                             | Register branding or marketing-panel changes                   |
 | `apps/frontend/public/brand/tailorcv-mark-*.svg`                                    | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark                                 | Auth logo geometry, color, or contrast changes                 |
 | `apps/frontend/lib/config/constants.ts`                                             | Stable public paths for the shared logo variants                                                               | Adding or renaming brand assets                                |
@@ -236,6 +237,14 @@ page-specific content remain owned by each view.
 Login and registration also use `auth-form-mobile-logo` for their shared
 small-screen logo positioning. Forgot-password email entry deliberately does
 not use that utility because it no longer renders a mobile logo.
+
+On desktop, login, registration, and forgot-password email entry render the
+shared `AuthBrandPanel`. The inset panel uses a clamped width between `27.5rem`
+and `47.5rem`, while `auth-form-panel` fills the remaining row width. Login also
+applies a clamped leading inset between `3rem` and `7rem` and aligns its form
+content toward the panel; registration and forgot-password retain the shared
+centered content treatment. Mobile hides the brand panel and retains the
+existing single-column form layouts.
 
 ### 6.8 Password-Recovery Email Privacy
 

@@ -1,7 +1,7 @@
 'use client';
 
+import { AuthBrandPanel } from '@/app/components/auth/auth-brand-panel';
 import {
-  LoginBranding,
   VerificationView,
   LoginFormView,
 } from '@/app/components/auth/login';
@@ -46,10 +46,10 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex min-h-screen flex-col lg:flex-row"
+      className="flex min-h-svh flex-col lg:flex-row"
       data-auth-ready={isClientReady ? 'true' : 'false'}
     >
-      <LoginBranding />
+      <AuthBrandPanel />
 
       <LoginFormView
         control={control}
