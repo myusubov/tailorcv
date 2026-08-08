@@ -3,8 +3,8 @@
 import { motion } from 'framer-motion';
 
 import { AuthLogo } from '@/app/components/auth/auth-logo';
-import { AuthMarketingPanel } from '@/app/components/auth/auth-marketing-panel';
 import { RegisterForm } from '@/app/components/auth/register';
+import { AuthBrandPanel } from '@/app/components/auth/auth-brand-panel';
 
 /**
  * Renders the responsive registration route with shared TailorCV branding and
@@ -15,7 +15,7 @@ import { RegisterForm } from '@/app/components/auth/register';
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <AuthMarketingPanel />
+      <AuthBrandPanel />
 
       {/* Right Panel - Form */}
       <div className="auth-form-panel">
@@ -44,7 +44,7 @@ export default function RegisterPage() {
             <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
               Create account
             </h2>
-            <p className="text-muted-foreground mt-3 text-lg">
+            <p className="text-muted mt-3 text-lg">
               Start building your resume for free.
             </p>
           </motion.div>

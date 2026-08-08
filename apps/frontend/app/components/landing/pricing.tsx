@@ -186,7 +186,7 @@ function PricingCard({
             className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 ${
               plan.popular
                 ? `bg-gradient-to-r ${plan.gradient} text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40`
-                : 'bg-surface-secondary text-landing-text-secondary hover:bg-surface-elevated hover:text-landing-text'
+                : 'bg-surface-secondary text-landing-text-secondary hover:bg-surface-tertiary hover:text-landing-text'
             }`}
           >
             {plan.cta}

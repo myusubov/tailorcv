@@ -70,7 +70,7 @@ function getStatusStyles(status: AnalysisStatus) {
     case 'missing':
       return { colorClass: 'text-danger' };
     default:
-      return { colorClass: 'text-default-400' };
+      return { colorClass: 'text-muted' };
   }
 }
 
@@ -141,7 +141,7 @@ export function ReviewAccordion({
                     'flex-1 text-left text-sm font-medium transition-colors',
                     isExpanded
                       ? 'text-foreground'
-                      : 'text-muted-foreground group-hover/trigger:text-foreground',
+                      : 'text-muted group-hover/trigger:text-foreground',
                   )}
                 >
                   {label}
@@ -151,7 +151,7 @@ export function ReviewAccordion({
                     'transition-colors',
                     isExpanded
                       ? 'text-foreground'
-                      : 'text-muted-foreground group-hover/trigger:text-foreground',
+                      : 'text-muted group-hover/trigger:text-foreground',
                   )}
                 />
               </Accordion.Trigger>

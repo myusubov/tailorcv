@@ -70,7 +70,7 @@ export function EducationCard({
   const endDate = useWatch({ control, name: `${basePath}.endDate` });
 
   return (
-    <div className="border-default-200 space-y-3 rounded-lg border p-4">
+    <div className="border-border space-y-3 rounded-lg border p-4">
       {/* Header with reorder and remove buttons */}
       <div className="flex items-start justify-between gap-2">
         <Controller
@@ -96,7 +96,7 @@ export function EducationCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+              className="text-muted hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:arrow-up" className="size-4" />
             </Button>
@@ -111,7 +111,7 @@ export function EducationCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+              className="text-muted hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:arrow-down" className="size-4" />
             </Button>
@@ -127,7 +127,7 @@ export function EducationCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+              className="text-muted hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:copy" className="size-4" />
             </Button>
@@ -143,7 +143,7 @@ export function EducationCard({
               size="sm"
               onPress={onRemove}
               isIconOnly
-              className="text-danger/50 hover:bg-danger/10 hover:text-danger rounded-full transition-colors"
+              className="text-danger/50 hover:bg-danger-soft-hover hover:text-danger rounded-full transition-colors"
             >
               <Icon icon="lucide:trash-2" className="size-4" />
             </Button>

@@ -50,6 +50,6 @@ test.describe.serial('Real Clerk forgot-password policy flow', () => {
     });
 
     await expect(page).toHaveURL(/\/forgot-password/);
-    await expect(page.locator('.bg-danger-50')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.bg-danger-soft')).toBeVisible({ timeout: 10_000 });
   });
 });

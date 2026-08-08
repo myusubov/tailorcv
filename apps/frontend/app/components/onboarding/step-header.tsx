@@ -18,7 +18,7 @@ export function StepHeader({ icon, title, description }: StepHeaderProps) {
       transition={{ duration: 0.4 }}
     >
       <motion.div
-        className="bg-primary/10 text-primary mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl"
+        className="bg-accent/10 text-accent mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.3 }}
@@ -34,7 +34,7 @@ export function StepHeader({ icon, title, description }: StepHeaderProps) {
         {title}
       </motion.h2>
       <motion.p
-        className="text-muted-foreground mt-2 text-base text-balance"
+        className="text-muted mt-2 text-base text-balance"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}

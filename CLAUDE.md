@@ -438,6 +438,7 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 - Never use `useState` for streamed data -- write directly to React Query cache (cache-direct pattern)
 - Always use `@iconify/react` for icons -- no other icon libraries
 - Import HeroUI's global stylesheet through `@heroui/styles/css` immediately after Tailwind so Turbopack resolves the explicit CSS export rather than retaining a stale package-root style entry across upgrades.
+- Use HeroUI v3 semantic color utilities: `accent` for brand emphasis, `surface` for containers, `default` for neutral controls, `muted` for subdued content, `separator`/`border` for structure, and status tokens for state. Do not restore v2-era `primary`, `secondary`, `content1-4`, numbered semantic color utilities, or `muted-foreground` aliases; HeroUI component variants named `primary` or `secondary` remain valid.
 - All interactive elements must have `aria-label` or semantic roles (HeroUI handles most)
 - Backend types for request/response bodies go in `src/types/`, not inline
 - Frontend types go in `lib/types/`, never in component directories

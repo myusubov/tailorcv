@@ -15,14 +15,14 @@ export function SmallScreenWarning() {
 
   return (
     <div className="bg-background/60 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md xl:hidden">
-      <div className="bg-content1 border-default-200 flex max-w-sm flex-col items-center rounded-3xl border p-8 text-center shadow-2xl">
-        <div className="bg-primary/10 mb-6 flex h-20 w-20 items-center justify-center rounded-2xl">
-          <Icon icon="lucide:monitor" className="text-primary h-10 w-10" />
+      <div className="bg-surface border-border flex max-w-sm flex-col items-center rounded-3xl border p-8 text-center shadow-2xl">
+        <div className="bg-accent/10 mb-6 flex h-20 w-20 items-center justify-center rounded-2xl">
+          <Icon icon="lucide:monitor" className="text-accent h-10 w-10" />
         </div>
         <h2 className="text-foreground mb-3 text-2xl font-bold tracking-tight">
           Desktop Recommended
         </h2>
-        <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
+        <p className="text-muted mb-8 text-sm leading-relaxed">
           Resume editing requires precision and a side-by-side view for the best
           results. We recommend switching to a larger screen for a professional
           experience.

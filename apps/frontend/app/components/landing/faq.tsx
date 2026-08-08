@@ -96,7 +96,7 @@ function FAQItem({
             className={`ml-4 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-colors ${
               isOpen
                 ? 'bg-orb-indigo text-indigo-500'
-                : 'bg-surface-secondary text-landing-text-muted group-hover:bg-surface-elevated'
+                : 'bg-surface-secondary text-landing-text-muted group-hover:bg-surface-tertiary'
             }`}
           >
             {isOpen ? (

@@ -20,16 +20,16 @@ export function ProposalCard({
   canApply = true,
 }: ProposalCardProps) {
   return (
-    <div className="bg-content2/50 my-3 w-full max-w-[95%] overflow-hidden rounded-xl border border-default-200 border-l-4 border-l-primary shadow-sm">
+    <div className="bg-surface-secondary/50 my-3 w-full max-w-[95%] overflow-hidden rounded-xl border border-border border-l-4 border-l-accent shadow-sm">
       <ProposalHeader explanation={explanation} />
 
-      <div className="mx-3 my-2 h-px bg-default-200" />
+      <div className="mx-3 my-2 h-px bg-default" />
 
       <div className="max-h-75 overflow-y-auto px-4 py-1">
         <ProposalContent proposal={proposal} originalData={originalData} />
       </div>
 
-      <div className="mx-3 my-2 h-px bg-default-200" />
+      <div className="mx-3 my-2 h-px bg-default" />
 
       <ProposalFooter
         canApply={canApply}

@@ -47,12 +47,12 @@ export function RegistrationVerificationView({
                 <Tooltip delay={500}>
                   <Button
                     isIconOnly
-                    className="text-muted-foreground hover:text-foreground bg-surface-elevated/90 absolute -top-4 -right-4 size-5"
+                    className="text-muted hover:text-foreground bg-overlay/90 absolute -top-4 -right-4 size-5"
                     onClick={onGoBack}
                   >
                     <Icon icon="lucide:undo-2" className="size-3" />
                   </Button>
-                  <Tooltip.Content className="bg-secondary text-secondary-foreground shadow-2xl">
+                  <Tooltip.Content className="bg-overlay text-overlay-foreground shadow-overlay">
                     Wrong email address ? Change it back
                   </Tooltip.Content>
                 </Tooltip>
@@ -114,11 +114,11 @@ export function RegistrationVerificationView({
             </form>
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
-            <p className="text-muted-foreground text-center text-sm">
+            <p className="text-muted text-center text-sm">
               Didn&apos;t receive the code?{' '}
               <button
                 type="button"
-                className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                className="text-accent cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={onResend}
                 disabled={isResending || isVerifying}
               >

@@ -49,7 +49,7 @@ export function OnboardingItemSection({
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-foreground text-lg font-semibold">{title}</h3>
         {count > 0 && (
-          <span className="text-muted-foreground text-sm font-medium">
+          <span className="text-muted text-sm font-medium">
             {countLabel}
           </span>
         )}
@@ -63,7 +63,7 @@ export function OnboardingItemSection({
         >
           <Card className="mt-2">
             <Card.Content className="flex flex-col items-center justify-center px-5 py-5 text-center">
-              <p className="text-muted-foreground text-sm text-balance">
+              <p className="text-muted text-sm text-balance">
                 {emptyDescription}
               </p>
 

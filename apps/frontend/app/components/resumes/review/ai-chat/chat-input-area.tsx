@@ -36,7 +36,7 @@ export function ChatInputArea({
       layout="position"
       transition={{ type: 'spring', stiffness: 400, damping: 35, mass: 0.8 }}
       className={cn(
-        'bg-content1 p-3 shadow-inner',
+        'bg-surface p-3 shadow-inner',
         isInputFullscreen
           ? 'absolute inset-0 z-50 p-4'
           : 'border-separator relative border-t',
@@ -44,7 +44,7 @@ export function ChatInputArea({
     >
       <div
         className={cn(
-          'border-border bg-content2 relative flex w-full flex-col gap-1 rounded-xl border p-1.5',
+          'border-border bg-surface-secondary relative flex w-full flex-col gap-1 rounded-xl border p-1.5',
           isInputFullscreen ? 'h-full items-stretch' : 'items-stretch',
         )}
       >
@@ -52,7 +52,7 @@ export function ChatInputArea({
           <div className="flex px-1.5 pt-1">
             <Tooltip delay={300}>
               <Tooltip.Trigger>
-                <div className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 flex cursor-help items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors">
+                <div className="bg-accent/10 border-accent/20 text-accent hover:bg-accent/20 flex cursor-help items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors">
                   <Icon icon="solar:document-bold" className="size-3" />
                   <span>{contextName}</span>
                 </div>
@@ -100,7 +100,7 @@ export function ChatInputArea({
                 <Button
                   isIconOnly
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted hover:text-foreground"
                   variant="ghost"
                   onPress={onToggleInputFullscreen}
                   aria-label={
@@ -157,7 +157,7 @@ export function ChatInputArea({
                 className={cn(
                   input.trim() && !isTyping
                     ? 'bg-accent text-accent-foreground'
-                    : 'bg-default text-muted-foreground',
+                    : 'bg-default text-muted',
                 )}
                 aria-label="Send message"
               >

@@ -45,12 +45,12 @@ export function GitHubRepoCard({
       tabIndex={isDisabled ? -1 : 0}
       aria-pressed={isSelected}
       aria-disabled={isDisabled}
-      className={`focus-visible:ring-primary/70 group relative cursor-pointer rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none ${
+      className={`focus-visible:ring-accent/70 group relative cursor-pointer rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none ${
         isSelected
-          ? 'border-primary bg-primary/5 ring-primary/20 ring-1'
+          ? 'border-accent bg-accent/5 ring-accent/20 ring-1'
           : isDisabled
             ? 'cursor-not-allowed opacity-45'
-            : 'hover:border-primary/40 hover:bg-surface-secondary'
+            : 'hover:border-accent/40 hover:bg-surface-secondary'
       }`}
     >
       <Card.Content className="flex flex-col gap-2.5">
@@ -58,7 +58,7 @@ export function GitHubRepoCard({
           <div className="flex items-center gap-2">
             <Icon
               icon={repo.private ? 'lucide:lock' : 'lucide:book-open'}
-              className="text-muted-foreground mt-0.5 size-4 shrink-0"
+              className="text-muted mt-0.5 size-4 shrink-0"
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export function GitHubRepoCard({
                   {repo.name}
                 </h3>
                 {repo.fork && (
-                  <span className="bg-surface-secondary text-muted-foreground shrink-0 rounded-md px-1.5 py-0.5 text-[11px]">
+                  <span className="bg-surface-secondary text-muted shrink-0 rounded-md px-1.5 py-0.5 text-[11px]">
                     Fork
                   </span>
                 )}
@@ -76,7 +76,7 @@ export function GitHubRepoCard({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="bg-primary flex size-5 shrink-0 items-center justify-center rounded-full"
+                className="bg-accent flex size-5 shrink-0 items-center justify-center rounded-full"
               >
                 <Icon icon="lucide:check" className="text-background size-3.5" />
               </motion.div>
@@ -84,13 +84,13 @@ export function GitHubRepoCard({
           </div>
 
           {repo.description && (
-            <p className="text-muted-foreground mt-1.5 line-clamp-2 text-sm leading-snug">
+            <p className="text-muted mt-1.5 line-clamp-2 text-sm leading-snug">
               {repo.description}
             </p>
           )}
         </div>
 
-        <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+        <div className="text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
           {repo.language && (
             <span className="flex items-center gap-1">
               <span

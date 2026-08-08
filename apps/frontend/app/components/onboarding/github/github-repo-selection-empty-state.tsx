@@ -10,9 +10,9 @@ export function GitHubRepoSelectionEmptyState() {
     <div className="col-span-full py-12 text-center">
       <Icon
         icon="lucide:search-x"
-        className="text-muted-foreground mx-auto mb-3 size-12"
+        className="text-muted mx-auto mb-3 size-12"
       />
-      <p className="text-muted-foreground">
+      <p className="text-muted">
         No repositories match your search.
       </p>
     </div>

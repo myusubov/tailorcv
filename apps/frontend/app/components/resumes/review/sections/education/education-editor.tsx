@@ -137,7 +137,7 @@ export function EducationEditor() {
         <Button
           variant="ghost"
           onPress={handleAddEducation}
-          className="border-default-300 text-muted-foreground hover:text-foreground w-full border border-dashed transition-colors"
+          className="border-border-secondary text-muted hover:text-foreground w-full border border-dashed transition-colors"
         >
           <Icon icon="lucide:plus" className="size-4" />
           Add Education
@@ -145,7 +145,7 @@ export function EducationEditor() {
 
         {/* Empty state */}
         {(!fields || fields.length === 0) && (
-          <p className="text-muted-foreground text-center text-sm">
+          <p className="text-muted text-center text-sm">
             No education added yet. This is optional.
           </p>
         )}

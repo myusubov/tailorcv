@@ -34,17 +34,17 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
     <nav className="w-full" aria-label="Onboarding progress">
       <div className="border-border bg-surface-secondary/70 mb-4 rounded-lg border px-4 py-3 sm:hidden">
         <div className="mb-1 flex items-center justify-between gap-3">
-          <span className="text-muted-foreground text-xs font-medium">
+          <span className="text-muted text-xs font-medium">
             Step {currentStepNumber}
           </span>
-          <span className="text-muted-foreground text-xs font-medium">
+          <span className="text-muted text-xs font-medium">
             {currentStepNumber}/{MANUAL_STEPS.length}
           </span>
         </div>
         <div className="text-foreground flex items-center gap-2 text-base font-semibold">
           <Icon
             icon={currentStepConfig.icon}
-            className="text-primary size-5 shrink-0"
+            className="text-accent size-5 shrink-0"
             aria-hidden
           />
           <span>{currentStepConfig.label}</span>
@@ -64,10 +64,10 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
               key={step.key}
               className={`flex w-fit items-center justify-start gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                 isCompleted
-                  ? 'bg-primary/10 text-primary'
+                  ? 'bg-accent/10 text-accent'
                   : isCurrent
                     ? 'border-border bg-surface-secondary text-foreground border'
-                    : 'text-muted-foreground bg-surface/70'
+                    : 'text-muted bg-surface/70'
               }`}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -83,7 +83,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
             >
               <Icon
                 icon={isCompleted ? 'lucide:check-circle' : step.icon}
-                className={`size-4 shrink-0 ${isCompleted || isCurrent ? 'text-primary' : ''}`}
+                className={`size-4 shrink-0 ${isCompleted || isCurrent ? 'text-accent' : ''}`}
                 aria-hidden
               />
               <span className="truncate">{step.label}</span>

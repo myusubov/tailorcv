@@ -27,7 +27,7 @@ export function GitHubRepoSelectionToolbar({
   const hasSelection = selectedCount > 0;
   const selectedCountClassName = isMaxSelected
     ? 'text-warning'
-    : 'text-muted-foreground';
+    : 'text-muted';
 
   const handleEscapeKey = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape') {
@@ -63,7 +63,7 @@ export function GitHubRepoSelectionToolbar({
             {selectedCount}/{maxRepos} selected
           </span>
           {isMaxSelected && (
-            <span className="bg-warning/10 text-warning rounded-full px-2 py-0.5 text-xs">
+            <span className="bg-warning-soft text-warning-soft-foreground rounded-full px-2 py-0.5 text-xs">
               Max reached
             </span>
           )}
@@ -79,7 +79,7 @@ export function GitHubRepoSelectionToolbar({
             {selectedCount}/{maxRepos} repositories selected
           </span>
           {isMaxSelected && (
-            <span className="bg-warning/10 text-warning rounded-full px-2 py-0.5">
+            <span className="bg-warning-soft text-warning-soft-foreground rounded-full px-2 py-0.5">
               Max reached
             </span>
           )}
@@ -113,7 +113,7 @@ function ClearSelectionButton({
           variant="ghost"
           onPress={onClearSelection}
           aria-label="Clear repository selection"
-          className={`text-muted-foreground hover:text-foreground ${className ?? ''}`}
+          className={`text-muted hover:text-foreground ${className ?? ''}`}
         >
           <Icon icon="lucide:x" className="size-4" />
         </Button>

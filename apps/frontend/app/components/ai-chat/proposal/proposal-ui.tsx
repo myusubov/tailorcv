@@ -8,12 +8,12 @@ interface ProposalHeaderProps {
 export function ProposalHeader({ explanation }: ProposalHeaderProps) {
   return (
     <div className="flex gap-3 p-3 pb-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-        <Sparkles className="size-4 text-primary" />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10">
+        <Sparkles className="size-4 text-accent" />
       </div>
       <div className="flex flex-col">
         <p className="text-small font-bold text-foreground">AI Suggestion</p>
-        <p className="text-tiny text-default-500 leading-tight">{explanation}</p>
+        <p className="text-tiny text-muted leading-tight">{explanation}</p>
       </div>
     </div>
   );

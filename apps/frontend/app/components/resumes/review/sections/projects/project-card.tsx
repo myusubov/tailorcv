@@ -70,10 +70,10 @@ export function ProjectCard({
   const endDate = useWatch({ control, name: `${basePath}.endDate` });
 
   return (
-    <div className="border-default-200 space-y-4 rounded-lg border p-4">
+    <div className="border-border space-y-4 rounded-lg border p-4">
       {/* Action toolbar — decoupled from form fields so inputs get full width */}
       <div className="flex items-center justify-between">
-        <span className="text-default-400 text-xs font-medium uppercase tracking-wide">
+        <span className="text-muted text-xs font-medium uppercase tracking-wide">
           Project {index + 1}
         </span>
         <div className="flex items-center gap-1">
@@ -85,7 +85,7 @@ export function ProjectCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+              className="text-muted hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:arrow-up" className="size-4" />
             </Button>
@@ -101,7 +101,7 @@ export function ProjectCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+              className="text-muted hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:arrow-down" className="size-4" />
             </Button>
@@ -116,7 +116,7 @@ export function ProjectCard({
               isIconOnly
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
+              className="text-muted hover:text-foreground rounded-full transition-colors"
             >
               <Icon icon="lucide:copy" className="size-4" />
             </Button>
@@ -131,7 +131,7 @@ export function ProjectCard({
               size="sm"
               onPress={onRemove}
               isIconOnly
-              className="text-danger/50 hover:bg-danger/10 hover:text-danger rounded-full transition-colors"
+              className="text-danger/50 hover:bg-danger-soft-hover hover:text-danger rounded-full transition-colors"
             >
               <Icon icon="lucide:trash-2" className="size-4" />
             </Button>

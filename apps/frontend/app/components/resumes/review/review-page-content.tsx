@@ -67,7 +67,7 @@ export function ReviewPageContent() {
       <SmallScreenWarning />
 
       {/* Left Panel - Editor */}
-      <div className="border-default-200 w-full min-w-0 shrink-0 border-b p-4 md:p-6 xl:h-screen xl:w-1/2 xl:overflow-y-auto xl:border-r xl:border-b-0">
+      <div className="border-border w-full min-w-0 shrink-0 border-b p-4 md:p-6 xl:h-screen xl:w-1/2 xl:overflow-y-auto xl:border-r xl:border-b-0">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -89,7 +89,7 @@ export function ReviewPageContent() {
                     >
                       <Icon
                         icon="solar:undo-left-round-linear"
-                        className="text-default-500 size-5"
+                        className="text-muted size-5"
                       />
                     </Button>
                   </Tooltip.Trigger>
@@ -110,7 +110,7 @@ export function ReviewPageContent() {
                     >
                       <Icon
                         icon="solar:undo-right-round-linear"
-                        className="text-default-500 size-5"
+                        className="text-muted size-5"
                       />
                     </Button>
                   </Tooltip.Trigger>
@@ -119,7 +119,7 @@ export function ReviewPageContent() {
                   </Tooltip.Content>
                 </Tooltip>
               </div>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted text-xs">
                 {isSaving
                   ? 'Saving...'
                   : isDirty
@@ -130,7 +130,7 @@ export function ReviewPageContent() {
               </span>
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted text-sm">
             Make sure everything looks good before finalizing.
           </p>
         </div>
@@ -138,7 +138,7 @@ export function ReviewPageContent() {
         {/* Data Analysis Panel - clickable to expand sections */}
         <DataAnalysisPanel
           data={formData}
-          className="bg-card mb-6"
+          className="bg-surface mb-6"
           onSectionClick={handleSectionClick}
           selectedSection={Array.from(expandedKeys)[0] || ''}
         />

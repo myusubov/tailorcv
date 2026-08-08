@@ -110,6 +110,7 @@ tailorcv/
 | Domain           | Relationship                                                                    | Key Interface                                       |
 | ---------------- | ------------------------------------------------------------------------------- | --------------------------------------------------- |
 | Auth             | Clerk packages are split between frontend and backend workspaces                | `@clerk/nextjs`, `@clerk/express`, `@clerk/backend` |
+| Auth brand UI    | Aceternity copy-paste prerequisites are frontend-owned; the current static grid does not import them directly | `clsx`, `motion`, `tailwind-merge`                   |
 | Auth recovery UI | Email masking is owned by the frontend workspace that renders recovery guidance | `maskdata` in `apps/frontend/package.json`          |
 | Backend Data     | Prisma packages must stay aligned in the backend workspace                      | `prisma`, `@prisma/client`, `@prisma/adapter-pg`    |
 | Frontend UI      | Next.js, React, HeroUI, and Tailwind packages belong to the frontend workspace   | `next`, `react`, `@heroui/react`, `@heroui/styles`  |

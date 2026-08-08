@@ -55,12 +55,12 @@ export function BulletItem({
     >
       <div
         onPointerDown={(e) => controls.start(e)}
-        className="hover:bg-default-100 mt-2.5 cursor-grab rounded p-0.5 transition-colors active:cursor-grabbing"
+        className="hover:bg-default-soft-hover mt-2.5 cursor-grab rounded p-0.5 transition-colors active:cursor-grabbing"
         title="Drag to reorder"
       >
         <Icon
           icon="lucide:grip-vertical"
-          className="text-muted-foreground hover:text-foreground size-3.5 transition-colors"
+          className="text-muted hover:text-foreground size-3.5 transition-colors"
         />
       </div>
 

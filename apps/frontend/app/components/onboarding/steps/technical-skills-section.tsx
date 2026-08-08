@@ -52,7 +52,7 @@ export function TechnicalSkillsSection({
                 variant="ghost"
                 aria-label="Clear all skills"
                 onPress={clearSkills}
-                className="text-muted-foreground hover:text-foreground px-2 text-sm"
+                className="text-muted hover:text-foreground px-2 text-sm"
               >
                 <Icon icon="lucide:x-circle" className="size-4" />
                 Clear all
@@ -74,14 +74,14 @@ export function TechnicalSkillsSection({
             {skills.map((skill) => (
               <Chip
                 key={skill.id}
-                className="bg-primary/10 text-primary gap-1 pr-1"
+                className="bg-accent/10 text-accent gap-1 pr-1"
               >
                 {skill.name}
                 <button
                   type="button"
                   aria-label={`Remove ${skill.name} skill`}
                   onClick={() => removeSkill({ skillId: skill.id })}
-                  className="hover:bg-primary/20 rounded-full p-0.5"
+                  className="hover:bg-accent/20 rounded-full p-0.5"
                 >
                   <Icon icon="lucide:x" className="size-3" />
                 </button>

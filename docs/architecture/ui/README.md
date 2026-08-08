@@ -9,12 +9,13 @@
 | Pillar | Description |
 | ------ | ----------- |
 | **Accessible primitives** | HeroUI and React Aria own component semantics, keyboard behavior, and compound-component contracts. |
-| **Application-owned theme** | TailorCV owns brand colors and intentional interaction overrides in `globals.css` without copying HeroUI internals. |
+| **Canonical semantic theme** | TailorCV uses the supplied generated HeroUI v3 OKLCH theme values in `globals.css` while retaining HeroUI's semantic names, calculated states, and Tailwind mappings. |
 | **Deliberate upgrades** | HeroUI versions are pinned exactly and upgraded only after release-note, type, interaction, and visual review. |
 
 ### 1.1 Durable Decisions
 
 - [0001-pin-heroui-exact-versions.md](adr/0001-pin-heroui-exact-versions.md) - Pin HeroUI packages exactly and treat every upgrade as an explicit migration.
+- [0002-use-heroui-v3-semantic-color-tokens.md](adr/0002-use-heroui-v3-semantic-color-tokens.md) - Keep application color usage on HeroUI v3 semantic roles rather than compatibility aliases or numbered palettes.
 
 ---
 
@@ -73,6 +74,10 @@ apps/frontend/
 - Follow the compound-component structure documented for the installed version. In HeroUI 3.2.3, `Checkbox.Control` belongs inside `Checkbox.Content`.
 - Preserve accessible names through visible content and semantic HeroUI composition rather than test-only selectors.
 - Keep TailorCV palette ownership in `globals.css`; add global interaction overrides only when the application intentionally differs from HeroUI defaults.
+- Complete incomplete HeroUI component treatments in the global component layer rather than patching package files. The local secondary Chip treatment combines each semantic color's soft background and foreground with a matching inset border.
+- Override HeroUI's canonical base variables instead of recreating its Tailwind bridge or calculated hover/soft colors. Use `accent`, `surface`, `default`, `muted`, `separator`, `border`, `focus`, and state tokens according to semantic intent.
+- Keep the generated light and dark OKLCH values, selectors, radii, and Inter assignment synchronized as one theme contract; TailorCV-specific decorative tokens remain outside those blocks.
+- Keep genuinely product-specific decorative colors explicitly namespaced, such as landing and orb tokens; authentication panels use the canonical accent instead of a parallel brand palette.
 - Keep HeroUI Toast and Sonner as separate existing feedback systems until a dedicated consolidation decision is made.
 
 ---
@@ -93,6 +98,8 @@ apps/frontend/
 - [x] HeroUI React and Styles pinned to `3.2.3`
 - [x] Tailwind CSS 4 retained as the styling engine
 - [x] HeroUI 3.2 Checkbox composition adopted across current application usages
+- [x] HeroUI v3 semantic color contract adopted across frontend consumers
+- [x] Secondary Chip color and bordered-treatment combinations completed locally
 - [x] Immediate Tooltip closing preserved through `--tooltip-close-delay`
 - [ ] Complete authorized type, test, build, dependency-tree, and browser verification
 

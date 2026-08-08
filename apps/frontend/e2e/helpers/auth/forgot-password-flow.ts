@@ -144,7 +144,7 @@ export async function completeForgotPasswordResetWithCandidates({
         .then(() => 'success' as const)
         .catch(() => null),
       page
-        .locator('.bg-danger-50')
+        .locator('.bg-danger-soft')
         .first()
         .waitFor({ state: 'visible', timeout: 3_000 })
         .then(() => 'retry' as const)

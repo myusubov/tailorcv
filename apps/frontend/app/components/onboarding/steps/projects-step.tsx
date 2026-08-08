@@ -164,7 +164,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
             <p className="text-foreground text-sm font-medium">
               For a stronger generated resume:
             </p>
-            <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
+            <ul className="text-muted list-disc space-y-1 pl-5 text-sm">
               <li>Add at least 3 technical skills</li>
               <li>
                 Add 1 project with a clear role, technologies, and impact
@@ -242,7 +242,7 @@ export function ProjectsStep({ onNext, onBack }: ProjectsStepProps) {
           transition={{ delay: 0.3 }}
         >
           <Button
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted hover:text-foreground"
             variant="ghost"
             onPress={onBack}
           >

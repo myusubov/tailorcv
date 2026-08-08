@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-06
+
+### Aceternity Auth Background Prerequisites
+
+- **Problem:** The frontend workspace did not declare the dependency set documented for the selected Aceternity copy-paste background examples.
+- **Solution:**
+  1. **Frontend ownership — `apps/frontend/package.json`**: Adds `clsx`, `motion`, and `tailwind-merge` to the workspace where auth background components are being developed.
+  2. **Reproducible resolution — `package-lock.json`**: Records the installed packages and Motion 13 dependency graph produced by the workspace install.
+  3. **Current usage boundary — `docs/architecture/dependency-management/README.md`**: Records that the current auth grid is CSS-only and does not yet import these prerequisites directly.
+- **Outcome:** Subsequent Aceternity background variants can use the documented frontend dependencies without another installation, while their currently unused status remains explicit.
+
 ## 2026-08-04
 
 ### Exact HeroUI 3.2.3 Dependency Contract

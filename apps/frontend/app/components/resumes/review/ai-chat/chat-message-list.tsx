@@ -25,17 +25,17 @@ export function ChatMessageList({
           <ChatMessageSkeleton />
         ) : messages.length === 0 && !isTyping ? (
           <div className="flex h-full flex-col items-center justify-center space-y-4 px-8 text-center">
-            <div className="bg-default-100 flex size-20 items-center justify-center rounded-3xl">
+            <div className="bg-default-soft flex size-20 items-center justify-center rounded-3xl">
               <Icon
                 icon="solar:magic-stick-3-bold-duotone"
-                className="text-primary size-10"
+                className="text-accent size-10"
               />
             </div>
             <div className="space-y-1">
               <h3 className="text-foreground text-lg font-semibold">
                 Your AI Resume Coach
               </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed text-balance">
+              <p className="text-muted text-sm leading-relaxed text-balance">
                 I can help you polish your summary, optimize bullet points, and
                 structure your experience. What would you like to improve?
               </p>

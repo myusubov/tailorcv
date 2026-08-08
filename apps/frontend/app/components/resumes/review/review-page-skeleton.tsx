@@ -49,7 +49,7 @@ export function ReviewPageSkeleton() {
       animate="visible"
     >
       {/* Left Panel - Editor skeleton */}
-      <div className="border-default-200 w-full min-w-0 shrink-0 border-b p-4 md:p-6 xl:h-screen xl:w-1/2 xl:overflow-y-auto xl:border-r xl:border-b-0">
+      <div className="border-border w-full min-w-0 shrink-0 border-b p-4 md:p-6 xl:h-screen xl:w-1/2 xl:overflow-y-auto xl:border-r xl:border-b-0">
         {/* Header skeleton */}
         <motion.div className="mb-6" variants={itemVariants}>
           <div className="mb-2 flex items-center justify-between gap-4">
@@ -61,7 +61,7 @@ export function ReviewPageSkeleton() {
 
         {/* Data Analysis Panel skeleton */}
         <motion.div
-          className="border-default-200 mb-6 rounded-xl border bg-default-50 p-4 shadow"
+          className="border-border mb-6 rounded-xl border bg-default-soft p-4 shadow"
           variants={itemVariants}
         >
           <div className="mb-3 flex items-center justify-between">
@@ -94,7 +94,7 @@ export function ReviewPageSkeleton() {
           {Array.from({ length: ACCORDION_ITEMS }).map((_, i) => (
             <motion.div
               key={i}
-              className="border-default-200 border-b first:rounded-t-xl last:rounded-b-xl last:border-b-0"
+              className="border-border border-b first:rounded-t-xl last:rounded-b-xl last:border-b-0"
               variants={itemVariants}
             >
               <div className="accordion__trigger flex w-full items-center justify-between gap-3 px-4 py-3">
