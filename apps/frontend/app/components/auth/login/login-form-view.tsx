@@ -51,12 +51,12 @@ export function LoginFormView({
   const isAnyAuthActionInProgress =
     isSubmitting || googleLoading || appleLoading;
   return (
-    <div className="auth-form-panel min-w-0 lg:pe-12 lg:ps-[clamp(3rem,6vw,7rem)]">
+    <div className="auth-form-panel min-w-0 lg:pe-12">
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="auth-form-content lg:mx-0"
+        className="auth-form-content"
       >
         {/* Mobile Logo - Centered */}
         <motion.div
@@ -77,7 +77,7 @@ export function LoginFormView({
           <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome back
           </h2>
-          <p className="text-muted-foreground mt-3 text-lg">
+          <p className="text-muted mt-3 text-lg">
             Enter your email to sign in to your account
           </p>
         </motion.div>
@@ -87,19 +87,19 @@ export function LoginFormView({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.25 }}
-            className="border-primary/20 bg-primary/5 space-y-3 rounded-2xl border px-4 py-4"
+            className="border-accent/20 bg-accent/5 space-y-3 rounded-2xl border px-4 py-4"
             role="status"
             aria-live="polite"
           >
             <div className="flex items-start gap-3">
-              <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+              <div className="bg-accent/10 text-accent flex size-9 shrink-0 items-center justify-center rounded-xl">
                 <Icon icon="lucide:shield-alert" className="size-5" />
               </div>
               <div className="space-y-1 text-left">
                 <p className="text-foreground font-semibold">
                   {authNotice.title}
                 </p>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted text-sm">
                   {authNotice.description}
                 </p>
               </div>
@@ -109,7 +109,7 @@ export function LoginFormView({
               <div className="flex pt-1">
                 <NextLink
                   href={authNotice.actionHref}
-                  className="bg-primary text-primary-foreground inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-transform hover:-translate-y-0.5 hover:opacity-95"
+                  className="bg-accent text-accent-foreground inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-transform hover:-translate-y-0.5 hover:opacity-95"
                 >
                   <Icon icon="lucide:key-round" className="size-4" />
                   {authNotice.actionLabel}
@@ -176,7 +176,7 @@ export function LoginFormView({
                   </TextField>
                   <NextLink
                     href="/forgot-password"
-                    className="text-primary absolute top-0 right-0 text-sm font-medium hover:underline"
+                    className="text-accent absolute top-0 right-0 text-sm font-medium hover:underline"
                   >
                     Forgot password?
                   </NextLink>
@@ -224,7 +224,7 @@ export function LoginFormView({
               <Separator className="border-divider w-full" />
             </div>
             <div className="relative flex justify-center text-xs tracking-wider uppercase">
-              <span className="bg-background text-muted-foreground px-4 font-medium">
+              <span className="bg-background text-muted px-4 font-medium">
                 Or
               </span>
             </div>
@@ -285,12 +285,12 @@ export function LoginFormView({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.8 }}
-            className="text-muted-foreground text-center text-sm"
+            className="text-muted text-center text-sm"
           >
             Don&apos;t have an account?{' '}
             <NextLink
               href="/register"
-              className="text-primary hover:text-primary/80 font-semibold underline-offset-4 hover:underline"
+              className="text-accent hover:text-accent/80 font-semibold underline-offset-4 hover:underline"
             >
               Sign up
             </NextLink>

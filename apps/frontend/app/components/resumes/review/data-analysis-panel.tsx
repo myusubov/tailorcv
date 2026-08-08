@@ -25,20 +25,20 @@ function getStatusIcon(status: AnalysisStatus) {
     case 'complete':
       return {
         icon: 'lucide:check-circle-2',
-        colorClass: 'text-success',
-        bgClass: 'bg-success/10',
+        colorClass: 'text-success-soft-foreground',
+        bgClass: 'bg-success-soft',
       };
     case 'incomplete':
       return {
         icon: 'lucide:alert-circle',
-        colorClass: 'text-warning',
-        bgClass: 'bg-warning/10',
+        colorClass: 'text-warning-soft-foreground',
+        bgClass: 'bg-warning-soft',
       };
     case 'missing':
       return {
         icon: 'lucide:x-circle',
-        colorClass: 'text-danger',
-        bgClass: 'bg-danger/10',
+        colorClass: 'text-danger-soft-foreground',
+        bgClass: 'bg-danger-soft',
       };
   }
 }
@@ -60,7 +60,7 @@ export function DataAnalysisPanel({
   return (
     <div
       className={cn(
-        'border-default-200 bg-default-50 rounded-xl border p-4 shadow sticky top-0 z-10',
+        'border-border bg-default-soft rounded-xl border p-4 shadow sticky top-0 z-10',
         className,
       )}
     >
@@ -74,11 +74,11 @@ export function DataAnalysisPanel({
           Resume Completeness
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-xs">{progressPct}% Complete</span>
+          <span className="text-muted text-xs">{progressPct}% Complete</span>
           <Icon
             icon="lucide:chevron-down"
             className={cn(
-              'text-muted-foreground size-4 transition-transform duration-300',
+              'text-muted size-4 transition-transform duration-300',
               isExpanded ? 'rotate-180' : '',
             )}
           />
@@ -86,9 +86,9 @@ export function DataAnalysisPanel({
       </button>
 
       {/* Progress Bar - Always visible */}
-      <div className="bg-secondary mb-4 h-1.5 w-full overflow-hidden rounded-full">
+      <div className="bg-default mb-4 h-1.5 w-full overflow-hidden rounded-full">
         <div
-          className="bg-primary h-full transition-all duration-300"
+          className="bg-accent h-full transition-all duration-300"
           style={{ width: `${progressPct}%` }}
         />
       </div>
@@ -119,10 +119,10 @@ export function DataAnalysisPanel({
                     onClick={() => onSectionClick?.(item.section)}
                     className={cn(
                       'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
-                      'hover:ring-primary/30 cursor-pointer hover:ring-2',
+                      'hover:ring-accent/30 cursor-pointer hover:ring-2',
                       bgClass,
                       // Selected state comes LAST to override bgClass
-                      isSelected && 'ring-primary/50 ring-2',
+                      isSelected && 'ring-accent/50 ring-2',
                     )}
                   >
                     <Icon
@@ -134,7 +134,7 @@ export function DataAnalysisPanel({
                         'flex-1 text-sm font-medium transition-colors',
                         isSelected
                           ? 'text-foreground'
-                          : 'text-muted-foreground group-hover:text-foreground',
+                          : 'text-muted group-hover:text-foreground',
                       )}
                     >
                       {item.section}
@@ -143,8 +143,8 @@ export function DataAnalysisPanel({
                       className={cn(
                         'text-[10px] transition-colors',
                         isSelected
-                          ? 'text-muted-foreground'
-                          : 'text-muted-foreground group-hover:text-muted-foreground',
+                          ? 'text-muted'
+                          : 'text-muted group-hover:text-muted',
                       )}
                     >
                       {item.message}

@@ -3,7 +3,7 @@ import type { BaseResumeData } from 'shared';
 
 function Label({ text }: { text: string }) {
   return (
-    <p className="text-xs font-semibold text-default-500 uppercase tracking-wider">
+    <p className="text-xs font-semibold text-muted uppercase tracking-wider">
       {text.charAt(0).toUpperCase() + text.slice(1)}
     </p>
   );
@@ -41,7 +41,7 @@ export function SkillsProposal({
           </Chip>
         ))}
         {newSkills.length === 0 && skills.length > 0 && (
-          <span className="text-tiny text-default-400 italic">No new skills added</span>
+          <span className="text-tiny text-muted italic">No new skills added</span>
         )}
       </div>
     </div>
@@ -120,23 +120,23 @@ export function ListProposal({
           const endDate = 'endDate' in item ? item.endDate : undefined;
 
           return (
-            <div key={i} className="relative rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
+            <div key={i} className="relative rounded-lg border border-border bg-default-soft p-3 text-sm">
                <div className="font-semibold text-foreground">
                  {title}
-                 {newItems.length > 0 && <span className="ml-2 text-[10px] text-primary font-bold uppercase">New</span>}
+                 {newItems.length > 0 && <span className="ml-2 text-[10px] text-accent font-bold uppercase">New</span>}
                </div>
                {subtitle && (
-                 <div className="text-xs text-default-500">
+                 <div className="text-xs text-muted">
                    {subtitle}
                  </div>
                )}
                {date && (
-                  <div className="mt-1 text-[10px] text-default-400">
+                  <div className="mt-1 text-[10px] text-muted">
                     {date} {endDate ? ` - ${endDate}` : ''}
                   </div>
                )}
                {'bullets' in item && item.bullets && Array.isArray(item.bullets) && item.bullets.length > 0 && (
-                 <ul className="mt-2 list-disc pl-4 text-xs text-default-600 space-y-1">
+                 <ul className="mt-2 list-disc pl-4 text-xs text-muted space-y-1">
                    {item.bullets.slice(0, 2).map((b, bi) => (
                      <li key={bi}>{b.text}</li>
                    ))}
@@ -165,7 +165,7 @@ export function TextProposal({
   return (
     <div className="space-y-1">
       <Label text={label} />
-      <div className="rounded-lg bg-primary/5 p-3 text-sm text-foreground border border-primary/10">
+      <div className="rounded-lg bg-accent/5 p-3 text-sm text-foreground border border-accent/10">
         {text}
       </div>
     </div>

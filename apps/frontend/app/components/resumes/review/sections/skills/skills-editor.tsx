@@ -260,7 +260,7 @@ export function SkillsEditor() {
           <button
             type="button"
             onClick={() => setIsAddingCategory(true)}
-            className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 px-1 text-xs transition-colors"
+            className="text-muted hover:text-accent inline-flex items-center gap-1.5 px-1 text-xs transition-colors"
           >
             <Icon icon="lucide:plus" className="size-3.5" />
             Add category
@@ -269,7 +269,7 @@ export function SkillsEditor() {
       </div>
 
       {fields.length === 0 && !isAddingCategory && (
-        <p className="text-muted-foreground py-8 text-center text-sm italic">
+        <p className="text-muted py-8 text-center text-sm italic">
           No skills added yet. Start by adding a category.
         </p>
       )}

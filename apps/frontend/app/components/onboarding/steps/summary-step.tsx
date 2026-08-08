@@ -70,7 +70,7 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
         <Button
           variant="ghost"
           onPress={onBack}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted hover:text-foreground"
         >
           <Icon icon="lucide:arrow-left" className="size-4" aria-hidden />
           Back

@@ -27,13 +27,13 @@ export function SkillItem({ skill, onRemove }: SkillItemProps) {
     <Reorder.Item value={skill} className="inline-block">
       <Chip
         variant="soft"
-        className="hover:bg-default-200 cursor-grab gap-1 pr-1 transition-colors active:cursor-grabbing"
+        className="hover:bg-default-hover cursor-grab gap-1 pr-1 transition-colors active:cursor-grabbing"
       >
         <span className="select-none">{skill.name}</span>
         <button
           type="button"
           onClick={() => onRemove(skill._index)}
-          className="hover:bg-default-300/50 focus:ring-primary ml-0.5 rounded-full p-0.5 transition-colors outline-none focus:ring-1"
+          className="hover:bg-default-hover focus:ring-accent ml-0.5 rounded-full p-0.5 transition-colors outline-none focus:ring-1"
           aria-label={`Remove skill ${skill.name}`}
         >
           <Icon icon="lucide:x" className="size-3" />

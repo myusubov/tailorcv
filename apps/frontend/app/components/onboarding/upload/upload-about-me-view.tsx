@@ -77,10 +77,10 @@ export function UploadAboutMeView({
   const borderColor = isDragReject
     ? 'border-danger'
     : isDragAccept
-      ? 'border-primary'
+      ? 'border-accent'
       : isDragActive
-        ? 'border-primary'
-        : 'border-default-200';
+        ? 'border-accent'
+        : 'border-border';
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -103,20 +103,20 @@ export function UploadAboutMeView({
             >
               <div
                 {...getRootProps()}
-                className={`group bg-default-50/50 hover:bg-default-100 hover:border-default-400 hover:shadow-primary/5 relative flex h-72 w-full cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all duration-300 ease-in-out hover:shadow-xl ${borderColor} `}
+                className={`group bg-default-soft hover:bg-default-soft-hover hover:border-border-tertiary hover:shadow-accent/5 relative flex h-72 w-full cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all duration-300 ease-in-out hover:shadow-xl ${borderColor} `}
               >
                 <input {...getInputProps()} />
                 <div className="flex flex-col items-center space-y-4 p-8 text-center">
-                  <div className="bg-primary/10 text-primary rounded-3xl p-5 transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:scale-110 group-hover:rotate-3">
+                  <div className="bg-accent/10 text-accent rounded-3xl p-5 transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:scale-110 group-hover:rotate-3">
                     <Icon icon="solar:cloud-upload-bold-duotone" width={48} />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-default-900 text-xl font-bold">
+                    <p className="text-foreground text-xl font-bold">
                       {isDragActive
                         ? 'Drop it here!'
                         : 'Click to upload or drag & drop'}
                     </p>
-                    <p className="text-default-500 text-sm">
+                    <p className="text-muted text-sm">
                       PDF, DOCX or TXT (Max 5MB)
                     </p>
                   </div>
@@ -131,16 +131,16 @@ export function UploadAboutMeView({
               exit={{ opacity: 0, y: -10 }}
               className="w-full"
             >
-              <div className="border-primary/20 bg-primary/5 shadow-primary/5 relative flex items-center gap-5 overflow-hidden rounded-3xl border-2 p-6 shadow-xl">
+              <div className="border-accent/20 bg-accent/5 shadow-accent/5 relative flex items-center gap-5 overflow-hidden rounded-3xl border-2 p-6 shadow-xl">
                 <div className="shrink-0 text-5xl">
                   <Icon icon={getFileIcon(file.name)} />
                 </div>
 
                 <div className="min-w-0 grow">
-                  <p className="text-default-900 truncate text-lg font-bold">
+                  <p className="text-foreground truncate text-lg font-bold">
                     {file.name}
                   </p>
-                  <p className="text-default-500 text-sm font-medium">
+                  <p className="text-muted text-sm font-medium">
                     {formatFileSize(file.size)} • Ready to process
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export function UploadAboutMeView({
             variant="ghost"
             onPress={onBack}
             isDisabled={isUploading}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back

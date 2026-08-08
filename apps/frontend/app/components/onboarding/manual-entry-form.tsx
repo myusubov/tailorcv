@@ -161,7 +161,7 @@ export function ManualEntryForm({ onBack }: ManualEntryFormProps) {
           animate={{ opacity: 1, y: 0 }}
         >
           <ProgressBar currentStep={currentStep} />
-          <p className="text-muted-foreground mt-3 text-center text-xs">
+          <p className="text-muted mt-3 text-center text-xs">
             Required fields are marked with{' '}
             <span className="text-danger">*</span>
           </p>

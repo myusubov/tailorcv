@@ -55,7 +55,8 @@
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step                       | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`       | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/auth-logo.tsx`                                   | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes          | Auth logo behavior, variants, sizing, or accessibility changes |
-| `apps/frontend/app/components/auth/auth-brand-panel.tsx`                            | Shared desktop auth brand panel with the primary surface, inverse logo, and decorative grid treatment           | Desktop auth brand-panel composition or styling changes        |
+| `apps/frontend/app/components/auth/auth-brand-panel.tsx`                            | Shared desktop auth brand panel with fixed branding, decorative grid treatment, and route-content composition   | Desktop auth brand-panel composition or styling changes        |
+| `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`              | Login-only miniature resume reminder and returning-user copy                                                    | Desktop login brand storytelling changes                       |
 | `apps/frontend/app/components/auth/auth-marketing-panel.tsx`                        | Shared desktop registration brand panel and inverse logo treatment                                             | Register branding or marketing-panel changes                   |
 | `apps/frontend/public/brand/tailorcv-mark-*.svg`                                    | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark                                 | Auth logo geometry, color, or contrast changes                 |
 | `apps/frontend/lib/config/constants.ts`                                             | Stable public paths for the shared logo variants                                                               | Adding or renaming brand assets                                |
@@ -115,6 +116,7 @@ app/components/auth/
 ├── login/
 │   ├── use-login-flow.ts
 │   ├── login-form-view.tsx
+│   ├── login-brand-panel-content.tsx
 │   ├── verification-view.tsx
 │   └── branding-view.tsx
 ├── register/
@@ -214,7 +216,8 @@ with contrast-specific variants:
 
 `AuthLogo` owns the variant-to-asset mapping, the 32px and 40px auth display
 sizes, and the accessible home-link contract. Its default is the primary mark;
-dark marketing panels must request the inverse variant explicitly.
+authentication marketing panels request the inverse variant explicitly for the
+white-on-accent treatment.
 
 The adjacent `TailorCV` text supplies the accessible link name, so decorative
 mark images use empty alternative text and do not repeat the brand name.
@@ -239,12 +242,28 @@ small-screen logo positioning. Forgot-password email entry deliberately does
 not use that utility because it no longer renders a mobile logo.
 
 On desktop, login, registration, and forgot-password email entry render the
-shared `AuthBrandPanel`. The inset panel uses a clamped width between `27.5rem`
-and `47.5rem`, while `auth-form-panel` fills the remaining row width. Login also
-applies a clamped leading inset between `3rem` and `7rem` and aligns its form
-content toward the panel; registration and forgot-password retain the shared
-centered content treatment. Mobile hides the brand panel and retains the
-existing single-column form layouts.
+shared `AuthBrandPanel`. The inset panel uses the fixed `w-122` spacing token,
+while `auth-form-panel` fills the remaining row width and keeps its constrained
+form content centered. Mobile hides the brand panel and retains the existing
+single-column form layouts.
+
+#### 6.7.1 Login Resume Reminder Composition
+
+`AuthBrandPanel` owns the invariant inverse logo, canonical HeroUI `accent`
+surface, white-derived faded grid, and desktop visibility. Its optional child
+region lets an auth route add non-essential brand storytelling without coupling
+the shared shell to a route.
+
+The login route composes `LoginBrandPanelContent` into that region. The content
+uses one flat, miniature resume page with familiar experience, project, and
+skills structure, followed by a short welcome-back message. The preview avoids
+scores, workflow states, and speculative product behavior because returning
+users only need a recognizable reminder of the document they work on in
+TailorCV. It uses an inverse translucent frame over the canonical accent surface
+and semantic surface, neutral, and separator roles for the document itself. It
+has no actions, state, user data, or authentication responsibility. Registration
+and forgot-password currently omit route-specific panel content and retain only
+the shared logo and background treatment.
 
 ### 6.8 Password-Recovery Email Privacy
 
@@ -321,6 +340,7 @@ available until the user dismisses it.
 - [x] Forgot-password controller/view split
 - [x] Clerk status helper coverage for login and forgot-password
 - [x] Shared primary/inverse shield mark across login and registration, plus the desktop password-recovery marketing panel
+- [x] Login-only desktop resume reminder composed into the shared brand panel
 - [x] Masked email context in password-recovery verification and password entry
 - [x] In-memory resend timestamp and ticking countdown state
 - [x] Success feedback after Clerk confirms a reset-code resend

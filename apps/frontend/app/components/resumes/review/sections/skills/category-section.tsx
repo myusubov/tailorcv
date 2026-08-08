@@ -64,10 +64,10 @@ export function CategorySection({
         >
           <Icon
             icon="lucide:grip-vertical"
-            className="text-muted-foreground hover:text-foreground size-3.5 transition-colors"
+            className="text-muted hover:text-foreground size-3.5 transition-colors"
           />
         </div>
-        <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase select-none">
+        <h4 className="text-muted text-xs font-semibold tracking-wide uppercase select-none">
           {category}
         </h4>
       </div>
@@ -96,7 +96,7 @@ export function CategorySection({
           <button
             type="button"
             onClick={onStartAdd}
-            className="border-default-300 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs transition-colors"
+            className="border-border-secondary text-muted hover:border-accent hover:text-accent hover:bg-accent/5 inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs transition-colors"
             aria-label={`Add skill to ${category}`}
           >
             <Icon icon="lucide:plus" className="size-3" />

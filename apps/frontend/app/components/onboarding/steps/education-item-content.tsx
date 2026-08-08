@@ -78,7 +78,7 @@ export function EducationItemContent({
                   isIconOnly
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted hover:text-foreground transition-colors"
                 >
                   <Icon icon="lucide:arrow-up" />
                 </Button>
@@ -95,7 +95,7 @@ export function EducationItemContent({
                   isIconOnly
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted hover:text-foreground transition-colors"
                 >
                   <Icon icon="lucide:arrow-down" />
                 </Button>
@@ -113,7 +113,7 @@ export function EducationItemContent({
                 variant="ghost"
                 size="sm"
                 onPress={onDuplicate}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted hover:text-foreground transition-colors"
               >
                 <Icon icon="lucide:copy" />
               </Button>
@@ -130,7 +130,7 @@ export function EducationItemContent({
                 variant="ghost"
                 size="sm"
                 onPress={onDelete}
-                className="text-danger/50 hover:bg-danger/10 hover:text-danger transition-colors"
+                className="text-danger/50 hover:bg-danger-soft-hover hover:text-danger transition-colors"
               >
                 <Icon icon="lucide:trash-2" />
               </Button>

@@ -51,7 +51,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   if (isThinkingState) {
     return (
       <div className="w-full max-w-[85%] self-start pb-8">
-        <div className="text-muted-foreground flex items-center gap-2">
+        <div className="text-muted flex items-center gap-2">
           <Icon
             icon="solar:magic-stick-3-linear"
             className="size-4 animate-pulse"
@@ -79,7 +79,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
           className={cn(
             'wrap-break-words relative max-w-[85%] rounded-2xl text-sm leading-relaxed transition-all',
             isUser
-              ? 'bg-primary text-primary-foreground px-3 py-2'
+              ? 'bg-accent text-accent-foreground px-3 py-2'
               : 'text-foreground pb-8',
           )}
         >
@@ -117,7 +117,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-accent hover:underline"
                 >
                   {children}
                 </a>
@@ -134,7 +134,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
                         'rounded px-1.5 py-0.5 font-mono text-xs font-semibold',
                         isUser
                           ? 'bg-white/20'
-                          : 'bg-default-200 text-foreground',
+                          : 'bg-default text-foreground',
                       )}
                       {...props}
                     >
@@ -146,7 +146,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
                 return <CodeBlock isUser={isUser} {...props} />;
               },
               blockquote: ({ children }) => (
-                <blockquote className="border-primary/50 text-muted-foreground mb-2 border-l-2 pl-3 italic last:mb-0">
+                <blockquote className="border-accent/50 text-muted mb-2 border-l-2 pl-3 italic last:mb-0">
                   {children}
                 </blockquote>
               ),
@@ -191,8 +191,9 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
                     size="sm"
                     variant="ghost"
                     className={cn(
-                      'text-muted-foreground hover:text-foreground size-7',
-                      isCopied && 'text-success bg-success/10',
+                      'text-muted hover:text-foreground size-7',
+                      isCopied &&
+                        'bg-success-soft text-success-soft-foreground',
                     )}
                     onPress={handleCopy}
                     isDisabled={isCopied}
@@ -244,7 +245,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       )}
 
       {proposalStatus === 'discarded' && (
-        <div className="text-default-400 mt-2 flex items-center gap-1.5 px-4 py-1 text-xs font-medium">
+        <div className="text-muted mt-2 flex items-center gap-1.5 px-4 py-1 text-xs font-medium">
           <Icon icon="solar:trash-bin-trash-bold" className="size-4" />
           Proposal discarded
         </div>

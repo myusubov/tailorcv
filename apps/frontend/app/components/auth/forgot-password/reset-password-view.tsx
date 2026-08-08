@@ -232,12 +232,12 @@ export function ResetPasswordView({
           </Card.Content>
           <Card.Footer className="border-divider flex-col gap-2 border-t pt-4">
             {isVerifyStep && (
-              <p className="text-muted-foreground text-center text-sm">
+              <p className="text-muted text-center text-sm">
                 Didn&apos;t receive the code?{' '}
                 <button
                   type="button"
                   aria-label="Resend reset code"
-                  className="text-primary cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  className="text-accent cursor-pointer font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={onResend}
                   disabled={isResending || remainingSeconds !== null}
                 >
@@ -249,11 +249,11 @@ export function ResetPasswordView({
                 </button>
               </p>
             )}
-            <p className="text-muted-foreground text-center text-sm">
+            <p className="text-muted text-center text-sm">
               <button
                 type="button"
                 aria-label="Use a different email address"
-                className="text-primary cursor-pointer font-medium hover:underline"
+                className="text-accent cursor-pointer font-medium hover:underline"
                 onClick={onBack}
               >
                 ← Use a different email

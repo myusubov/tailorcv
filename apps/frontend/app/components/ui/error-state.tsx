@@ -36,7 +36,7 @@ export const ErrorState = ({
         {title}
       </h3>
       {errorMessage && (
-        <p className="text-muted-foreground mb-8 max-w-md">
+        <p className="text-muted mb-8 max-w-md">
           {errorMessage}
         </p>
       )}

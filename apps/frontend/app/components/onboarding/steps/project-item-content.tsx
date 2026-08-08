@@ -67,7 +67,7 @@ export function ProjectItemContent({
       <Card.Header className="flex-row items-center justify-between">
         <span
           aria-label={`Project ${index + 1}`}
-          className="bg-surface-secondary text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+          className="bg-surface-secondary text-muted flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
         >
           {index + 1}
         </span>
@@ -81,7 +81,7 @@ export function ProjectItemContent({
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted hover:text-foreground transition-colors"
               >
                 <Icon icon="lucide:arrow-up" />
               </Button>
@@ -97,7 +97,7 @@ export function ProjectItemContent({
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted hover:text-foreground transition-colors"
               >
                 <Icon icon="lucide:arrow-down" />
               </Button>
@@ -114,7 +114,7 @@ export function ProjectItemContent({
               variant="ghost"
               size="sm"
               onPress={onDuplicate}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted hover:text-foreground transition-colors"
             >
               <Icon icon="lucide:copy" />
             </Button>
@@ -129,7 +129,7 @@ export function ProjectItemContent({
               variant="ghost"
               size="sm"
               onPress={onDelete}
-              className="text-danger/50 hover:bg-danger/10 hover:text-danger transition-colors"
+              className="text-danger/50 hover:bg-danger-soft-hover hover:text-danger transition-colors"
             >
               <Icon icon="lucide:trash-2" />
             </Button>

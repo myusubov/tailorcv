@@ -36,18 +36,18 @@ export function RegisterTermsField({ control }: RegisterTermsFieldProps) {
                 <Checkbox.Control className="size-5">
                   <Checkbox.Indicator />
                 </Checkbox.Control>
-                <span className="text-muted-foreground text-sm leading-snug">
+                <span className="text-muted text-sm leading-snug">
                   I agree to the{' '}
                   <Link
                     href="#"
-                    className="text-primary hover:text-primary/80 font-bold"
+                    className="text-accent hover:text-accent/80 font-bold"
                   >
                     Terms
                   </Link>{' '}
                   and{' '}
                   <Link
                     href="#"
-                    className="text-primary hover:text-primary/80 font-bold"
+                    className="text-accent hover:text-accent/80 font-bold"
                   >
                     Privacy Policy
                   </Link>

@@ -29,7 +29,7 @@ export function DateClearButton({ label, onClear }: DateClearButtonProps) {
       }}
       onMouseDown={(event) => event.preventDefault()}
       onKeyDown={(event) => event.stopPropagation()}
-      className="text-muted-foreground hover:bg-default/40 hover:text-foreground focus-visible:ring-ring flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      className="text-muted hover:bg-default/40 hover:text-foreground focus-visible:ring-focus flex size-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       <Icon icon="lucide:x" className="size-4" />
     </button>

@@ -5,6 +5,7 @@ import {
   VerificationView,
   LoginFormView,
 } from '@/app/components/auth/login';
+import { LoginBrandPanelContent } from '@/app/components/auth/login/login-brand-panel-content';
 import { useLoginFlow } from '@/app/components/auth/login/use-login-flow';
 
 export default function LoginPage() {
@@ -49,7 +50,9 @@ export default function LoginPage() {
       className="flex min-h-svh flex-col lg:flex-row"
       data-auth-ready={isClientReady ? 'true' : 'false'}
     >
-      <AuthBrandPanel />
+      <AuthBrandPanel>
+        <LoginBrandPanelContent />
+      </AuthBrandPanel>
 
       <LoginFormView
         control={control}

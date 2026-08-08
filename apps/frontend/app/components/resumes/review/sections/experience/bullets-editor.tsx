@@ -68,7 +68,7 @@ export function BulletsEditor({ basePath }: BulletsEditorProps) {
 
   return (
     <div className="space-y-2">
-      <Label className="text-muted-foreground text-xs">
+      <Label className="text-muted text-xs">
         Achievements / Responsibilities
       </Label>
 
@@ -93,7 +93,7 @@ export function BulletsEditor({ basePath }: BulletsEditorProps) {
         variant="ghost"
         size="sm"
         onPress={handleAddBullet}
-        className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+        className="text-muted hover:text-foreground text-sm transition-colors"
       >
         <Icon icon="lucide:plus" className="size-4" />
         Add bullet point

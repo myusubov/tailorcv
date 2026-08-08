@@ -69,7 +69,7 @@ export function AnimatedError({
         >
           <div
             ref={contentRef}
-            className="bg-danger-50 text-danger flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
+            className="bg-danger-soft text-danger-soft-foreground flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium"
           >
             <Icon icon={icon} className="size-4 shrink-0" />
             {message}

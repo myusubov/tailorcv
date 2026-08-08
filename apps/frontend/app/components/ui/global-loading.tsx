@@ -53,14 +53,14 @@ export function GlobalLoading({
       )}
     >
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">
-        <div className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-full ring-1 ring-primary/15">
+        <div className="bg-accent/10 text-accent flex size-14 items-center justify-center rounded-full ring-1 ring-accent/15">
           <Spinner aria-hidden="true" color="current" size="lg" />
         </div>
 
         <div className="space-y-1.5">
           <p className="text-foreground text-base font-semibold">{title}</p>
           {description ? (
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-muted text-sm leading-relaxed">
               {description}
             </p>
           ) : null}

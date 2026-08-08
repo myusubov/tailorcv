@@ -37,7 +37,7 @@ export function DeleteDialog({
                   <Modal.Heading>{title}</Modal.Heading>
                 </Modal.Header>
                 <Modal.Body>
-                  <div className="text-muted-foreground text-sm">
+                  <div className="text-muted text-sm">
                     {description}
                   </div>
                 </Modal.Body>

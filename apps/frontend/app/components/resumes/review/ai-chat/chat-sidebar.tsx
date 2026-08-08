@@ -44,7 +44,7 @@ export function ChatSidebar() {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-content1 border-separator flex h-full shrink-0 flex-col overflow-hidden border-r"
+            className="bg-surface border-separator flex h-full shrink-0 flex-col overflow-hidden border-r"
           >
             {/* Header */}
             <div className="h-ai-header border-separator flex items-center justify-between border-b px-3">
@@ -59,7 +59,7 @@ export function ChatSidebar() {
                       size="sm"
                       variant="ghost"
                       onPress={() => createNewConversation()}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-muted hover:text-foreground"
                       aria-label="New conversation"
                       isDisabled={isCreatingConv}
                     >
@@ -78,7 +78,7 @@ export function ChatSidebar() {
                       size="sm"
                       variant="ghost"
                       onPress={() => setIsSidebarOpen(false)}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-muted hover:text-foreground"
                       aria-label="Close sidebar"
                     >
                       <Icon
@@ -104,7 +104,7 @@ export function ChatSidebar() {
                   <ConversationSkeleton />
                 </>
               ) : conversations.length === 0 ? (
-                <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
+                <div className="text-muted flex flex-col items-center justify-center gap-2 py-8 text-center text-sm">
                   <Icon
                     icon="solar:chat-dots-linear"
                     className="size-8 opacity-50"

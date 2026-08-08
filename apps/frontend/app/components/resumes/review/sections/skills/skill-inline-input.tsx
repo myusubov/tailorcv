@@ -46,7 +46,7 @@ export function SkillInlineInput({
   return (
     <div
       className={cn(
-        'bg-default-100 focus-within:border-primary/50 inline-flex items-center rounded-full border border-transparent px-2 py-0.5 transition-all',
+        'bg-default-soft focus-within:border-accent/50 inline-flex items-center rounded-full border border-transparent px-2 py-0.5 transition-all',
         className,
       )}
     >
@@ -68,7 +68,7 @@ export function SkillInlineInput({
         type="button"
         onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
         onClick={onSubmit}
-        className="text-primary hover:text-primary/80 hover:bg-default-200 ml-1 rounded-full p-0.5 transition-colors"
+        className="text-accent hover:text-accent/80 hover:bg-default-hover ml-1 rounded-full p-0.5 transition-colors"
         aria-label="Confirm addition"
       >
         <Icon icon="lucide:check" className="size-3.5" />

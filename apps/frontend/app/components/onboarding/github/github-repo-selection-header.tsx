@@ -40,10 +40,10 @@ export function GitHubRepoSelectionHeader({
             height={48}
             quality={100}
             priority
-            className="ring-primary/20 size-12 rounded-full ring-2"
+            className="ring-accent/20 size-12 rounded-full ring-2"
           />
         ) : (
-          <div className="bg-surface-secondary ring-primary/20 text-muted-foreground flex size-12 items-center justify-center rounded-full text-sm font-semibold ring-2">
+          <div className="bg-surface-secondary ring-accent/20 text-muted flex size-12 items-center justify-center rounded-full text-sm font-semibold ring-2">
             {avatarInitial}
           </div>
         )}
@@ -54,7 +54,7 @@ export function GitHubRepoSelectionHeader({
               href={`https://github.com/${connection.githubUsername}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary underline"
+              className="text-accent underline"
             >
               @{connection.githubUsername}
             </a>
@@ -62,7 +62,7 @@ export function GitHubRepoSelectionHeader({
           {isRepositoryCountLoading ? (
             <div className="bg-surface-secondary mt-1 h-3 w-32 animate-pulse rounded-full" />
           ) : (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted text-sm">
               {repositoryCount} repositories found
             </p>
           )}
@@ -78,7 +78,7 @@ export function GitHubRepoSelectionHeader({
         Choose repositories to analyze
       </motion.h1>
       <motion.p
-        className="text-muted-foreground mx-auto max-w-lg text-sm text-balance"
+        className="text-muted mx-auto max-w-lg text-sm text-balance"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}

@@ -35,7 +35,7 @@ export function DeleteProjectModal({
                   <Modal.Heading>Remove project?</Modal.Heading>
                 </Modal.Header>
                 <Modal.Body>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted text-sm">
                     This will permanently remove{' '}
                     <span className="text-foreground font-medium">
                       {projectNumber

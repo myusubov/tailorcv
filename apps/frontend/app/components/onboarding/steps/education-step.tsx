@@ -128,7 +128,7 @@ export function EducationStep({
           >
             <Card className="mt-2">
               <Card.Content className="flex flex-col items-center justify-center px-5 py-5 text-center">
-                <p className="text-muted-foreground text-sm text-balance">
+                <p className="text-muted text-sm text-balance">
                   Education is optional. Add schools, bootcamps, or
                   certifications if they strengthen your resume.
                 </p>
@@ -174,7 +174,7 @@ export function EducationStep({
             variant="ghost"
             onPress={onBack}
             isDisabled={isLoading}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted hover:text-foreground"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Back

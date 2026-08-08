@@ -41,7 +41,7 @@ export function GitHubConnectView({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <span className="bg-primary/10 text-primary mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium tracking-wide uppercase">
+            <span className="bg-accent/10 text-accent mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium tracking-wide uppercase">
               Built from your engineering work
             </span>
           </motion.div>
@@ -56,7 +56,7 @@ export function GitHubConnectView({
           </motion.h1>
 
           <motion.p
-            className="text-muted-foreground mx-auto mt-4 max-w-xl text-base leading-relaxed text-balance"
+            className="text-muted mx-auto mt-4 max-w-xl text-base leading-relaxed text-balance"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
@@ -107,14 +107,14 @@ export function GitHubConnectView({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7 + index * 0.1 }}
               >
-                <div className="bg-primary/10 mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
-                  <Icon icon={item.icon} className="text-primary size-4" />
+                <div className="bg-accent/10 mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
+                  <Icon icon={item.icon} className="text-accent size-4" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-foreground text-sm font-medium">
                     {item.title}
                   </p>
-                  <p className="text-muted-foreground mt-0.5 text-sm leading-snug">
+                  <p className="text-muted mt-0.5 text-sm leading-snug">
                     {item.description}
                   </p>
                 </div>
@@ -134,7 +134,7 @@ export function GitHubConnectView({
             variant="ghost"
             onPress={onBack}
             isDisabled={isConnecting}
-            className="text-muted-foreground hover:text-foreground w-full sm:w-auto"
+            className="text-muted hover:text-foreground w-full sm:w-auto"
           >
             <Icon icon="lucide:arrow-left" className="size-4" />
             Choose a different method

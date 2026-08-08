@@ -36,7 +36,7 @@ export function ChatHeader({
               onPress={() => setIsSidebarOpen(!isSidebarOpen)}
               className={cn(
                 isSidebarOpen && 'bg-default/60',
-                !isSidebarOpen && 'text-muted-foreground hover:text-foreground',
+                !isSidebarOpen && 'text-muted hover:text-foreground',
               )}
               aria-label={isSidebarOpen ? 'Hide history' : 'Show history'}
             >
@@ -79,7 +79,7 @@ export function ChatHeader({
               size="sm"
               variant="ghost"
               onPress={() => createNewConversation()}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted hover:text-foreground"
               aria-label="New conversation"
               isDisabled={isCreatingConv}
             >
@@ -99,7 +99,7 @@ export function ChatHeader({
               variant="ghost"
               size="sm"
               onPress={onToggleFullscreen}
-              className={cn('text-muted-foreground hover:text-foreground')}
+              className={cn('text-muted hover:text-foreground')}
               aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
             >
               <Icon
@@ -127,7 +127,7 @@ export function ChatHeader({
               variant="ghost"
               size="sm"
               onPress={onClose}
-              className={cn('text-muted-foreground hover:text-foreground')}
+              className={cn('text-muted hover:text-foreground')}
               aria-label="Close chat"
             >
               <Icon icon="solar:close-circle-linear" className="size-4" />

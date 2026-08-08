@@ -15,7 +15,7 @@ export default function SSOCallbackPage() {
         <div className="flex max-w-md flex-col gap-4 text-center">
           <div className="space-y-2">
             <h1 className="text-foreground text-lg font-semibold">We couldn&apos;t finish sign in</h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted text-sm">
               The OAuth callback returned an error before your session could be finalized.
             </p>
           </div>
@@ -25,7 +25,7 @@ export default function SSOCallbackPage() {
           <Link
             href="/login"
             aria-label="Back to login"
-            className="bg-primary text-primary-foreground inline-flex w-full items-center justify-center rounded-medium px-4 py-2 font-semibold"
+            className="bg-accent text-accent-foreground inline-flex w-full items-center justify-center rounded-medium px-4 py-2 font-semibold"
           >
             Back to login
           </Link>
@@ -39,7 +39,7 @@ export default function SSOCallbackPage() {
     <div className="bg-background flex min-h-screen items-center justify-center">
       <div className="flex max-w-md flex-col items-center gap-3 text-center">
         <h1 className="text-lg font-semibold">Finishing sign in…</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted text-sm">
           You&apos;ll be redirected automatically once the sign-in is complete.
         </p>
         <Spinner color="current" size="lg" />

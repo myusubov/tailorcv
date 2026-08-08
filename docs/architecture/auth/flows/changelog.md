@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-08-07
+
+### Login Resume Preview Simplification
+
+- **Problem:** The login panel's overlapping job and resume cards invented analysis states, scores, and tailoring signals that made a familiar returning-user screen feel like a generic AI product demonstration.
+- **Solution:**
+  1. **Recognizable product artifact — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Replaces the layered workflow mockup with one flat resume-page preview whose experience, projects, and skills sections echo TailorCV's existing resume output.
+  2. **Restrained returning-user copy — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Replaces product-explanation copy with a short welcome-back message and removes badges, percentages, progress bars, glow, and elevated card effects.
+  3. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the recognizable-document approach and the deliberate exclusion of speculative workflow details.
+- **Outcome:** The desktop login panel now offers a quiet reminder of the user's resume work without teaching the product again or implying unfinished functionality.
+
+### Auth Panel Canonical Accent Treatment
+
+- **Problem:** The desktop authentication panel introduced dedicated `auth-brand` color tokens even though the canonical HeroUI accent and explicit inverse white utilities already express the intended treatment.
+- **Solution:**
+  1. **Canonical panel color — `apps/frontend/app/components/auth/auth-brand-panel.tsx` and `apps/frontend/app/globals.css`**: Replaces the custom brand background and foreground tokens with `bg-accent`, `text-white`, and a white-derived grid, then removes the unused token definitions and mappings.
+  2. **Inverse login composition — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Uses white and translucent-white utilities for the preview surface, labels, indicator, chips, and marketing copy.
+  3. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the canonical accent and inverse-white ownership boundary.
+- **Outcome:** The authentication marketing panel now uses the existing application theme without maintaining a separate brand palette.
+
+### Login Brand Panel Semantic Color Alignment
+
+- **Problem:** The login product preview used fixed white, zinc, black, and emerald utilities, while coupling the large marketing canvas to HeroUI's interactive accent made dark mode switch the bright green panel to a harsh black foreground.
+- **Solution:**
+  1. **Stable brand shell — `apps/frontend/app/globals.css`, `apps/frontend/app/components/auth/auth-brand-panel.tsx`, and `auth-logo.tsx`**: Adds a dedicated dark-emerald `auth-brand` surface with a stable white foreground, derives the grid from `currentColor`, and keeps the inverse mark consistent in both themes.
+  2. **Semantic product preview — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Replaces fixed palette utilities with accent, surface, separator, neutral, shadow, and success roles.
+- **Outcome:** The desktop login composition preserves its visual hierarchy while following the active HeroUI light or dark theme without route-specific color literals.
+
+### Login Product-Outcome Brand Story
+
+- **Problem:** The shared desktop brand panel established TailorCV identity but left the login surface without meaningful product context, while hardcoding login copy into the shared shell would also force it onto registration and password recovery.
+- **Solution:**
+  1. **Composable shared surface — `apps/frontend/app/components/auth/auth-brand-panel.tsx`**: Adds an optional child-content region below the invariant logo while preserving the existing inset dimensions, grid treatment, and desktop-only behavior.
+  2. **Login-specific outcome — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Adds a static target-role card, overlapping tailored-resume result, and concise returning-user message without introducing interaction, user data, or new client state.
+  3. **Route-scoped adoption — `apps/frontend/app/(auth)/login/page.tsx`**: Composes the outcome content only on login so registration and forgot-password remain visually and behaviorally unchanged.
+- **Outcome:** Desktop login now demonstrates TailorCV's job-to-resume outcome inside the brand panel while the shared shell remains reusable and authentication behavior remains untouched.
+
 ## 2026-08-06
 
 ### Shared Desktop Auth Brand Panel
