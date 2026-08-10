@@ -241,6 +241,11 @@ Login and registration also use `auth-form-mobile-logo` for their shared
 small-screen logo positioning. Forgot-password email entry deliberately does
 not use that utility because it no longer renders a mobile logo.
 
+All three entry forms use `auth-form-mobile-intro` for their route title and
+description. The introduction remains visible and centered on smaller screens,
+then becomes visually hidden while remaining available to assistive technology
+beside the desktop brand panel.
+
 On desktop, login, registration, and forgot-password email entry render the
 shared `AuthBrandPanel`. The inset panel uses the fixed `w-122` spacing token,
 while `auth-form-panel` fills the remaining row width and keeps its constrained
@@ -260,10 +265,11 @@ skills structure, followed by a short welcome-back message. The preview avoids
 scores, workflow states, and speculative product behavior because returning
 users only need a recognizable reminder of the document they work on in
 TailorCV. It uses an inverse translucent frame over the canonical accent surface
-and semantic surface, neutral, and separator roles for the document itself. It
-has no actions, state, user data, or authentication responsibility. Registration
-and forgot-password currently omit route-specific panel content and retain only
-the shared logo and background treatment.
+and fixed white and zinc utilities for the document itself, so the preview keeps
+its light-paper appearance in both application themes. It has no actions, state,
+user data, or authentication responsibility. Registration and forgot-password
+currently omit route-specific panel content and retain only the shared logo and
+background treatment.
 
 ### 6.8 Password-Recovery Email Privacy
 
