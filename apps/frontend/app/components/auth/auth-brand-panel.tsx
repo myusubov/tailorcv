@@ -18,11 +18,11 @@ export function AuthBrandPanel({ children }: AuthBrandPanelProps) {
       <div className="bg-accent relative flex w-full flex-col overflow-hidden rounded-2xl p-8 text-white">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:64px_64px] opacity-30"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-size-[64px_64px] opacity-30"
         />
         <div
           aria-hidden="true"
-          className="bg-accent pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black_95%)]"
+          className="bg-accent pointer-events-none absolute inset-0 mask-[radial-gradient(ellipse_at_center,transparent_30%,black_95%)]"
         />
 
         <div className="relative z-20">

@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-08-10
+
+### Theme-Independent Login Resume Preview
+
+- **Problem:** The miniature resume used semantic surface and neutral roles, so dark mode turned the document dark even though it sits on the same green brand panel and is intended to remain recognizable as white paper.
+- **Solution:**
+  1. **Fixed document palette — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Replaces theme-responsive document, label, separator, and placeholder colors with white and zinc utilities that remain visually stable in both application themes.
+  2. **Flat preview treatment — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Removes the padded bordered frame around the document so the preview remains one direct, minimal card rather than a layered card composition.
+  3. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the light-paper invariant and its fixed white/zinc ownership.
+- **Outcome:** The login brand panel presents the same minimal white resume reminder in light and dark modes without introducing a separate theme token contract.
+
+## 2026-08-08
+
+### Responsive Auth Form Introductions
+
+- **Problem:** Login hid its repeated desktop introduction with a route-specific class, while registration and password recovery retained the same title-and-description pattern beside the shared desktop brand panel.
+- **Solution:**
+  1. **Shared responsive utility — `apps/frontend/app/globals.css`**: Adds `auth-form-mobile-intro`, which keeps route context visible on smaller screens and visually hides it with `sr-only` on desktop so assistive technology retains the heading.
+  2. **Consistent entry forms — `apps/frontend/app/components/auth/login/login-form-view.tsx`, `apps/frontend/app/(auth)/register/page.tsx`, and `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx`**: Applies the shared introduction behavior across login, registration, and forgot-password email entry.
+  3. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the shared responsive ownership and accessibility behavior.
+- **Outcome:** Small-screen auth forms retain clear route context without repeating their introduction visually beside the desktop brand panel.
+
 ## 2026-08-07
 
 ### Login Resume Preview Simplification
