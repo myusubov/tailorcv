@@ -6,13 +6,23 @@
 
 ## 2026-08-11
 
+### Register Entrance Animation CSS Migration
+
+- **Decision:** Use CSS keyframes for the registration form and email-verification entrance sequences.
+- **Problem:** Registration retained multiple Framer Motion wrappers for fixed mount-only opacity, translation, and scale effects after login had moved the same presentation concern into inspectable native CSS.
+- **Solution:**
+  1. **Semantic animation targets — register view components and `apps/frontend/app/components/auth/registration-verification-view.tsx`**: Replaces Motion wrappers with native elements and route-specific classes while preserving form and verification structure.
+  2. **Scoped timelines — `apps/frontend/app/globals.css`**: Reuses shared form keyframes, adds dedicated illustration and verification treatments, preserves existing durations and delays, and honors reduced-motion preferences.
+  3. **Ownership boundary — `docs/architecture/auth/flows/README.md`**: Records registration animation as a CSS presentation concern with no authentication-flow responsibility.
+- **Outcome:** Registration retains its staggered form and verification entrances while removing Framer Motion from those static presentation paths.
+
 ### Login Entrance Animation CSS Migration
 
 - **Decision:** Use CSS keyframes for the login form's fixed entrance sequence.
 - **Problem:** The static login view used multiple Framer Motion wrappers for mount-only opacity, translation, and scale effects that developers wanted to inspect and replay together with browser animation tooling.
 - **Solution:**
   1. **Semantic animation targets — `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Replaces Motion wrappers with native elements and attaches existing or reusable classes to every animated region.
-  2. **Reusable timelines — `apps/frontend/app/globals.css`**: Preserves the existing durations, delays, offsets, and scale while sharing repeated vertical and fade keyframes and honoring reduced-motion preferences.
+  2. **Reusable timelines — `apps/frontend/app/globals.css`**: Preserves the existing durations, delays, and offsets, keeps the illustration and mobile-logo entrances fade-only, and shares repeated vertical and fade keyframes while honoring reduced-motion preferences.
   3. **Ownership boundary — `docs/architecture/auth/flows/README.md`**: Records that fixed login entrance motion belongs to CSS rather than JavaScript animation wrappers.
 - **Outcome:** The login form retains its existing staggered entrance while removing Framer Motion from this static presentation path.
 

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Checkbox, Link } from '@heroui/react';
 import { Controller, type Control } from 'react-hook-form';
 
@@ -12,14 +11,13 @@ interface RegisterTermsFieldProps {
  * Renders the registration terms agreement bound to the provided form control.
  * The checkbox owns the boolean `terms` value and exposes independently
  * reachable links for the terms and privacy policy.
+ *
+ * @param props - React Hook Form control that owns the terms value.
+ * @returns The controlled terms agreement and its validation message.
  */
 export function RegisterTermsField({ control }: RegisterTermsFieldProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.6 }}
-    >
+    <div className="auth-register-terms-enter">
       <Controller
         name="terms"
         control={control}
@@ -62,6 +60,6 @@ export function RegisterTermsField({ control }: RegisterTermsFieldProps) {
           </div>
         )}
       />
-    </motion.div>
+    </div>
   );
 }

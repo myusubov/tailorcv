@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import NextLink from 'next/link';
 import { Button, Form, Separator, Spinner } from '@heroui/react';
 import { Icon } from '@iconify/react';
@@ -23,6 +22,12 @@ export interface RegisterFormViewProps {
   onAppleSignUp: () => void;
 }
 
+/**
+ * Renders the registration form, provider actions, and login navigation.
+ *
+ * @param props - Form control, request state, errors, and registration callbacks.
+ * @returns The render-only register form with route-scoped CSS animation targets.
+ */
 export function RegisterFormView({
   control,
   globalError,
@@ -43,11 +48,7 @@ export function RegisterFormView({
 
       <div id="clerk-captcha" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.7 }}
-      >
+      <div className="auth-register-submit-enter">
         <Button
           type="submit"
           isDisabled={isAnyAuthActionInProgress}
@@ -68,21 +69,16 @@ export function RegisterFormView({
             </>
           )}
         </Button>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.8 }}
-        className="relative py-2"
-      >
+      <div className="auth-register-divider-enter relative py-2">
         <div className="absolute inset-0 flex items-center">
           <Separator className="border-divider w-full" />
         </div>
         <div className="relative flex justify-center text-xs tracking-wider uppercase">
           <span className="bg-background text-muted px-4 font-medium">Or</span>
         </div>
-      </motion.div>
+      </div>
 
       <RegisterSocialActions
         appleLoading={appleLoading}
@@ -92,12 +88,7 @@ export function RegisterFormView({
         onGoogleSignUp={onGoogleSignUp}
       />
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 1.0 }}
-        className="text-muted text-center text-sm"
-      >
+      <p className="auth-register-login-enter text-muted text-center text-sm">
         Already have an account?{' '}
         <NextLink
           href="/login"
@@ -105,7 +96,7 @@ export function RegisterFormView({
         >
           Log in
         </NextLink>
-      </motion.p>
+      </p>
     </Form>
   );
 }

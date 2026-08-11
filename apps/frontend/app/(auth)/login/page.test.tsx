@@ -8,9 +8,12 @@ vi.mock('@/app/components/auth/login/use-login-flow', () => ({
 }));
 
 vi.mock('@/app/components/auth/login', () => ({
-  LoginBranding: () => <div data-testid="login-branding" />,
   LoginFormView: () => <div data-testid="login-form-view" />,
   VerificationView: () => <div data-testid="login-verification-view" />,
+}));
+
+vi.mock('@/app/components/auth/login/login-brand-panel-content', () => ({
+  LoginBrandPanelContent: () => <div data-testid="login-branding" />,
 }));
 
 vi.mock('@/lib/config', () => ({

@@ -6,6 +6,16 @@
 
 ## 2026-08-11
 
+### Register Brand Story and CSS Entrance Motion
+
+- **Problem:** Registration still showed an empty desktop brand panel and used Framer Motion wrappers for its fixed form and email-verification entrance sequence, unlike the completed login treatment.
+- **Solution:**
+  1. **Optimized artwork — `apps/frontend/public/images/auth/register-illustration.webp`**: Converts the supplied transparent PNG into a metadata-free WebP while preserving its `1024 × 1536` dimensions and alpha channel.
+  2. **Route-specific composition — `apps/frontend/app/components/auth/register/register-brand-panel-content.tsx` + `apps/frontend/app/(auth)/register/page.tsx`**: Adds the contained decorative illustration and new-user copy to `AuthBrandPanel`, with desktop and mobile headings owning their respective breakpoints.
+  3. **Native entrance sequence — register view components, `apps/frontend/app/components/auth/registration-verification-view.tsx`, and `apps/frontend/app/globals.css`**: Replaces fixed Motion wrappers with semantic CSS targets, preserves the existing durations and delays, and disables decorative motion for reduced-motion users.
+  4. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the register panel, responsive heading ownership, and CSS animation boundary.
+- **Outcome:** Registration now has a distinct first-step brand story and native CSS entrance sequence without changing Clerk, form, CAPTCHA, OAuth, or verification behavior.
+
 ### Login Browser Input Semantics
 
 - **Problem:** The login fields relied on their input types alone, leaving browsers and password managers without explicit guidance about the account identifier and existing password while also allowing spellcheck on email text.

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Button, Spinner } from '@heroui/react';
 import { Icon } from '@iconify/react';
 
@@ -10,6 +9,12 @@ interface RegisterSocialActionsProps {
   onGoogleSignUp: () => void;
 }
 
+/**
+ * Renders the Google and Apple registration actions with shared loading state.
+ *
+ * @param props - Provider loading state, disabled state, and sign-up callbacks.
+ * @returns The provider buttons with route-scoped CSS animation targets.
+ */
 export function RegisterSocialActions({
   appleLoading,
   googleLoading,
@@ -19,11 +24,7 @@ export function RegisterSocialActions({
 }: RegisterSocialActionsProps) {
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.9 }}
-      >
+      <div className="auth-register-social-enter">
         <Button
           type="button"
           variant="secondary"
@@ -43,13 +44,9 @@ export function RegisterSocialActions({
             </>
           )}
         </Button>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.9 }}
-      >
+      <div className="auth-register-social-enter">
         <Button
           type="button"
           variant="tertiary"
@@ -69,7 +66,7 @@ export function RegisterSocialActions({
             </>
           )}
         </Button>
-      </motion.div>
+      </div>
     </>
   );
 }
