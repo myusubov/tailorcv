@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-08-11
+
+### Login Browser Input Semantics
+
+- **Problem:** The login fields relied on their input types alone, leaving browsers and password managers without explicit guidance about the account identifier and existing password while also allowing spellcheck on email text.
+- **Solution:**
+  1. **Email intent — `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Identifies the account field as email autofill content and disables spellchecking for the identifier.
+  2. **Password intent — `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Marks the credential as the account's current password so password managers can distinguish login from password creation.
+  3. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the browser-semantic hints without changing Clerk validation ownership.
+- **Outcome:** Login fields communicate their intended autofill behavior without altering form validation or authentication flow state.
+
+### Responsive Login Heading Semantics
+
+- **Problem:** Login renders different visible introductions across breakpoints, but keeping the mobile form introduction screen-reader-accessible on desktop duplicated the visible brand-panel heading.
+- **Solution:**
+  1. **Desktop heading ownership — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Keeps the visible brand-panel message available as the desktop page heading.
+  2. **Mobile heading ownership — `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Removes the form introduction from layout and the accessibility tree only on desktop while preserving it as the visible, accessible heading when the brand panel is hidden on smaller screens.
+  3. **Scoped shared behavior — `docs/architecture/auth/flows/README.md`**: Records the login-specific breakpoint switch without changing registration or forgot-password heading accessibility.
+- **Outcome:** Login exposes exactly one visible and accessible page heading at each breakpoint, with ownership matching the displayed layout.
+
+### Login Resume Illustration
+
+- **Problem:** The hand-built miniature resume card still looked like a generic interface mockup rather than a natural, memorable product illustration.
+- **Solution:**
+  1. **Dedicated artwork — `apps/frontend/public/images/auth/login-illustration.webp`**: Adds a transparent, compressed resume-tailoring illustration for the desktop login brand panel.
+  2. **Stable shared branding — `apps/frontend/app/components/auth/auth-brand-panel.tsx`**: Pins the shared inverse logo to the panel's top-left so route content can own its composition independently.
+  3. **Illustration composition — `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`**: Replaces the HTML resume card with the decorative image while retaining the existing welcome-back copy, eager desktop loading, and quality-preserving unoptimized delivery.
+  4. **Current-state documentation — `docs/architecture/auth/flows/README.md`**: Records the illustration asset, presentation contract, and absence of application behavior.
+- **Outcome:** The login panel now presents a recognizable resume-tailoring artifact without resembling a speculative dashboard or introducing interactive state.
+
 ## 2026-08-10
 
 ### Theme-Independent Login Resume Preview

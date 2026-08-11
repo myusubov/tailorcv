@@ -24,6 +24,12 @@ Developer / CI / Docker / Vercel
   -> Node 22 runtime contract
   -> npm workspace commands
 
+Backend production build
+  -> generate Prisma client
+  -> compile TypeScript
+  -> copy Prisma runtime into apps/backend/dist
+  -> npm start
+
 LAN browser
   -> Windows private-network firewall
   -> WSL2 mirrored networking
@@ -40,6 +46,8 @@ LAN browser
 | `package.json` and `.nvmrc`      | Declare the repository Node major for package managers, local shells, and Vercel | Changing or diagnosing the supported Node runtime          |
 | `.github/workflows/ci.yml`       | Selects the Node version used by repository CI                                   | Changing CI runtime behavior                               |
 | `Dockerfile`                     | Selects the backend production/build Node image                                  | Changing backend container runtime                         |
+| `apps/backend/package.json`      | Builds a self-contained backend runtime, including the generated Prisma client   | Changing backend production build or start behavior        |
+| `apps/backend/scripts/copy-prisma-runtime.mjs` | Copies Prisma runtime files into the compiled backend artifact      | Changing the backend output structure                      |
 | `apps/frontend/Dockerfile`       | Selects the frontend production/build Node image                                 | Changing frontend container runtime                        |
 | `apps/frontend/next.config.ts`   | Owns the Next.js development-origin allowlist and frontend runtime configuration | Changing the host address used to open the development app |
 | `.wslconfig` on the Windows host | Owns WSL2 networking behavior outside this repository                            | Diagnosing Windows-to-WSL or LAN-to-WSL reachability       |
@@ -87,6 +95,8 @@ Windows host (outside repository)
 - Keep external host commands and machine-specific firewall state out of repository source files.
 - Keep the root engine, `.nvmrc`, CI setup, Docker images, workspace Node types, and documented runtime on the same Node major.
 - Change the repository Node major as one coordinated migration rather than allowing environments to drift independently.
+- Keep `apps/backend/dist` self-contained: the backend build generates Prisma before compilation and copies the Prisma runtime into the relative path consumed by compiled imports.
+- Keep local production-like builds and Docker builds on the same backend build command rather than repairing container output separately.
 
 ---
 
@@ -105,6 +115,7 @@ Windows host (outside repository)
 - [x] Node 22 declared for local version selection, package-manager engines, CI, and Docker
 - [x] Workspace Node type packages aligned with Node 22
 - [x] Current Windows LAN address is represented in `allowedDevOrigins`
+- [x] Backend production builds include the generated Prisma runtime in `apps/backend/dist`
 - [ ] Confirm or update that address whenever the host joins a different network
 - [ ] Treat LAN reachability as verified only after probing the exact endpoint from the intended client
 

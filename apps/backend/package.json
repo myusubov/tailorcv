@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch --include .env src/server.ts",
     "test": "vitest run --passWithNoTests",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "npm run prisma:generate && tsc -p tsconfig.build.json && node scripts/copy-prisma-runtime.mjs",
     "start": "cross-env NODE_ENV=production TS_NODE_PROJECT=tsconfig.prod.json node -r tsconfig-paths/register dist/src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

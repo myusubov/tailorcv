@@ -26,7 +26,6 @@ ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db" \
     SHADOW_DATABASE_URL="postgresql://user:pass@localhost:5432/shadow"
 RUN rm -rf apps/backend/dist packages/shared/dist \
   && rm -f apps/backend/tsconfig.tsbuildinfo packages/shared/tsconfig.tsbuildinfo \
-  && npm run prisma:generate --workspace=backend \
   && npm run build --workspace=shared \
   && npm run build --workspace=backend
 
@@ -38,8 +37,7 @@ COPY apps/backend/package.json apps/backend/
 COPY packages/shared/package.json packages/shared/
 RUN npm ci --omit=dev
 
-# Copy built artifacts
-COPY --from=build /app/apps/backend/prisma apps/backend/dist/prisma
+# Copy self-contained build artifacts
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 COPY --from=build /app/apps/backend/dist apps/backend/dist
 

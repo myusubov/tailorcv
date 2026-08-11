@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import NextLink from 'next/link';
 import {
   Form,
@@ -51,43 +50,25 @@ export function LoginFormView({
   const isAnyAuthActionInProgress =
     isSubmitting || googleLoading || appleLoading;
   return (
-    <div className="auth-form-panel">
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="auth-form-content"
-      >
+    <div className="auth-login-form auth-form-panel">
+      <div className="auth-form-content">
         {/* Mobile Logo - Centered */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="auth-form-mobile-logo"
-        >
+        <div className="auth-form-mobile-logo">
           <AuthLogo className="text-foreground" />
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="auth-form-mobile-intro"
-        >
-          <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
+        <div className="auth-form-mobile-intro lg:hidden">
+          <h1 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome back
-          </h2>
+          </h1>
           <p className="text-muted mt-3 text-lg">
             Enter your email to sign in to your account
           </p>
-        </motion.div>
+        </div>
 
         {authNotice ? (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-            className="border-accent/20 bg-accent/5 space-y-3 rounded-2xl border px-4 py-4"
+          <div
+            className="auth-login-notice-enter border-accent/20 bg-accent/5 space-y-3 rounded-2xl border px-4 py-4"
             role="status"
             aria-live="polite"
           >
@@ -99,9 +80,7 @@ export function LoginFormView({
                 <p className="text-foreground font-semibold">
                   {authNotice.title}
                 </p>
-                <p className="text-muted text-sm">
-                  {authNotice.description}
-                </p>
+                <p className="text-muted text-sm">{authNotice.description}</p>
               </div>
             </div>
 
@@ -117,15 +96,11 @@ export function LoginFormView({
                 </NextLink>
               </div>
             ) : null}
-          </motion.div>
+          </div>
         ) : null}
 
         <Form className="space-y-6" onSubmit={onSubmit}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
+          <div className="auth-login-email-enter">
             <Controller
               name="email"
               control={control}
@@ -139,6 +114,8 @@ export function LoginFormView({
                   <Input
                     {...field}
                     type="email"
+                    autoComplete='email'
+                    spellCheck={false}
                     placeholder="john@example.com"
                   />
                   {fieldState.error && (
@@ -147,13 +124,9 @@ export function LoginFormView({
                 </TextField>
               )}
             />
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-          >
+          <div className="auth-login-password-enter">
             <Controller
               name="password"
               control={control}
@@ -169,6 +142,7 @@ export function LoginFormView({
                       {...field}
                       type="password"
                       placeholder="Enter your password"
+                      autoComplete='current-password'
                     />
                     {fieldState.error && (
                       <FieldError>{fieldState.error.message}</FieldError>
@@ -183,15 +157,11 @@ export function LoginFormView({
                 </div>
               )}
             />
-          </motion.div>
+          </div>
 
           <AnimatedError message={globalError} />
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-          >
+          <div className="auth-login-submit-enter">
             <Button
               type="submit"
               isDisabled={isAnyAuthActionInProgress}
@@ -207,19 +177,14 @@ export function LoginFormView({
                   Sign In
                   <Icon
                     icon="lucide:arrow-right"
-                    className="size-4 transition-all group-hover:translate-x-1"
+                    className="size-4 transition-transform group-hover:translate-x-1"
                   />
                 </>
               )}
             </Button>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.6 }}
-            className="relative py-2"
-          >
+          <div className="auth-login-divider-enter relative py-2">
             <div className="absolute inset-0 flex items-center">
               <Separator className="border-divider w-full" />
             </div>
@@ -228,13 +193,9 @@ export function LoginFormView({
                 Or
               </span>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.7 }}
-          >
+          <div className="auth-login-social-enter">
             <Button
               type="button"
               variant="secondary"
@@ -254,12 +215,8 @@ export function LoginFormView({
                 </>
               )}
             </Button>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.7 }}
-          >
+          </div>
+          <div className="auth-login-social-enter">
             <Button
               type="button"
               variant="tertiary"
@@ -279,14 +236,9 @@ export function LoginFormView({
                 </>
               )}
             </Button>
-          </motion.div>
+          </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.8 }}
-            className="text-muted text-center text-sm"
-          >
+          <p className="auth-login-sign-up-enter text-muted text-center text-sm">
             Don&apos;t have an account?{' '}
             <NextLink
               href="/register"
@@ -294,9 +246,9 @@ export function LoginFormView({
             >
               Sign up
             </NextLink>
-          </motion.p>
+          </p>
         </Form>
-      </motion.div>
+      </div>
     </div>
   );
 }
