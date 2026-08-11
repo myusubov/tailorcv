@@ -25,7 +25,7 @@ export function AuthBrandPanel({ children }: AuthBrandPanelProps) {
           className="bg-accent pointer-events-none absolute inset-0 mask-[radial-gradient(ellipse_at_center,transparent_30%,black_95%)]"
         />
 
-        <div className="relative z-20">
+        <div className="absolute top-8 left-8 z-20">
           <AuthLogo variant="inverse" />
         </div>
 

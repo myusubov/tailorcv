@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-11
+
+### Login Entrance Animation CSS Migration
+
+- **Decision:** Use CSS keyframes for the login form's fixed entrance sequence.
+- **Problem:** The static login view used multiple Framer Motion wrappers for mount-only opacity, translation, and scale effects that developers wanted to inspect and replay together with browser animation tooling.
+- **Solution:**
+  1. **Semantic animation targets — `apps/frontend/app/components/auth/login/login-form-view.tsx`**: Replaces Motion wrappers with native elements and attaches existing or reusable classes to every animated region.
+  2. **Reusable timelines — `apps/frontend/app/globals.css`**: Preserves the existing durations, delays, offsets, and scale while sharing repeated vertical and fade keyframes and honoring reduced-motion preferences.
+  3. **Ownership boundary — `docs/architecture/auth/flows/README.md`**: Records that fixed login entrance motion belongs to CSS rather than JavaScript animation wrappers.
+- **Outcome:** The login form retains its existing staggered entrance while removing Framer Motion from this static presentation path.
+
 ## 2026-08-07
 
 ### Auth Brand Token Removal

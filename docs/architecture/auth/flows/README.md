@@ -44,6 +44,7 @@
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `apps/frontend/app/(auth)/login/page.tsx`                                           | Thin login route controller that switches between password sign-in and Client Trust verification views         | Any login page composition change                              |
 | `apps/frontend/app/components/auth/login/use-login-flow.ts`                         | Login controller hook — Clerk sign-in orchestration, auth notices, Client Trust, and SSO start handlers        | Any login behavior or redirect change                          |
+| `apps/frontend/app/components/auth/login/login-form-view.tsx`                       | Presentational login form with browser field semantics and route-scoped entrance animation targets             | Login form structure, accessibility, or presentation changes   |
 | `apps/frontend/app/components/auth/register/register-form.tsx`                      | Register form — email/password + Google/Apple SSO handlers                                                     | Any register change                                            |
 | `apps/frontend/app/components/auth/register/use-register-flow.ts`                   | Register controller hook for email/password sign-up, SSO initiation, and OTP verification                      | Register controller changes                                    |
 | `apps/frontend/app/components/auth/register/register-terms-field.tsx`               | Controlled, accessible HeroUI terms agreement with independently reachable legal links                         | Registration terms or Checkbox composition changes             |
@@ -56,7 +57,8 @@
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`       | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/auth-logo.tsx`                                   | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes          | Auth logo behavior, variants, sizing, or accessibility changes |
 | `apps/frontend/app/components/auth/auth-brand-panel.tsx`                            | Shared desktop auth brand panel with fixed branding, decorative grid treatment, and route-content composition   | Desktop auth brand-panel composition or styling changes        |
-| `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`              | Login-only miniature resume reminder and returning-user copy                                                    | Desktop login brand storytelling changes                       |
+| `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`              | Login-only resume-tailoring illustration and returning-user copy                                                | Desktop login brand storytelling changes                       |
+| `apps/frontend/public/images/auth/login-illustration.webp`                           | Transparent login-panel illustration of a resume being tailored                                                 | Login illustration artwork or delivery changes                 |
 | `apps/frontend/app/components/auth/auth-marketing-panel.tsx`                        | Shared desktop registration brand panel and inverse logo treatment                                             | Register branding or marketing-panel changes                   |
 | `apps/frontend/public/brand/tailorcv-mark-*.svg`                                    | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark                                 | Auth logo geometry, color, or contrast changes                 |
 | `apps/frontend/lib/config/constants.ts`                                             | Stable public paths for the shared logo variants                                                               | Adding or renaming brand assets                                |
@@ -241,10 +243,26 @@ Login and registration also use `auth-form-mobile-logo` for their shared
 small-screen logo positioning. Forgot-password email entry deliberately does
 not use that utility because it no longer renders a mobile logo.
 
+Login entrance motion is implemented with CSS keyframes scoped beneath its
+`auth-login-form` parent and attached to the existing shared layout classes and
+login-specific form-item classes. Repeated vertical and fade treatments reuse
+shared keyframes while element classes own their individual delays. This keeps
+the static login view free of JavaScript animation wrappers, prevents the
+sequence from leaking into other auth routes, and disables it for
+reduced-motion users.
+
+The login email field identifies itself to browser autofill and disables
+spellchecking, while the password field requests the existing account password
+through `current-password`. These hints do not change Clerk validation or
+submission ownership.
+
 All three entry forms use `auth-form-mobile-intro` for their route title and
-description. The introduction remains visible and centered on smaller screens,
-then becomes visually hidden while remaining available to assistive technology
-beside the desktop brand panel.
+description. The introduction remains visible and centered on smaller screens.
+Login additionally removes its form introduction from layout and the
+accessibility tree on desktop because its route-specific brand-panel heading
+owns that context there. Registration and forgot-password keep their form
+introductions visually hidden but accessible on desktop because their shared
+brand panels do not provide equivalent route headings.
 
 On desktop, login, registration, and forgot-password email entry render the
 shared `AuthBrandPanel`. The inset panel uses the fixed `w-122` spacing token,
@@ -254,20 +272,23 @@ single-column form layouts.
 
 #### 6.7.1 Login Resume Reminder Composition
 
-`AuthBrandPanel` owns the invariant inverse logo, canonical HeroUI `accent`
-surface, white-derived faded grid, and desktop visibility. Its optional child
-region lets an auth route add non-essential brand storytelling without coupling
-the shared shell to a route.
+`AuthBrandPanel` owns the invariant inverse logo pinned to its top-left corner,
+canonical HeroUI `accent` surface, white-derived faded grid, and desktop
+visibility. Its optional child region lets an auth route add non-essential
+brand storytelling without coupling the shared shell to a route.
 
 The login route composes `LoginBrandPanelContent` into that region. The content
-uses one flat, miniature resume page with familiar experience, project, and
-skills structure, followed by a short welcome-back message. The preview avoids
-scores, workflow states, and speculative product behavior because returning
-users only need a recognizable reminder of the document they work on in
-TailorCV. It uses an inverse translucent frame over the canonical accent surface
-and fixed white and zinc utilities for the document itself, so the preview keeps
-its light-paper appearance in both application themes. It has no actions, state,
-user data, or authentication responsibility. Registration and forgot-password
+uses a transparent WebP illustration of a resume being tailored, followed by a
+short welcome-back message. The artwork gives returning users a recognizable
+reminder of the document they work on without presenting scores, workflow
+states, or speculative product behavior. Its colors remain fixed across
+application themes because it is displayed on the theme-independent accent
+panel. The illustration is decorative, eagerly loaded for the desktop entrance
+sequence, and rendered without Next.js re-encoding to preserve its intended
+quality. The accompanying copy provides the accessible login heading on
+desktop. On smaller screens, the entire brand panel is hidden and the visible
+form introduction provides that heading instead. It has no actions, state, user
+data, or authentication responsibility. Registration and forgot-password
 currently omit route-specific panel content and retain only the shared logo and
 background treatment.
 
