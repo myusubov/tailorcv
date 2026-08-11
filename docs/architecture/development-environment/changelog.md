@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-11
+
+### Self-Contained Backend Production Build
+
+- **Decision:** Make the backend build generate and package its Prisma runtime so `npm run build` followed by `npm start` uses the same artifact locally and in Docker.
+- **Problem:** TypeScript emitted imports targeting `dist/prisma/generated/client`, but the local backend build did not copy that generated JavaScript. Docker repaired the artifact with an extra copy step, leaving local production startup broken.
+- **Solution:**
+  1. **Backend build ownership — `apps/backend/package.json`**: Runs Prisma generation before TypeScript compilation and packages the Prisma runtime afterward.
+  2. **Deterministic artifact assembly — `apps/backend/scripts/copy-prisma-runtime.mjs`**: Replaces `dist/prisma` with the current schema, migrations, and generated client after compilation.
+  3. **Shared local/container contract — `Dockerfile`**: Removes the container-only Prisma copy and consumes the self-contained backend `dist` output.
+- **Outcome:** A clean production-like workflow requires only `npm run build` followed by `npm start`; local and Docker startup resolve the same compiled Prisma path.
+
 ## 2026-08-04
 
 ### Repository-Wide Node 22 Runtime
