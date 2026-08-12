@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Controller, type Control } from 'react-hook-form';
 import { FieldError, Input, Label, TextField } from '@heroui/react';
 
@@ -8,55 +7,69 @@ interface RegisterFieldsProps {
   control: Control<RegisterFormValues>;
 }
 
+/**
+ * Renders the email and password fields bound to the registration form.
+ *
+ * @param props - React Hook Form control that owns the registration values.
+ * @returns The three validated registration fields with staggered CSS targets.
+ */
 export function RegisterFields({ control }: RegisterFieldsProps) {
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-      >
+      <div className="auth-register-email-enter">
         <Controller
           name="email"
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isRequired isInvalid={!!fieldState.error}>
+            <TextField
+              className="w-full"
+              isRequired
+              isInvalid={!!fieldState.error}
+            >
               <Label className="text-base">Email</Label>
               <Input {...field} type="email" placeholder="john@example.com" />
-              {fieldState.error ? <FieldError>{fieldState.error.message}</FieldError> : null}
+              {fieldState.error ? (
+                <FieldError>{fieldState.error.message}</FieldError>
+              ) : null}
             </TextField>
           )}
         />
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-      >
+      <div className="auth-register-password-enter">
         <Controller
           name="password"
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isRequired isInvalid={!!fieldState.error}>
+            <TextField
+              className="w-full"
+              isRequired
+              isInvalid={!!fieldState.error}
+            >
               <Label className="text-base">Password</Label>
-              <Input {...field} type="password" placeholder="Min. 8 characters" />
-              {fieldState.error ? <FieldError>{fieldState.error.message}</FieldError> : null}
+              <Input
+                {...field}
+                type="password"
+                placeholder="Min. 8 characters"
+              />
+              {fieldState.error ? (
+                <FieldError>{fieldState.error.message}</FieldError>
+              ) : null}
             </TextField>
           )}
         />
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
-      >
+      <div className="auth-register-confirm-password-enter">
         <Controller
           name="confirmPassword"
           control={control}
           render={({ field, fieldState }) => (
-            <TextField className="w-full" isRequired isInvalid={!!fieldState.error}>
+            <TextField
+              className="w-full"
+              isRequired
+              isInvalid={!!fieldState.error}
+            >
               <Label className="text-base">Confirm password</Label>
               <Input
                 {...field}
@@ -64,11 +77,13 @@ export function RegisterFields({ control }: RegisterFieldsProps) {
                 type="password"
                 placeholder="Re-enter your password"
               />
-              {fieldState.error ? <FieldError>{fieldState.error.message}</FieldError> : null}
+              {fieldState.error ? (
+                <FieldError>{fieldState.error.message}</FieldError>
+              ) : null}
             </TextField>
           )}
         />
-      </motion.div>
+      </div>
     </>
   );
 }

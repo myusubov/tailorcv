@@ -2,7 +2,6 @@
 
 import { Button, Card, InputOTP, Spinner, Tooltip } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { motion } from 'framer-motion';
 
 import { AnimatedError } from '@/app/components/ui';
 
@@ -18,6 +17,12 @@ export interface RegistrationVerificationViewProps {
   onSubmit: (event: React.FormEvent) => Promise<void>;
 }
 
+/**
+ * Renders the email-code verification step for the active registration flow.
+ *
+ * @param props - Verification state, request flags, and flow callbacks.
+ * @returns The OTP card with resend, correction, and submit controls.
+ */
 export function RegistrationVerificationView({
   code,
   email,
@@ -31,12 +36,7 @@ export function RegistrationVerificationView({
 }: RegistrationVerificationViewProps) {
   return (
     <div className="flex flex-col items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full"
-      >
+      <div className="auth-register-verification-enter w-full">
         <Card className="w-full">
           <Card.Header className="flex flex-col gap-1 text-center">
             <Card.Title className="text-2xl">Check your email</Card.Title>
@@ -61,12 +61,7 @@ export function RegistrationVerificationView({
           </Card.Header>
           <Card.Content>
             <form onSubmit={onSubmit} className="flex flex-col gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="flex justify-center pt-4"
-              >
+              <div className="auth-register-verification-code-enter flex justify-center pt-4">
                 <InputOTP
                   aria-label="Verification code"
                   maxLength={6}
@@ -74,7 +69,7 @@ export function RegistrationVerificationView({
                   onChange={onCodeChange}
                   pattern="^[0-9]*$"
                   inputMode="numeric"
-                  className='justify-center'
+                  className="justify-center"
                 >
                   <InputOTP.Group>
                     <InputOTP.Slot index={0} />
@@ -87,7 +82,7 @@ export function RegistrationVerificationView({
                     <InputOTP.Slot index={5} />
                   </InputOTP.Group>
                 </InputOTP>
-              </motion.div>
+              </div>
 
               <AnimatedError message={globalError} />
 
@@ -127,7 +122,7 @@ export function RegistrationVerificationView({
             </p>
           </Card.Footer>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }
