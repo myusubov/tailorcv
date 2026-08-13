@@ -9,7 +9,7 @@
 | Pillar                     | Description                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | **Runtime consistency**    | Local development, CI, Docker, and deployment use the same supported Node major.                                          |
-| **Repository boundary**    | Repository-owned configuration is documented here; Windows firewall and WSL networking remain external host state.       |
+| **Repository boundary**    | Repository-owned configuration is documented here; Windows firewall and WSL networking remain external host state.        |
 | **Exact origin allowlist** | Next.js development origins are explicit and narrow instead of allowing arbitrary remote hosts.                           |
 | **Environment awareness**  | A private LAN address is not stable across networks and must be re-discovered before the allowlist is treated as current. |
 
@@ -41,16 +41,17 @@ LAN browser
 
 ## 3. Key Files & Entry Points
 
-| File                             | Purpose                                                                          | When to Read                                               |
-| -------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `package.json` and `.nvmrc`      | Declare the repository Node major for package managers, local shells, and Vercel | Changing or diagnosing the supported Node runtime          |
-| `.github/workflows/ci.yml`       | Selects the Node version used by repository CI                                   | Changing CI runtime behavior                               |
-| `Dockerfile`                     | Selects the backend production/build Node image                                  | Changing backend container runtime                         |
-| `apps/backend/package.json`      | Builds a self-contained backend runtime, including the generated Prisma client   | Changing backend production build or start behavior        |
-| `apps/backend/scripts/copy-prisma-runtime.mjs` | Copies Prisma runtime files into the compiled backend artifact      | Changing the backend output structure                      |
-| `apps/frontend/Dockerfile`       | Selects the frontend production/build Node image                                 | Changing frontend container runtime                        |
-| `apps/frontend/next.config.ts`   | Owns the Next.js development-origin allowlist and frontend runtime configuration | Changing the host address used to open the development app |
-| `.wslconfig` on the Windows host | Owns WSL2 networking behavior outside this repository                            | Diagnosing Windows-to-WSL or LAN-to-WSL reachability       |
+| File                                           | Purpose                                                                          | When to Read                                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `package.json` and `.nvmrc`                    | Declare the repository Node major for package managers, local shells, and Vercel | Changing or diagnosing the supported Node runtime          |
+| `.github/workflows/ci.yml`                     | Selects the Node version used by repository CI                                   | Changing CI runtime behavior                               |
+| `Dockerfile`                                   | Selects the backend production/build Node image                                  | Changing backend container runtime                         |
+| `apps/backend/package.json`                    | Builds a self-contained backend runtime, including the generated Prisma client   | Changing backend production build or start behavior        |
+| `apps/backend/scripts/copy-prisma-runtime.mjs` | Copies Prisma runtime files into the compiled backend artifact                   | Changing the backend output structure                      |
+| `apps/frontend/Dockerfile`                     | Selects the frontend production/build Node image                                 | Changing frontend container runtime                        |
+| `apps/frontend/next.config.ts`                 | Owns the Next.js development-origin allowlist and frontend runtime configuration | Changing the host address used to open the development app |
+| `apps/frontend/package.json`                   | Owns the Next.js development-server and compiler release                         | Changing or diagnosing framework development behavior      |
+| `.wslconfig` on the Windows host               | Owns WSL2 networking behavior outside this repository                            | Diagnosing Windows-to-WSL or LAN-to-WSL reachability       |
 
 ---
 
@@ -97,6 +98,7 @@ Windows host (outside repository)
 - Change the repository Node major as one coordinated migration rather than allowing environments to drift independently.
 - Keep `apps/backend/dist` self-contained: the backend build generates Prisma before compilation and copies the Prisma runtime into the relative path consumed by compiled imports.
 - Keep local production-like builds and Docker builds on the same backend build command rather than repairing container output separately.
+- Keep Turbopack's development filesystem cache disabled because this workspace has repeatedly restored stale CSS and HMR chunks. Normal in-memory Fast Refresh remains enabled.
 
 ---
 
@@ -116,6 +118,7 @@ Windows host (outside repository)
 - [x] Workspace Node type packages aligned with Node 22
 - [x] Current Windows LAN address is represented in `allowedDevOrigins`
 - [x] Backend production builds include the generated Prisma runtime in `apps/backend/dist`
+- [x] Next.js 16.3 development tooling is current, with cross-session Turbopack filesystem persistence disabled after recurring stale CSS and HMR restores
 - [ ] Confirm or update that address whenever the host joins a different network
 - [ ] Treat LAN reachability as verified only after probing the exact endpoint from the intended client
 
@@ -123,12 +126,13 @@ Windows host (outside repository)
 
 ## 9. Risks & Mitigations
 
-| Risk                                                 | Mitigation                                                                                       |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| The committed private address becomes stale          | Re-discover the Windows LAN address after network changes and update the allowlist intentionally |
-| The allowlist is mistaken for firewall configuration | Diagnose the Next.js, WSL2, Windows firewall, and LAN-client boundaries separately               |
-| A broad development origin weakens local safeguards  | Keep the allowlist restricted to exact required origins                                          |
-| Local, CI, Docker, and deployment use different Node majors | Keep all repository runtime declarations synchronized and confirm the deployment build log |
+| Risk                                                                  | Mitigation                                                                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| The committed private address becomes stale                           | Re-discover the Windows LAN address after network changes and update the allowlist intentionally           |
+| The allowlist is mistaken for firewall configuration                  | Diagnose the Next.js, WSL2, Windows firewall, and LAN-client boundaries separately                         |
+| A broad development origin weakens local safeguards                   | Keep the allowlist restricted to exact required origins                                                    |
+| Local, CI, Docker, and deployment use different Node majors           | Keep all repository runtime declarations synchronized and confirm the deployment build log                 |
+| Turbopack restores stale compiler output between development sessions | Disable `turbopackFileSystemCacheForDev`; accept slower warm starts while retaining in-memory Fast Refresh |
 
 ---
 

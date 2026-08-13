@@ -1,10 +1,7 @@
 'use client';
 
 import { AuthBrandPanel } from '@/app/components/auth/auth-brand-panel';
-import {
-  VerificationView,
-  LoginFormView,
-} from '@/app/components/auth/login';
+import { VerificationView, LoginFormView } from '@/app/components/auth/login';
 import { LoginBrandPanelContent } from '@/app/components/auth/login/login-brand-panel-content';
 import { useLoginFlow } from '@/app/components/auth/login/use-login-flow';
 

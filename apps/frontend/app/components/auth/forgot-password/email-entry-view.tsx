@@ -12,10 +12,10 @@ import {
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Control, Controller } from 'react-hook-form';
-import { motion } from 'framer-motion';
 
 import { ForgotPasswordFormValues } from '@/lib/schemas/auth';
 import { AuthBrandPanel } from '../auth-brand-panel';
+import { ForgotPasswordBrandPanelContent } from './forgot-password-brand-panel-content';
 
 interface EmailEntryViewProps {
   control: Control<ForgotPasswordFormValues>;
@@ -35,38 +35,26 @@ export function EmailEntryView({
   onSubmit,
 }: EmailEntryViewProps) {
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
+    <div className="auth-forgot-password-form flex min-h-screen flex-col lg:flex-row">
       {/* Left Panel - Branding (Desktop Only) */}
-      <AuthBrandPanel />
+      <AuthBrandPanel>
+        <ForgotPasswordBrandPanelContent />
+      </AuthBrandPanel>
 
       {/* Right Panel - Form */}
       <div className="auth-form-panel">
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="auth-form-content"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="auth-form-mobile-intro"
-          >
-            <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
+        <div className="auth-form-content">
+          <div className="auth-form-mobile-intro">
+            <h1 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
               Forgot password?
-            </h2>
+            </h1>
             <p className="text-muted mt-3 text-lg">
               Enter your email and we&apos;ll send you a reset code
             </p>
-          </motion.div>
+          </div>
 
           <Form className="space-y-6" onSubmit={onSubmit}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-            >
+            <div className="auth-forgot-password-email-enter">
               <Controller
                 name="email"
                 control={control}
@@ -88,13 +76,9 @@ export function EmailEntryView({
                   </TextField>
                 )}
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-            >
+            <div className="auth-forgot-password-submit-enter">
               <Button
                 type="submit"
                 isDisabled={isSubmitting}
@@ -115,14 +99,9 @@ export function EmailEntryView({
                   </>
                 )}
               </Button>
-            </motion.div>
+            </div>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-              className="text-muted text-center text-sm"
-            >
+            <p className="text-muted auth-forgot-password-redirect-enter text-center text-sm">
               Remember your password?{' '}
               <NextLink
                 href="/login"
@@ -130,9 +109,9 @@ export function EmailEntryView({
               >
                 Back to login
               </NextLink>
-            </motion.p>
+            </p>
           </Form>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

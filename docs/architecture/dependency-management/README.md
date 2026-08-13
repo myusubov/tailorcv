@@ -19,6 +19,7 @@
 - **App dependencies live in apps**: Frontend packages such as React, Next.js, and date utilities belong in `apps/frontend/package.json`; backend packages such as Clerk Express and Prisma belong in `apps/backend/package.json`.
 - **Overrides must be verified**: A root override is kept only when `npm ls` confirms the installed tree actually resolves to the intended version.
 - **HeroUI stays exact and synchronized**: `@heroui/react` and `@heroui/styles` use the same exact version so component and CSS contracts cannot move independently or through a routine install.
+- **Framework packages stay synchronized**: Upgrade `next` and `eslint-config-next` together so runtime and framework lint rules describe the same release contract.
 
 ---
 
@@ -100,6 +101,7 @@ tailorcv/
 - **Rule**: Update HeroUI React and Styles together at exact matching versions.
 - **Rule**: Treat React Aria as lockfile-managed peer infrastructure unless frontend source imports a package directly or npm reports an unmet peer.
 - **Rule**: Inspect intervening release notes and the resolved peer tree before delivery.
+- **Rule**: Upgrade `next` and `eslint-config-next` together after reviewing the target minor release for repository-relevant behavior changes.
 
 ---
 
@@ -107,13 +109,13 @@ tailorcv/
 
 > How this domain connects to other domains. Update this when dependencies change.
 
-| Domain           | Relationship                                                                    | Key Interface                                       |
-| ---------------- | ------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Auth             | Clerk packages are split between frontend and backend workspaces                | `@clerk/nextjs`, `@clerk/express`, `@clerk/backend` |
-| Auth brand UI    | Aceternity copy-paste prerequisites are frontend-owned; the current static grid does not import them directly | `clsx`, `motion`, `tailwind-merge`                   |
-| Auth recovery UI | Email masking is owned by the frontend workspace that renders recovery guidance | `maskdata` in `apps/frontend/package.json`          |
-| Backend Data     | Prisma packages must stay aligned in the backend workspace                      | `prisma`, `@prisma/client`, `@prisma/adapter-pg`    |
-| Frontend UI      | Next.js, React, HeroUI, and Tailwind packages belong to the frontend workspace   | `next`, `react`, `@heroui/react`, `@heroui/styles`  |
+| Domain           | Relationship                                                                                                  | Key Interface                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Auth             | Clerk packages are split between frontend and backend workspaces                                              | `@clerk/nextjs`, `@clerk/express`, `@clerk/backend` |
+| Auth brand UI    | Aceternity copy-paste prerequisites are frontend-owned; the current static grid does not import them directly | `clsx`, `motion`, `tailwind-merge`                  |
+| Auth recovery UI | Email masking is owned by the frontend workspace that renders recovery guidance                               | `maskdata` in `apps/frontend/package.json`          |
+| Backend Data     | Prisma packages must stay aligned in the backend workspace                                                    | `prisma`, `@prisma/client`, `@prisma/adapter-pg`    |
+| Frontend UI      | Next.js, React, HeroUI, and Tailwind packages belong to the frontend workspace                                | `next`, `react`, `@heroui/react`, `@heroui/styles`  |
 
 ---
 
@@ -127,11 +129,12 @@ tailorcv/
 - [x] Root app-only dependencies removed from `package.json`
 - [x] High-risk `js-cookie` finding remediated through Clerk patch/update and verified override
 - [x] HeroUI React and Styles pinned together at `3.2.3`
+- [x] Next.js runtime and ESLint configuration aligned at `16.3.0`
 
 ### Phase 2: Deferred Major/Upstream Items
 
 - [ ] Resolve Prisma's pinned `@hono/node-server` when Prisma publishes a patched dependency or a safe lockfile strategy is chosen
-- [ ] Resolve Next's bundled `postcss` when Next publishes a patched release
+- [x] Resolve Next's bundled `postcss` through the Next.js 16.3.0 upgrade
 - [ ] Plan Vitest/Vite/esbuild major migration separately
 
 ---
@@ -144,7 +147,7 @@ tailorcv/
 | Root overrides give a false sense of safety                                        | Keep only overrides verified by `npm ls`                                                                         |
 | Workspace source relies on undeclared root dependencies                            | Search direct imports and move dependencies to the owning workspace                                              |
 | Installing one package silently refreshes unrelated compatible transitive versions | Review lockfile package additions, removals, and version changes separately from the requested direct dependency |
-| A component-library range admits an unreviewed UI contract change                   | Keep HeroUI packages exactly pinned and migrate them through the UI upgrade workflow                              |
+| A component-library range admits an unreviewed UI contract change                  | Keep HeroUI packages exactly pinned and migrate them through the UI upgrade workflow                             |
 
 ---
 

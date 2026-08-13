@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-08-13
+
+### Disable Unreliable Cross-Session Turbopack Development Cache
+
+- **Problem:** Repeated development sessions restored stale authentication CSS and failed to load the browser HMR client chunk. Turbopack continued compiling source changes, but the open page did not receive them until the development server was fully stopped and restarted.
+- **Root cause:** `apps/frontend/next.config.ts` explicitly enabled the experimental `turbopackFileSystemCacheForDev` configuration flag, allowing compiler artifacts in `.next` to be restored across `next dev` sessions. This workspace reproduced the filesystem cache's documented stability risk despite the Next.js 16.3 upgrade.
+- **Solution:** Set `turbopackFileSystemCacheForDev` to `false`. Turbopack and its normal in-memory Fast Refresh behavior remain enabled; only compiler persistence across server restarts is disabled.
+- **Tradeoff:** Subsequent development-server starts may perform more compilation work, but source and CSS correctness take priority over faster warm startup.
+
+## 2026-08-12
+
+### Next.js 16.3 Development Runtime
+
+- **Problem:** A Next.js 16.2.12 development session rebuilt authentication CSS from an invalid restored Turbopack result, serving a removed login scale transition while omitting the newly added register illustration animation.
+- **Solution:**
+  1. **Framework update — `apps/frontend/package.json` + `package-lock.json`**: Upgrades Next.js to 16.3.0, which includes fixes for restored module-factory incremental builds, filesystem watching, persistence failure handling, and development asset cache busting.
+  2. **Built-in recovery — Next.js 16.3 DevTools**: Makes the framework-provided bundler-cache reset and compilation diagnostics available when a development cache becomes invalid instead of introducing a repository-specific cache-deletion startup script.
+- **Outcome:** The repository retains Next.js filesystem caching and normal development startup while moving to the framework release that improves cache correctness and provides its supported stale-output recovery path.
+
 ## 2026-08-11
 
 ### Self-Contained Backend Production Build

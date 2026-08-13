@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname, '../..'),
   },
   experimental: {
-    turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForDev: false,
     typedEnv: true,
     mcpServer: true,
   },

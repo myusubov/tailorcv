@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-13
+
+### Forgot-Password CSS Motion and OTP Surface Treatment
+
+- **Decision:** Keep forgot-password mount-only presentation in native CSS and use HeroUI's surface-appropriate `InputOTP` variant rather than changing global field tokens.
+- **Problem:** Recovery views retained Framer Motion wrappers for deterministic entrance effects, and primary reset-code slots shared the Card's surface color with a transparent field border, making them effectively invisible until focus.
+- **Solution:**
+  1. **Semantic animation targets — forgot-password entry and reset views**: Replaces Motion wrappers with native elements and route-specific classes while preserving the existing entry, scale, and staggered vertical treatments.
+  2. **Scoped timelines — `apps/frontend/app/globals.css`**: Adds the illustration, email-entry, reset-card, and item sequences and includes every target in the reduced-motion override.
+  3. **Surface-aware OTP composition — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Selects HeroUI's `secondary` variant so the slots use the contrasting `default` surface role inside the Card.
+- **Outcome:** Forgot-password presentation no longer requires Framer Motion, reduced-motion users avoid decorative entrances, and reset-code slots remain perceivable before focus in both themes.
+
 ## 2026-08-11
 
 ### Register Entrance Animation CSS Migration
