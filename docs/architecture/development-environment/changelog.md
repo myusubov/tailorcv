@@ -9,7 +9,7 @@
 ### Disable Unreliable Cross-Session Turbopack Development Cache
 
 - **Problem:** Repeated development sessions restored stale authentication CSS and failed to load the browser HMR client chunk. Turbopack continued compiling source changes, but the open page did not receive them until the development server was fully stopped and restarted.
-- **Root cause:** `apps/frontend/next.config.ts` explicitly enabled the beta `turbopackFileSystemCacheForDev` feature, allowing compiler artifacts in `.next` to be restored across `next dev` sessions. This workspace reproduced the filesystem cache's documented stability risk despite the Next.js 16.3 upgrade.
+- **Root cause:** `apps/frontend/next.config.ts` explicitly enabled the experimental `turbopackFileSystemCacheForDev` configuration flag, allowing compiler artifacts in `.next` to be restored across `next dev` sessions. This workspace reproduced the filesystem cache's documented stability risk despite the Next.js 16.3 upgrade.
 - **Solution:** Set `turbopackFileSystemCacheForDev` to `false`. Turbopack and its normal in-memory Fast Refresh behavior remain enabled; only compiler persistence across server restarts is disabled.
 - **Tradeoff:** Subsequent development-server starts may perform more compilation work, but source and CSS correctness take priority over faster warm startup.
 

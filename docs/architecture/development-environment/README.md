@@ -98,7 +98,7 @@ Windows host (outside repository)
 - Change the repository Node major as one coordinated migration rather than allowing environments to drift independently.
 - Keep `apps/backend/dist` self-contained: the backend build generates Prisma before compilation and copies the Prisma runtime into the relative path consumed by compiled imports.
 - Keep local production-like builds and Docker builds on the same backend build command rather than repairing container output separately.
-- Keep Turbopack's beta development filesystem cache disabled because this workspace has repeatedly restored stale CSS and HMR chunks. Normal in-memory Fast Refresh remains enabled.
+- Keep Turbopack's development filesystem cache disabled because this workspace has repeatedly restored stale CSS and HMR chunks. Normal in-memory Fast Refresh remains enabled.
 
 ---
 
@@ -118,7 +118,7 @@ Windows host (outside repository)
 - [x] Workspace Node type packages aligned with Node 22
 - [x] Current Windows LAN address is represented in `allowedDevOrigins`
 - [x] Backend production builds include the generated Prisma runtime in `apps/backend/dist`
-- [x] Next.js 16.3 development tooling is current, with beta cross-session Turbopack filesystem persistence disabled after recurring stale CSS and HMR restores
+- [x] Next.js 16.3 development tooling is current, with cross-session Turbopack filesystem persistence disabled after recurring stale CSS and HMR restores
 - [ ] Confirm or update that address whenever the host joins a different network
 - [ ] Treat LAN reachability as verified only after probing the exact endpoint from the intended client
 
