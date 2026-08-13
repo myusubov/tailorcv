@@ -18,7 +18,7 @@ test.describe('Auth smoke flows', () => {
     await expectAuthPage({
       page,
       path: '/forgot-password',
-      heading: 'Forgot password?',
+      heading: 'Forgot your password?',
       primaryButtonName: 'Send Reset Code',
     });
 
@@ -53,18 +53,24 @@ test.describe('Auth smoke flows', () => {
 
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
-    await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible();
+    await expect(
+      page.getByLabel('Confirm password', { exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Continue with Apple' }),
     ).toBeVisible();
   });
 
-  test('rejects direct navigation to the SSO callback page', async ({ page }) => {
+  test('rejects direct navigation to the SSO callback page', async ({
+    page,
+  }) => {
     await page.goto('/sso-callback', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test('redirects retired SSO continuation visits to registration', async ({ page }) => {
+  test('redirects retired SSO continuation visits to registration', async ({
+    page,
+  }) => {
     await page.goto('/sso-continue', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/register$/);
   });

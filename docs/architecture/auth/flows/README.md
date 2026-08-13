@@ -56,11 +56,15 @@
 | `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`     | Forgot-password page controller hook that owns Clerk reset state transitions and the in-memory resend cooldown | App-layer forgot-password controller changes                   |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step                       | Forgot-password form-structure changes                         |
 | `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`       | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                | Forgot-password form-structure changes                         |
+| `apps/frontend/app/components/auth/forgot-password/forgot-password-brand-panel-content.tsx` | Forgot-password recovery illustration and desktop reassurance copy                                      | Desktop recovery brand storytelling changes                    |
+| `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx`             | Presentational recovery email form with responsive heading and CSS entrance targets                       | Forgot-password email-entry presentation changes               |
+| `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`          | Presentational reset-code and new-password card with CSS entrance targets                                 | Reset-card presentation or OTP composition changes             |
 | `apps/frontend/app/components/auth/auth-logo.tsx`                                   | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes          | Auth logo behavior, variants, sizing, or accessibility changes |
 | `apps/frontend/app/components/auth/auth-brand-panel.tsx`                            | Shared desktop auth brand panel with fixed branding, decorative grid treatment, and route-content composition  | Desktop auth brand-panel composition or styling changes        |
 | `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`             | Login-only resume-tailoring illustration and returning-user copy                                               | Desktop login brand storytelling changes                       |
 | `apps/frontend/public/images/auth/login-illustration.webp`                          | Transparent login-panel illustration of a resume being tailored                                                | Login illustration artwork or delivery changes                 |
 | `apps/frontend/public/images/auth/register-illustration.webp`                       | Transparent register-panel illustration of a new resume taking shape                                           | Register illustration artwork or delivery changes              |
+| `apps/frontend/public/images/auth/forgot-password-illustration.webp`                 | Transparent recovery-panel illustration of secured resume access                                               | Forgot-password illustration artwork or delivery changes       |
 | `apps/frontend/app/components/auth/auth-marketing-panel.tsx`                        | Shared desktop registration brand panel and inverse logo treatment                                             | Register branding or marketing-panel changes                   |
 | `apps/frontend/public/brand/tailorcv-mark-*.svg`                                    | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark                                 | Auth logo geometry, color, or contrast changes                 |
 | `apps/frontend/lib/config/constants.ts`                                             | Stable public paths for the shared logo variants                                                               | Adding or renaming brand assets                                |
@@ -134,6 +138,7 @@ app/components/auth/
     ├── use-forgot-password-flow.ts
     ├── forgot-password-email-entry.tsx
     ├── forgot-password-reset.tsx
+    ├── forgot-password-brand-panel-content.tsx
     ├── email-entry-view.tsx
     └── reset-password-view.tsx
 ```
@@ -246,15 +251,15 @@ Login and registration also use `auth-form-mobile-logo` for their shared
 small-screen logo positioning. Forgot-password email entry deliberately does
 not use that utility because it no longer renders a mobile logo.
 
-Login and registration entrance motion is implemented with CSS keyframes scoped
-beneath their `auth-login-form` and `auth-register-form` parents and attached to
-the existing shared layout classes plus route-specific form-item classes.
-Repeated vertical and fade treatments reuse shared keyframes while element
-classes own their individual delays. Registration verification uses dedicated
-card and code-entry targets so its shorter scale and vertical treatments remain
-unchanged. This keeps both static entry views and registration verification free
-of JavaScript animation wrappers, prevents sequences from leaking into other
-auth routes, and disables decorative motion for reduced-motion users.
+Login, registration, and forgot-password entrance motion is implemented with
+CSS keyframes scoped beneath their route-specific form parents and attached to
+shared layout classes plus semantic item targets. Repeated vertical and fade
+treatments reuse shared keyframes while element classes own their individual
+delays. Registration verification and the recovery reset card use dedicated
+targets so their shorter scale and vertical treatments remain unchanged. This
+keeps the static auth views free of JavaScript animation wrappers, prevents
+sequences from leaking into other routes, and disables decorative motion for
+reduced-motion users.
 
 The login email field identifies itself to browser autofill and disables
 spellchecking, while the password field requests the existing account password
@@ -265,9 +270,9 @@ All three entry forms use `auth-form-mobile-intro` for their route title and
 description. The introduction remains visible and centered on smaller screens.
 Login and registration remove their form introductions from layout and the
 accessibility tree on desktop because their route-specific brand-panel headings
-own that context there. Forgot-password keeps its form introduction visually
-hidden but accessible on desktop because its shared brand panel does not provide
-an equivalent route heading.
+own that context there. Forgot-password currently keeps its form introduction
+visually hidden but accessible on desktop while also rendering recovery copy in
+the brand panel.
 
 On desktop, login, registration, and forgot-password email entry render the
 shared `AuthBrandPanel`. The inset panel uses the fixed `w-122` spacing token,
@@ -293,9 +298,7 @@ sequence, and rendered without Next.js re-encoding to preserve its intended
 quality. The accompanying copy provides the accessible login heading on
 desktop. On smaller screens, the entire brand panel is hidden and the visible
 form introduction provides that heading instead. It has no actions, state, user
-data, or authentication responsibility. Forgot-password currently omits
-route-specific panel content and retains only the shared logo and background
-treatment.
+data, or authentication responsibility.
 
 #### 6.7.2 Register Resume Beginning Composition
 
@@ -312,6 +315,22 @@ route-scoped CSS classes. The form sequence reuses shared entrance keyframes;
 the verification card and code input retain their shorter scale and vertical
 treatments through dedicated classes. These presentation layers have no Clerk,
 form-state, CAPTCHA, navigation, or verification-flow responsibility.
+
+#### 6.7.3 Forgot-Password Recovery Composition
+
+The forgot-password email-entry route composes
+`ForgotPasswordBrandPanelContent` into the shared desktop panel. Its transparent
+WebP presents a secured resume-access metaphor beside concise recovery copy. The
+decorative image is eagerly loaded, delivered without Next.js re-encoding, and
+fades in through the route's reduced-motion-aware CSS sequence.
+
+The email form and staged reset card replace fixed Framer Motion wrappers with
+semantic CSS targets while preserving their original durations, delays,
+translations, and card scale entrance. The reset-code control uses HeroUI's
+`secondary` `InputOTP` treatment because it sits on a Card surface, keeping each
+slot distinct in both light and dark themes without changing the global field
+tokens. These presentation changes do not alter Clerk reset state, resend
+cooldowns, password validation, or navigation.
 
 ### 6.8 Password-Recovery Email Privacy
 

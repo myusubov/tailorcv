@@ -14,7 +14,6 @@ import {
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { Control, Controller } from 'react-hook-form';
-import { motion } from 'framer-motion';
 import { maskEmail2 } from 'maskdata';
 
 import { ResetPasswordFormValues } from '@/lib/schemas/auth';
@@ -68,12 +67,7 @@ export function ResetPasswordView({
 
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full max-w-110"
-      >
+      <div className="auth-forgot-password-reset-enter w-full max-w-110">
         <Card className="w-full">
           <Card.Header className="flex flex-col gap-1 text-center">
             <Card.Title className="text-2xl">Reset your password</Card.Title>
@@ -88,12 +82,7 @@ export function ResetPasswordView({
                 }}
                 className="flex flex-col gap-6"
               >
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  className="flex justify-center pt-4"
-                >
+                <div className="auth-forgot-password-code-enter flex justify-center pt-4">
                   <InputOTP
                     aria-label="Reset code"
                     maxLength={6}
@@ -101,7 +90,8 @@ export function ResetPasswordView({
                     onChange={onCodeChange}
                     pattern="^[0-9]*$"
                     inputMode="numeric"
-                    className='justify-center'
+                    className="justify-center"
+                    variant="secondary"
                   >
                     <InputOTP.Group>
                       <InputOTP.Slot index={0} />
@@ -114,13 +104,9 @@ export function ResetPasswordView({
                       <InputOTP.Slot index={5} />
                     </InputOTP.Group>
                   </InputOTP>
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                >
+                <div className="auth-forgot-password-verify-enter">
                   <Button
                     type="submit"
                     isDisabled={code.length !== 6 || isVerifyingCode}
@@ -141,15 +127,11 @@ export function ResetPasswordView({
                       </>
                     )}
                   </Button>
-                </motion.div>
+                </div>
               </Form>
             ) : (
               <Form onSubmit={onSetPassword} className="flex flex-col gap-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
+                <div className="auth-forgot-password-new-password-enter">
                   <Controller
                     name="password"
                     control={control}
@@ -171,13 +153,9 @@ export function ResetPasswordView({
                       </TextField>
                     )}
                   />
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                >
+                <div className="auth-forgot-password-confirm-password-enter">
                   <Controller
                     name="confirmPassword"
                     control={control}
@@ -199,13 +177,9 @@ export function ResetPasswordView({
                       </TextField>
                     )}
                   />
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                >
+                <div className="auth-forgot-password-reset-submit-enter">
                   <Button
                     type="submit"
                     isDisabled={isSubmitting}
@@ -226,7 +200,7 @@ export function ResetPasswordView({
                       </>
                     )}
                   </Button>
-                </motion.div>
+                </div>
               </Form>
             )}
           </Card.Content>
@@ -261,7 +235,7 @@ export function ResetPasswordView({
             </p>
           </Card.Footer>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

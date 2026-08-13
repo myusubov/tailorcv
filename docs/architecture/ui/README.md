@@ -78,6 +78,7 @@ apps/frontend/
 - Override HeroUI's canonical base variables instead of recreating its Tailwind bridge or calculated hover/soft colors. Use `accent`, `surface`, `default`, `muted`, `separator`, `border`, `focus`, and state tokens according to semantic intent.
 - Keep the generated light and dark OKLCH values, selectors, radii, and Inter assignment synchronized as one theme contract; TailorCV-specific decorative tokens remain outside those blocks.
 - Keep genuinely product-specific decorative colors explicitly namespaced, such as landing and orb tokens; authentication panels use the canonical accent instead of a parallel brand palette.
+- Use HeroUI's `secondary` `InputOTP` variant when the slots sit directly on a `surface` container so the `default` slot background remains distinguishable in light and dark themes without changing global field tokens.
 - Keep HeroUI Toast and Sonner as separate existing feedback systems until a dedicated consolidation decision is made.
 
 ---
@@ -101,6 +102,8 @@ apps/frontend/
 - [x] HeroUI v3 semantic color contract adopted across frontend consumers
 - [x] Secondary Chip color and bordered-treatment combinations completed locally
 - [x] Immediate Tooltip closing preserved through `--tooltip-close-delay`
+- [x] Auth entrance sequences use route-scoped native CSS with reduced-motion fallbacks
+- [x] Reset-code `InputOTP` slots remain visible on Card surfaces in light and dark themes
 - [ ] Complete authorized type, test, build, dependency-tree, and browser verification
 
 ---

@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-13
+
+### Forgot-Password Brand Story and Native Entrance Motion
+
+- **Problem:** Forgot-password email entry retained an empty desktop brand panel, while both the entry form and staged reset card still used Framer Motion wrappers for fixed mount-only effects. The reset-code slots also blended into their Card surface when unfocused in both application themes.
+- **Solution:**
+  1. **Recovery composition — `apps/frontend/app/components/auth/forgot-password/forgot-password-brand-panel-content.tsx`, `email-entry-view.tsx`, and `apps/frontend/public/images/auth/forgot-password-illustration.webp`**: Adds a decorative recovery illustration and reassurance copy through the shared `AuthBrandPanel` composition boundary.
+  2. **Native entrance sequences — forgot-password views and `apps/frontend/app/globals.css`**: Replaces fixed Motion wrappers with route-scoped CSS targets, preserves the existing timing and transform sequence, and disables the decorative effects for reduced-motion users.
+  3. **Visible reset-code slots — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Uses HeroUI's `secondary` `InputOTP` treatment for code slots rendered on a Card surface so they remain distinct before focus in light and dark themes.
+  4. **Smoke expectation — `apps/frontend/e2e/auth-smoke.spec.ts`**: Aligns the forgot-password heading expectation with the new desktop recovery copy.
+- **Outcome:** Password recovery now has route-specific desktop storytelling, native CSS entrance motion, and visible OTP slots without changing Clerk state transitions, resend behavior, validation, or navigation.
+
 ## 2026-08-11
 
 ### Register Brand Story and CSS Entrance Motion
