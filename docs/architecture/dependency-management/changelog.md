@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-12
+
+### Next.js 16.3 Framework Alignment
+
+- **Decision:** Upgrade the frontend from Next.js 16.2 to the latest stable 16.3 release while leaving the already-compatible React declarations unchanged.
+- **Problem:** Next.js 16.2.12 restored stale Turbopack development output after current authentication CSS had been pulled, and its release line retained the older bundled PostCSS resolution.
+- **Solution:**
+  1. **Synchronized framework ownership — `apps/frontend/package.json`**: Advances `next` and `eslint-config-next` together to `^16.3.0` without broadening the upgrade to React or unrelated direct dependencies.
+  2. **Reproducible resolution — `package-lock.json`**: Resolves the Next runtime, SWC platform packages, ESLint plugin, Sharp 0.35.3 image stack, and patched PostCSS graph shipped by Next.js 16.3.
+  3. **Compatibility review — repository routes and configuration**: Confirms the app does not use the 16.3 behaviors most likely to require attention, including `generateStaticParams`, Cache Components, Partial Prefetching, Instant Navigation configuration, or a custom HMR endpoint.
+- **Outcome:** The frontend now uses Next.js and its ESLint rules at 16.3.0, gaining the current Turbopack persistence, incremental-build, watcher, and development-diagnostics fixes without an application migration or codemod.
+
 ## 2026-08-06
 
 ### Aceternity Auth Background Prerequisites
