@@ -9,9 +9,11 @@ import {
 } from '@/lib/schemas/auth';
 
 import { EmailEntryView } from './email-entry-view';
+import { useEffect } from 'react';
 
 interface ForgotPasswordEmailEntryProps {
   onSubmit: (email: string) => Promise<void>;
+  email?: string;
 }
 
 /**
@@ -22,18 +24,26 @@ interface ForgotPasswordEmailEntryProps {
  */
 export function ForgotPasswordEmailEntry({
   onSubmit,
+  email,
 }: ForgotPasswordEmailEntryProps) {
   const {
     control,
     handleSubmit,
     formState: { isSubmitting },
+    setValue,
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: '',
+      email: email ?? '',
     },
     mode: 'onSubmit',
   });
+
+  useEffect(() => {
+    if (email) {
+      setValue('email', email);
+    }
+  }, [email, setValue]);
 
   const handleFormSubmit = async ({ email }: ForgotPasswordFormValues) => {
     await onSubmit(email);

@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-14
+
+### Clerk Next.js 7.7.5 Frontend Upgrade
+
+- **Decision:** Upgrade the frontend Clerk SDK within its existing v7 major line without coupling it to a backend Clerk package migration; concurrent custom-auth changes remain separate auth-domain work.
+- **Problem:** The frontend still declared `@clerk/nextjs` 7.4.1 while the reviewed target was 7.7.5.
+- **Solution:**
+  1. **Frontend ownership — `apps/frontend/package.json`**: Advances `@clerk/nextjs` to `^7.7.5` in the workspace that imports it.
+  2. **Reproducible resolution — `package-lock.json`**: Records Clerk Next.js 7.7.5 and its compatible Clerk React, backend, shared, and TanStack Query transitive packages.
+  3. **Scope boundary — auth source and backend dependencies**: Leaves backend Clerk packages unchanged and records the same-worktree login, recovery, and SSO behavior changes in the auth architecture domain instead of attributing them to package resolution.
+- **Outcome:** The lockfile resolves `@clerk/nextjs` 7.7.5 for the frontend while backend Clerk packages remain unchanged; runtime authentication behavior was not exercised as part of this upgrade.
+
 ## 2026-08-12
 
 ### Next.js 16.3 Framework Alignment

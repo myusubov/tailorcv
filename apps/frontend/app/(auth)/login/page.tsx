@@ -12,7 +12,6 @@ export default function LoginPage() {
     googleLoading,
     appleLoading,
     authNotice,
-    globalError,
     verifying,
     code,
     isVerifying,
@@ -37,7 +36,6 @@ export default function LoginPage() {
         isResending={resending}
         onResend={handleResend}
         onBack={handleBackToLogin}
-        error={globalError}
       />
     );
   }
@@ -57,7 +55,6 @@ export default function LoginPage() {
         googleLoading={googleLoading}
         appleLoading={appleLoading}
         authNotice={authNotice}
-        globalError={globalError}
         onSubmit={handleSubmit}
         onGoogleSignIn={handleGoogleSignIn}
         onAppleSignIn={handleAppleSignIn}

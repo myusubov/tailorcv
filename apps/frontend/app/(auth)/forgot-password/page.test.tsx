@@ -8,7 +8,9 @@ vi.mock('@/app/components/auth/forgot-password/use-forgot-password-flow', () => 
 }));
 
 vi.mock('@/app/components/auth/forgot-password', () => ({
-  ForgotPasswordEmailEntry: () => <div data-testid="forgot-password-email-entry" />,
+  ForgotPasswordEmailEntry: ({ email }: { email?: string }) => (
+    <div data-email={email} data-testid="forgot-password-email-entry" />
+  ),
   ForgotPasswordReset: () => <div data-testid="forgot-password-reset" />,
 }));
 
@@ -18,12 +20,17 @@ describe('ForgotPasswordPage', () => {
   it('renders the email-entry controller on the first step', () => {
     mockUseForgotPasswordFlow.mockReturnValue({
       step: 'email',
+      emailPrefill: 'user@example.com',
       handleEmailSubmit: vi.fn(),
     });
 
     render(<ForgotPasswordPage />);
 
-    expect(screen.getByTestId('forgot-password-email-entry')).toBeTruthy();
+    expect(
+      screen
+        .getByTestId('forgot-password-email-entry')
+        .getAttribute('data-email'),
+    ).toBe('user@example.com');
     expect(screen.queryByTestId('forgot-password-reset')).toBeNull();
   });
 

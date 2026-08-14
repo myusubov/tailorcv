@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSignIn } from '@clerk/nextjs';
 import { toast } from '@heroui/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { resolveForgotPasswordCompletion } from '@/lib/auth/clerk-flow';
 import { config } from '@/lib/config';
@@ -23,12 +23,15 @@ interface SetPasswordArgs {
  *
  * @returns Render state and callbacks for the forgot-password controllers.
  * @remarks The hook owns Clerk calls, local step transitions, navigation, toast
- * feedback, and the in-memory UI resend cooldown. Clerk's server-side rate limit
- * remains authoritative.
+ * feedback, one-shot query-prefill cleanup, and the in-memory UI resend cooldown.
+ * Clerk's server-side rate limit remains authoritative.
  */
 export function useForgotPasswordFlow() {
   const { signIn, fetchStatus } = useSignIn();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
+  const emailPrefill = searchParams.get('email') ?? '';
 
   const [step, setStep] = useState<ResetStep>('email');
   const [email, setEmail] = useState('');
@@ -39,6 +42,20 @@ export function useForgotPasswordFlow() {
     null,
   );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+
+  // Remove the handoff value after the mounted email form has received it.
+  useEffect(() => {
+    if (!emailPrefill) return;
+
+    const nextSearchParams = new URLSearchParams(searchParamsString);
+    nextSearchParams.delete('email');
+
+    const nextQuery = nextSearchParams.toString();
+    router.replace(
+      nextQuery ? `/forgot-password?${nextQuery}` : '/forgot-password',
+      { scroll: false },
+    );
+  }, [emailPrefill, router, searchParamsString]);
 
   // Regularly update the remaining seconds until the resend cooldown expires.
 
@@ -226,7 +243,9 @@ export function useForgotPasswordFlow() {
         return;
       }
 
-      setStep('set-password');
+      if (signIn.status === 'needs_new_password') {
+        setStep('set-password');
+      }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
@@ -249,6 +268,7 @@ export function useForgotPasswordFlow() {
     try {
       const { error } = await signIn.resetPasswordEmailCode.submitPassword({
         password,
+        signOutOfOtherSessions: true,
       });
 
       if (error) {
@@ -321,6 +341,7 @@ export function useForgotPasswordFlow() {
   return {
     step,
     email,
+    emailPrefill,
     code,
     isResending,
     isVerifyingCode,

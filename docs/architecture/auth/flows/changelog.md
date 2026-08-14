@@ -2,7 +2,31 @@
 
 > Chronological implementation history for Auth Flows. Add new entries at the top.
 
+Archived entries: [changelog-archive.md](changelog-archive.md)
+
 ---
+
+## 2026-08-14
+
+### Login Feedback And Password-Recovery Handoff
+
+- **Decision:** Use Clerk's direct password sign-in operation, keep flow-level failures on one HeroUI toast path, and carry the entered email into password recovery without leaving it in the visible URL.
+- **Problem:** Login still split password authentication across identifier creation and password verification, maintained duplicate inline global-error plumbing, and discarded the entered email when users selected password recovery.
+- **Solution:**
+  1. **Direct password orchestration — `apps/frontend/app/components/auth/login/use-login-flow.ts`**: Calls `signIn.password({ emailAddress, password })`, evaluates the resulting Clerk status, and reports returned or thrown failures through HeroUI danger toasts.
+  2. **Single feedback contract — login route and views**: Removes the login `globalError` prop chain and its duplicate animated error surfaces while preserving field-specific React Hook Form validation.
+  3. **Recovery prefill — `login-form-view.tsx`, `use-forgot-password-flow.ts`, and `forgot-password-email-entry.tsx`**: Watches and encodes the current email, exposes it from the recovery flow hook as a one-shot prefill, removes the parameter with `router.replace()`, and lets the mounted RHF form retain the seeded value after URL cleanup.
+- **Outcome:** Password login uses one Clerk operation and one flow-level error surface, while users entering recovery keep their email without retaining it in the address bar. Returning to email entry after starting reset no longer restores the consumed login email, and search-parameter ownership remains in the flow hook.
+
+### Forgot-Password Status And Session Hardening
+
+- **Decision:** Reveal password entry only after Clerk reaches `needs_new_password` and revoke the account's other sessions when the replacement password is submitted.
+- **Problem:** A successful code response could advance the UI without confirming Clerk's next state, and resetting a password left other active sessions untouched. Password inputs on the reset Card also lacked the contrasting treatment already used for its OTP slots.
+- **Solution:**
+  1. **State gate — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Advances from code verification only when `signIn.status === 'needs_new_password'`.
+  2. **Session invalidation — `use-forgot-password-flow.ts`**: Passes `signOutOfOtherSessions: true` to `submitPassword()`.
+  3. **Card-surface fields — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Applies HeroUI's `secondary` variant to both password inputs.
+- **Outcome:** The recovery UI no longer opens password entry before Clerk reaches the required state, replacement passwords invalidate other sessions, and all reset-card fields remain visually distinct. A dedicated unexpected-status message after successful code verification is still not implemented.
 
 ## 2026-08-13
 
@@ -311,28 +335,3 @@
   2. **`apps/frontend/app/(auth)/login/page.tsx`**: Reduced the route component to a thin render boundary that selects between `LoginFormView` and `VerificationView`.
   3. **`apps/frontend/app/components/auth/login/use-login-flow.test.tsx` + `apps/frontend/app/(auth)/login/page.test.tsx`**: Added focused regression coverage for the extracted login flow and the route-level render switch.
 - **Outcome:** The login route now follows the same controller/view split as the rest of the auth stack, and the most important password-sign-in branches have fast, direct coverage without relying on browser automation.
-
-## 2026-04-07
-
-### Clerk v7 Auth Parity Audit And Smoke Coverage
-
-- **Decision:** Align the custom auth controllers with Clerk v7's documented state machine instead of relying on implicit status handling, and lock the public-route guard behavior down with smoke coverage.
-- **Problem:** The login flow still finalized without `decorateUrl`, treated Client Trust as a generic second-factor email flow, the forgot-password flow assumed every successful password submission could finalize immediately, `/sso-continue` was missing Clerk's required captcha mount, and middleware redirected authenticated auth-route visits to a stale `/test` path.
-- **Solution:**
-  1. **`apps/frontend/lib/auth/clerk-flow.ts` + `apps/frontend/lib/auth/clerk-flow.test.ts`**: Added focused Clerk-status decision helpers and regression tests for login and forgot-password state handling.
-  2. **`apps/frontend/app/(auth)/login/page.tsx`**: Switched successful sign-in completion to `finalize({ navigate })`, split `needs_client_trust` from `needs_second_factor`, and moved trusted-device verification to `signIn.mfa.sendEmailCode()` / `signIn.mfa.verifyEmailCode()`.
-  3. **`apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`**: Added explicit post-password handling for `complete`, `needs_second_factor`, and unexpected statuses instead of always finalizing.
-  4. **`apps/frontend/app/components/auth/register/register-form.tsx` + `apps/frontend/app/components/auth/registration-verification.tsx`**: Tightened sign-up and email-verification error handling so unexpected Clerk statuses surface explicitly instead of stalling silently.
-- **Outcome:** The custom auth stack now matches Clerk v7's documented login and recovery states more closely, trusted-device verification uses the correct API surface, and auth redirects are consistent with the configured post-sign-in destination.
-
-## 2026-04-06
-
-### Forgot-Password State Alignment
-
-- **Decision:** Model forgot-password as a staged Clerk sign-in flow that verifies the reset code before accepting a new password.
-- **Problem:** The reset page submitted `verifyCode()` and `submitPassword()` in the same handler, which left the flow in `needs_first_factor` and blocked users from completing password resets reliably.
-- **Solution:**
-  1. **`apps/frontend/app/(auth)/forgot-password/page.tsx`**: Split the controller into `email`, `verify-code`, and `set-password` phases and handled Clerk statuses explicitly.
-  2. **`apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Converted the reset screen into a staged single-screen UI that only reveals password fields after Clerk returns `needs_new_password`.
-  3. **`docs/architecture/auth/flows/README.md`**: Documented the forgot-password state progression and required handler split for future auth work.
-- **Outcome:** The reset flow now follows Clerk's documented state machine, invalid codes stay in the verification step, and successful resets finalize with the same redirect behavior as the rest of the auth system.

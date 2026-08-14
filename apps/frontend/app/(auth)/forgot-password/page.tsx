@@ -15,6 +15,7 @@ export default function ForgotPasswordPage() {
   const {
     step,
     email,
+    emailPrefill,
     code,
     isResending,
     isVerifyingCode,
@@ -45,5 +46,10 @@ export default function ForgotPasswordPage() {
     );
   }
 
-  return <ForgotPasswordEmailEntry onSubmit={handleEmailSubmit} />;
+  return (
+    <ForgotPasswordEmailEntry
+      onSubmit={handleEmailSubmit}
+      email={emailPrefill}
+    />
+  );
 }

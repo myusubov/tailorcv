@@ -20,6 +20,7 @@
 - **Overrides must be verified**: A root override is kept only when `npm ls` confirms the installed tree actually resolves to the intended version.
 - **HeroUI stays exact and synchronized**: `@heroui/react` and `@heroui/styles` use the same exact version so component and CSS contracts cannot move independently or through a routine install.
 - **Framework packages stay synchronized**: Upgrade `next` and `eslint-config-next` together so runtime and framework lint rules describe the same release contract.
+- **Clerk workspaces migrate independently**: Frontend `@clerk/nextjs` updates do not imply a backend Clerk package migration; review each workspace and its auth consumers within its own scope.
 
 ---
 
@@ -130,6 +131,7 @@ tailorcv/
 - [x] High-risk `js-cookie` finding remediated through Clerk patch/update and verified override
 - [x] HeroUI React and Styles pinned together at `3.2.3`
 - [x] Next.js runtime and ESLint configuration aligned at `16.3.0`
+- [x] Clerk Next.js frontend SDK aligned at `7.7.5` independently of the backend Clerk migration
 
 ### Phase 2: Deferred Major/Upstream Items
 

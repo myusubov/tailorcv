@@ -10,8 +10,7 @@ import {
   Spinner,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { Control, Controller } from 'react-hook-form';
-import { AnimatedError } from '@/app/components/ui';
+import { Control, Controller, useWatch } from 'react-hook-form';
 import { AuthLogo } from '@/app/components/auth/auth-logo';
 import type { LoginAuthNotice } from '@/lib/auth/login-auth-reason';
 import { LoginFormValues } from '@/lib/schemas/auth';
@@ -22,7 +21,6 @@ interface LoginFormViewProps {
   googleLoading: boolean;
   appleLoading: boolean;
   authNotice: LoginAuthNotice | null;
-  globalError: string;
   onSubmit: () => void;
   onGoogleSignIn: () => void;
   onAppleSignIn: () => void;
@@ -42,13 +40,14 @@ export function LoginFormView({
   googleLoading,
   appleLoading,
   authNotice,
-  globalError,
   onSubmit,
   onGoogleSignIn,
   onAppleSignIn,
 }: LoginFormViewProps) {
   const isAnyAuthActionInProgress =
     isSubmitting || googleLoading || appleLoading;
+
+  const emailValue = useWatch({ control, name: 'email', defaultValue: '' });
   return (
     <div className="auth-login-form auth-form-panel">
       <div className="auth-form-content">
@@ -114,7 +113,7 @@ export function LoginFormView({
                   <Input
                     {...field}
                     type="email"
-                    autoComplete='email'
+                    autoComplete="email"
                     spellCheck={false}
                     placeholder="john@example.com"
                   />
@@ -142,14 +141,14 @@ export function LoginFormView({
                       {...field}
                       type="password"
                       placeholder="Enter your password"
-                      autoComplete='current-password'
+                      autoComplete="current-password"
                     />
                     {fieldState.error && (
                       <FieldError>{fieldState.error.message}</FieldError>
                     )}
                   </TextField>
                   <NextLink
-                    href="/forgot-password"
+                    href={`/forgot-password${emailValue ? `?email=${encodeURIComponent(emailValue)}` : ''}`}
                     className="text-accent absolute top-0 right-0 text-sm font-medium hover:underline"
                   >
                     Forgot password?
@@ -158,8 +157,6 @@ export function LoginFormView({
               )}
             />
           </div>
-
-          <AnimatedError message={globalError} />
 
           <div className="auth-login-submit-enter">
             <Button

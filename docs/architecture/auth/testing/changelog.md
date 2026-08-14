@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-14
+
+### Login And SSO Regression Contract Alignment
+
+- **Problem:** The login hook tests still asserted the retired two-step password and manual provider-redirect implementation, while callback coverage did not prove that returned transfer errors or unverified `missing_requirements` states leave the spinner.
+- **Solution:**
+  1. **Login contracts — `apps/frontend/app/components/auth/login/use-login-flow.test.tsx`**: Replaces identifier-creation and manual-location expectations with direct `signIn.password()` payloads, HeroUI danger-toast assertions, and `signIn.sso()` redirect contracts for Google and Apple.
+  2. **Callback failures — `apps/frontend/app/components/auth/sso-callback/use-sso-callback.test.tsx`**: Adds both transfer-direction error cases and changes the unverified missing-requirements expectation to a visible callback error.
+  3. **Recovery handoff — `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx` and `apps/frontend/app/(auth)/forgot-password/page.test.tsx`**: Verifies that the flow exposes the login email, removes only that query parameter, preserves unrelated parameters, and passes the prefill through the thin route controller.
+  4. **Coverage map — `docs/architecture/auth/testing/README.md`**: Records the hook suites as fast app-owned boundaries for the staged authentication behavior.
+- **Outcome:** The focused test source now encodes the current login, SSO callback, and one-shot recovery-prefill contracts. These tests were not executed during this change.
+
 ## 2026-08-05
 
 ### Fresh-Attempt Clerk Fixture And Rejection Coverage
