@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-08-14
+
+### Reset-Password Card Field Treatment
+
+- **Problem:** The reset code already used HeroUI's contrasting Card-surface treatment, but the new-password and confirmation inputs still used the default field variant on the same surface.
+- **Solution:**
+  1. **Consistent reset fields — `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`**: Applies HeroUI's `secondary` variant to both password inputs so they follow the established reset-card OTP treatment.
+  2. **UI contract — `docs/architecture/ui/README.md`**: Extends the surface-aware field rule to both `InputOTP` and password `Input` components.
+- **Outcome:** Every interactive field on the reset Card uses the same distinguishable surface treatment in light and dark themes.
+
 ## 2026-08-13
 
 ### Forgot-Password CSS Motion and OTP Surface Treatment

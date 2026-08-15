@@ -53,7 +53,9 @@ Real Clerk reset coverage
 | `apps/frontend/e2e/helpers/auth/forgot-password-flow.ts`                              | Forgot-password page orchestration helpers                                                                                                       | Real forgot-password browser-flow changes      |
 | `apps/frontend/e2e/helpers/auth/forgot-password.ts`                                   | Thin barrel that re-exports public forgot-password auth helpers                                                                                  | Spec-facing auth helper imports                |
 | `apps/frontend/e2e/helpers/env.ts`                                                    | E2E env loader for Clerk/Gmail test configuration                                                                                                | Real auth test setup changes                   |
-| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx` | Focused hook coverage for initial code sending, in-memory cooldown timing, resend blocking, retry availability, and duplicate-request protection | Forgot-password controller or cooldown changes |
+| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx` | Focused hook coverage for one-shot email prefill cleanup, initial code sending, cooldown timing, resend blocking, and retry protection             | Forgot-password controller or cooldown changes |
+| `apps/frontend/app/components/auth/login/use-login-flow.test.tsx`                     | Focused login coverage for direct password sign-in, Client Trust, toast feedback, and Clerk-native login SSO initiation                          | Login controller or OAuth-entry changes        |
+| `apps/frontend/app/components/auth/sso-callback/use-sso-callback.test.tsx`            | Focused callback coverage for finalization, transfers, returned transfer errors, missing requirements, and fallback redirects                    | SSO callback state-machine changes             |
 | `apps/frontend/lib/auth/login-recovery.test.ts`                                       | Focused unit coverage for password rotation selection logic                                                                                      | Fast auth-helper regression coverage           |
 | `apps/frontend/lib/auth/clerk-mail.test.ts`                                           | Focused unit coverage for Clerk reset-mail fallback behavior                                                                                     | Fast mail-helper regression coverage           |
 
@@ -67,6 +69,8 @@ Real Clerk reset coverage
   - controller hooks and thin page boundaries
   - helper utilities
   - Clerk state decision helpers
+  - login password, Client Trust, and Clerk-native SSO initiation outcomes
+  - SSO transfer errors and terminal missing-requirements outcomes
 - Playwright auth smoke:
   - signed-out pages render
   - protected routes redirect
@@ -98,6 +102,12 @@ apps/frontend/e2e/
 
 apps/frontend/app/components/auth/forgot-password/
 └── use-forgot-password-flow.test.tsx # Fast controller-hook coverage
+
+apps/frontend/app/components/auth/login/
+└── use-login-flow.test.tsx # Fast password, Client Trust, feedback, and SSO-start coverage
+
+apps/frontend/app/components/auth/sso-callback/
+└── use-sso-callback.test.tsx # Fast callback transfer and fallback coverage
 ```
 
 ---
@@ -180,6 +190,9 @@ npm run test:e2e:frontend:real-auth
 - [x] Cooldown blocking followed by resend availability and renewal after expiry
 - [x] Failed-resend retry availability and duplicate in-flight request protection
 - [x] Rejected Clerk reset stops fresh-attempt creation and surfaces error feedback
+- [x] Login email handoff is exposed once while URL cleanup preserves unrelated query parameters
+- [x] Direct password sign-in, login toast feedback, Client Trust, and `signIn.sso()` invocation contracts
+- [x] Returned SSO transfer errors and terminal missing-requirements callback contracts
 - [ ] Fresh-attempt reset ordering, returned reset-error handling, and different-email cleanup coverage
 
 ---

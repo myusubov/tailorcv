@@ -12,6 +12,13 @@ const toastMocks = vi.hoisted(() => ({
   success: vi.fn(),
 }));
 
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  replace: vi.fn(),
+  getSearchParam: vi.fn(),
+  searchParamsToString: vi.fn(),
+}));
+
 vi.mock('@clerk/nextjs', () => ({
   useSignIn: () => ({
     fetchStatus: 'idle',
@@ -32,7 +39,12 @@ vi.mock('@heroui/react', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: navigationMocks.push,
+    replace: navigationMocks.replace,
+  }),
+  useSearchParams: () => ({
+    get: navigationMocks.getSearchParam,
+    toString: navigationMocks.searchParamsToString,
   }),
 }));
 
@@ -53,10 +65,16 @@ describe('useForgotPasswordFlow', () => {
     toastMocks.danger.mockReset();
     toastMocks.success.mockReset();
     clerkMocks.reset.mockReset();
+    navigationMocks.push.mockReset();
+    navigationMocks.replace.mockReset();
+    navigationMocks.getSearchParam.mockReset();
+    navigationMocks.searchParamsToString.mockReset();
 
     clerkMocks.create.mockResolvedValue({ error: null });
     clerkMocks.sendCode.mockResolvedValue({ error: null });
     clerkMocks.reset.mockResolvedValue({ error: null });
+    navigationMocks.getSearchParam.mockReturnValue(null);
+    navigationMocks.searchParamsToString.mockReturnValue('');
   });
 
   afterEach(() => {
@@ -68,6 +86,23 @@ describe('useForgotPasswordFlow', () => {
     const { result } = renderHook(() => useForgotPasswordFlow());
 
     expect(result.current.step).toBe('email');
+  });
+
+  it('exposes the email handoff once and removes it from the URL', () => {
+    navigationMocks.getSearchParam.mockImplementation((name: string) =>
+      name === 'email' ? 'user@example.com' : null,
+    );
+    navigationMocks.searchParamsToString.mockReturnValue(
+      'email=user%40example.com&source=login',
+    );
+
+    const { result } = renderHook(() => useForgotPasswordFlow());
+
+    expect(result.current.emailPrefill).toBe('user@example.com');
+    expect(navigationMocks.replace).toHaveBeenCalledWith(
+      '/forgot-password?source=login',
+      { scroll: false },
+    );
   });
 
   it('shows a restart error and does not create a sign-in attempt when Clerk reset rejects', async () => {

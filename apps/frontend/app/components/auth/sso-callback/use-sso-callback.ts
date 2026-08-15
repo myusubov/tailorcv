@@ -4,7 +4,10 @@ import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { buildLoginUrl, type LoginAuthReason } from '@/lib/auth/login-auth-reason';
+import {
+  buildLoginUrl,
+  type LoginAuthReason,
+} from '@/lib/auth/login-auth-reason';
 import { config } from '@/lib/config';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
 
@@ -36,11 +39,7 @@ export function useSSOCallback() {
 
       hasRun.current = true;
 
-      const redirectToLogin = ({
-        reason,
-      }: {
-        reason?: LoginAuthReason;
-      }) => {
+      const redirectToLogin = ({ reason }: { reason?: LoginAuthReason }) => {
         router.push(buildLoginUrl({ reason }));
       };
 
@@ -105,9 +104,16 @@ export function useSSOCallback() {
         // Case 2: The sign-up is transferable — the OAuth email already exists as a Clerk account.
         // Transfer the pending sign-up into a sign-in so the existing account is used instead.
         if (signUp.isTransferable) {
-          await signIn.create({ transfer: true });
+          const { error } = await signIn.create({ transfer: true });
+          if (error) {
+            setError(getClerkErrorMessage(error));
+            setIsLoading(false);
+            return;
+          }
           // SignInFutureResource status doesn't update in-place afer create(); cast to include 'complete'.t
-          const signInStatus = signIn.status as typeof signIn.status | 'complete';
+          const signInStatus = signIn.status as
+            | typeof signIn.status
+            | 'complete';
           if (signInStatus === 'complete') {
             await finalizeSignIn();
             return;
@@ -120,7 +126,9 @@ export function useSSOCallback() {
         // This OAuth provider isn't the primary auth method — redirect to login to complete it.
         if (
           signIn.status === 'needs_first_factor' &&
-          !signIn.supportedFirstFactors?.every((f) => f.strategy === 'enterprise_sso')
+          !signIn.supportedFirstFactors?.every(
+            (f) => f.strategy === 'enterprise_sso',
+          )
         ) {
           return redirectToLogin({ reason: 'primary_required' });
         }
@@ -128,19 +136,14 @@ export function useSSOCallback() {
         // Case 4: The sign-in is transferable — this OAuth account has no Clerk user yet.
         // Transfer the pending sign-in into a sign-up to create a new account.
         if (signIn.isTransferable) {
-          await signUp.create({ transfer: true });
+          const { error } = await signUp.create({ transfer: true });
+          if (error) {
+            setError(getClerkErrorMessage(error));
+            setIsLoading(false);
+            return;
+          }
           if (signUp.status === 'complete') {
             await finalizeSignUp();
-            return;
-          }
-          if (
-            signUp.status === 'missing_requirements' &&
-            signUp.verifications.externalAccount.status === 'verified'
-          ) {
-            showMissingRequirementsError();
-            return;
-          }
-          if (signUp.status === 'missing_requirements') {
             return;
           }
         }
@@ -151,18 +154,18 @@ export function useSSOCallback() {
           return;
         }
 
-        // Case 6: Clerk still requires fields this app no longer collects.
-        // Surface this as configuration drift instead of routing to a retired continuation page.
-        if (
-          signUp.status === 'missing_requirements' &&
-          signUp.verifications.externalAccount.status === 'verified'
-        ) {
+        // Case 6: Clerk still requires fields this app does not currently collect.
+        // Surface configuration drift instead of leaving the callback pending indefinitely.
+        if (signUp.status === 'missing_requirements') {
           showMissingRequirementsError();
           return;
         }
 
         // Case 7: Sign-in requires MFA or a password reset — redirect to login to handle it.
-        if (signIn.status === 'needs_second_factor' || signIn.status === 'needs_new_password') {
+        if (
+          signIn.status === 'needs_second_factor' ||
+          signIn.status === 'needs_new_password'
+        ) {
           return redirectToLogin({
             reason:
               signIn.status === 'needs_second_factor'
@@ -175,7 +178,8 @@ export function useSSOCallback() {
         // Activate it directly instead of creating a new one.
         if (signIn.existingSession || signUp.existingSession) {
           const sessionId =
-            signIn.existingSession?.sessionId ?? signUp.existingSession?.sessionId;
+            signIn.existingSession?.sessionId ??
+            signUp.existingSession?.sessionId;
           if (sessionId) {
             await clerk.setActive({
               session: sessionId,

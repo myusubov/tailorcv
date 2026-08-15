@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockPush = vi.hoisted(() => vi.fn());
@@ -119,6 +119,44 @@ describe('useSSOCallback', () => {
     expect(mockPush).not.toHaveBeenCalledWith('/sso-continue');
   });
 
+  it('surfaces Clerk errors when transferring sign-up into sign-in', async () => {
+    const signIn = createSignInMock();
+    const signUp = createSignUpMock();
+    signUp.isTransferable = true;
+    signIn.create.mockResolvedValue({
+      error: { clerkError: true, message: 'Sign-in transfer failed' },
+    });
+    mockSignInState.signIn = signIn;
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useSSOCallback());
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Sign-in transfer failed');
+    });
+
+    expect(mockPush).not.toHaveBeenCalledWith('/login');
+  });
+
+  it('surfaces Clerk errors when transferring sign-in into sign-up', async () => {
+    const signIn = createSignInMock();
+    const signUp = createSignUpMock();
+    signIn.isTransferable = true;
+    signUp.create.mockResolvedValue({
+      error: { clerkError: true, message: 'Sign-up transfer failed' },
+    });
+    mockSignInState.signIn = signIn;
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useSSOCallback());
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Sign-up transfer failed');
+    });
+
+    expect(mockPush).not.toHaveBeenCalledWith('/login');
+  });
+
   it('surfaces remaining missing requirements as a callback error', async () => {
     const signUp = createSignUpMock();
     mockSignUpState.signUp = signUp;
@@ -126,13 +164,15 @@ describe('useSSOCallback', () => {
     const { result } = renderHook(() => useSSOCallback());
 
     await waitFor(() => {
-      expect(result.current.error).toContain('Clerk still requires additional sign-up fields');
+      expect(result.current.error).toContain(
+        'Clerk still requires additional sign-up fields',
+      );
     });
 
     expect(mockPush).not.toHaveBeenCalledWith('/sso-continue');
   });
 
-  it('defers missing-requirements errors while transferred external accounts are still verifying', async () => {
+  it('surfaces missing requirements while transferred external accounts are still unverified', async () => {
     const signIn = createSignInMock();
     const signUp = createSignUpMock();
     signIn.isTransferable = true;
@@ -149,9 +189,11 @@ describe('useSSOCallback', () => {
     await waitFor(() => {
       expect(signUp.create).toHaveBeenCalledWith({ transfer: true });
     });
-    await act(async () => {});
-
-    expect(result.current.error).toBeNull();
+    await waitFor(() => {
+      expect(result.current.error).toContain(
+        'Clerk still requires additional sign-up fields',
+      );
+    });
     expect(mockPush).not.toHaveBeenCalledWith('/login');
     expect(mockPush).not.toHaveBeenCalledWith('/sso-continue');
   });

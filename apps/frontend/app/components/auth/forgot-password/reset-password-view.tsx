@@ -146,6 +146,7 @@ export function ResetPasswordView({
                           aria-label="New password"
                           type="password"
                           placeholder="Min. 8 characters"
+                          variant="secondary"
                         />
                         {fieldState.error && (
                           <FieldError>{fieldState.error.message}</FieldError>
@@ -170,6 +171,7 @@ export function ResetPasswordView({
                           aria-label="Confirm password"
                           type="password"
                           placeholder="Confirm your password"
+                          variant="secondary"
                         />
                         {fieldState.error && (
                           <FieldError>{fieldState.error.message}</FieldError>

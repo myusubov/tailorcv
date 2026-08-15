@@ -40,36 +40,36 @@
 
 ## 3. Key Files & Entry Points
 
-| File                                                                                | Purpose                                                                                                        | When to Read                                                   |
-| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `apps/frontend/app/(auth)/login/page.tsx`                                           | Thin login route controller that switches between password sign-in and Client Trust verification views         | Any login page composition change                              |
-| `apps/frontend/app/components/auth/login/use-login-flow.ts`                         | Login controller hook — Clerk sign-in orchestration, auth notices, Client Trust, and SSO start handlers        | Any login behavior or redirect change                          |
-| `apps/frontend/app/components/auth/login/login-form-view.tsx`                       | Presentational login form with browser field semantics and route-scoped entrance animation targets             | Login form structure, accessibility, or presentation changes   |
-| `apps/frontend/app/components/auth/register/register-form.tsx`                      | Register form — email/password + Google/Apple SSO handlers                                                     | Any register change                                            |
-| `apps/frontend/app/components/auth/register/register-brand-panel-content.tsx`       | Register-only resume illustration and new-user brand copy                                                      | Desktop register brand storytelling changes                    |
-| `apps/frontend/app/components/auth/register/use-register-flow.ts`                   | Register controller hook for email/password sign-up, SSO initiation, and OTP verification                      | Register controller changes                                    |
-| `apps/frontend/app/components/auth/register/register-terms-field.tsx`               | Controlled, accessible HeroUI terms agreement with independently reachable legal links                         | Registration terms or Checkbox composition changes             |
-| `apps/frontend/app/components/auth/registration-verification-view.tsx`              | Render-only email OTP verification view                                                                        | Email verification UI changes                                  |
-| `apps/frontend/app/components/auth/registration-verification.tsx`                   | Thin registration verification controller                                                                      | Email verification composition changes                         |
-| `apps/frontend/app/components/auth/use-registration-verification-flow.ts`           | Email OTP verification flow hook                                                                               | Verification behavior changes                                  |
-| `apps/frontend/app/(auth)/forgot-password/page.tsx`                                 | Thin forgot-password route controller                                                                          | Forgot-password page composition changes                       |
-| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`     | Forgot-password page controller hook that owns Clerk reset state transitions and the in-memory resend cooldown | App-layer forgot-password controller changes                   |
-| `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx` | Local email-step form controller that owns RHF wiring for the forgot-password entry step                       | Forgot-password form-structure changes                         |
-| `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`       | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                | Forgot-password form-structure changes                         |
-| `apps/frontend/app/components/auth/forgot-password/forgot-password-brand-panel-content.tsx` | Forgot-password recovery illustration and desktop reassurance copy                                      | Desktop recovery brand storytelling changes                    |
-| `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx`             | Presentational recovery email form with responsive heading and CSS entrance targets                       | Forgot-password email-entry presentation changes               |
-| `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`          | Presentational reset-code and new-password card with CSS entrance targets                                 | Reset-card presentation or OTP composition changes             |
-| `apps/frontend/app/components/auth/auth-logo.tsx`                                   | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes          | Auth logo behavior, variants, sizing, or accessibility changes |
-| `apps/frontend/app/components/auth/auth-brand-panel.tsx`                            | Shared desktop auth brand panel with fixed branding, decorative grid treatment, and route-content composition  | Desktop auth brand-panel composition or styling changes        |
-| `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`             | Login-only resume-tailoring illustration and returning-user copy                                               | Desktop login brand storytelling changes                       |
-| `apps/frontend/public/images/auth/login-illustration.webp`                          | Transparent login-panel illustration of a resume being tailored                                                | Login illustration artwork or delivery changes                 |
-| `apps/frontend/public/images/auth/register-illustration.webp`                       | Transparent register-panel illustration of a new resume taking shape                                           | Register illustration artwork or delivery changes              |
-| `apps/frontend/public/images/auth/forgot-password-illustration.webp`                 | Transparent recovery-panel illustration of secured resume access                                               | Forgot-password illustration artwork or delivery changes       |
-| `apps/frontend/app/components/auth/auth-marketing-panel.tsx`                        | Shared desktop registration brand panel and inverse logo treatment                                             | Register branding or marketing-panel changes                   |
-| `apps/frontend/public/brand/tailorcv-mark-*.svg`                                    | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark                                 | Auth logo geometry, color, or contrast changes                 |
-| `apps/frontend/lib/config/constants.ts`                                             | Stable public paths for the shared logo variants                                                               | Adding or renaming brand assets                                |
-| `apps/frontend/lib/auth/clerk-flow.ts`                                              | Small Clerk-status decision helpers for login and forgot-password custom flows                                 | Auditing or changing Clerk state handling                      |
-| `apps/frontend/lib/schemas/auth.ts`                                                 | Zod schemas: login, register, forgotPassword, and resetPassword                                                | Adding/changing form fields                                    |
+| File                                                                                        | Purpose                                                                                                                        | When to Read                                                   |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `apps/frontend/app/(auth)/login/page.tsx`                                                   | Thin login route controller that switches between password sign-in and Client Trust verification views                         | Any login page composition change                              |
+| `apps/frontend/app/components/auth/login/use-login-flow.ts`                                 | Login controller hook — Clerk sign-in orchestration, auth notices, Client Trust, and SSO start handlers                        | Any login behavior or redirect change                          |
+| `apps/frontend/app/components/auth/login/login-form-view.tsx`                               | Presentational login form with browser field semantics, watched-email recovery handoff, and entrance targets                   | Login form structure, accessibility, or presentation changes   |
+| `apps/frontend/app/components/auth/register/register-form.tsx`                              | Register form — email/password + Google/Apple SSO handlers                                                                     | Any register change                                            |
+| `apps/frontend/app/components/auth/register/register-brand-panel-content.tsx`               | Register-only resume illustration and new-user brand copy                                                                      | Desktop register brand storytelling changes                    |
+| `apps/frontend/app/components/auth/register/use-register-flow.ts`                           | Register controller hook for email/password sign-up, SSO initiation, and OTP verification                                      | Register controller changes                                    |
+| `apps/frontend/app/components/auth/register/register-terms-field.tsx`                       | Controlled, accessible HeroUI terms agreement with independently reachable legal links                                         | Registration terms or Checkbox composition changes             |
+| `apps/frontend/app/components/auth/registration-verification-view.tsx`                      | Render-only email OTP verification view                                                                                        | Email verification UI changes                                  |
+| `apps/frontend/app/components/auth/registration-verification.tsx`                           | Thin registration verification controller                                                                                      | Email verification composition changes                         |
+| `apps/frontend/app/components/auth/use-registration-verification-flow.ts`                   | Email OTP verification flow hook                                                                                               | Verification behavior changes                                  |
+| `apps/frontend/app/(auth)/forgot-password/page.tsx`                                         | Thin forgot-password route controller that selects the active flow step                                                        | Forgot-password page composition changes                       |
+| `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.ts`             | Forgot-password page controller hook that owns Clerk reset state, one-shot email prefill cleanup, and the resend cooldown       | App-layer forgot-password controller changes                   |
+| `apps/frontend/app/components/auth/forgot-password/forgot-password-email-entry.tsx`         | Local email-step form controller that owns RHF wiring for the forgot-password entry step                                       | Forgot-password form-structure changes                         |
+| `apps/frontend/app/components/auth/forgot-password/forgot-password-reset.tsx`               | Local reset-step form controller that owns RHF wiring for code verification / password reset UI                                | Forgot-password form-structure changes                         |
+| `apps/frontend/app/components/auth/forgot-password/forgot-password-brand-panel-content.tsx` | Forgot-password recovery illustration and desktop reassurance copy                                                             | Desktop recovery brand storytelling changes                    |
+| `apps/frontend/app/components/auth/forgot-password/email-entry-view.tsx`                    | Presentational recovery email form with responsive heading and CSS entrance targets                                            | Forgot-password email-entry presentation changes               |
+| `apps/frontend/app/components/auth/forgot-password/reset-password-view.tsx`                 | Presentational reset-code and new-password card with CSS entrance targets                                                      | Reset-card presentation or OTP composition changes             |
+| `apps/frontend/app/components/auth/auth-logo.tsx`                                           | Shared accessible home-link wordmark with explicit contrast variants and supported auth display sizes                          | Auth logo behavior, variants, sizing, or accessibility changes |
+| `apps/frontend/app/components/auth/auth-brand-panel.tsx`                                    | Shared desktop auth brand panel with fixed branding, decorative grid treatment, and route-content composition                  | Desktop auth brand-panel composition or styling changes        |
+| `apps/frontend/app/components/auth/login/login-brand-panel-content.tsx`                     | Login-only resume-tailoring illustration and returning-user copy                                                               | Desktop login brand storytelling changes                       |
+| `apps/frontend/public/images/auth/login-illustration.webp`                                  | Transparent login-panel illustration of a resume being tailored                                                                | Login illustration artwork or delivery changes                 |
+| `apps/frontend/public/images/auth/register-illustration.webp`                               | Transparent register-panel illustration of a new resume taking shape                                                           | Register illustration artwork or delivery changes              |
+| `apps/frontend/public/images/auth/forgot-password-illustration.webp`                        | Transparent recovery-panel illustration of secured resume access                                                               | Forgot-password illustration artwork or delivery changes       |
+| `apps/frontend/app/components/auth/auth-marketing-panel.tsx`                                | Shared desktop registration brand panel and inverse logo treatment                                                             | Register branding or marketing-panel changes                   |
+| `apps/frontend/public/brand/tailorcv-mark-*.svg`                                            | Primary, inverse, and monochrome variants of the shared TailorCV shield/T mark                                                 | Auth logo geometry, color, or contrast changes                 |
+| `apps/frontend/lib/config/constants.ts`                                                     | Stable public paths for the shared logo variants                                                                               | Adding or renaming brand assets                                |
+| `apps/frontend/lib/auth/clerk-flow.ts`                                                      | Small Clerk-status decision helpers for login and forgot-password custom flows                                                 | Auditing or changing Clerk state handling                      |
+| `apps/frontend/lib/schemas/auth.ts`                                                         | Zod schemas: login, register, forgotPassword, and resetPassword                                                                | Adding/changing form fields                                    |
 
 ---
 
@@ -180,6 +180,7 @@ if (signIn.status === 'needs_new_password') {
 
 const passwordResult = await signIn.resetPasswordEmailCode.submitPassword({
   password,
+  signOutOfOtherSessions: true,
 });
 if (passwordResult.error) {
   // Render the returned ClerkError via getClerkErrorMessage().
@@ -189,6 +190,11 @@ if (passwordResult.error) {
   // Surface an explicit MFA-required state.
 }
 ```
+
+The code-verification handler advances only when Clerk reports
+`needs_new_password`. Any other successful response remains on the code step;
+the current implementation does not yet surface a dedicated unexpected-status
+message at this boundary.
 
 ### 6.3 Login Client Trust vs MFA
 
@@ -327,9 +333,10 @@ fades in through the route's reduced-motion-aware CSS sequence.
 The email form and staged reset card replace fixed Framer Motion wrappers with
 semantic CSS targets while preserving their original durations, delays,
 translations, and card scale entrance. The reset-code control uses HeroUI's
-`secondary` `InputOTP` treatment because it sits on a Card surface, keeping each
-slot distinct in both light and dark themes without changing the global field
-tokens. These presentation changes do not alter Clerk reset state, resend
+`secondary` `InputOTP` treatment, and the new-password fields use the matching
+`secondary` `Input` treatment, because they sit on a Card surface. This keeps
+the controls distinct in both light and dark themes without changing the global
+field tokens. These presentation changes do not alter Clerk reset state, resend
 cooldowns, password validation, or navigation.
 
 ### 6.8 Password-Recovery Email Privacy
@@ -373,18 +380,33 @@ to email entry. Local email, code, and cooldown state are cleared even when that
 best-effort reset reports or throws an error; the next email submission retries
 the reset before creating its fresh attempt.
 
-### 6.11 Toast-Only Forgot-Password Feedback
+### 6.11 Toast-Only Login And Forgot-Password Feedback
 
-The forgot-password flow reports Clerk and flow-level failures through HeroUI
-toasts owned by `useForgotPasswordFlow()`. The route, form controllers, and views
-do not carry a separate `globalError` value or render a duplicate global-error
-surface. React Hook Form and Zod validation errors remain inline beside their
+The login and forgot-password flows report Clerk and flow-level failures through
+HeroUI toasts owned by their controller hooks. Their route and view contracts do
+not carry a separate `globalError` value or render duplicate global-error
+surfaces. React Hook Form and Zod validation errors remain inline beside their
 corresponding fields because they identify input the user can correct directly.
 
 Retryable failures use the standard toast duration. Terminal failures that occur
 after password submission, including MFA-required, unexpected Clerk status, and
 session-finalization outcomes, use persistent toasts so the explanation remains
 available until the user dismisses it.
+
+### 6.12 Login-To-Recovery Email Handoff
+
+`LoginFormView` watches the current email field and adds it to the forgot-password
+link as an encoded `email` query parameter. On `/forgot-password`,
+`useForgotPasswordFlow()` exposes that value as a one-shot form prefill and removes
+only the `email` parameter with `router.replace()`. The mounted local RHF
+controller receives the prefill before the cleaned search params propagate and
+retains its field value after the query disappears.
+
+This keeps the email out of the visible URL after initialization while preserving
+unrelated query parameters. If the user later returns from the active reset flow,
+the email controller remounts without the already-consumed prefill, so the old
+login email is not restored. Query parsing and cleanup remain inside the feature
+flow hook, while the route only selects the active controller.
 
 ---
 
@@ -414,7 +436,9 @@ available until the user dismisses it.
 - [x] Success feedback after Clerk confirms a reset-code resend
 - [x] Cooldown-aware resend disabling, successful renewal, failure retry, and duplicate-request protection
 - [x] Fresh Clerk reset attempt before a new email submission and when abandoning the active flow
-- [x] Toast-only Clerk and flow feedback with inline field validation retained
+- [x] Toast-only login and forgot-password feedback with inline field validation retained
+- [x] Login email handoff into forgot-password with immediate query cleanup
+- [x] Reset-code status gate before password entry and other-session sign-out after password replacement
 
 ---
 
@@ -424,6 +448,7 @@ available until the user dismisses it.
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Client Trust incorrectly handled as generic second factor     | Treat `needs_client_trust` as its own Clerk state and use `signIn.mfa.*` email-code APIs                           |
 | Forgot-password silently stalls after successful Clerk calls  | Treat returned `{ error }` payloads and unexpected post-submit statuses as first-class UI states                   |
+| Successful code verification returns an unexpected status     | Keep the code step active; add explicit user feedback before treating this boundary as fully hardened              |
 | In-memory cooldown is mistaken for security enforcement       | Treat the countdown as mounted-flow feedback and leave authoritative abuse protection to Clerk                     |
 | Reload leaves Clerk's prior reset attempt available locally   | Ignore status restoration, reset Clerk before the next email submission, and restart the local flow at email entry |
 | Duplicate reset-code requests overlap                         | Disable the view while pending and guard both active cooldown and in-flight state inside the flow hook             |

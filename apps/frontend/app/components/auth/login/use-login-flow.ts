@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 import {
   getLoginAuthNotice,
@@ -13,7 +13,6 @@ import {
   LOGIN_AUTH_REASON_QUERY_PARAM,
 } from '@/lib/auth/login-auth-reason';
 import { resolveLoginAttemptOutcome } from '@/lib/auth/clerk-flow';
-import { resetClerkAuthResource } from '@/lib/auth/reset-clerk-auth-resource';
 import { config } from '@/lib/config';
 import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
@@ -26,7 +25,6 @@ export interface UseLoginFlowResult {
   googleLoading: boolean;
   appleLoading: boolean;
   authNotice: LoginAuthNotice | null;
-  globalError: string;
   verifying: boolean;
   code: string;
   isVerifying: boolean;
@@ -48,7 +46,6 @@ export interface UseLoginFlowResult {
  */
 export function useLoginFlow(): UseLoginFlowResult {
   const { signIn, fetchStatus } = useSignIn();
-  const [globalError, setGlobalError] = useState('');
   const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -109,7 +106,7 @@ export function useLoginFlow(): UseLoginFlowResult {
 
     if (error) {
       const clerkError = getClerkErrorMessage(error);
-      setGlobalError(clerkError || 'Failed to complete sign in');
+      toast.danger(clerkError || 'Failed to complete sign in');
       return false;
     }
 
@@ -118,22 +115,16 @@ export function useLoginFlow(): UseLoginFlowResult {
 
   const submitPasswordSignIn = async ({ email, password }: LoginFormValues) => {
     if (fetchStatus === 'fetching' || !signIn) return;
-    setGlobalError('');
 
     try {
-      const { error: signInCreateError } = await signIn.create({ identifier: email });
+      const { error: signInError } = await signIn.password({
+        emailAddress: email,
+        password,
+      });
 
-      if (signInCreateError) {
-        const clerkError = getClerkErrorMessage(signInCreateError);
-        setGlobalError(clerkError || 'Failed to start sign in');
-        return;
-      }
-
-      const { error: signInPasswordError } = await signIn.password({ password });
-
-      if (signInPasswordError) {
-        const clerkError = getClerkErrorMessage(signInPasswordError);
-        setGlobalError(clerkError || 'Invalid email or password');
+      if (signInError) {
+        const clerkError = getClerkErrorMessage(signInError);
+        toast.danger(clerkError || 'Invalid email or password');
         return;
       }
 
@@ -152,7 +143,7 @@ export function useLoginFlow(): UseLoginFlowResult {
 
         if (error) {
           const clerkError = getClerkErrorMessage(error);
-          setGlobalError(clerkError || 'Failed to send verification code');
+          toast.danger(clerkError || 'Failed to send verification code');
           return;
         }
 
@@ -162,33 +153,33 @@ export function useLoginFlow(): UseLoginFlowResult {
       }
 
       if (outcome.type === 'needs_second_factor') {
-        setGlobalError(
+        toast.danger(
           'Your account requires a second verification method after password sign-in. This login form does not support that MFA step yet.',
         );
         return;
       }
 
       if (outcome.type === 'needs_new_password') {
-        toast.error('For your security, you must reset your password.');
+        toast.danger('For your security, you must reset your password.');
         router.push('/forgot-password');
         return;
       }
 
       if (outcome.type === 'unsupported_second_factor') {
-        setGlobalError(
+        toast.danger(
           'Trusted-device verification is required, but email code verification is not available for this account.',
         );
         return;
       }
 
       console.error('Unhandled sign-in status:', outcome.status);
-      setGlobalError(
+      toast.danger(
         `Sign in status: ${outcome.status?.replace(/_/g, ' ') || 'Unknown'}. Please contact support.`,
       );
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Invalid email or password');
+      toast.danger(clerkError || 'Invalid email or password');
     }
   };
 
@@ -202,32 +193,22 @@ export function useLoginFlow(): UseLoginFlowResult {
     if (fetchStatus === 'fetching' || !signIn) return;
 
     try {
-      setGlobalError('');
       setLoading(true);
-      await resetClerkAuthResource({ resource: signIn });
-      const { error } = await signIn.create({
+      const { error } = await signIn.sso({
         strategy,
-        redirectUrl: '/sso-callback',
-        actionCompleteRedirectUrl: config.auth.afterSignInUrl,
+        redirectCallbackUrl: '/sso-callback',
+        redirectUrl: config.auth.afterSignInUrl,
       });
 
       if (error) {
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'OAuth failed');
+        toast.danger(clerkError || 'OAuth failed');
         return;
       }
-
-      const redirectUrl = signIn.firstFactorVerification.externalVerificationRedirectURL;
-      if (!redirectUrl) {
-        setGlobalError('OAuth failed to initialize');
-        return;
-      }
-
-      window.location.assign(redirectUrl);
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'OAuth failed');
+      toast.danger(clerkError || 'OAuth failed');
     } finally {
       setLoading(false);
     }
@@ -250,13 +231,12 @@ export function useLoginFlow(): UseLoginFlowResult {
   const handleResend = async () => {
     if (fetchStatus === 'fetching' || !signIn) return;
     setResending(true);
-    setGlobalError('');
     try {
       const { error } = await signIn.mfa.sendEmailCode();
 
       if (error) {
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Failed to resend code');
+        toast.danger(clerkError || 'Failed to resend code');
         return;
       }
 
@@ -264,7 +244,7 @@ export function useLoginFlow(): UseLoginFlowResult {
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Failed to resend code');
+      toast.danger(clerkError || 'Failed to resend code');
     } finally {
       setResending(false);
     }
@@ -274,13 +254,12 @@ export function useLoginFlow(): UseLoginFlowResult {
     event.preventDefault();
     if (fetchStatus === 'fetching' || !signIn) return;
     setIsVerifying(true);
-    setGlobalError('');
     try {
       const { error } = await signIn.mfa.verifyEmailCode({ code });
 
       if (error) {
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -290,13 +269,13 @@ export function useLoginFlow(): UseLoginFlowResult {
       }
 
       console.error('Unhandled sign-in verification status:', signIn.status);
-      setGlobalError(
+      toast.danger(
         `Verification status: ${signIn.status?.replace(/_/g, ' ') || 'Unknown'}. Please contact support.`,
       );
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Verification failed');
+      toast.danger(clerkError || 'Verification failed');
     } finally {
       setIsVerifying(false);
     }
@@ -312,7 +291,6 @@ export function useLoginFlow(): UseLoginFlowResult {
     googleLoading,
     appleLoading,
     authNotice,
-    globalError,
     verifying,
     code,
     isVerifying,

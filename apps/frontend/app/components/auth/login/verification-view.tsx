@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Card, InputOTP, Button, Spinner } from '@heroui/react';
-import { AnimatedError } from '@/app/components/ui';
 
 interface VerificationViewProps {
   code: string;
@@ -10,7 +9,6 @@ interface VerificationViewProps {
   isResending: boolean;
   onResend: () => void;
   onBack: () => void;
-  error: string;
 }
 
 export function VerificationView({
@@ -21,7 +19,6 @@ export function VerificationView({
   isResending,
   onResend,
   onBack,
-  error,
 }: VerificationViewProps) {
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4 sm:p-8">
@@ -47,7 +44,8 @@ export function VerificationView({
                   onChange={onCodeChange}
                   pattern="^[0-9]*$"
                   inputMode="numeric"
-                  className='justify-center'
+                  className="justify-center"
+                  variant="secondary"
                 >
                   <InputOTP.Group>
                     <InputOTP.Slot index={0} />
@@ -61,8 +59,6 @@ export function VerificationView({
                   </InputOTP.Group>
                 </InputOTP>
               </div>
-
-              <AnimatedError message={error} />
 
               <Button
                 type="submit"

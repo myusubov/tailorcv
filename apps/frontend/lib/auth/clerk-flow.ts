@@ -59,7 +59,9 @@ export function resolveLoginAttemptOutcome({
 
   if (status === 'needs_client_trust') {
     const hasEmailCodeFactor =
-      supportedSecondFactors?.some((factor) => factor.strategy === 'email_code') ?? false;
+      supportedSecondFactors?.some(
+        (factor) => factor.strategy === 'email_code',
+      ) ?? false;
 
     return hasEmailCodeFactor
       ? { type: 'client_trust_email_code' }

@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-08-14
+
+### Clerk-Native Login SSO And Callback Failure Handling
+
+- **Decision:** Start login OAuth through Clerk's supported `signIn.sso()` operation while retaining the existing manual `signIn.create()` registration path, and treat callback transfer failures or unresolved sign-up requirements as visible terminal states.
+- **Problem:** Login still carried the manual provider-redirect workaround introduced for an earlier SDK behavior, transfer calls ignored returned Clerk errors, and `missing_requirements` could leave the callback spinner active while external verification had not reached `verified`.
+- **Solution:**
+  1. **Login initiation — `apps/frontend/app/components/auth/login/use-login-flow.ts`**: Uses `signIn.sso({ strategy, redirectCallbackUrl: '/sso-callback', redirectUrl })` for Google and Apple and reports immediate failures through HeroUI toasts.
+  2. **Transfer result handling — `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts`**: Checks the `{ error }` returned by both sign-up-to-sign-in and sign-in-to-sign-up transfers before continuing.
+  3. **Terminal missing requirements — `use-sso-callback.ts` and `apps/frontend/app/sso-callback/page.tsx`**: Converts every remaining `missing_requirements` state into the callback page's existing error UI instead of waiting indefinitely for a verification-status gate.
+  4. **Focused regression contracts — login and SSO callback hook tests**: Updates login initiation expectations and adds returned-transfer-error plus unverified missing-requirements cases.
+- **Outcome:** Login delegates provider navigation to Clerk, and the callback leaves its spinner for transfer or configuration failures. Registration still uses its separate manual OAuth start path, and no auth test or provider flow was executed during documentation reconciliation.
+
 ## 2026-04-21
 
 ### Manual OAuth Start Avoids Abandoned Provider Resume
