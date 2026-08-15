@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-15
+
+### Clerk-Native Registration SSO
+
+- **Decision:** Initiate registration providers directly with Clerk's documented `signUp.sso()` flow, reserving `signUp.reset()` for explicit registration restarts and accepting the migration only after focused contracts and manual provider-cancellation checks.
+- **Problem:** Register social buttons retained the lower-level `signIn.create()` plus manual external-redirect workaround after login moved to Clerk-native SSO, leaving the two entry pages on different initiation contracts.
+- **Solution:**
+  1. **Registration initiation — `apps/frontend/app/components/auth/register/use-register-flow.ts`**: Removes `useSignIn()` and calls `signUp.sso({ strategy, redirectCallbackUrl: '/sso-callback', redirectUrl })` directly for Google and Apple without applying the historical reset workaround.
+  2. **Failure handling — `use-register-flow.ts`**: Reports returned or thrown SSO errors through HeroUI danger toasts.
+  3. **Callback compatibility — existing `/sso-callback` state machine**: Continues finalizing new users as sign-up and transferring matching existing accounts to sign-in without adding local intent state.
+- **Outcome:** Both auth entry pages delegate provider navigation to Clerk's v7 factor-specific SSO operations. Manual same-provider and cross-provider cancellation verification remains required because an earlier SDK behavior resumed abandoned attempts; the obsolete reset-before-SSO workaround is not treated as Clerk guidance, and no provider flow was run during implementation.
+
 ## 2026-08-14
 
 ### Clerk-Native Login SSO And Callback Failure Handling

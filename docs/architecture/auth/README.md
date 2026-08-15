@@ -22,6 +22,7 @@
 - **`hasRun` ref**: Prevents double-execution in React StrictMode on the SSO callback hook.
 - **`auth_reason` login redirects**: When OAuth cannot finish sign-in because Clerk requires the primary factor, a second factor, or a password reset, redirect to `/login` with a reason code so the login page can explain the next step inline.
 - **No account profile names**: TailorCV auth flows do not collect or submit account first/last name. If Clerk reports `missing_requirements` for names, treat it as dashboard configuration drift.
+- **Factor-specific social entry**: Login uses `signIn.sso()` and registration uses `signUp.sso()` directly; `/sso-callback` owns transfers between the two resources. `signUp.reset()` is reserved for an explicit registration restart, such as changing the email during verification.
 
 ---
 

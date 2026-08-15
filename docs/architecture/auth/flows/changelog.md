@@ -6,6 +6,18 @@ Archived entries: [changelog-archive.md](changelog-archive.md)
 
 ---
 
+## 2026-08-15
+
+### Clerk-Native Registration And Attempt Reset
+
+- **Decision:** Keep Clerk's password/OTP registration sequence, move form-level failures to HeroUI toasts, and require Clerk attempt reset before changing the verification email.
+- **Problem:** Registration still carried a form-level `globalError` surface, and its change-email action returned to the form without clearing the pending Clerk sign-up attempt.
+- **Solution:**
+  1. **Registration controller — `apps/frontend/app/components/auth/register/use-register-flow.ts`**: Reports password, code-send, unexpected-status, and social-initiation failures through HeroUI danger toasts while keeping OTP-step failures inline.
+  2. **Attempt lifecycle — `use-register-flow.ts`**: Calls `signUp.reset()` before leaving verification and keeps the OTP screen active when reset returns or throws an error.
+  3. **Render contract — `apps/frontend/app/components/auth/register/register-form-view.tsx`**: Removes the form-level `globalError` prop and duplicate animated-error surface while retaining field validation.
+- **Outcome:** Registration entry feedback matches the other Clerk v7 flows, and changing an email no longer leaves the UI out of sync with Clerk's pending attempt. Verification commands and provider flows were not run during implementation.
+
 ## 2026-08-14
 
 ### Login Feedback And Password-Recovery Handoff

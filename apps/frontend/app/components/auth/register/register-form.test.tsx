@@ -10,9 +10,7 @@ vi.mock('./use-register-flow', () => ({
 }));
 
 vi.mock('./register-form-view', () => ({
-  RegisterFormView: ({ globalError }: { globalError: string }) => (
-    <div data-testid="register-form-view">{globalError}</div>
-  ),
+  RegisterFormView: () => <div data-testid="register-form-view" />,
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -35,7 +33,6 @@ describe('RegisterForm', () => {
       mode: 'form',
       formViewProps: {
         control: {},
-        globalError: 'Create account failed',
         googleLoading: false,
         appleLoading: false,
         isSubmitting: false,
@@ -49,7 +46,6 @@ describe('RegisterForm', () => {
     render(<RegisterForm />);
 
     expect(screen.getByTestId('register-form-view')).toBeTruthy();
-    expect(screen.getByText('Create account failed')).toBeTruthy();
     expect(screen.queryByTestId('registration-verification')).toBeNull();
   });
 

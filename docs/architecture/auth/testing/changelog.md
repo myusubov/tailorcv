@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-08-15
+
+### Registration Clerk Contract Alignment
+
+- **Decision:** Cover registration's direct Clerk-native SSO, explicit reset-before-restart lifecycle, and HeroUI feedback at the hook boundary while retaining manual Google/Apple provider verification.
+- **Problem:** Register hook tests asserted manual `signIn.create()` redirects and did not prove that changing email clears Clerk or that reset failures keep verification active.
+- **Solution:**
+  1. **Password and correction contracts — `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`**: Covers password/code initiation, returned Clerk feedback, successful change-email reset, and reset failure that remains on the OTP screen.
+  2. **Social initiation contracts — the same hook suite**: Verifies exact Google/Apple `signUp.sso()` parameters, proves social entry does not reset the resource, and covers returned/thrown SSO feedback.
+  3. **Controller boundary — `apps/frontend/app/components/auth/register/register-form.test.tsx`**: Aligns the form-mode fixture with the removal of form-level `globalError` plumbing.
+- **Outcome:** Fast tests encode the new app-owned registration boundaries. They were updated but not executed, and provider cancellation/retry remains a manual acceptance gate.
+
 ## 2026-08-14
 
 ### Login And SSO Regression Contract Alignment

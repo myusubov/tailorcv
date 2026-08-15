@@ -84,10 +84,10 @@ sequenceDiagram
     participant V as RegistrationVerification
 
     U->>R: Submit email/password form
-    R->>R: signUp.create() → prepareEmailAddressVerification()
+    R->>R: signUp.password() → verifications.sendEmailCode()
     R->>V: Show OTP input
     U->>V: Enter OTP
-    V->>V: signUp.attemptEmailAddressVerification()
+    V->>V: signUp.verifications.verifyEmailCode()
     V->>V: signUp.finalize({ navigate: decorateUrl }) → /onboarding
 ```
 
@@ -220,6 +220,11 @@ router.push(buildLoginUrl({ reason: 'second_factor_required' }));
 ### 6.5 Register Password Confirmation
 
 Email/password registration validates `password` and `confirmPassword` locally in `registerSchema` before Clerk submission. `useRegisterFlow()` still sends only `emailAddress` and `password` to `signUp.password()`, so confirmation remains a local guard and is never sent to Clerk or the backend.
+
+The verification screen's change-email action calls `signUp.reset()` before
+returning to the form. A returned or thrown reset failure leaves verification
+active with an inline explanation so the UI never claims that Clerk abandoned
+the pending attempt when it did not.
 
 ### 6.6 Responsive Auth Brand Marks
 
@@ -380,13 +385,15 @@ to email entry. Local email, code, and cooldown state are cleared even when that
 best-effort reset reports or throws an error; the next email submission retries
 the reset before creating its fresh attempt.
 
-### 6.11 Toast-Only Login And Forgot-Password Feedback
+### 6.11 Toast-Only Auth Entry Feedback
 
-The login and forgot-password flows report Clerk and flow-level failures through
-HeroUI toasts owned by their controller hooks. Their route and view contracts do
-not carry a separate `globalError` value or render duplicate global-error
-surfaces. React Hook Form and Zod validation errors remain inline beside their
-corresponding fields because they identify input the user can correct directly.
+The login, register form, and forgot-password flows report Clerk and flow-level
+entry failures through HeroUI toasts owned by their controller hooks. Their form
+view contracts do not carry a separate `globalError` value or render duplicate
+global-error surfaces. Registration OTP failures remain inline because they
+belong to the active verification step. React Hook Form and Zod validation errors
+also remain inline beside their corresponding fields because they identify input
+the user can correct directly.
 
 Retryable failures use the standard toast duration. Terminal failures that occur
 after password submission, including MFA-required, unexpected Clerk status, and
@@ -436,7 +443,8 @@ flow hook, while the route only selects the active controller.
 - [x] Success feedback after Clerk confirms a reset-code resend
 - [x] Cooldown-aware resend disabling, successful renewal, failure retry, and duplicate-request protection
 - [x] Fresh Clerk reset attempt before a new email submission and when abandoning the active flow
-- [x] Toast-only login and forgot-password feedback with inline field validation retained
+- [x] Clerk reset before registration email correction; fresh social entry delegates directly to `signUp.sso()`
+- [x] Toast-only login, register entry, and forgot-password feedback with inline field and OTP validation retained
 - [x] Login email handoff into forgot-password with immediate query cleanup
 - [x] Reset-code status gate before password entry and other-session sign-out after password replacement
 
@@ -453,6 +461,7 @@ flow hook, while the route only selects the active controller.
 | Reload leaves Clerk's prior reset attempt available locally   | Ignore status restoration, reset Clerk before the next email submission, and restart the local flow at email entry |
 | Duplicate reset-code requests overlap                         | Disable the view while pending and guard both active cooldown and in-flight state inside the flow hook             |
 | Terminal reset outcome disappears before it can be understood | Keep terminal HeroUI error toasts visible until the user dismisses them                                            |
+| Registration returns to email entry without clearing Clerk    | Require a successful `signUp.reset()` before leaving the OTP screen                                                   |
 | View files start re-owning RHF setup                          | Keep RHF/schema wiring in flow hooks or local controllers, not render-only view files                              |
 
 ---
