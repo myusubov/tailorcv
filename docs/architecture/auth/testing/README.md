@@ -55,6 +55,7 @@ Real Clerk reset coverage
 | `apps/frontend/e2e/helpers/env.ts`                                                    | E2E env loader for Clerk/Gmail test configuration                                                                                                | Real auth test setup changes                   |
 | `apps/frontend/app/components/auth/forgot-password/use-forgot-password-flow.test.tsx` | Focused hook coverage for one-shot email prefill cleanup, initial code sending, cooldown timing, resend blocking, and retry protection             | Forgot-password controller or cooldown changes |
 | `apps/frontend/app/components/auth/login/use-login-flow.test.tsx`                     | Focused login coverage for direct password sign-in, Client Trust, toast feedback, and Clerk-native login SSO initiation                          | Login controller or OAuth-entry changes        |
+| `apps/frontend/app/components/auth/register/use-register-flow.test.tsx`                | Focused registration coverage for password/code initiation, attempt reset, HeroUI feedback, and Clerk-native signup SSO                         | Register controller or OAuth-entry changes     |
 | `apps/frontend/app/components/auth/sso-callback/use-sso-callback.test.tsx`            | Focused callback coverage for finalization, transfers, returned transfer errors, missing requirements, and fallback redirects                    | SSO callback state-machine changes             |
 | `apps/frontend/lib/auth/login-recovery.test.ts`                                       | Focused unit coverage for password rotation selection logic                                                                                      | Fast auth-helper regression coverage           |
 | `apps/frontend/lib/auth/clerk-mail.test.ts`                                           | Focused unit coverage for Clerk reset-mail fallback behavior                                                                                     | Fast mail-helper regression coverage           |
@@ -70,6 +71,7 @@ Real Clerk reset coverage
   - helper utilities
   - Clerk state decision helpers
   - login password, Client Trust, and Clerk-native SSO initiation outcomes
+  - register password/code initiation, attempt reset, and Clerk-native signup SSO outcomes
   - SSO transfer errors and terminal missing-requirements outcomes
 - Playwright auth smoke:
   - signed-out pages render
@@ -105,6 +107,9 @@ apps/frontend/app/components/auth/forgot-password/
 
 apps/frontend/app/components/auth/login/
 └── use-login-flow.test.tsx # Fast password, Client Trust, feedback, and SSO-start coverage
+
+apps/frontend/app/components/auth/register/
+└── use-register-flow.test.tsx # Fast password, reset, feedback, and signup SSO-start coverage
 
 apps/frontend/app/components/auth/sso-callback/
 └── use-sso-callback.test.tsx # Fast callback transfer and fallback coverage
@@ -154,6 +159,7 @@ npm run test:e2e:frontend:real-auth
 ### 6.5 Social Auth Testing Policy
 
 - Keep Google and Apple auth automation at the app-owned boundary only:
+  - login and register flow-hook initiation
   - `useSSOCallback`
   - retired `/sso-continue` redirect
   - public-route guards and fallback redirects
@@ -163,6 +169,8 @@ npm run test:e2e:frontend:real-auth
   - Google sign-up
   - Apple sign-in
   - Apple sign-up
+  - same-provider retry after cancelling registration OAuth
+  - cross-provider switch after cancelling registration OAuth
   - missing-requirements configuration-drift error
   - existing-session callback behavior
 - Do not add full provider-browser automation by default; it is too flaky relative to the confidence gained over the current hook and smoke coverage.
@@ -192,8 +200,9 @@ npm run test:e2e:frontend:real-auth
 - [x] Rejected Clerk reset stops fresh-attempt creation and surfaces error feedback
 - [x] Login email handoff is exposed once while URL cleanup preserves unrelated query parameters
 - [x] Direct password sign-in, login toast feedback, Client Trust, and `signIn.sso()` invocation contracts
+- [x] Registration password/code initiation, reset lifecycle, toast feedback, and `signUp.sso()` invocation contracts
 - [x] Returned SSO transfer errors and terminal missing-requirements callback contracts
-- [ ] Fresh-attempt reset ordering, returned reset-error handling, and different-email cleanup coverage
+- [ ] Forgot-password reset ordering, returned reset-error handling, and different-email cleanup coverage
 
 ---
 
@@ -203,10 +212,11 @@ npm run test:e2e:frontend:real-auth
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | OTP UI interactions diverge between flows                                     | Reuse the shared OTP helper for reset and verification steps                                                   |
 | External services slow down the suite                                         | Keep real auth tests separate from fast Vitest and smoke runs                                                  |
-| Partial fresh-attempt coverage is mistaken for the complete reset contract    | Keep reset ordering, returned errors, and different-email cleanup listed as pending until asserted directly    |
+| Partial forgot-password coverage is mistaken for its complete reset contract  | Keep reset ordering, returned errors, and different-email cleanup listed as pending until asserted directly    |
 | Shared real-auth user collides across specs                                   | Run the combined real-auth command with one Playwright worker so password rotation and reset state stay serial |
 | Sign-up coverage becomes non-repeatable because the test email already exists | Generate a fresh Clerk test email per run instead of reusing a fixed sign-up account                           |
 | Google/Apple provider automation becomes brittle                              | Keep OAuth coverage at the app-owned hook/guard layer and verify provider-controlled flows manually            |
+| Clerk resumes an abandoned registration provider attempt                      | Use Clerk's direct `signUp.sso()` contract and manually verify same-provider retry plus cross-provider switching |
 
 ---
 

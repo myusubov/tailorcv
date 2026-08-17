@@ -1,9 +1,9 @@
-import { useSignIn, useSignUp } from '@clerk/nextjs';
+import { useSignUp } from '@clerk/nextjs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 
 import { config } from '@/lib/config';
 import { registerSchema, type RegisterFormValues } from '@/lib/schemas/auth';
@@ -29,10 +29,13 @@ export type UseRegisterFlowResult =
  * The hook owns form state, Clerk password sign-up, email-code dispatch, and the transition
  * into the verification screen once Clerk reports the expected pending-email state. It returns
  * view-specific props so the controller can switch screens without knowing each field mapping.
+ *
+ * @returns Render-safe props for either registration entry or email verification.
+ * @remarks Side effects are limited to Clerk attempt mutations, HeroUI feedback, and
+ * post-finalization navigation. Clerk must be reset successfully before changing email.
  */
 export function useRegisterFlow(): UseRegisterFlowResult {
   const router = useRouter();
-  const [globalError, setGlobalError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -40,7 +43,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
   const [verificationError, setVerificationError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, fetchStatus } = useSignUp();
 
   const {
@@ -61,7 +63,35 @@ export function useRegisterFlow(): UseRegisterFlowResult {
 
   const email = useWatch({ control, name: 'email' });
 
-  const handleGoBack = () => {
+  /**
+   * Abandons the pending Clerk attempt before returning to email entry.
+   * Keeps verification visible when Clerk cannot clear its local attempt state.
+   *
+   * @returns A promise that resolves after Clerk and local form state are reconciled.
+   * @remarks Mutates Clerk's local attempt and clears local verification state only on success.
+   */
+  const handleGoBack = async () => {
+    if (!signUp) {
+      setVerificationError(
+        'Unable to restart sign up. Please refresh and try again.',
+      );
+      return;
+    }
+
+    try {
+      const { error } = await signUp.reset();
+      if (error) {
+        const clerkError = getClerkErrorMessage(error);
+        setVerificationError(clerkError || 'Unable to restart sign up');
+        return;
+      }
+    } catch (err: unknown) {
+      console.error(JSON.stringify(err, null, 2));
+      const clerkError = getClerkErrorMessage(err);
+      setVerificationError(clerkError || 'Unable to restart sign up');
+      return;
+    }
+
     setVerifying(false);
     setVerificationCode('');
     setVerificationError('');
@@ -148,9 +178,16 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     }
   };
 
+  /**
+   * Starts password registration, sends Clerk's email code, and opens verification
+   * only for the supported pending-email state.
+   *
+   * @param data - Locally validated email, password, confirmation, and terms values.
+   * @returns A promise that resolves after Clerk advances or feedback is shown.
+   * @remarks Sends only email and password to Clerk; confirmation and terms remain local guards.
+   */
   const submitRegistration = async (data: RegisterFormValues) => {
     if (fetchStatus === 'fetching' || !signUp) return;
-    setGlobalError('');
 
     try {
       const { error } = await signUp.password({
@@ -161,7 +198,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
       if (error) {
         console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -170,7 +207,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
       if (sendEmailError) {
         console.error(JSON.stringify(sendEmailError, null, 2));
         const clerkError = getClerkErrorMessage(sendEmailError);
-        setGlobalError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -183,16 +220,23 @@ export function useRegisterFlow(): UseRegisterFlowResult {
         return;
       }
 
-      setGlobalError(
+      toast.danger(
         `Unexpected sign-up status: ${signUp.status?.replace(/_/g, ' ') || 'unknown'}. Please try again.`,
       );
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Something went wrong');
+      toast.danger(clerkError || 'Something went wrong');
     }
   };
 
+  /**
+   * Delegates social-provider navigation to Clerk's v7 SSO operation for the
+   * requested strategy.
+   *
+   * @param input - Provider strategy and its route-specific loading-state setter.
+   * @returns A promise that resolves when Clerk redirects or reports an initiation failure.
+   */
   const performOAuthSignUp = async ({
     strategy,
     setLoading,
@@ -200,39 +244,35 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     strategy: OAuthSignUpStrategy;
     setLoading: (loading: boolean) => void;
   }) => {
-    if (signInFetchStatus === 'fetching' || !signIn) return;
+    if (fetchStatus === 'fetching' || !signUp) return;
 
     try {
-      setGlobalError('');
       setLoading(true);
-      const { error } = await signIn.create({
+      const { error } = await signUp.sso({
         strategy,
-        redirectUrl: '/sso-callback',
-        actionCompleteRedirectUrl: config.auth.afterSignUpUrl,
+        redirectCallbackUrl: '/sso-callback',
+        redirectUrl: config.auth.afterSignUpUrl,
       });
 
       if (error) {
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'OAuth failed');
+        toast.danger(clerkError || 'OAuth failed');
         return;
       }
-
-      const redirectUrl = signIn.firstFactorVerification.externalVerificationRedirectURL;
-      if (!redirectUrl) {
-        setGlobalError('OAuth failed to initialize');
-        return;
-      }
-
-      window.location.assign(redirectUrl);
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'OAuth failed');
+      toast.danger(clerkError || 'OAuth failed');
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Starts a Google sign-up through the shared Clerk SSO boundary.
+   *
+   * @returns A promise that resolves when social initiation finishes or redirects.
+   */
   const handleGoogleSignUp = async () => {
     await performOAuthSignUp({
       strategy: 'oauth_google',
@@ -240,6 +280,11 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     });
   };
 
+  /**
+   * Starts an Apple sign-up through the shared Clerk SSO boundary.
+   *
+   * @returns A promise that resolves when social initiation finishes or redirects.
+   */
   const handleAppleSignUp = async () => {
     await performOAuthSignUp({
       strategy: 'oauth_apple',
@@ -268,7 +313,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     mode: 'form',
     formViewProps: {
       control,
-      globalError,
       googleLoading,
       appleLoading,
       isSubmitting,

@@ -18,8 +18,7 @@
 ```
 User clicks "Continue with Google/Apple"
   -> login: signIn.sso({ strategy, redirectCallbackUrl, redirectUrl })
-  -> register: signIn.create({ strategy, redirectUrl, actionCompleteRedirectUrl })
-               then window.location.assign(externalVerificationRedirectURL)
+  -> register: signUp.sso({ strategy, redirectCallbackUrl, redirectUrl })
   -> /sso-callback
   -> useSSOCallback()
      -> finalize sign-in
@@ -39,9 +38,9 @@ User clicks "Continue with Google/Apple"
 | File                                                                 | Purpose                                                                                                 | When to Read                                           |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts` | Core v7 SSO callback hook — all OAuth finalization logic                                                | Any SSO flow change                                    |
+| `apps/frontend/app/components/auth/register/use-register-flow.ts`   | Registration password/OTP controller and direct `signUp.sso()` provider initiation                      | Registration OAuth-entry changes                       |
 | `apps/frontend/app/sso-callback/page.tsx`                            | SSO callback page — delegates to `useSSOCallback`                                                       | SSO flow changes                                       |
 | `apps/frontend/app/(auth)/sso-continue/page.tsx`                     | Retired continuation route that redirects to registration                                               | Defensive route behavior changes                       |
-| `apps/frontend/lib/auth/reset-clerk-auth-resource.ts`                | Runtime-compatible reset helper retained for auth paths that still clear stale Clerk resources manually | Manual OAuth provider switching or cancellation issues |
 | `apps/frontend/lib/auth/login-auth-reason.ts`                        | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in                          | OAuth fallback UX changes                              |
 | `apps/frontend/proxy.ts`                                             | Clerk middleware — public/auth/protected route matchers                                                 | Route protection changes                               |
 
@@ -63,8 +62,7 @@ sequenceDiagram
     alt Login social button
         L->>O: signIn.sso({ redirectCallbackUrl: '/sso-callback', redirectUrl })
     else Register social button
-        L->>O: signIn.create({ redirectUrl: '/sso-callback', actionCompleteRedirectUrl })
-        L->>O: window.location.assign(externalVerificationRedirectURL)
+        L->>O: signUp.sso({ redirectCallbackUrl: '/sso-callback', redirectUrl })
     end
     O-->>CB: Redirect after OAuth
     CB->>Hook: useSSOCallback()
@@ -110,24 +108,19 @@ failures are shown through the login flow's HeroUI toast path.
 ### 6.2 SSO Initiation (Register Social Buttons)
 
 ```typescript
-const { error } = await signIn.create({
+const { error } = await signUp.sso({
   strategy: 'oauth_google',
-  redirectUrl: '/sso-callback',
-  actionCompleteRedirectUrl: config.auth.afterSignUpUrl,
+  redirectCallbackUrl: '/sso-callback',
+  redirectUrl: config.auth.afterSignUpUrl,
 });
-
-if (!error) {
-  window.location.assign(
-    signIn.firstFactorVerification.externalVerificationRedirectURL,
-  );
-}
 ```
 
-Registration social buttons intentionally start with `signIn.create()` instead of
-`signUp.sso()`. Unknown users are transferred to sign-up by `/sso-callback`, while
-existing users complete as sign-in. This remains intentionally documented as a
-separate current path; the staged login migration does not migrate registration
-initiation to `signIn.sso()`.
+Registration delegates provider navigation directly to Clerk's native
+`signUp.sso()` operation. Unknown users complete as sign-up, while existing users
+transfer to sign-in through `/sso-callback`. Returned or thrown SSO failures use
+the register flow's HeroUI toast path. `signUp.reset()` is reserved for an
+explicit restart of the password/OTP flow, such as changing the email during
+verification; it is not a prerequisite for fresh social entry.
 
 ### 6.3 OAuth Fallback Redirect Context
 
@@ -170,9 +163,9 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 
 | Risk                                                                                    | Mitigation                                                                                                                                                                                            |
 | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Login and registration initiation parameters are mixed up                               | Login uses `signIn.sso({ redirectCallbackUrl, redirectUrl })`; registration uses `signIn.create({ redirectUrl, actionCompleteRedirectUrl })` followed by `externalVerificationRedirectURL` navigation |
+| Login and registration initiate against the wrong Clerk resource                       | Use `signIn.sso()` for login and `signUp.sso()` for registration, with `redirectCallbackUrl` pointing to `/sso-callback` and `redirectUrl` pointing to the flow-specific destination                 |
 | Clerk still requires first/last name after app removal                                  | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled                                                    |
-| Login and registration OAuth starts drift because they use different Clerk entry points | Keep both paths and their tests documented separately until registration is deliberately migrated or the asymmetry is removed                                                                         |
+| Cancelled registration provider state leaks into the next attempt                       | Keep direct `signUp.sso()` aligned with Clerk's current contract and manually verify same-provider and cross-provider cancellation retries                                                              |
 | Transfer mutations return an error without throwing                                     | Inspect the `{ error }` result from both transfer calls and replace the spinner with callback-page error state                                                                                        |
 | Clerk reports `missing_requirements` before or after external verification settles      | Surface configuration drift for every remaining `missing_requirements` state instead of leaving the public callback pending                                                                           |
 | React StrictMode double-execution on SSO callback                                       | `hasRun = useRef(false)` guard in `useSSOCallback`                                                                                                                                                    |

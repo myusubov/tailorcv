@@ -3,7 +3,6 @@ import { Button, Form, Separator, Spinner } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import type { Control } from 'react-hook-form';
 
-import { AnimatedError } from '@/app/components/ui';
 import type { RegisterFormValues } from '@/lib/schemas/auth';
 
 import { RegisterFields } from './register-fields';
@@ -12,7 +11,6 @@ import { RegisterTermsField } from './register-terms-field';
 
 export interface RegisterFormViewProps {
   control: Control<RegisterFormValues>;
-  globalError: string;
   googleLoading: boolean;
   appleLoading: boolean;
   isSubmitting: boolean;
@@ -25,12 +23,11 @@ export interface RegisterFormViewProps {
 /**
  * Renders the registration form, provider actions, and login navigation.
  *
- * @param props - Form control, request state, errors, and registration callbacks.
+ * @param props - Form control, request state, and registration callbacks.
  * @returns The render-only register form with route-scoped CSS animation targets.
  */
 export function RegisterFormView({
   control,
-  globalError,
   googleLoading,
   appleLoading,
   isSubmitting,
@@ -43,8 +40,6 @@ export function RegisterFormView({
     <Form className="space-y-6" onSubmit={onSubmit}>
       <RegisterFields control={control} />
       <RegisterTermsField control={control} />
-
-      <AnimatedError message={globalError} />
 
       <div id="clerk-captcha" />
 

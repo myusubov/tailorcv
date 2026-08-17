@@ -5,10 +5,6 @@ const mockSignUpState = vi.hoisted(() => ({
   signUp: null as null | MockSignUp,
   fetchStatus: 'idle',
 }));
-const mockSignInState = vi.hoisted(() => ({
-  signIn: null as null | MockSignIn,
-  fetchStatus: 'idle',
-}));
 const mockFormState = vi.hoisted(() => ({
   data: {
     email: 'new-user@example.com',
@@ -19,14 +15,11 @@ const mockFormState = vi.hoisted(() => ({
   isSubmitting: false,
 }));
 const mockPush = vi.hoisted(() => vi.fn());
-const mockLocationAssign = vi.hoisted(() => vi.fn());
-
-interface MockSignIn {
-  create: ReturnType<typeof vi.fn>;
-  firstFactorVerification: {
-    externalVerificationRedirectURL: URL | null;
-  };
-}
+const mockSetValue = vi.hoisted(() => vi.fn());
+const toastMocks = vi.hoisted(() => ({
+  danger: vi.fn(),
+  success: vi.fn(),
+}));
 
 interface MockSignUp {
   status: string | null;
@@ -34,14 +27,23 @@ interface MockSignUp {
   missingFields: string[];
   password: ReturnType<typeof vi.fn>;
   reset: ReturnType<typeof vi.fn>;
+  sso: ReturnType<typeof vi.fn>;
+  finalize: ReturnType<typeof vi.fn>;
   verifications: {
     sendEmailCode: ReturnType<typeof vi.fn>;
+    verifyEmailCode: ReturnType<typeof vi.fn>;
   };
 }
 
 vi.mock('@clerk/nextjs', () => ({
-  useSignIn: () => mockSignInState,
   useSignUp: () => mockSignUpState,
+}));
+
+vi.mock('@heroui/react', () => ({
+  toast: {
+    danger: toastMocks.danger,
+    success: toastMocks.success,
+  },
 }));
 
 vi.mock('next/navigation', () => ({
@@ -59,8 +61,7 @@ vi.mock('react-hook-form', () => ({
     formState: {
       isSubmitting: mockFormState.isSubmitting,
     },
-    setValue: vi.fn(),
-    reset: vi.fn(),
+    setValue: mockSetValue,
   }),
   useWatch: () => mockFormState.data.email,
 }));
@@ -75,22 +76,34 @@ vi.mock('@/lib/config', () => ({
 
 const { useRegisterFlow } = await import('./use-register-flow');
 
-const createSignInMock = (): MockSignIn => ({
-  create: vi.fn().mockResolvedValue({ error: null }),
-  firstFactorVerification: {
-    externalVerificationRedirectURL: new URL('https://accounts.example.com/oauth'),
-  },
-});
-
+/**
+ * Creates the mutable Clerk future-resource fixture used by register flow tests.
+ *
+ * @returns A successful default sign-up mock whose status awaits email verification.
+ */
 const createSignUpMock = (): MockSignUp => ({
   status: 'missing_requirements',
   unverifiedFields: ['email_address'],
   missingFields: [],
   password: vi.fn().mockResolvedValue({ error: null }),
   reset: vi.fn().mockResolvedValue({ error: null }),
+  sso: vi.fn().mockResolvedValue({ error: null }),
+  finalize: vi.fn().mockResolvedValue({ error: null }),
   verifications: {
     sendEmailCode: vi.fn().mockResolvedValue({ error: null }),
+    verifyEmailCode: vi.fn().mockResolvedValue({ error: null }),
   },
+});
+
+/**
+ * Creates a Clerk-shaped error that exercises the shared message parser.
+ *
+ * @param input - Human-readable error message to expose through the flow.
+ * @returns A minimal Clerk error fixture.
+ */
+const createFlowError = ({ message }: { message: string }) => ({
+  clerkError: true,
+  message,
 });
 
 describe('useRegisterFlow', () => {
@@ -102,29 +115,20 @@ describe('useRegisterFlow', () => {
       terms: true,
     };
     mockFormState.isSubmitting = false;
-    mockPush.mockClear();
-    mockLocationAssign.mockReset();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: {
-        ...window.location,
-        assign: mockLocationAssign,
-      },
-    });
-    mockSignInState.fetchStatus = 'idle';
-    mockSignInState.signIn = createSignInMock();
+    mockPush.mockReset();
+    mockSetValue.mockReset();
+    toastMocks.danger.mockReset();
+    toastMocks.success.mockReset();
     mockSignUpState.fetchStatus = 'idle';
     mockSignUpState.signUp = createSignUpMock();
-    window.sessionStorage.clear();
   });
 
-  it('creates password sign-ups without account profile names', async () => {
+  it('creates a password sign-up, sends its email code, and enters verification', async () => {
     const signUp = createSignUpMock();
     mockSignUpState.signUp = signUp;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;
-
     if (current.mode !== 'form') {
       throw new Error('Expected register flow to start in form mode');
     }
@@ -137,41 +141,124 @@ describe('useRegisterFlow', () => {
       emailAddress: 'new-user@example.com',
       password: 'Password123!',
     });
+    expect(signUp.verifications.sendEmailCode).toHaveBeenCalledTimes(1);
+    expect(result.current.mode).toBe('verification');
   });
 
-  it('starts Google sign-up with a fresh sign-in OAuth attempt and provider redirect', async () => {
-    const signIn = createSignInMock();
-    mockSignInState.signIn = signIn;
+  it('reports returned password sign-up errors through HeroUI danger feedback', async () => {
+    const signUp = createSignUpMock();
+    signUp.password.mockResolvedValue({
+      error: createFlowError({ message: 'Email address is already registered' }),
+    });
+    mockSignUpState.signUp = signUp;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;
-
     if (current.mode !== 'form') {
       throw new Error('Expected register flow to start in form mode');
     }
 
     await act(async () => {
-      await current.formViewProps.onGoogleSignUp();
+      await current.formViewProps.onSubmit();
     });
 
-    expect(signIn.create).toHaveBeenCalledWith({
-      strategy: 'oauth_google',
-      redirectUrl: '/sso-callback',
-      actionCompleteRedirectUrl: '/onboarding',
-    });
-    expect(mockLocationAssign).toHaveBeenCalledWith(
-      new URL('https://accounts.example.com/oauth'),
+    expect(toastMocks.danger).toHaveBeenCalledWith(
+      'Email address is already registered',
     );
-    expect(window.sessionStorage.getItem('tailorcv:sso-flow')).toBeNull();
+    expect(signUp.verifications.sendEmailCode).not.toHaveBeenCalled();
   });
 
-  it('creates a fresh OAuth sign-in attempt before each sign-up provider redirect', async () => {
-    const signIn = createSignInMock();
-    mockSignInState.signIn = signIn;
+  it('reports thrown password sign-up errors through HeroUI danger feedback', async () => {
+    const signUp = createSignUpMock();
+    signUp.password.mockRejectedValue(
+      createFlowError({ message: 'Password sign-up request failed' }),
+    );
+    mockSignUpState.signUp = signUp;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;
+    if (current.mode !== 'form') {
+      throw new Error('Expected register flow to start in form mode');
+    }
 
+    await act(async () => {
+      await current.formViewProps.onSubmit();
+    });
+
+    expect(toastMocks.danger).toHaveBeenCalledWith(
+      'Password sign-up request failed',
+    );
+    expect(signUp.verifications.sendEmailCode).not.toHaveBeenCalled();
+  });
+
+  it('resets Clerk before returning from verification to change the email', async () => {
+    const signUp = createSignUpMock();
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useRegisterFlow());
+    const current = result.current;
+    if (current.mode !== 'form') {
+      throw new Error('Expected register flow to start in form mode');
+    }
+
+    await act(async () => {
+      await current.formViewProps.onSubmit();
+    });
+    const verificationCurrent = result.current;
+    if (verificationCurrent.mode !== 'verification') {
+      throw new Error('Expected register flow to enter verification mode');
+    }
+
+    await act(async () => {
+      await verificationCurrent.verificationViewProps.onGoBack();
+    });
+
+    expect(signUp.reset).toHaveBeenCalledTimes(1);
+    expect(mockSetValue).toHaveBeenCalledWith('email', '');
+    expect(result.current.mode).toBe('form');
+  });
+
+  it('keeps verification active when Clerk cannot reset the sign-up attempt', async () => {
+    const signUp = createSignUpMock();
+    signUp.reset.mockResolvedValue({
+      error: createFlowError({ message: 'Sign-up reset failed' }),
+    });
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useRegisterFlow());
+    const current = result.current;
+    if (current.mode !== 'form') {
+      throw new Error('Expected register flow to start in form mode');
+    }
+
+    await act(async () => {
+      await current.formViewProps.onSubmit();
+    });
+    const verificationCurrent = result.current;
+    if (verificationCurrent.mode !== 'verification') {
+      throw new Error('Expected register flow to enter verification mode');
+    }
+
+    await act(async () => {
+      await verificationCurrent.verificationViewProps.onGoBack();
+    });
+
+    expect(result.current.mode).toBe('verification');
+    if (result.current.mode !== 'verification') {
+      throw new Error('Expected verification to remain active after reset failure');
+    }
+    expect(result.current.verificationViewProps.globalError).toBe(
+      'Sign-up reset failed',
+    );
+    expect(mockSetValue).not.toHaveBeenCalled();
+  });
+
+  it('starts Google sign-up directly through the native SSO operation', async () => {
+    const signUp = createSignUpMock();
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useRegisterFlow());
+    const current = result.current;
     if (current.mode !== 'form') {
       throw new Error('Expected register flow to start in form mode');
     }
@@ -180,38 +267,57 @@ describe('useRegisterFlow', () => {
       await current.formViewProps.onGoogleSignUp();
     });
 
+    expect(signUp.reset).not.toHaveBeenCalled();
+    expect(signUp.sso).toHaveBeenCalledWith({
+      strategy: 'oauth_google',
+      redirectCallbackUrl: '/sso-callback',
+      redirectUrl: '/onboarding',
+    });
+  });
+
+  it('starts Google and Apple through Clerk without resetting the sign-up resource', async () => {
+    const signUp = createSignUpMock();
+    mockSignUpState.signUp = signUp;
+
+    const { result } = renderHook(() => useRegisterFlow());
+    const current = result.current;
+    if (current.mode !== 'form') {
+      throw new Error('Expected register flow to start in form mode');
+    }
+
+    await act(async () => {
+      await current.formViewProps.onGoogleSignUp();
+    });
     await act(async () => {
       await current.formViewProps.onAppleSignUp();
     });
 
-    expect(signIn.create).toHaveBeenNthCalledWith(1, {
+    expect(signUp.reset).not.toHaveBeenCalled();
+    expect(signUp.sso).toHaveBeenNthCalledWith(1, {
       strategy: 'oauth_google',
-      redirectUrl: '/sso-callback',
-      actionCompleteRedirectUrl: '/onboarding',
+      redirectCallbackUrl: '/sso-callback',
+      redirectUrl: '/onboarding',
     });
-    expect(signIn.create).toHaveBeenNthCalledWith(2, {
+    expect(signUp.sso).toHaveBeenNthCalledWith(2, {
       strategy: 'oauth_apple',
-      redirectUrl: '/sso-callback',
-      actionCompleteRedirectUrl: '/onboarding',
+      redirectCallbackUrl: '/sso-callback',
+      redirectUrl: '/onboarding',
     });
-    expect(mockLocationAssign).toHaveBeenCalledTimes(2);
   });
 
-  it('clears stale OAuth errors before starting a new provider', async () => {
-    const signIn = createSignInMock();
-    signIn.create
+  it('reports returned and thrown SSO failures through HeroUI danger feedback', async () => {
+    const signUp = createSignUpMock();
+    signUp.sso
       .mockResolvedValueOnce({
-        error: {
-          clerkError: true,
-          message: 'OAuth popup was closed',
-        },
+        error: createFlowError({ message: 'Google sign-up failed' }),
       })
-      .mockResolvedValueOnce({ error: null });
-    mockSignInState.signIn = signIn;
+      .mockRejectedValueOnce(
+        createFlowError({ message: 'Apple sign-up failed' }),
+      );
+    mockSignUpState.signUp = signUp;
 
     const { result } = renderHook(() => useRegisterFlow());
     const current = result.current;
-
     if (current.mode !== 'form') {
       throw new Error('Expected register flow to start in form mode');
     }
@@ -219,26 +325,11 @@ describe('useRegisterFlow', () => {
     await act(async () => {
       await current.formViewProps.onGoogleSignUp();
     });
-
-    expect(result.current.mode).toBe('form');
-    if (result.current.mode !== 'form') {
-      throw new Error('Expected register flow to remain in form mode');
-    }
-    expect(result.current.formViewProps.globalError).toBe('OAuth popup was closed');
-
-    const retryCurrent = result.current;
-    if (retryCurrent.mode !== 'form') {
-      throw new Error('Expected register flow to remain in form mode');
-    }
-
     await act(async () => {
-      await retryCurrent.formViewProps.onAppleSignUp();
+      await current.formViewProps.onAppleSignUp();
     });
 
-    expect(result.current.mode).toBe('form');
-    if (result.current.mode !== 'form') {
-      throw new Error('Expected register flow to remain in form mode');
-    }
-    expect(result.current.formViewProps.globalError).toBe('');
+    expect(toastMocks.danger).toHaveBeenNthCalledWith(1, 'Google sign-up failed');
+    expect(toastMocks.danger).toHaveBeenNthCalledWith(2, 'Apple sign-up failed');
   });
 });
