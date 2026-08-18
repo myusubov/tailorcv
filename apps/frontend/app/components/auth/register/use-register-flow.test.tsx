@@ -247,9 +247,7 @@ describe('useRegisterFlow', () => {
     if (result.current.mode !== 'verification') {
       throw new Error('Expected verification to remain active after reset failure');
     }
-    expect(result.current.verificationViewProps.globalError).toBe(
-      'Sign-up reset failed',
-    );
+    expect(toastMocks.danger).toHaveBeenCalledWith('Sign-up reset failed');
     expect(mockSetValue).not.toHaveBeenCalled();
   });
 

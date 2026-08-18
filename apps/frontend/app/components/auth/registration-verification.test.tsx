@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { useSignUp } from '@clerk/nextjs';
@@ -8,18 +8,15 @@ import { RegistrationVerification } from './registration-verification';
 type SignUpProp = ReturnType<typeof useSignUp>['signUp'];
 
 const mockPush = vi.hoisted(() => vi.fn());
-const mockToastSuccess = vi.hoisted(() => vi.fn());
+const toastMocks = vi.hoisted(() => ({
+  danger: vi.fn(),
+  success: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
-}));
-
-vi.mock('sonner', () => ({
-  toast: {
-    success: mockToastSuccess,
-  },
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -35,6 +32,10 @@ vi.mock('@heroui/react', async () => {
 
   return {
     ...actual,
+    toast: {
+      danger: toastMocks.danger,
+      success: toastMocks.success,
+    },
     InputOTP: ({ value, onChange, maxLength }: { value: string; onChange: (value: string) => void; maxLength: number }) => (
       <input
         aria-label="Verification code"
@@ -76,10 +77,11 @@ const createSignUpMock = () => {
 describe('RegistrationVerification', () => {
   beforeEach(() => {
     mockPush.mockReset();
-    mockToastSuccess.mockReset();
+    toastMocks.danger.mockReset();
+    toastMocks.success.mockReset();
   });
 
-  it('shows resend errors returned by Clerk', async () => {
+  it('reports resend errors through HeroUI danger feedback', async () => {
     const user = userEvent.setup();
     const signUp = createSignUpMock();
     signUp.verifications.sendEmailCode.mockResolvedValue({
@@ -97,10 +99,12 @@ describe('RegistrationVerification', () => {
 
     await user.click(screen.getByRole('button', { name: 'Resend code' }));
 
-    expect(await screen.findByText('Unable to resend code')).toBeTruthy();
+    await waitFor(() => {
+      expect(toastMocks.danger).toHaveBeenCalledWith('Unable to resend code');
+    });
   });
 
-  it('shows verify-email errors returned by Clerk', async () => {
+  it('reports verify-email errors through HeroUI danger feedback', async () => {
     const user = userEvent.setup();
     const signUp = createSignUpMock();
     signUp.verifications.verifyEmailCode.mockResolvedValue({
@@ -119,10 +123,12 @@ describe('RegistrationVerification', () => {
     await user.type(screen.getByLabelText('Verification code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Verify Email' }));
 
-    expect(await screen.findByText('Invalid verification code')).toBeTruthy();
+    await waitFor(() => {
+      expect(toastMocks.danger).toHaveBeenCalledWith('Invalid verification code');
+    });
   });
 
-  it('shows finalize errors returned by Clerk', async () => {
+  it('reports finalize errors through HeroUI danger feedback', async () => {
     const user = userEvent.setup();
     const signUp = createSignUpMock();
     signUp.status = 'complete';
@@ -143,10 +149,12 @@ describe('RegistrationVerification', () => {
     await user.type(screen.getByLabelText('Verification code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Verify Email' }));
 
-    expect(await screen.findByText('Unable to finish sign up')).toBeTruthy();
+    await waitFor(() => {
+      expect(toastMocks.danger).toHaveBeenCalledWith('Unable to finish sign up');
+    });
   });
 
-  it('shows unexpected status errors after successful verification', async () => {
+  it('reports unexpected statuses through HeroUI danger feedback', async () => {
     const user = userEvent.setup();
     const signUp = createSignUpMock();
     signUp.status = 'needs_identifier';
@@ -164,10 +172,10 @@ describe('RegistrationVerification', () => {
     await user.type(screen.getByLabelText('Verification code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Verify Email' }));
 
-    expect(
-      await screen.findByText(
+    await waitFor(() => {
+      expect(toastMocks.danger).toHaveBeenCalledWith(
         'Unexpected verification status: needs identifier. Please try again.',
-      ),
-    ).toBeTruthy();
+      );
+    });
   });
 });
