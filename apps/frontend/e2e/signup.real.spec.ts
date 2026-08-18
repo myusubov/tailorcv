@@ -14,7 +14,12 @@ test.describe.serial('Real Clerk sign-up flow', () => {
 
     await page.goto('/register', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: /^(Start with your story\.|Create account)$/,
+      }),
+    ).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
     await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible();

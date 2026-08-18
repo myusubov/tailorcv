@@ -75,6 +75,7 @@ Real Clerk reset coverage
   - SSO transfer errors and terminal missing-requirements outcomes
 - Playwright auth smoke:
   - signed-out pages render
+  - registration readiness accepts the visible breakpoint-owned level-one heading
   - protected routes redirect
   - `/sso-callback` rejects direct navigation and retired `/sso-continue` redirects to registration
 - Playwright real auth:
@@ -200,7 +201,8 @@ npm run test:e2e:frontend:real-auth
 - [x] Rejected Clerk reset stops fresh-attempt creation and surfaces error feedback
 - [x] Login email handoff is exposed once while URL cleanup preserves unrelated query parameters
 - [x] Direct password sign-in, login toast feedback, Client Trust, and `signIn.sso()` invocation contracts
-- [x] Registration password/code initiation, reset lifecycle, toast feedback, and `signUp.sso()` invocation contracts
+- [x] Registration password/code initiation, reset lifecycle, entry-toast feedback, and `signUp.sso()` invocation contracts
+- [ ] Registration reset and OTP failure assertions aligned with the toast-only verification contract
 - [x] Returned SSO transfer errors and terminal missing-requirements callback contracts
 - [ ] Forgot-password reset ordering, returned reset-error handling, and different-email cleanup coverage
 
@@ -217,6 +219,7 @@ npm run test:e2e:frontend:real-auth
 | Sign-up coverage becomes non-repeatable because the test email already exists | Generate a fresh Clerk test email per run instead of reusing a fixed sign-up account                           |
 | Google/Apple provider automation becomes brittle                              | Keep OAuth coverage at the app-owned hook/guard layer and verify provider-controlled flows manually            |
 | Clerk resumes an abandoned registration provider attempt                      | Use Clerk's direct `signUp.sso()` contract and manually verify same-provider retry plus cross-provider switching |
+| Registration tests retain the removed inline OTP-error contract                | Assert HeroUI danger toasts for reset, resend, verification, finalization, and unexpected-status failures        |
 
 ---
 

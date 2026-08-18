@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-08-18
+
+### Registration Verification Feedback Boundary
+
+- **Decision:** Remove the verification view's obsolete `globalError` fixture as production registration moves its flow-level OTP feedback to HeroUI toasts.
+- **Problem:** The thin verification boundary test still modeled an inline error prop that the render contract no longer accepts.
+- **Solution:**
+  1. **Boundary fixture — `apps/frontend/app/components/auth/registration-verification-boundary.test.tsx`**: Remove `globalError` from the mocked grouped view props and render-only verification fixture.
+  2. **Coverage boundary — `docs/architecture/auth/testing/README.md`**: Record that the register hook and verification component assertions still need alignment with the toast-only verification contract.
+- **Outcome:** The thin boundary fixture matches the current view shape, but registration reset and OTP failure coverage is not yet reconciled and no verification command was run.
+
+## 2026-08-17
+
+### Responsive Registration Heading Assertions
+
+- **Decision:** Accept the route's visible desktop or mobile registration heading in browser tests.
+- **Problem:** Desktop Playwright runs expected the mobile-only `Create account` heading even though the desktop brand panel exposes `Start with your story.` as the accessible heading.
+- **Solution:** Update the real signup and auth-smoke assertions to match either breakpoint-specific level-one heading without weakening the surrounding form checks.
+- **Outcome:** Registration E2E readiness checks now follow the responsive heading contract. Tests were not run during this edit.
+
 ## 2026-08-15
 
 ### Registration Clerk Contract Alignment

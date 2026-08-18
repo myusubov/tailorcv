@@ -15,14 +15,11 @@ vi.mock('./use-registration-verification-flow', () => ({
 vi.mock('./registration-verification-view', () => ({
   RegistrationVerificationView: ({
     email,
-    globalError,
   }: {
     email: string;
-    globalError: string;
   }) => (
     <div data-testid="registration-verification-view">
       {email}
-      {globalError}
     </div>
   ),
 }));
@@ -33,7 +30,6 @@ describe('RegistrationVerification boundary', () => {
       viewProps: {
         code: '',
         email: 'user@example.com',
-        globalError: 'Invalid verification code',
         isResending: false,
         isVerifying: false,
         onCodeChange: vi.fn(),
@@ -54,6 +50,5 @@ describe('RegistrationVerification boundary', () => {
 
     expect(screen.getByTestId('registration-verification-view')).toBeTruthy();
     expect(screen.getByText(/user@example.com/)).toBeTruthy();
-    expect(screen.getByText(/Invalid verification code/)).toBeTruthy();
   });
 });
