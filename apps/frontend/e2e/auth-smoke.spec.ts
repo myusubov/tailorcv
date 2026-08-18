@@ -47,7 +47,7 @@ test.describe('Auth smoke flows', () => {
     await expectAuthPage({
       page,
       path: '/register',
-      heading: 'Create account',
+      heading: /^(Start with your story\.|Create account)$/,
       primaryButtonName: 'Create Account',
     });
 

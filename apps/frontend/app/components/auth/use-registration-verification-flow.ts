@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import type { useSignUp } from '@clerk/nextjs';
+import { toast } from '@heroui/react';
 
 import { config } from '@/lib/config';
 import { getClerkErrorMessage } from '@/lib/utils/utils';
@@ -17,7 +17,6 @@ interface UseRegistrationVerificationFlowArgs {
 interface RegistrationVerificationViewProps {
   code: string;
   email: string;
-  globalError: string;
   isResending: boolean;
   isVerifying: boolean;
   onCodeChange: (code: string) => void;
@@ -45,19 +44,17 @@ export function useRegistrationVerificationFlow({
   const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [resending, setResending] = useState(false);
-  const [globalError, setGlobalError] = useState('');
 
   const handleResend = async () => {
     if (!signUp) return;
     setResending(true);
-    setGlobalError('');
 
     try {
       const { error } = await signUp.verifications.sendEmailCode();
       if (error) {
         console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -65,7 +62,7 @@ export function useRegistrationVerificationFlow({
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Failed to resend code');
+      toast.danger(clerkError || 'Failed to resend code');
     } finally {
       setResending(false);
     }
@@ -81,7 +78,7 @@ export function useRegistrationVerificationFlow({
       if (error) {
         console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
-        setGlobalError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -105,20 +102,20 @@ export function useRegistrationVerificationFlow({
         if (finalizeError) {
           console.error(JSON.stringify(finalizeError, null, 2));
           const clerkError = getClerkErrorMessage(finalizeError);
-          setGlobalError(clerkError || 'Failed to complete sign up');
+          toast.danger(clerkError || 'Failed to complete sign up');
           return;
         }
 
         return;
       }
 
-      setGlobalError(
+      toast.danger(
         `Unexpected verification status: ${signUp.status?.replace(/_/g, ' ') || 'unknown'}. Please try again.`,
       );
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setGlobalError(clerkError || 'Verification failed');
+      toast.danger(clerkError || 'Verification failed');
     } finally {
       setIsVerifying(false);
     }
@@ -128,7 +125,6 @@ export function useRegistrationVerificationFlow({
     viewProps: {
       code,
       email,
-      globalError,
       isResending: resending,
       isVerifying,
       onCodeChange: setCode,

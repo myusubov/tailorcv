@@ -40,7 +40,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
   const [appleLoading, setAppleLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [verificationError, setVerificationError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const { signUp, fetchStatus } = useSignUp();
@@ -72,9 +71,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
    */
   const handleGoBack = async () => {
     if (!signUp) {
-      setVerificationError(
-        'Unable to restart sign up. Please refresh and try again.',
-      );
+      toast.danger('Unable to restart sign up. Please refresh and try again.');
       return;
     }
 
@@ -82,33 +79,31 @@ export function useRegisterFlow(): UseRegisterFlowResult {
       const { error } = await signUp.reset();
       if (error) {
         const clerkError = getClerkErrorMessage(error);
-        setVerificationError(clerkError || 'Unable to restart sign up');
+        toast.danger(clerkError || 'Unable to restart sign up');
         return;
       }
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setVerificationError(clerkError || 'Unable to restart sign up');
+      toast.danger(clerkError || 'Unable to restart sign up');
       return;
     }
 
     setVerifying(false);
     setVerificationCode('');
-    setVerificationError('');
     setValue('email', '');
   };
 
   const handleResendVerification = async () => {
     if (!signUp) return;
     setIsResending(true);
-    setVerificationError('');
 
     try {
       const { error } = await signUp.verifications.sendEmailCode();
       if (error) {
         console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
-        setVerificationError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -116,7 +111,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setVerificationError(clerkError || 'Failed to resend code');
+      toast.danger(clerkError || 'Failed to resend code');
     } finally {
       setIsResending(false);
     }
@@ -126,7 +121,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
     event.preventDefault();
     if (!signUp) return;
     setIsVerifying(true);
-    setVerificationError('');
 
     try {
       const { error } = await signUp.verifications.verifyEmailCode({
@@ -135,7 +129,7 @@ export function useRegisterFlow(): UseRegisterFlowResult {
       if (error) {
         console.error(JSON.stringify(error, null, 2));
         const clerkError = getClerkErrorMessage(error);
-        setVerificationError(clerkError || 'Verification failed');
+        toast.danger(clerkError || 'Verification failed');
         return;
       }
 
@@ -159,20 +153,20 @@ export function useRegisterFlow(): UseRegisterFlowResult {
         if (finalizeError) {
           console.error(JSON.stringify(finalizeError, null, 2));
           const clerkError = getClerkErrorMessage(finalizeError);
-          setVerificationError(clerkError || 'Failed to complete sign up');
+          toast.danger(clerkError || 'Failed to complete sign up');
           return;
         }
 
         return;
       }
 
-      setVerificationError(
+      toast.danger(
         `Unexpected verification status: ${signUp.status?.replace(/_/g, ' ') || 'unknown'}. Please try again.`,
       );
     } catch (err: unknown) {
       console.error(JSON.stringify(err, null, 2));
       const clerkError = getClerkErrorMessage(err);
-      setVerificationError(clerkError || 'Verification failed');
+      toast.danger(clerkError || 'Verification failed');
     } finally {
       setIsVerifying(false);
     }
@@ -298,7 +292,6 @@ export function useRegisterFlow(): UseRegisterFlowResult {
       verificationViewProps: {
         code: verificationCode,
         email,
-        globalError: verificationError,
         isResending,
         isVerifying,
         onCodeChange: setVerificationCode,

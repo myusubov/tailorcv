@@ -20,7 +20,6 @@ export function RegistrationVerification({
   email,
   onGoBack,
   signUp,
-  resetForm,
 }: RegistrationVerificationProps) {
   const registrationVerificationFlow = useRegistrationVerificationFlow({
     email,

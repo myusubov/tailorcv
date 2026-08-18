@@ -223,8 +223,8 @@ Email/password registration validates `password` and `confirmPassword` locally i
 
 The verification screen's change-email action calls `signUp.reset()` before
 returning to the form. A returned or thrown reset failure leaves verification
-active with an inline explanation so the UI never claims that Clerk abandoned
-the pending attempt when it did not.
+active and reports the Clerk failure through a HeroUI danger toast so the UI
+never claims that Clerk abandoned the pending attempt when it did not.
 
 ### 6.6 Responsive Auth Brand Marks
 
@@ -324,8 +324,10 @@ introduction becomes the visible heading when the panel is hidden.
 Registration keeps its original form and verification timings through
 route-scoped CSS classes. The form sequence reuses shared entrance keyframes;
 the verification card and code input retain their shorter scale and vertical
-treatments through dedicated classes. These presentation layers have no Clerk,
-form-state, CAPTCHA, navigation, or verification-flow responsibility.
+treatments through dedicated classes. The verification code uses HeroUI's
+`secondary` `InputOTP` treatment so its slots remain distinct from the Card
+surface. These presentation layers have no Clerk, form-state, CAPTCHA,
+navigation, or verification-flow responsibility.
 
 #### 6.7.3 Forgot-Password Recovery Composition
 
@@ -385,20 +387,20 @@ to email entry. Local email, code, and cooldown state are cleared even when that
 best-effort reset reports or throws an error; the next email submission retries
 the reset before creating its fresh attempt.
 
-### 6.11 Toast-Only Auth Entry Feedback
+### 6.11 Toast-Only Auth Flow Feedback
 
-The login, register form, and forgot-password flows report Clerk and flow-level
-entry failures through HeroUI toasts owned by their controller hooks. Their form
-view contracts do not carry a separate `globalError` value or render duplicate
-global-error surfaces. Registration OTP failures remain inline because they
-belong to the active verification step. React Hook Form and Zod validation errors
-also remain inline beside their corresponding fields because they identify input
-the user can correct directly.
+The login, registration, and forgot-password flows report Clerk and flow-level
+failures through HeroUI toasts owned by their controller hooks. Registration
+uses the same feedback surface during email-code verification, so its OTP view
+contract does not carry a separate `globalError` value or render an
+`AnimatedError` surface. React Hook Form and Zod validation errors remain inline
+beside their corresponding fields because they identify input the user can
+correct directly.
 
-Retryable failures use the standard toast duration. Terminal failures that occur
-after password submission, including MFA-required, unexpected Clerk status, and
-session-finalization outcomes, use persistent toasts so the explanation remains
-available until the user dismisses it.
+Registration verification failures use the standard toast duration while the
+active OTP screen remains mounted for correction or retry. Controllers that
+classify an outcome as terminal can opt into persistent toasts so the
+explanation remains available until the user dismisses it.
 
 ### 6.12 Login-To-Recovery Email Handoff
 
@@ -444,7 +446,7 @@ flow hook, while the route only selects the active controller.
 - [x] Cooldown-aware resend disabling, successful renewal, failure retry, and duplicate-request protection
 - [x] Fresh Clerk reset attempt before a new email submission and when abandoning the active flow
 - [x] Clerk reset before registration email correction; fresh social entry delegates directly to `signUp.sso()`
-- [x] Toast-only login, register entry, and forgot-password feedback with inline field and OTP validation retained
+- [x] Toast-only login, registration, and forgot-password flow feedback with inline field validation retained
 - [x] Login email handoff into forgot-password with immediate query cleanup
 - [x] Reset-code status gate before password entry and other-session sign-out after password replacement
 
@@ -456,7 +458,7 @@ flow hook, while the route only selects the active controller.
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Client Trust incorrectly handled as generic second factor     | Treat `needs_client_trust` as its own Clerk state and use `signIn.mfa.*` email-code APIs                           |
 | Forgot-password silently stalls after successful Clerk calls  | Treat returned `{ error }` payloads and unexpected post-submit statuses as first-class UI states                   |
-| Successful code verification returns an unexpected status     | Keep the code step active; add explicit user feedback before treating this boundary as fully hardened              |
+| Successful code verification returns an unexpected status     | Keep the code step active and report the explicit status through a HeroUI danger toast                              |
 | In-memory cooldown is mistaken for security enforcement       | Treat the countdown as mounted-flow feedback and leave authoritative abuse protection to Clerk                     |
 | Reload leaves Clerk's prior reset attempt available locally   | Ignore status restoration, reset Clerk before the next email submission, and restart the local flow at email entry |
 | Duplicate reset-code requests overlap                         | Disable the view while pending and guard both active cooldown and in-flight state inside the flow hook             |

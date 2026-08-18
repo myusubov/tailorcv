@@ -8,7 +8,6 @@ import { AnimatedError } from '@/app/components/ui';
 export interface RegistrationVerificationViewProps {
   code: string;
   email: string;
-  globalError: string;
   isResending: boolean;
   isVerifying: boolean;
   onCodeChange: (code: string) => void;
@@ -26,7 +25,6 @@ export interface RegistrationVerificationViewProps {
 export function RegistrationVerificationView({
   code,
   email,
-  globalError,
   isResending,
   isVerifying,
   onCodeChange,
@@ -70,6 +68,7 @@ export function RegistrationVerificationView({
                   pattern="^[0-9]*$"
                   inputMode="numeric"
                   className="justify-center"
+                  variant='secondary'
                 >
                   <InputOTP.Group>
                     <InputOTP.Slot index={0} />
@@ -83,8 +82,6 @@ export function RegistrationVerificationView({
                   </InputOTP.Group>
                 </InputOTP>
               </div>
-
-              <AnimatedError message={globalError} />
 
               <Button
                 type="submit"

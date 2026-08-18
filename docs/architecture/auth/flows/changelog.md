@@ -6,6 +6,18 @@ Archived entries: [changelog-archive.md](changelog-archive.md)
 
 ---
 
+## 2026-08-18
+
+### Registration Verification Toast And OTP Surface
+
+- **Decision:** Use the registration flow's HeroUI toast channel for Clerk failures throughout email verification and apply the Card-appropriate `secondary` OTP treatment.
+- **Problem:** Registration entry failures used the shared toast contract, but the verification step still carried a separate `globalError` prop and animated inline surface, while its default OTP slots did not use the contrasting Card treatment already established in password recovery.
+- **Solution:**
+  1. **Verification orchestration — `apps/frontend/app/components/auth/register/use-register-flow.ts` and `apps/frontend/app/components/auth/use-registration-verification-flow.ts`**: Route returned and thrown resend, reset, verification, finalization, and unexpected-status failures through HeroUI danger toasts while keeping the active verification mode mounted.
+  2. **Render contract — `apps/frontend/app/components/auth/registration-verification-view.tsx`**: Remove the verification `globalError` prop and inline animated-error surface, and render the code input with HeroUI's `secondary` variant.
+  3. **Thin controller — `apps/frontend/app/components/auth/registration-verification.tsx`**: Stop consuming the obsolete form-reset callback while continuing to forward the grouped verification view props.
+- **Outcome:** Registration now uses one flow-level feedback surface from password entry through OTP completion, and the OTP slots remain distinct from their Card background. Verification commands were not run during this documentation reconciliation.
+
 ## 2026-08-15
 
 ### Clerk-Native Registration And Attempt Reset
