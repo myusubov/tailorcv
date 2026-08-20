@@ -36,9 +36,9 @@
 
 ```text
 GitHub repo IDs selected by user
-  -> protected analyze endpoint
-  -> fetch selected repo trees
-  -> Project Structure Analyzer
+  -> protected temporary analyze endpoint
+  -> empty temporary response
+  -> future repo-tree retrieval and Project Structure Analyzer
   -> future analyzers
   -> future evidence aggregator + AI resume synthesis
 ```
@@ -101,8 +101,8 @@ docs/architecture/
 
 | Domain            | Relationship                                                                                                      | Key Interface                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Onboarding        | GitHub repo selection calls the temporary analyze endpoint and shows success/error feedback.                      | `AnalyzeGithubReposInput`        |
-| GitHub service    | Protected GitHub routes receive a saved connection, fetch repo trees, and pass normalized entries into analyzers. | `AnalyzeProjectStructureInput`   |
+| Onboarding        | GitHub repo selection loads installation repositories and calls the temporary analyze endpoint, which currently returns an empty response. | `FetchGithubReposResponse` |
+| GitHub service    | Protected GitHub routes refresh a saved installation token before accessing installation repositories. | `GitHubConnection` |
 | Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps.            | `ProjectStructureAnalysisResult` |
 
 ---

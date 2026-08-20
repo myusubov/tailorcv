@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-19
+
+### Installation-Scoped GitHub Repository Picker
+
+- **Problem:** The GitHub picker assumed a user OAuth connection with account identity fields and a bare repository array, while the backend now connects through GitHub App installations and returns installation repository metadata.
+- **Solution:**
+  1. Updated `apps/frontend/lib/types/github.ts` and `github-repo-selection-view.tsx` to consume `FetchGithubReposResponse`, using `repositories` for filtering and `total_count` for the displayed repository count.
+  2. Removed the connected-account identity display from `github-repo-selection-header.tsx` because the client-safe GitHub connection response no longer contains user-profile fields.
+  3. Kept the existing Analyze UI handoff in `github-step.tsx`; its temporary backend endpoint now returns an empty response while project-structure analysis is paused.
+- **Outcome:** GitHub onboarding renders the repositories available to the installed App without relying on retired OAuth profile fields, while preserving the existing selection workflow.
+
 ## 2026-08-04
 
 ### HeroUI 3.2 Current-Item Checkboxes

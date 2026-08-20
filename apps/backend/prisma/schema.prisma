@@ -59,15 +59,13 @@ model ChatMessage {
 }
 
 model GitHubConnection {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  accessToken     String
-  githubUserId    Int
-  githubUsername  String
-  githubAvatarUrl String?
-  scopes          String // Space-separated scopes (e.g., "repo read:user")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                               String   @id @default(uuid())
+  userId                           String   @unique
+  installationId                    String
+  installationAccessToken          String
+  installationAccessTokenExpiresAt DateTime
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
 

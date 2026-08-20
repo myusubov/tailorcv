@@ -1,7 +1,6 @@
-import { prisma } from '../lib';
+import { logger, prisma } from '../lib';
 import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
-import jwt from 'jsonwebtoken';
 import {
   ErrorCode,
   GitHubTokenResponse,
@@ -10,6 +9,8 @@ import {
   GitHubTokenErrorResponse,
   GitHubRepo,
   GitHubConnection,
+  CreateInstallationAccessTokenResponse,
+  FetchGithubReposResponse,
 } from 'shared';
 import {
   FetchGithubCommitsInput,
@@ -18,8 +19,11 @@ import {
   GitHubCommit,
   GitHubPullRequest,
   DetectRepoTechStackInput,
+  VerifyGithubUserCanAccessInstallationInput,
 } from '../types/github';
-import { githubApiPolicy } from '../lib/resilience';
+import { randomBytes } from 'node:crypto';
+import { redisClient } from '../lib/redis';
+import jwt from 'jsonwebtoken';
 
 /**
  * Generates the GitHub OAuth authorization URL
@@ -27,75 +31,48 @@ import { githubApiPolicy } from '../lib/resilience';
  * - repo: For deep extraction (commits, PRs, package.json)
  * - read:user: For profile mapping
  */
-export function getGithubAuthUrl(userId: string): string {
-  // Generate a signed JWT as the state parameter for CSRF protection
-  const state = jwt.sign(
-    {
-      userId,
-      timestamp: Date.now(),
-      purpose: 'github_oauth',
-    },
-    env.JWT_SECRET,
-    { expiresIn: '10m' }, // State expires in 10 minutes
+export async function getGithubAuthUrl(userId: string): Promise<string> {
+  const state = randomBytes(32).toString('base64url');
+
+  await redisClient.set(`github_oauth_state:${state}`, userId, 'EX', 300); // Expires in 5 minutes
+
+  const url = new URL(
+    `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,
   );
 
-  const rootUrl = 'https://github.com/login/oauth/authorize';
-  const options = {
-    client_id: env.GITHUB_CLIENT_ID,
-    redirect_uri: env.GITHUB_REDIRECT_URI,
-    scope: 'repo read:user',
-    state,
-  };
+  url.searchParams.set('state', state);
 
-  const queryString = new URLSearchParams(options).toString();
-  const fullUrl = `${rootUrl}?${queryString}`;
-
-  return fullUrl;
+  return url.toString();
 }
 
 /**
- * Verifies the OAuth state parameter to prevent CSRF attacks
- * @param state - The state JWT from GitHub callback
- * @param expectedUserId - The user ID that should match the state
- * @throws AppError if state is invalid or expired
+ * Verifies the OAuth state parameter to prevent CSRF attacks.
+ * Atomically retrieves and deletes the state key from Redis.
+ *
+ * @param state - The state string from GitHub callback
+ * @param expectedUserId - The Clerk user ID that should match the state
+ * @throws AppError if state is missing, expired, or user ID does not match
  */
-export function verifyOAuthState(state: string, expectedUserId: string): void {
-  try {
-    const decoded = jwt.verify(state, env.JWT_SECRET) as {
-      userId: string;
-      timestamp: number;
-      purpose: string;
-    };
+export async function verifyOAuthState(
+  state: string,
+  expectedUserId: string,
+): Promise<void> {
+  const storedUserId = await redisClient.getdel(`github_oauth_state:${state}`);
 
-    // Verify the purpose matches
-    if (decoded.purpose !== 'github_oauth') {
-      throw new AppError('Invalid state purpose', ErrorCode.UNAUTHORIZED, 401);
-    }
+  if (!storedUserId) {
+    throw new AppError(
+      'OAuth state expired or invalid - please try again',
+      ErrorCode.UNAUTHORIZED,
+      401,
+    );
+  }
 
-    // Verify the userId matches the authenticated user
-    if (decoded.userId !== expectedUserId) {
-      throw new AppError(
-        'State userId mismatch - possible CSRF attack',
-        ErrorCode.UNAUTHORIZED,
-        401,
-      );
-    }
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new AppError(
-        'OAuth state expired - please try again',
-        ErrorCode.UNAUTHORIZED,
-        401,
-      );
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw new AppError(
-        'Invalid OAuth state - possible CSRF attack',
-        ErrorCode.UNAUTHORIZED,
-        401,
-      );
-    }
-    throw error;
+  if (storedUserId !== expectedUserId) {
+    throw new AppError(
+      'State userId mismatch - possible CSRF attack',
+      ErrorCode.UNAUTHORIZED,
+      401,
+    );
   }
 }
 
@@ -106,13 +83,6 @@ export function verifyOAuthState(state: string, expectedUserId: string): void {
 export async function exchangeCodeForToken(
   code: string,
 ): Promise<GitHubTokenResponse> {
-  // UNCOMMENT THE LINE BELOW TO TEST FRONTEND ERROR TOASTS
-  /*    throw new AppError(
-    `GitHub token exchange failed`,
-    ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
-    502
-  ); */
-
   const tokenUrl = 'https://github.com/login/oauth/access_token';
 
   const params = new URLSearchParams({
@@ -121,31 +91,22 @@ export async function exchangeCodeForToken(
     code,
   });
 
-  const response = await githubApiPolicy.execute(async () => {
-    // Chaos: GITHUB_CHAOS_FAKE_FAIL=token or all
-    if (
-      env.GITHUB_CHAOS_FAKE_FAIL === 'token' ||
-      env.GITHUB_CHAOS_FAKE_FAIL === 'all'
-    ) {
-      throw new Error('Chaos: simulated GitHub API failure (token)');
-    }
-    const res = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
-    });
-    if (!res.ok) {
-      throw new AppError(
-        `GitHub token exchange failed: ${res.statusText}`,
-        ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
-        502,
-      );
-    }
-    return res;
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
   });
+
+  if (!response.ok) {
+    throw new AppError(
+      `GitHub token exchange failed: ${response.statusText}`,
+      ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
+      502,
+    );
+  }
 
   const data = (await response.json()) as GitHubTokenErrorResponse;
 
@@ -157,11 +118,159 @@ export async function exchangeCodeForToken(
     );
   }
 
+  if (!data.access_token) {
+    throw new AppError(
+      'GitHub token exchange returned no access token',
+      ErrorCode.INVALID_RESPONSE,
+      502,
+    );
+  }
+
   return {
-    access_token: data.access_token!,
-    scope: data.scope!,
-    token_type: data.token_type!,
+    access_token: data.access_token,
+    scope: data.scope ?? '',
+    token_type: data.token_type ?? 'bearer',
   };
+}
+
+export async function verifyGithubUserCanAccessInstallation({
+  userAccessToken,
+  installationId,
+}: VerifyGithubUserCanAccessInstallationInput): Promise<void> {
+  const response = await fetch(
+    `https://api.github.com/user/installations/${installationId}/repositories?per_page=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${userAccessToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2026-03-10',
+      },
+    },
+  );
+
+  if (response.status === 403 || response.status === 404) {
+    throw new AppError(
+      'GitHub installation does not belong to this user',
+      ErrorCode.UNAUTHORIZED,
+      401,
+    );
+  }
+
+  if (!response.ok) {
+    throw new AppError(
+      'Could not verify GitHub installation',
+      ErrorCode.GITHUB_OAUTH_ERROR,
+      502,
+    );
+  }
+}
+
+/** Signs a fresh App-level JWT for authenticating a single installation-token request. */
+function signGithubAppJwt(): string {
+  const now = Math.floor(Date.now() / 1000);
+  return jwt.sign(
+    {
+      iss: env.GITHUB_APP_ID,
+      iat: now - 60,
+      exp: now + 600,
+    },
+    env.GITHUB_APP_PRIVATE_KEY,
+    {
+      algorithm: 'RS256',
+    },
+  );
+}
+
+/**
+ * Creates a short-lived installation token for the selected GitHub App installation.
+ * Retries once with a freshly-signed JWT on 401, since a rejection here is caused by
+ * clock skew at the moment of signing rather than invalid credentials.
+ */
+export async function createInstallationAccessToken(
+  installationId: string,
+): Promise<CreateInstallationAccessTokenResponse> {
+  const url = `https://api.github.com/app/installations/${installationId}/access_tokens`;
+
+  let response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${signGithubAppJwt()}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2026-03-10',
+    },
+  });
+
+  if (response.status === 401) {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${signGithubAppJwt()}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2026-03-10',
+      },
+    });
+  }
+
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to create installation access token: ${response.statusText}`,
+      ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
+      502,
+    );
+  }
+
+  const data = (await response.json()) as CreateInstallationAccessTokenResponse;
+
+  if (typeof data.token !== 'string' || data.token.length === 0) {
+    throw new AppError(
+      'GitHub returned an invalid installation access token',
+      ErrorCode.INVALID_RESPONSE,
+      502,
+    );
+  }
+
+  return data;
+}
+
+export async function getValidInstallationToken(
+  githubConnection: GitHubConnection,
+): Promise<GitHubConnection> {
+  const now = new Date();
+  const tokenExpiresAt = new Date(
+    githubConnection.installationAccessTokenExpiresAt,
+  );
+
+  if (Number.isNaN(tokenExpiresAt.getTime())) {
+    throw new AppError(
+      'Invalid GitHub token expiration date',
+      ErrorCode.INVALID_RESPONSE,
+      500,
+    );
+  }
+
+  // 5 minute buffer to account for clock skew and network latency
+  const refreshBufferMs = 5 * 60 * 1000;
+  const shouldRefresh =
+    tokenExpiresAt.getTime() - now.getTime() <= refreshBufferMs;
+
+  if (shouldRefresh) {
+    const { expires_at, token } = await createInstallationAccessToken(
+      githubConnection.installationId,
+    );
+    githubConnection.installationAccessToken = token;
+    githubConnection.installationAccessTokenExpiresAt = new Date(expires_at);
+
+    await prisma.gitHubConnection.update({
+      where: { userId: githubConnection.userId },
+      data: {
+        installationAccessToken: githubConnection.installationAccessToken,
+        installationAccessTokenExpiresAt:
+          githubConnection.installationAccessTokenExpiresAt,
+      },
+    });
+  }
+
+  return githubConnection;
 }
 
 /**
@@ -169,99 +278,77 @@ export async function exchangeCodeForToken(
  * Endpoint: GET https://api.github.com/user
  */
 export async function getGitHubUser(accessToken: string): Promise<GitHubUser> {
-  /*   throw new AppError(
-    `Failed to fetch GitHub user`,
-    ErrorCode.GITHUB_USER_FETCH_FAILED,
-    502
-  ); */
-  const response = await githubApiPolicy.execute(async () => {
-    const res = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-    if (!res.ok) {
-      throw new AppError(
-        `Failed to fetch GitHub user: ${res.statusText}`,
-        ErrorCode.GITHUB_USER_FETCH_FAILED,
-        502,
-      );
-    }
-    return res;
+  const response = await fetch('https://api.github.com/user', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
   });
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch GitHub user: ${response.statusText}`,
+      ErrorCode.GITHUB_USER_FETCH_FAILED,
+      502,
+    );
+  }
 
   return response.json() as Promise<GitHubUser>;
 }
 
 export async function saveGitHubConnection(input: SaveGitHubConnectionInput) {
-  /*   throw new AppError(
-    `Failed to save GitHub connection`,
-    ErrorCode.GITHUB_CONNECTION_SAVE_FAILED,
-    502
-  ); */
   const {
     userId,
-    accessToken,
-    githubUserId,
-    githubUsername,
-    githubAvatarUrl,
-    scope,
+    installationAccessToken,
+    installationAccessTokenExpiresAt,
+    installationId,
   } = input;
 
   return await prisma.gitHubConnection.upsert({
     where: { userId },
     update: {
-      accessToken,
-      githubUserId,
-      githubUsername,
-      githubAvatarUrl,
-      scopes: scope,
+      installationAccessToken,
+      installationAccessTokenExpiresAt,
+      installationId,
     },
     create: {
       userId,
-      accessToken,
-      githubUserId,
-      githubUsername,
-      githubAvatarUrl,
-      scopes: scope,
+      installationAccessToken,
+      installationAccessTokenExpiresAt,
+      installationId,
     },
   });
 }
 
 export async function fetchGithubRepos(
   accessToken: string,
-): Promise<GitHubRepo[]> {
-  const response = await githubApiPolicy.execute(async () => {
-    // Chaos: GITHUB_CHAOS_FAKE_FAIL=repos or all
-    if (
-      env.GITHUB_CHAOS_FAKE_FAIL === 'repos' ||
-      env.GITHUB_CHAOS_FAKE_FAIL === 'all'
-    ) {
-      throw new Error('Chaos: simulated GitHub API failure (repos)');
-    }
-    const res = await fetch(
-      'https://api.github.com/user/repos?sort=updated&visibility=all',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
+): Promise<FetchGithubReposResponse> {
+  // Chaos: GITHUB_CHAOS_FAKE_FAIL=repos or all
+  if (
+    env.GITHUB_CHAOS_FAKE_FAIL === 'repos' ||
+    env.GITHUB_CHAOS_FAKE_FAIL === 'all'
+  ) {
+    throw new Error('Chaos: simulated GitHub API failure (repos)');
+  }
+  const response = await fetch(
+    'https://api.github.com/installation/repositories?per_page=100&page=1',
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2026-03-10',
       },
+    },
+  );
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch GitHub repos: ${response.statusText}`,
+      ErrorCode.GITHUB_REPOS_FETCH_FAILED,
+      502,
     );
-    if (!res.ok) {
-      throw new AppError(
-        `Failed to fetch GitHub repos: ${res.statusText}`,
-        ErrorCode.GITHUB_REPOS_FETCH_FAILED,
-        502,
-      );
-    }
-    return res;
-  });
+  }
 
-  return response.json() as Promise<GitHubRepo[]>;
+  return response.json() as Promise<FetchGithubReposResponse>;
 }
 
 export async function getGithubConnection(
@@ -281,25 +368,22 @@ export async function fetchRepoCommits(
   input: FetchGithubCommitsInput,
 ): Promise<GitHubCommit[]> {
   const { accessToken, owner, repo, limit = 100 } = input;
-  const response = await githubApiPolicy.execute(async () => {
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${limit}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github+json',
-        },
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${limit}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
       },
+    },
+  );
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch GitHub commits: ${response.statusText}`,
+      ErrorCode.GITHUB_COMMITS_FETCH_FAILED,
+      502,
     );
-    if (!res.ok) {
-      throw new AppError(
-        `Failed to fetch GitHub commits: ${res.statusText}`,
-        ErrorCode.GITHUB_COMMITS_FETCH_FAILED,
-        502,
-      );
-    }
-    return res;
-  });
+  }
 
   return (await response.json()) as GitHubCommit[];
 }
@@ -313,25 +397,22 @@ export async function fetchRepoPullRequests(
   input: FetchGithubPullRequestsInput,
 ): Promise<GitHubPullRequest[]> {
   const { accessToken, owner, repo, limit = 50 } = input;
-  const response = await githubApiPolicy.execute(async () => {
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/pulls?per_page=${limit}&state=all`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github+json',
-        },
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/pulls?per_page=${limit}&state=all`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
       },
+    },
+  );
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch GitHub pull requests: ${response.statusText}`,
+      ErrorCode.GITHUB_PULL_REQUESTS_FETCH_FAILED,
+      502,
     );
-    if (!res.ok) {
-      throw new AppError(
-        `Failed to fetch GitHub pull requests: ${res.statusText}`,
-        ErrorCode.GITHUB_PULL_REQUESTS_FETCH_FAILED,
-        502,
-      );
-    }
-    return res;
-  });
+  }
 
   return (await response.json()) as GitHubPullRequest[];
 }
@@ -347,29 +428,24 @@ export async function fetchRepoFile(
 ): Promise<string | null> {
   const { accessToken, owner, repo, path } = input;
 
-  const response = await githubApiPolicy.execute(async () => {
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github+json',
-        },
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
       },
-    );
-    // File not found is expected for some tech stack files - do not retry
-    if (res.status === 404) return res;
-    if (!res.ok) {
-      throw new AppError(
-        `Failed to fetch GitHub file: ${res.statusText}`,
-        ErrorCode.GITHUB_FILE_FETCH_FAILED,
-        502,
-      );
-    }
-    return res;
-  });
-
+    },
+  );
+  // File not found is expected for some tech stack files
   if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch GitHub file: ${response.statusText}`,
+      ErrorCode.GITHUB_FILE_FETCH_FAILED,
+      502,
+    );
+  }
 
   const data = (await response.json()) as { content: string; encoding: string };
 
@@ -393,29 +469,25 @@ export async function fetchRepoReadme(input: {
   repo: string;
 }): Promise<string | null> {
   const { accessToken, owner, repo } = input;
-  const response = await githubApiPolicy.execute(async () => {
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/readme`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github.raw', // Request raw content directly
-        },
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/readme`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github.raw', // Request raw content directly
       },
-    );
-    // No readme is normal - do not retry
-    if (res.status === 404) return res;
-    if (!res.ok) {
-      throw new AppError(
-        `Failed to fetch GitHub readme: ${res.statusText}`,
-        ErrorCode.GITHUB_FILE_FETCH_FAILED,
-        502,
-      );
-    }
-    return res;
-  });
-
+    },
+  );
+  // No readme is normal
   if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new AppError(
+      `Failed to fetch GitHub readme: ${response.statusText}`,
+      ErrorCode.GITHUB_FILE_FETCH_FAILED,
+      502,
+    );
+  }
+
   return await response.text();
 }
 

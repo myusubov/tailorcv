@@ -1,21 +1,19 @@
 'use server';
 
 import { defineAction } from './_action';
+import type {
+  InitiateGithubAuthOutput,
+  AnalyzeGithubReposInput,
+  AnalyzeGithubReposOutput,
+} from '@/lib/types/github';
 
-export type AnalyzeGithubReposInput = number[]
-
-export interface AnalyzeGithubReposOutput {
-  summaries: Array<{
-    repositoryId: number;
-    repositoryFullName: string;
-    projectShape: string;
-    inferredStack: string[];
-    totalFiles: number;
-    topLevelFolders: string[];
-    maxDepth: number;
-    isTreeTruncated: boolean;
-  }>;
-}
+export const initiateGithubAuthAction = defineAction<
+  void,
+  InitiateGithubAuthOutput
+>({
+  method: 'POST',
+  path: 'auth/github',
+});
 
 export const analyzeGithubReposAction = defineAction<
   AnalyzeGithubReposInput,

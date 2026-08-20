@@ -1,17 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useRef } from 'react';
+import { toast } from '@heroui/react';
 import {
   useGithubConnectionQuery,
   useGithubReposQuery,
 } from '@/lib/http/github-client';
-import { analyzeGithubReposAction } from '@/lib/actions/github.actions';
+import {
+  analyzeGithubReposAction,
+  initiateGithubAuthAction,
+} from '@/lib/actions/github.actions';
 import { useActionMutation } from '@/lib/hooks/use-action-mutation';
 import { GlobalLoading } from '@/app/components/ui/global-loading';
 import { GitHubConnectView } from './github-connect-view';
 import { GitHubRepoSelectionView } from './github-repo-selection-view';
-import { env } from '@/lib/config';
 import { useQueryStates, parseAsString } from 'nuqs';
 import GithubErrorView from './github-error-view';
 
@@ -28,19 +30,21 @@ interface GitHubStepProps {
  * the full viewport, while repository loading remains progressive.
  */
 export function GitHubStep({ onBack }: GitHubStepProps) {
-  const [isConnecting, setIsConnecting] = useState(false);
   const analyzeMutation = useActionMutation(analyzeGithubReposAction, {
     showErrorToast: true,
+  });
+
+  const connectMutation = useActionMutation(initiateGithubAuthAction, {
+    showErrorToast: true,
     onSuccess: (data) => {
-      console.log({ data })
-    }
+      window.location.href = data.authUrl;
+    },
   });
 
   // Handle OAuth search params using nuqs
   const [oauthParams, setOauthParams] = useQueryStates(
     {
       status: parseAsString,
-      message: parseAsString,
     },
     {
       history: 'replace',
@@ -64,23 +68,25 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     retry: 1, // Retry once automatically before showing error
   });
 
-  // Show toasts and clear params immediately after mount
+
+  const hasHandledOauthStatus = useRef(false);
   useEffect(() => {
-    if (oauthParams.status) {
+    if (oauthParams.status && !hasHandledOauthStatus.current) {
+      hasHandledOauthStatus.current = true;
+
       if (oauthParams.status === 'connected') {
         toast.success('GitHub connected successfully');
       } else if (oauthParams.status === 'error') {
-        toast.error('Failed to connect to GitHub');
+        toast.danger('Failed to connect to GitHub');
       }
 
       // Atomic cleanup using nuqs
-      setOauthParams({ status: null, message: null });
+      setOauthParams({ status: null });
     }
   }, [oauthParams, setOauthParams]);
 
   const handleConnect = () => {
-    setIsConnecting(true);
-    window.location.href = `${env.NEXT_PUBLIC_API_URL}/api/v1/auth/github`;
+    connectMutation.mutate();
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
@@ -112,8 +118,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
 
     return (
       <GitHubRepoSelectionView
-        repos={githubRepos ?? []}
-        connection={githubConnection}
+        repos={githubRepos ?? { total_count: 0, repositories: [] }}
         onBack={onBack}
         onAnalyze={handleAnalyze}
         isLoading={analyzeMutation.isPending}
@@ -125,7 +130,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   // Show connect view if not connected
   return (
     <GitHubConnectView
-      isConnecting={isConnecting}
+      isConnecting={connectMutation.isPending}
       onConnect={handleConnect}
       onBack={onBack}
     />

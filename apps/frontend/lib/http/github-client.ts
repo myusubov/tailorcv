@@ -1,5 +1,6 @@
 import { defineQuery } from '@/lib/http/define-query';
 import type { GitHubConnectionResponse, GitHubRepo } from 'shared';
+import { GetGithubReposOutput } from '../types/github';
 
 export const useGithubConnectionQuery = defineQuery<
   void,
@@ -10,7 +11,7 @@ export const useGithubConnectionQuery = defineQuery<
   defaults: { cache: 'no-store' },
 });
 
-export const useGithubReposQuery = defineQuery<void, GitHubRepo[]>({
+export const useGithubReposQuery = defineQuery<void, GetGithubReposOutput>({
   path: '/api/github/repos',
   keyPrefix: 'github-repos',
   defaults: { cache: 'no-store' },

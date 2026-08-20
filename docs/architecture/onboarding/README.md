@@ -45,8 +45,8 @@ app/onboarding/page.tsx
 | `apps/frontend/app/onboarding/page.tsx`                                         | Chooses onboarding method and renders the selected onboarding path.                                   | Any onboarding route-level change.                          |
 | `apps/frontend/app/onboarding/types.ts`                                         | Defines onboarding method and manual-entry step config.                                               | Adding, removing, or renaming manual steps.                 |
 | `apps/frontend/app/components/onboarding/manual-entry-form.tsx`                 | Coordinates manual-entry form state, validation, step transitions, and placeholder generation submit. | Manual-entry flow changes.                                  |
-| `apps/frontend/app/components/onboarding/github/github-step.tsx`                | Handles GitHub connection/repo loading and temporary repo analysis submit.                            | GitHub onboarding path changes.                             |
-| `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` | Coordinates GitHub repo search query param, selection limit, clear selection, and analyze handoff.    | GitHub repo picker behavior changes.                        |
+| `apps/frontend/app/components/onboarding/github/github-step.tsx`                | Handles GitHub connection, installation-repository loading, and temporary analysis submit.            | GitHub onboarding path changes.                             |
+| `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx` | Coordinates GitHub repo search query param, installation-repository count, selection limit, clear selection, and analyze handoff. | GitHub repo picker behavior changes. |
 | `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`              | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components.           | GitHub repo picker presentation changes.                    |
 | `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx`  | Shared skeleton grid used while GitHub repositories are loading.                                      | GitHub repo loading-state UI changes.                       |
 | `apps/frontend/app/components/ui/global-loading.tsx`                            | Body-level blocking loading portal with customizable status copy.                                     | Full-viewport loading-state UI changes.                     |
@@ -136,7 +136,7 @@ if (ok) goToNextStep();
 | Domain            | Relationship                                                                                          | Key Interface                                                  |
 | ----------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Auth              | New users land on onboarding after registration.                                                      | `config.auth.afterSignUpUrl`                                   |
-| GitHub analysis   | GitHub Analyze calls the temporary backend analysis endpoint and logs project-structure summaries.    | `analyzeGithubReposAction`, `POST /api/v1/auth/github/analyze` |
+| GitHub analysis   | GitHub loads repositories from the connected installation; Analyze calls a temporary endpoint that currently returns an empty response. | `FetchGithubReposResponse`, `POST /api/v1/auth/github/analyze` |
 | Resume generation | Upload and manual submit handlers are placeholders until the next generation pipeline is implemented. | Placeholder toasts in upload and manual paths                  |
 | Shared schemas    | Manual entry validates against the shared onboarding form schema.                                     | `onboardingSchema`, `OnboardingFormInput`                      |
 | UI system         | HeroUI supplies form, date, modal, chip, and Checkbox primitives used by onboarding.                   | `@heroui/react`, `docs/architecture/ui/README.md`              |
@@ -158,7 +158,9 @@ if (ok) goToNextStep();
 - [x] Upload onboarding path
 - [x] GitHub onboarding path
 - [x] Upload analysis submit temporarily reset to placeholder
-- [x] GitHub analysis submit wired to temporary project-structure logging endpoint
+- [x] GitHub installation repository picker
+- [x] GitHub analysis submit wired to a temporary empty-response endpoint
+- [ ] Resume GitHub project-structure analysis after the temporary endpoint is restored
 
 ---
 

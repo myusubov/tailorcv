@@ -21,12 +21,10 @@ export interface GitHubTokenErrorResponse {
 }
 
 export interface SaveGitHubConnectionInput {
-  userId: string;
-  accessToken: string;
-  githubUserId: number;
-  githubUsername: string;
-  githubAvatarUrl?: string;
-  scope: string;
+  userId: string; 
+  installationId: string;
+  installationAccessToken: string;
+  installationAccessTokenExpiresAt: Date;
 }
 
 export interface GitHubRepo {
@@ -57,21 +55,25 @@ export interface GitHubRepo {
 export interface GitHubConnection {
   id: string;
   userId: string;
-  accessToken: string;
-  githubUserId: number;
-  githubUsername: string;
-  githubAvatarUrl: string | null;
-  scopes: string;
+  installationId: string;
+  installationAccessToken: string;
+  installationAccessTokenExpiresAt: Date;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
 
 export interface GitHubConnectionResponse {
   id: string;
-  githubUserId: number;
-  githubUsername: string;
-  githubAvatarUrl: string | null;
-  scopes: string;
   createdAt: Date | string;
   updatedAt: Date | string;
+}
+
+export interface CreateInstallationAccessTokenResponse {
+  token: string;
+  expires_at: string;
+}
+
+export interface FetchGithubReposResponse {
+  total_count: number;
+  repositories: GitHubRepo[];
 }

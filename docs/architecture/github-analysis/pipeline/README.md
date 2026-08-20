@@ -19,12 +19,12 @@ GitHub repo IDs selected by user
   └─ POST /api/v1/auth/github/analyze
       ├─ require Clerk authentication
       ├─ require saved GitHub connection
-      ├─ fetch current repository list
-      ├─ filter selected repository IDs
-      ├─ fetch each selected repository tree
-      ├─ Project Structure Analyzer
-      ├─ future analyzers
-      └─ future evidence aggregator + AI resume synthesis
+      └─ currently returns an empty temporary response
+
+GitHub App installation
+  └─ callback verifies user access to installation
+      └─ stores installation ID and short-lived installation token
+          └─ protected GitHub routes refresh token before use
 ```
 
 ---
@@ -39,7 +39,9 @@ GitHub repo IDs selected by user
 | `apps/backend/src/mappers/github.mapper.ts`                        | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                    | GitHub response DTO changes                |
 | `apps/backend/src/middleware/github-auth.ts`                       | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.         | GitHub-protected route changes             |
 | `packages/shared/src/types/github.ts`                              | Defines full backend GitHub connection and client-safe public connection response types.                      | GitHub API contract changes                |
-| `apps/backend/src/services/github-analysis.service.ts`             | Temporary orchestration service that fetches repo trees, runs project-structure analysis, and logs summaries. | GitHub analysis orchestration changes      |
+| `apps/backend/prisma/schema.prisma`                                | Persists the installation ID plus the cached, expiring installation token for each Clerk user.                | GitHub connection persistence changes      |
+| `apps/backend/src/services/github.service.ts`                       | Initiates the installation flow, verifies callbacks, manages installation tokens, and fetches repositories.   | GitHub connection or token lifecycle changes |
+| `apps/backend/src/services/github-analysis.service.ts`             | Retains the analyzer orchestration implementation; it is not currently invoked by the temporary endpoint.     | Resuming GitHub analysis orchestration     |
 | `apps/backend/src/services/github-analysis/github-tree-fetcher.ts` | Fetches recursive GitHub tree metadata for a selected repository.                                             | GitHub tree API changes                    |
 | `apps/backend/src/utils/github-utils.ts`                           | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                  | Tree normalization or repo parsing changes |
 
@@ -55,12 +57,7 @@ flowchart TD
   Route --> Clerk[requireClerkAuth]
   Clerk --> GitHubAuth[requireGithubConnection]
   GitHubAuth --> Controller[analyzeGithubRepos]
-  Controller --> Service[analyzeGithubRepositories]
-  Service --> Repos[Fetch GitHub repos]
-  Service --> Tree[Fetch recursive repository tree]
-  Tree --> Analyzer[Project Structure Analyzer]
-  Analyzer --> Log[Log summary]
-  Analyzer --> Response[Return summaries]
+  Controller --> Response[Return temporary empty response]
 ```
 
 ---
@@ -107,9 +104,9 @@ apps/backend/src/
 ### 6.2 GitHub Connection Boundary
 
 - **Rule**: GitHub-token routes must run `requireClerkAuth` before `requireGithubConnection`.
-- **Rule**: `requireGithubConnection` attaches `res.locals.githubConnection` so controllers/services do not refetch the connection.
+- **Rule**: `requireGithubConnection` refreshes an installation token that is within five minutes of expiration before attaching `res.locals.githubConnection`.
 - **Rule**: `/connection` remains Clerk-only because it is the status endpoint used to detect whether the user is connected.
-- **Rule**: `/connection` must return `GitHubConnectionResponse | null` and must never expose the stored OAuth `accessToken` to the browser.
+- **Rule**: `/connection` must return `GitHubConnectionResponse | null` and must never expose the installation ID or stored installation token to the browser.
 - **Rule**: Any client response derived from a token-bearing/internal GitHub object must use a response DTO mapper with an explicit field allowlist.
 
 ---
@@ -122,12 +119,25 @@ apps/backend/src/
 | Auth                       | GitHub-token routes require Clerk auth and saved GitHub connection middleware. | `requireClerkAuth`, `requireGithubConnection` |
 | Project structure analysis | Service normalizes GitHub tree entries before invoking the analyzer.           | `AnalyzeProjectStructureInput`                |
 
+### 7.1 GitHub App Connection & Environment Configuration
+
+The backend connects to GitHub through a repository-scoped GitHub App. The installation is the durable connection boundary; a GitHub user authorization token is used only during the callback to verify that the authenticated user can access the selected installation.
+
+1. **Initiation (`POST /api/v1/auth/github`)**: Generates a cryptographically random 32-byte Base64URL `state`, stores `github_oauth_state:<state> -> clerkUserId` in Redis with a 5-minute TTL, and returns `{ authUrl }` pointing to `https://github.com/apps/<GITHUB_APP_SLUG>/installations/new?state=<state>` for the client to navigate to. The frontend calls this through `initiateGithubAuthAction` rather than a direct browser redirect, so installation-precondition failures surface as a normal action error instead of a raw page.
+2. **Callback (`GET /api/v1/auth/github/callback`)**: Atomically consumes the state with Redis `GETDEL`, confirms the matching Clerk user, exchanges the callback code for a user token, and verifies that the user can access the returned installation.
+3. **Connection persistence**: The callback signs an app JWT, obtains a short-lived installation token, and upserts `installationId`, `installationAccessToken`, and its expiration. GitHub-protected routes refresh the token with a five-minute buffer before using it.
+4. **Migration boundary**: The migration deletes legacy OAuth connection records because they cannot be converted into GitHub App installations; affected users reconnect through the installation flow.
+
+The backend validates GitHub App configuration through `apps/backend/src/config/env.ts` (`GITHUB_APP_SLUG`, `GITHUB_APP_ID`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_CALLBACK_URL`, and normalized PEM `GITHUB_APP_PRIVATE_KEY`). Temporary legacy aliases stay confined to the configuration boundary while call sites transition.
+
 ---
 
 ## 8. Implementation Status
 
-- [x] Temporary analyze endpoint
+- [x] Temporary analyze endpoint accepts selected repository IDs and returns an empty response
+- [ ] Resume temporary analyze endpoint orchestration and project-structure summaries
 - [x] GitHub connection middleware boundary
+- [x] GitHub App installation connection and installation-token refresh
 - [x] Client-safe GitHub response mapper
 - [x] Recursive GitHub tree fetcher
 - [x] Tree entry normalization
@@ -142,6 +152,8 @@ apps/backend/src/
 | Risk                                                           | Mitigation                                                                             |
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | OAuth token leaks into client response                         | Always map internal GitHub connection models through `github.mapper.ts`.               |
+| Legacy OAuth connections are treated as GitHub App installations | Delete incompatible records in the migration and require affected users to reconnect. |
+| An installation token expires during a protected request       | Refresh cached tokens five minutes before expiry in `requireGithubConnection`.         |
 | Analyzers refetch the same GitHub data repeatedly              | Keep analyzers pure and pass normalized tree/file data from the service layer.         |
 | Temporary endpoint response becomes a final contract too early | Keep temporary analyze output explicit and document future pipeline stages separately. |
 

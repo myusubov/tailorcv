@@ -30,15 +30,16 @@ const envSchema = z.object({
   // OpenAI AI
   OPENAI_API_KEY: z.string().min(1),
 
-  // GitHub OAuth
-  GITHUB_CLIENT_ID: z.string().min(1),
-  GITHUB_CLIENT_SECRET: z.string().min(1),
-  GITHUB_REDIRECT_URI: z
-    .url()
-    .default('http://localhost:8080/api/v1/auth/github/callback'),
-
-  // JWT Secret (for OAuth state signing)
-  JWT_SECRET: z.string().min(32),
+  // GitHub App
+  GITHUB_APP_SLUG: z.string().min(1),
+  GITHUB_APP_ID: z.string().regex(/^\d+$/, 'Must be a numeric GitHub App ID'),
+  GITHUB_APP_CLIENT_ID: z.string().min(1),
+  GITHUB_APP_CLIENT_SECRET: z.string().min(1),
+  GITHUB_APP_CALLBACK_URL: z.url(),
+  GITHUB_APP_PRIVATE_KEY: z
+    .string()
+    .min(1)
+    .transform((privateKey) => privateKey.replace(/\\n/g, '\n')),
 
   // Frontend URL (for CORS)
   FRONTEND_URL: z.url().default('http://localhost:3000'),
@@ -64,7 +65,16 @@ const envSchema = z.object({
 // Parse and validate environment variables
 const parseEnv = () => {
   try {
-    return envSchema.parse(process.env);
+    const parsedEnv = envSchema.parse(process.env);
+
+    return {
+      ...parsedEnv,
+      // Transitional aliases for the existing OAuth service. Remove them when
+      // the GitHub App installation flow replaces that service path.
+      GITHUB_CLIENT_ID: parsedEnv.GITHUB_APP_CLIENT_ID,
+      GITHUB_CLIENT_SECRET: parsedEnv.GITHUB_APP_CLIENT_SECRET,
+      GITHUB_REDIRECT_URI: parsedEnv.GITHUB_APP_CALLBACK_URL,
+    };
   } catch (error) {
     if (error instanceof ZodError) {
       console.error('❌ Invalid environment variables:');
@@ -81,7 +91,7 @@ const parseEnv = () => {
 export const env = parseEnv();
 
 // Export the type for use in other files
-export type Env = z.infer<typeof envSchema>;
+export type Env = ReturnType<typeof parseEnv>;
 
 // Log loaded config (without sensitive data)
 if (env.NODE_ENV === 'development') {
