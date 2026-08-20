@@ -18,7 +18,7 @@ if (connectionString) {
       'Prisma DB connection config',
     );
   } catch (e) {
-    logger.warn({ error: e }, 'Could not parse DATABASE_URL for logging');
+    logger.warn({ err: e }, 'Could not parse DATABASE_URL for logging');
   }
 } else {
   logger.error('DATABASE_URL is not set');

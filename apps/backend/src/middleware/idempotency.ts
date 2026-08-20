@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { redisPublisher } from '../lib/redis';
+import { redisClient } from '../lib/redis';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import { logger } from '../lib/logger';
@@ -42,7 +42,7 @@ export const idempotency = (options: IdempotencyOptions = {}) => {
 
     try {
       // Check if the key exists in Redis
-      const existing = await redisPublisher.get(redisKey);
+      const existing = await redisClient.get(redisKey);
 
       if (existing) {
         const { status } = JSON.parse(existing);
@@ -66,7 +66,7 @@ export const idempotency = (options: IdempotencyOptions = {}) => {
       }
 
       // Mark the request as processing
-      await redisPublisher.set(
+      await redisClient.set(
         redisKey,
         JSON.stringify({ status: 'processing', timestamp: Date.now() }),
         'EX',
@@ -75,7 +75,7 @@ export const idempotency = (options: IdempotencyOptions = {}) => {
 
       // Attach helper to the response object to mark as completed manually
       res.markIdempotentCompleted = async () => {
-        await redisPublisher.set(
+        await redisClient.set(
           redisKey,
           JSON.stringify({ status: 'completed', timestamp: Date.now() }),
           'EX',
@@ -85,7 +85,7 @@ export const idempotency = (options: IdempotencyOptions = {}) => {
 
       next();
     } catch (error) {
-      logger.error({ error, redisKey }, 'Idempotency middleware error');
+      logger.error({ err: error, redisKey }, 'Idempotency middleware error');
       // If Redis fails, we still want to process the request
       next();
     }

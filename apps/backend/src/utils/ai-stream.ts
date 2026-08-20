@@ -163,7 +163,7 @@ export async function* handleOpenAIStream(
     if (error.name === 'AbortError' || controller.signal.aborted) {
       return; // User stopped the response
     }
-    logger.error({ error }, 'OpenAI stream handler error');
+    logger.error({ err: error }, 'OpenAI stream handler error');
     throw error;
   }
 }

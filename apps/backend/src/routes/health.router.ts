@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { redisPublisher } from '../lib/redis';
+import { redisClient } from '../lib/redis';
 import { logger } from '../lib/logger';
 
 export const healthRouter = Router();
@@ -47,7 +47,7 @@ healthRouter.get('/', async (req, res) => {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error({ error }, 'Database health check failed');
+    logger.error({ err: error }, 'Database health check failed');
     healthCheck.dependencies.database = {
       status: 'error',
       message: errorMessage,
@@ -58,7 +58,7 @@ healthRouter.get('/', async (req, res) => {
   // Check Redis connectivity
   try {
     const redisStart = Date.now();
-    await redisPublisher.ping();
+    await redisClient.ping();
     const redisTime = Date.now() - redisStart;
     healthCheck.dependencies.redis = {
       status: 'ok',
@@ -66,7 +66,7 @@ healthRouter.get('/', async (req, res) => {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error({ error }, 'Redis health check failed');
+    logger.error({ err: error }, 'Redis health check failed');
     healthCheck.dependencies.redis = {
       status: 'error',
       message: errorMessage,

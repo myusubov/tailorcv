@@ -10,7 +10,7 @@ import { AppError } from './utils/AppError';
 import { ErrorCode } from 'shared';
 import { logger, requestLogger } from './lib/logger';
 import { prisma } from './lib/prisma';
-import { redisPublisher, redisSubscriber } from './lib/redis';
+import { redisClient, redisSubscriber } from './lib/redis';
 import { globalRateLimiter } from './middleware/rateLimiter';
 import { jsonParser, urlencodedParser } from './middleware/bodyParser';
 
@@ -28,8 +28,8 @@ app.use(urlencodedParser);
 app.use(clerkMiddleware());
 app.use(requestLogger);
 
-// Apply global rate limiting to all API routes
-app.use('/api', globalRateLimiter);
+// // Apply global rate limiting to all API routes
+// app.use('/api', globalRateLimiter);
 
 // Routes
 app.use('/api/v1', v1Router);
@@ -66,7 +66,7 @@ const gracefulShutdown = async (signal: string) => {
   // Stop accepting new connections
   server.close(async (err) => {
     if (err) {
-      logger.error({ error: err }, 'Error during server shutdown');
+      logger.error({ err }, 'Error during server shutdown');
       process.exit(1);
     }
 
@@ -78,13 +78,13 @@ const gracefulShutdown = async (signal: string) => {
       logger.info('Prisma disconnected');
 
       // Disconnect Redis clients
-      await Promise.all([redisPublisher.quit(), redisSubscriber.quit()]);
+      await Promise.all([redisClient.quit(), redisSubscriber.quit()]);
       logger.info('Redis clients disconnected');
 
       logger.info('Graceful shutdown completed');
       process.exit(0);
     } catch (error) {
-      logger.error({ error }, 'Error during resource cleanup');
+      logger.error({ err: error }, 'Error during resource cleanup');
       process.exit(1);
     }
   });

@@ -140,7 +140,7 @@ export async function generateConversationTitle(
 
     return title;
   } catch (error) {
-    logger.error({ error, input }, 'Failed to generate conversation title');
+    logger.error({ err: error, input }, 'Failed to generate conversation title');
     // Fallback to slice
     return input.slice(0, 50);
   }

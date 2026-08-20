@@ -6,7 +6,7 @@ import { logger } from './logger';
  * Redis client for publishing messages
  * Used by workers and services to publish job updates
  */
-export const redisPublisher = new Redis(env.REDIS_URL, {
+export const redisClient = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: 3,
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);
@@ -30,22 +30,22 @@ export const redisSubscriber = new Redis(env.REDIS_URL, {
 });
 
 // Connect both clients on initialization
-Promise.all([redisPublisher.connect(), redisSubscriber.connect()])
+Promise.all([redisClient.connect(), redisSubscriber.connect()])
   .then(() => {
     logger.info('Redis clients connected successfully');
   })
   .catch((error) => {
-    logger.error({ error }, 'Failed to connect to Redis');
+    logger.error({ err: error }, 'Failed to connect to Redis');
     process.exit(1);
   });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('Disconnecting Redis clients...');
-  await Promise.all([redisPublisher.quit(), redisSubscriber.quit()]);
+  await Promise.all([redisClient.quit(), redisSubscriber.quit()]);
 });
 
 process.on('SIGINT', async () => {
   logger.info('Disconnecting Redis clients...');
-  await Promise.all([redisPublisher.quit(), redisSubscriber.quit()]);
+  await Promise.all([redisClient.quit(), redisSubscriber.quit()]);
 });

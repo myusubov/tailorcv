@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { RedisStore, type RedisReply } from 'rate-limit-redis';
-import { redisPublisher } from '../lib/redis';
+import { redisClient } from '../lib/redis';
 import { errorResponse } from '../utils/response';
 import { ErrorCode } from 'shared';
 import type { Request, Response } from 'express';
@@ -16,7 +16,7 @@ export const globalRateLimiter = rateLimit({
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
-      redisPublisher.call(command, ...args) as Promise<RedisReply>,
+      redisClient.call(command, ...args) as Promise<RedisReply>,
     prefix: 'rl:global:',
   }),
   handler: (req: Request, res: Response) => {
@@ -45,7 +45,7 @@ export const aiChatRateLimiter = rateLimit({
   legacyHeaders: false,
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
-      redisPublisher.call(command, ...args) as Promise<RedisReply>,
+      redisClient.call(command, ...args) as Promise<RedisReply>,
     prefix: 'rl:ai-chat:',
   }),
   handler: (req: Request, res: Response) => {
@@ -71,7 +71,7 @@ export const aiConversationCrudRateLimiter = rateLimit({
   legacyHeaders: false,
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
-      redisPublisher.call(command, ...args) as Promise<RedisReply>,
+      redisClient.call(command, ...args) as Promise<RedisReply>,
     prefix: 'rl:ai-conv-crud:',
   }),
   handler: (req: Request, res: Response) => {
@@ -97,7 +97,7 @@ export const githubAuthRateLimiter = rateLimit({
   legacyHeaders: false,
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
-      redisPublisher.call(command, ...args) as Promise<RedisReply>,
+      redisClient.call(command, ...args) as Promise<RedisReply>,
     prefix: 'rl:github-auth:',
   }),
   handler: (req: Request, res: Response) => {
@@ -124,7 +124,7 @@ export const githubApiRateLimiter = rateLimit({
   legacyHeaders: false,
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
-      redisPublisher.call(command, ...args) as Promise<RedisReply>,
+      redisClient.call(command, ...args) as Promise<RedisReply>,
     prefix: 'rl:github-api:',
   }),
   handler: (req: Request, res: Response) => {
