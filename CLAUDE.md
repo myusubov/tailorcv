@@ -8,12 +8,6 @@ Before any code implementation:
 
 - Read `docs/architecture/README.md`.
 - Read the relevant domain folder if one exists.
-- If no relevant domain folder exists, create/update one before the work is considered complete.
-
-After any source/config change under `apps/`, `packages/`, or root project config:
-
-- Update the relevant `docs/architecture` README/changelog/ADR files in the same work session.
-- Do not claim completion, commit, or open a PR until the architecture docs are current.
 
 ## Git Safety
 
@@ -44,7 +38,7 @@ After any source/config change under `apps/`, `packages/`, or root project confi
 | Validation    | Zod 4                              | -                           |
 | Data Fetching | TanStack React Query v5            | -                           |
 | Forms         | react-hook-form + Zod              | -                           |
-| Toasts        | sonner                             | -                           |
+| Toasts        | HeroUI Toast (`showErrorToast`, `useActionMutation`) + sonner (other call sites, see `docs/architecture/ui/README.md`) | -    |
 | Resilience    | cockatiel                          | -                           |
 
 ## Project Structure
@@ -100,7 +94,6 @@ npm run prisma:studio          # visual DB browser
 
 - Use chat-based planning and the platform's plan mode by default for multi-step work.
 - Do not create a repo-local `PLAN.md` unless a human explicitly asks for a file-based plan artifact.
-- When a reusable implementation pattern changes, update this `CLAUDE.md`; when feature architecture changes, update the relevant domain folder under `docs/architecture/`.
 
 ---
 
@@ -390,7 +383,7 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 | `successResponse`                   | `apps/backend/src/utils/response.ts`             | Standardized success response wrapper                          |
 | `AppError`                          | `apps/backend/src/utils/AppError.ts`             | Typed error class with ErrorCode                               |
 | `initSseResponse` / `writeSseEvent` | `apps/backend/src/utils/ai-stream-sse.ts`        | SSE utilities for streaming                                    |
-| `showErrorToast`                    | `apps/frontend/lib/utils/error-toast.ts`         | Sonner toast for API errors                                    |
+| `showErrorToast`                    | `apps/frontend/lib/utils/error-toast.tsx`        | HeroUI toast for API errors                                    |
 | `deepMerge`                         | `packages/shared/src/utils/deepMerge.ts`         | Deep object merge                                              |
 
 ## Cross-Project Workflows

@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-08-20
+
+### Shared Error Toast Migrated to HeroUI Toast
+
+- **Problem:** `showErrorToast` and `useActionMutation`'s default error path rendered through Sonner's `toast.error`, splitting the app's error-feedback surface from the HeroUI Toast provider used elsewhere.
+- **Solution:**
+  1. **Shared utility — `apps/frontend/lib/utils/error-toast.tsx`**: Imports `toast` from `@heroui/react` and calls `toast.danger`, mapping the retry action to `actionProps.children`/`onPress` and `duration` to `timeout`.
+  2. **Mutation default — `apps/frontend/lib/hooks/use-action-mutation.ts`**: Imports `toast` from `@heroui/react` for its default error toast instead of `sonner`.
+- **Outcome:** `showErrorToast` and default mutation error toasts render through HeroUI Toast; Sonner remains mounted in `app/layout.tsx` for other call sites per the existing coexistence rule until a full consolidation decision is made.
+
 ## 2026-08-14
 
 ### Reset-Password Card Field Treatment

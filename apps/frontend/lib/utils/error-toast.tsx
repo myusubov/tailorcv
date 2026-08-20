@@ -1,6 +1,6 @@
 'use client';
 
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { ErrorCode } from 'shared';
 import { ApiRequestError } from '../http/define-query';
 
@@ -57,13 +57,13 @@ export function showErrorToast(
       ErrorCode.INVALID_RESPONSE,
     ].includes(code) && !!options?.onRetry;
 
-  toast.error(friendlyMessage, {
-    action: needsRetryAction
+  toast.danger(friendlyMessage, {
+    actionProps: needsRetryAction
       ? {
-          label: 'Retry',
-          onClick: () => options.onRetry?.(options.data),
+          children: 'Retry',
+          onPress: () => options.onRetry?.(options.data),
         }
       : undefined,
-    duration: options?.duration,
+    timeout: options?.duration,
   });
 }
