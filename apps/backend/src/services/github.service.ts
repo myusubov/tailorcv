@@ -34,7 +34,7 @@ import jwt from 'jsonwebtoken';
 export async function getGithubAuthUrl(userId: string): Promise<string> {
   const state = randomBytes(32).toString('base64url');
 
-  await redisClient.set(`github_oauth_state:${state}`, userId, 'EX', 300); // Expires in 5 minutes
+  await redisClient.set(`github_oauth_state:${state}`, userId, 'EX', 900); // Expires in 15 minutes
 
   const url = new URL(
     `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,

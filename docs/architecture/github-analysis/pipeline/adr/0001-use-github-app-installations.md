@@ -15,7 +15,7 @@ Repository analysis needs access that is scoped to repositories a user explicitl
 
 Use a GitHub App installation as the durable connection boundary. Persist the installation ID plus a short-lived installation token and its expiration for each Clerk user; do not persist the callback's user authorization token or expose installation credentials through the client API.
 
-Initiate the installation flow with an opaque random state stored in Redis for five minutes and consume it atomically during the callback. Validate that the authorized GitHub user can access the selected installation. Refresh the persisted installation token before protected GitHub operations when it is within five minutes of expiry.
+Initiate the installation flow with an opaque random state stored in Redis for fifteen minutes and consume it atomically during the callback. Validate that the authorized GitHub user can access the selected installation. Refresh the persisted installation token before protected GitHub operations when it is within five minutes of expiry.
 
 ## Considered Options
 

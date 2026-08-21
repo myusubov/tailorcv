@@ -6,6 +6,14 @@
 
 Historical pipeline entries currently live in the parent GitHub Analysis changelog: [../changelog.md](../changelog.md).
 
+## 2026-08-21
+
+### OAuth State TTL Extended
+
+- **Problem:** The 5-minute Redis TTL on `github_oauth_state:<state>` (`apps/backend/src/services/github.service.ts`) could expire before a user completed the GitHub App installation authorization redirect.
+- **Solution:** Extended the TTL to 15 minutes (`EX 900`).
+- **Outcome:** Callback state remains valid for longer installation flows while still expiring and single-use via `GETDEL`.
+
 ## 2026-08-19
 
 ### GitHub App Installation Connection and Token Lifecycle
