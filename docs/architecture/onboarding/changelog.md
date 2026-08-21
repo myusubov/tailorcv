@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-08-21
+
+### GitHub-Only Method Selection
+
+- **Problem:** `MethodSelection` offered Upload and Manual Entry alongside GitHub import, but onboarding is narrowing to a GitHub-only critical path.
+- **Solution:**
+  1. **`apps/frontend/app/components/onboarding/method-selection.tsx`**: Commented out the Upload and Manual Entry method cards, updated the intro copy to "master resume," and centered the single remaining GitHub card.
+  2. Left `apps/frontend/app/onboarding/page.tsx` unchanged: `upload` and `manual` remain valid `?method=` values, so both flows stay reachable directly and their components stay in the codebase.
+  3. Minor spacing cleanup in `github-repo-selection-actions.tsx`, `github-repo-selection-results.tsx`, and `github-repo-selection-toolbar.tsx`.
+- **Outcome:** New users only see GitHub import as a choice; Upload and Manual Entry are dormant but not deleted, preserving the existing tested implementations for a possible future re-introduction.
+
 ## 2026-08-19
 
 ### Installation-Scoped GitHub Repository Picker

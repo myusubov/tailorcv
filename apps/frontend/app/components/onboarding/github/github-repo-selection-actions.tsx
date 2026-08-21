@@ -22,7 +22,7 @@ export function GitHubRepoSelectionActions({
 }: GitHubRepoSelectionActionsProps) {
   return (
     <motion.div
-      className="flex shrink-0 items-center justify-between gap-4 px-4 sm:px-6 pt-4"
+      className="flex shrink-0 items-center justify-between gap-4 px-4 sm:px-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6 }}

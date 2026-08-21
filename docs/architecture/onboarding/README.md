@@ -1,6 +1,6 @@
 # Onboarding: Resume Data Capture
 
-> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. Generation submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt.
+> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. Generation submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt. The method-selection UI currently offers GitHub import only; upload and manual entry remain implemented and reachable via their `?method=` query values but are not presented as selectable cards.
 
 ---
 

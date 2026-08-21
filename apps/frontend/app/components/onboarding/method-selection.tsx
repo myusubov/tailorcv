@@ -19,24 +19,24 @@ const methods = [
     time: '~2 minutes',
     recommended: true,
   },
-  {
-    id: 'upload' as const,
-    icon: 'lucide:upload',
-    title: 'Upload About Me File',
-    description: 'Upload .txt or .md with your info',
-    details: 'Fastest if you have it ready',
-    time: '~1 minute',
-    recommended: false,
-  },
-  {
-    id: 'manual' as const,
-    icon: 'lucide:pen-line',
-    title: 'Manual Entry',
-    description: 'Fill in a simple form yourself',
-    details: 'Complete control over your data',
-    time: '~5 minutes',
-    recommended: false,
-  },
+  // {
+  //   id: 'upload' as const,
+  //   icon: 'lucide:upload',
+  //   title: 'Upload About Me File',
+  //   description: 'Upload .txt or .md with your info',
+  //   details: 'Fastest if you have it ready',
+  //   time: '~1 minute',
+  //   recommended: false,
+  // },
+  // {
+  //   id: 'manual' as const,
+  //   icon: 'lucide:pen-line',
+  //   title: 'Manual Entry',
+  //   description: 'Fill in a simple form yourself',
+  //   details: 'Complete control over your data',
+  //   time: '~5 minutes',
+  //   recommended: false,
+  // },
 ];
 
 const containerVariants = {
@@ -72,25 +72,21 @@ export function MethodSelection({ onSelectMethod }: MethodSelectionProps) {
           Welcome to TailorCV!
         </h1>
         <p className="text-muted mt-3 text-lg">
-          Let&apos;s create your base resume in 2 minutes
+          Let&apos;s create your master resume in 2 minutes
         </p>
-        <p className="text-muted mt-2 text-sm">
+        {/* <p className="text-muted mt-2 text-sm">
           Choose the fastest way to get started:
-        </p>
+        </p> */}
       </motion.div>
 
       <motion.div
-        className="flex w-full max-w-4xl flex-wrap gap-4"
+        className="flex w-full max-w-4xl flex-wrap justify-center gap-4"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {methods.map((method) => (
-          <motion.div
-            key={method.id}
-            variants={itemVariants}
-            className="min-w-[18rem] flex-1"
-          >
+          <motion.div key={method.id} variants={itemVariants}>
             <Card className="group relative p-0 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
               <button
                 type="button"
