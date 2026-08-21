@@ -323,13 +323,6 @@ export async function saveGitHubConnection(input: SaveGitHubConnectionInput) {
 export async function fetchGithubRepos(
   accessToken: string,
 ): Promise<FetchGithubReposResponse> {
-  // Chaos: GITHUB_CHAOS_FAKE_FAIL=repos or all
-  if (
-    env.GITHUB_CHAOS_FAKE_FAIL === 'repos' ||
-    env.GITHUB_CHAOS_FAKE_FAIL === 'all'
-  ) {
-    throw new Error('Chaos: simulated GitHub API failure (repos)');
-  }
   const response = await fetch(
     'https://api.github.com/installation/repositories?per_page=100&page=1',
     {

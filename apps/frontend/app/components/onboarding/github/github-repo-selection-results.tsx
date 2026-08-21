@@ -23,7 +23,7 @@ export function GitHubRepoSelectionResults({
   maxRepos,
 }: GitHubRepoSelectionResultsProps) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 sm:px-6">
+    <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:px-6">
       {isReposLoading ? (
         <GitHubRepoGridSkeleton />
       ) : (
