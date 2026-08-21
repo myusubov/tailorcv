@@ -13,10 +13,6 @@ export function mapGitHubConnectionToResponse({
 }): GitHubConnectionResponse {
   return {
     id: githubConnection.id,
-    githubUserId: githubConnection.githubUserId,
-    githubUsername: githubConnection.githubUsername,
-    githubAvatarUrl: githubConnection.githubAvatarUrl,
-    scopes: githubConnection.scopes,
     createdAt: githubConnection.createdAt,
     updatedAt: githubConnection.updatedAt,
   };

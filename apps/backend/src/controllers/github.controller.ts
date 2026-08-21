@@ -1,12 +1,14 @@
 import type { Request, Response, NextFunction } from 'express';
 import { analyzeGithubRepositories } from '../services/github-analysis.service';
 import {
+  createInstallationAccessToken,
   exchangeCodeForToken,
   fetchGithubRepos,
   getGithubAuthUrl,
   getGithubConnection,
   getGitHubUser,
   saveGitHubConnection,
+  verifyGithubUserCanAccessInstallation,
   verifyOAuthState,
 } from '../services/github.service';
 import { mapGitHubConnectionToResponse } from '../mappers/github.mapper';
@@ -16,10 +18,12 @@ import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import { successResponse } from '../utils/response';
-import { handleResilienceError } from '../lib/resilience';
+import { logger } from '../lib/logger';
 
 /**
- * Initiates the GitHub OAuth flow by redirecting to GitHub
+ * Returns the GitHub App installation URL for the client to redirect to.
+ * A JSON response (instead of a server-side redirect) lets the frontend
+ * surface connection-precondition failures as a normal error, not a raw page.
  */
 export async function initiateGithubAuth(
   req: Request,
@@ -28,15 +32,21 @@ export async function initiateGithubAuth(
 ) {
   try {
     const { clerkUserId } = res.locals;
-    const authUrl = getGithubAuthUrl(clerkUserId);
-    res.redirect(authUrl);
+    const authUrl = await getGithubAuthUrl(clerkUserId);
+    return successResponse(res, { authUrl }, 200);
   } catch (error) {
     next(error);
   }
 }
 
 /**
- * Handles the callback from GitHub after authorization
+ * Completes the combined GitHub App installation and user-authorization callback.
+ *
+ * Inputs arrive through GitHub callback query parameters and the authenticated
+ * Clerk user in response locals. The handler consumes the single-use state,
+ * verifies that the GitHub user can access the supplied installation, creates
+ * and persists an installation token, and redirects to onboarding. Failures are
+ * logged internally without exposing provider details in the browser redirect.
  */
 export async function handleGithubCallback(
   req: Request,
@@ -44,44 +54,43 @@ export async function handleGithubCallback(
   next: NextFunction,
 ) {
   try {
-    const { code, state } = req.query;
+    const { installation_id, state, code } = req.query;
     const { clerkUserId } = res.locals;
 
-    if (!code || !state) {
-      throw new AppError(
-        'Missing authorization code or state',
-        ErrorCode.BAD_REQUEST,
-        400,
-      );
+    if (
+      typeof code !== 'string' ||
+      typeof state !== 'string' ||
+      typeof installation_id !== 'string'
+    ) {
+      throw new AppError('Invalid GitHub callback', ErrorCode.BAD_REQUEST, 400);
     }
-
     // Verify the OAuth state to prevent CSRF attacks
-    verifyOAuthState(state as string, clerkUserId);
+    await verifyOAuthState(state as string, clerkUserId);
 
-    const tokenResponse = await exchangeCodeForToken(code as string);
-    const githubUser = await getGitHubUser(tokenResponse.access_token);
+    const userAccessToken = await exchangeCodeForToken(code);
+
+    await verifyGithubUserCanAccessInstallation({
+      userAccessToken: userAccessToken.access_token,
+      installationId: installation_id as string,
+    });
+
+    const { token, expires_at } = await createInstallationAccessToken(
+      installation_id as string,
+    );
+
     await saveGitHubConnection({
       userId: clerkUserId,
-      accessToken: tokenResponse.access_token,
-      githubUserId: githubUser.id,
-      githubUsername: githubUser.login,
-      githubAvatarUrl: githubUser.avatar_url,
-      scope: tokenResponse.scope,
+      installationAccessToken: token,
+      installationAccessTokenExpiresAt: new Date(expires_at),
+      installationId: installation_id as string,
     });
 
     res.redirect(
       `${env.FRONTEND_URL}/onboarding?method=github&status=connected`,
     );
   } catch (error: unknown) {
-    const appError =
-      error instanceof AppError
-        ? error
-        : handleResilienceError(error, 'GitHub');
-    console.error('GitHub Callback Error:', error); // Log the real error
-    const errorMessage = appError.errorCode.toLowerCase(); // Use the standardized error code
-    res.redirect(
-      `${env.FRONTEND_URL}/onboarding?method=github&status=error&message=${encodeURIComponent(errorMessage)}`,
-    );
+    logger.error({ err: error }, 'GitHub App callback failed');
+    res.redirect(`${env.FRONTEND_URL}/onboarding?method=github&status=error`);
   }
 }
 
@@ -92,7 +101,9 @@ export async function getGithubRepos(
 ) {
   try {
     const { githubConnection } = res.locals;
-    const repos = await fetchGithubRepos(githubConnection.accessToken);
+    const repos = await fetchGithubRepos(
+      githubConnection.installationAccessToken,
+    );
     return successResponse(res, repos, 200);
   } catch (error) {
     next(error);
@@ -127,12 +138,12 @@ export async function analyzeGithubRepos(
   try {
     const { clerkUserId, githubConnection } = res.locals;
     const { repoIds } = req.body;
-    const result = await analyzeGithubRepositories({
-      clerkUserId,
-      accessToken: githubConnection.accessToken,
-      repoIds,
-    });
-    return successResponse(res, result, 200);
+    // const result = await analyzeGithubRepositories({
+    //   clerkUserId,
+    //   accessToken: githubConnection.accessToken,
+    //   repoIds,
+    // });
+    return successResponse(res, {}, 200);
   } catch (error) {
     next(error);
   }

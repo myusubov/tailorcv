@@ -185,3 +185,8 @@ export interface GitHubPullRequest {
   auto_merge: unknown | null;
   active_lock_reason: string | null;
 }
+
+export interface VerifyGithubUserCanAccessInstallationInput {
+  userAccessToken: string;
+  installationId: string;
+}

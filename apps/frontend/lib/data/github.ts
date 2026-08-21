@@ -7,7 +7,7 @@ import type {
   GetGithubConnectionOutput,
   GetGithubReposInput,
   GetGithubReposOutput,
-} from '@/lib/contracts/github';
+} from '@/lib/types/github';
 
 export const getGithubConnection = defineGet<
   GetGithubConnectionInput,

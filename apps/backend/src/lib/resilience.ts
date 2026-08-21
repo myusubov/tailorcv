@@ -90,19 +90,6 @@ export const timeoutPolicy = timeout(30 * 1000, TimeoutStrategy.Aggressive);
 const openaiBulkhead = bulkhead(10, 20); // 10 concurrent, 20 in queue
 
 /**
- * Combined resilience policy for GitHub API calls.
- * Isolated retry and circuit breaker.
- */
-const githubRetry = createRetryPolicy('github');
-const githubBreaker = createCircuitBreakerPolicy('github');
-
-export const githubApiPolicy = wrap(
-  timeoutPolicy,
-  githubRetry,
-  githubBreaker,
-);
-
-/**
  * Combined resilience policy for OpenAI API calls.
  * Includes bulkhead and longer timeout.
  */
@@ -140,7 +127,7 @@ export async function executeWithPolicy<T>(
     return await policy.execute(fn);
   } catch (error: any) {
     if (context) {
-      logger.error({ error, context }, 'Resilience policy execution failed');
+      logger.error({ err: error, context }, 'Resilience policy execution failed');
       // Attach context to the error object so the global middleware can use it
       error.context = context;
     }

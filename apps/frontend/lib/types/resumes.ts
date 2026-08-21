@@ -47,3 +47,9 @@ export interface UpdateResumeInput {
   name?: string;
   data: BaseResumeData;
 }
+
+export type GetResumeInput = {
+  id: string;
+};
+
+export type GetResumeOutput = BaseResume;

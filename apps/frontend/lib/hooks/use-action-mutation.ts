@@ -1,6 +1,6 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { UseFormReturn } from 'react-hook-form';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { ErrorCode } from 'shared';
 
 import { ApiResult } from '@/lib/api';

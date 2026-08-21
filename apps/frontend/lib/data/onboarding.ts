@@ -5,7 +5,7 @@ import { defineGet } from './_query';
 import type {
   GetOnboardingStatusInput,
   GetOnboardingStatusOutput,
-} from '@/lib/contracts/onboarding';
+} from '@/lib/types/onboarding';
 
 export const getOnboardingStatus = defineGet<
   GetOnboardingStatusInput,

@@ -14,7 +14,7 @@ import { analyzeGithubReposRequestBodySchema } from '../schemas/github.schema';
 export const githubRouter = Router();
 
 // /api/v1/auth/github
-githubRouter.get('/', requireClerkAuth, initiateGithubAuth);
+githubRouter.post('/', requireClerkAuth, initiateGithubAuth);
 
 // /api/v1/auth/github/callback
 githubRouter.get('/callback', requireClerkAuth, handleGithubCallback);

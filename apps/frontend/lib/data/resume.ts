@@ -1,5 +1,5 @@
 import { defineGet } from './_query';
-import type { GetResumeInput, GetResumeOutput } from '@/lib/contracts/resume';
+import type { GetResumeInput, GetResumeOutput } from '@/lib/types/resumes';
 
 export const getResume = defineGet<GetResumeInput, GetResumeOutput>({
   path: ({ id }) => `resumes/base/${id}`,

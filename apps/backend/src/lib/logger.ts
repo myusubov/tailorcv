@@ -9,6 +9,7 @@ export const logger = pino(
     level: process.env.LOG_LEVEL ?? (isDev ? 'debug' : 'info'),
     base: undefined,
     redact: ['req.headers.authorization', 'req.headers.cookie'],
+    serializers: { err: pino.stdSerializers.err },
   },
   isDev
     ? pino.transport({

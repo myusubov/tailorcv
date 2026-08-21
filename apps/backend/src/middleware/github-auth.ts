@@ -1,7 +1,10 @@
 import type { RequestHandler } from 'express';
 import { ErrorCode } from 'shared';
 
-import { getGithubConnection } from '../services/github.service';
+import {
+  getGithubConnection,
+  getValidInstallationToken,
+} from '../services/github.service';
 import type { ClerkLocals, GitHubConnectionLocals } from '../types/locals';
 import { AppError } from '../utils/AppError';
 
@@ -27,7 +30,9 @@ export const requireGithubConnection: RequestHandler = async (
       );
     }
 
-    (res.locals as GitHubConnectionLocals).githubConnection = githubConnection;
+    const validConnection = await getValidInstallationToken(githubConnection);
+
+    (res.locals as GitHubConnectionLocals).githubConnection = validConnection;
     next();
   } catch (error) {
     next(error);
