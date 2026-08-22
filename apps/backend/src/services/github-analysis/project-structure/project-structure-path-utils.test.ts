@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { ownerPathForDockerContainerizationArea } from './project-structure-path-utils';
+import {
+  ownerPathForDockerContainerizationArea,
+  ownerPathForPodmanOciContainerizationArea,
+} from './project-structure-path-utils';
 
 describe('project structure path utils', () => {
   describe('ownerPathForDockerContainerizationArea', () => {
@@ -64,6 +67,86 @@ describe('project structure path utils', () => {
       'falls back to parent owner for local area path %s',
       (path, expected) => {
         expect(ownerPathForDockerContainerizationArea(path)).toBe(expected);
+      },
+    );
+  });
+
+  describe('ownerPathForPodmanOciContainerizationArea', () => {
+    it.each([
+      ['apps/api/api.container', 'apps/api'],
+      ['apps/api/quadlet/api.container', 'apps/api'],
+      ['services/worker/worker.pod', 'services/worker'],
+      ['packages/backend/Containerfile', 'packages/backend'],
+      ['libs/api/.containerignore', 'libs/api'],
+    ])('returns monorepo owner for %s', (path, expectedOwnerPath) => {
+      expect(ownerPathForPodmanOciContainerizationArea(path)).toBe(
+        expectedOwnerPath,
+      );
+    });
+
+    it.each([
+      ['apps/api.container', 'apps'],
+      ['services/worker.pod', 'services'],
+      ['packages/Containerfile', 'packages'],
+    ])(
+      'returns monorepo root for direct Podman/OCI evidence %s',
+      (path, expectedOwnerPath) => {
+        expect(ownerPathForPodmanOciContainerizationArea(path)).toBe(
+          expectedOwnerPath,
+        );
+      },
+    );
+
+    it.each([
+      ['apps/quadlet/api.container', 'apps'],
+      ['services/deploy/worker.pod', 'services'],
+      ['packages/containers/api.container', 'packages'],
+    ])(
+      'returns monorepo root for Podman config directory evidence %s',
+      (path, expectedOwnerPath) => {
+        expect(ownerPathForPodmanOciContainerizationArea(path)).toBe(
+          expectedOwnerPath,
+        );
+      },
+    );
+
+    it.each([
+      ['api.container', '.'],
+      ['Containerfile', '.'],
+      ['.containerignore', '.'],
+      ['quadlet/api.container', '.'],
+      ['containers/api.container', '.'],
+      ['deploy/quadlet/api.container', '.'],
+      ['etc/containers/systemd/api.container', '.'],
+    ])('returns root owner for repo-level config path %s', (path, expected) => {
+      expect(ownerPathForPodmanOciContainerizationArea(path)).toBe(expected);
+    });
+
+    it.each([
+      [
+        'subsystems/video/etc/containers/systemd/rear-camera.container',
+        'subsystems/video',
+      ],
+      ['tools/quadlet/oikos.container', 'tools'],
+    ])(
+      'collapses a generic config directory anywhere in the path to its owning component for %s',
+      (path, expected) => {
+        expect(ownerPathForPodmanOciContainerizationArea(path)).toBe(
+          expected,
+        );
+      },
+    );
+
+    it.each([
+      ['backend/api.container', 'backend'],
+      ['api/worker.pod', 'api'],
+      ['experimental/podman-systemd/misp-core.container', 'experimental/podman-systemd'],
+    ])(
+      'falls back to parent owner for local area path %s',
+      (path, expected) => {
+        expect(ownerPathForPodmanOciContainerizationArea(path)).toBe(
+          expected,
+        );
       },
     );
   });

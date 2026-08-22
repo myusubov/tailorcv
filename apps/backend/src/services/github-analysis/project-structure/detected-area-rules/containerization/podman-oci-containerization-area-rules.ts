@@ -1,5 +1,6 @@
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
+import { ownerPathForPodmanOciContainerizationArea } from '../../project-structure-path-utils';
 import {
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
@@ -111,9 +112,12 @@ function hasPodmanOciContainerizationAreaShape(
  * @remarks Quadlet and generic OCI build signals can appear at repo root or in
  * many configuration folders, so collection matches file basenames without a
  * required directory. Signals are counted once per provisional application
- * owner. The combination gate prevents individual or support-only basenames
- * from emitting, but Podman-specific owner resolution and fixture/example path
- * exclusions remain separate unfinished work.
+ * owner, then resolved to their owner path through
+ * {@link ownerPathForPodmanOciContainerizationArea}. The combination gate
+ * prevents individual or support-only basenames from emitting. Evidence under
+ * generic `docs`, `test`, `tests`, `fixtures`, or example paths is not
+ * excluded by name, consistent with this analyzer's general policy of relying
+ * on signal-combination precision instead of directory-name exclusions.
  */
 export function addPodmanOciContainerizationAreas({
   candidates,
@@ -171,6 +175,7 @@ export function addPodmanOciContainerizationAreas({
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES[
           'podman-quadlet-container-unit'
         ],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -181,6 +186,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'podman-quadlet-pod-unit',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['podman-quadlet-pod-unit'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -191,6 +197,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'podman-quadlet-kube-unit',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['podman-quadlet-kube-unit'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -201,6 +208,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'podman-quadlet-build-unit',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['podman-quadlet-build-unit'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -211,6 +219,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'podman-quadlet-image-unit',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['podman-quadlet-image-unit'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -223,6 +232,7 @@ export function addPodmanOciContainerizationAreas({
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES[
           'podman-quadlet-network-unit'
         ],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -233,6 +243,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'podman-quadlet-volume-unit',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['podman-quadlet-volume-unit'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -245,6 +256,7 @@ export function addPodmanOciContainerizationAreas({
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES[
           'podman-quadlet-artifact-unit'
         ],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -255,6 +267,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'oci-container-build-file',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['oci-container-build-file'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 
@@ -265,6 +278,7 @@ export function addPodmanOciContainerizationAreas({
       signal: 'oci-container-ignore-file',
       score:
         PODMAN_OCI_CONTAINERIZATION_SIGNAL_SCORES['oci-container-ignore-file'],
+      resolveOwnerPath: ownerPathForPodmanOciContainerizationArea,
     });
   }
 

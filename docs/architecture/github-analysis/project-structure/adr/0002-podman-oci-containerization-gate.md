@@ -40,7 +40,7 @@ Core `.container`, `.pod`, `.kube`, and `.build` signals score `3`; `.image` sco
 - Common multi-file runtime shapes such as container plus pod/network/volume and build shapes such as build plus Containerfile can emit Podman/OCI containerization.
 - Generic OCI evidence never attributes Podman without a qualifying Quadlet core unit.
 - Signal scores improve confidence only for a gate-qualified owner.
-- Podman-specific owner resolution and exclusions for test, fixture, example, and documentation paths remain required follow-up work.
+- Owner resolution is implemented in `ownerPathForPodmanOciContainerizationArea` (`docs/architecture/github-analysis/project-structure/changelog.md#podmanoci-owner-resolution`). Consistent with this analyzer's general policy against directory-name exclusions (`docs/architecture/github-analysis/project-structure/README.md`), test, fixture, example, and documentation paths are not excluded by name; the combination gate remains the sole precision mechanism.
 
 ## References
 
