@@ -4,10 +4,14 @@
 
 ## Non-Negotiable Work Gate
 
-Before any code implementation:
+Before any code implementation, analysis, or recommendation about a specific
+domain:
 
 - Read `docs/architecture/README.md`.
 - Read the relevant domain folder if one exists.
+
+This applies even when only discussing or planning an approach, not only
+when editing files.
 
 ## Git Safety
 
