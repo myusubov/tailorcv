@@ -7190,6 +7190,118 @@ describe('analyzeProjectStructure', () => {
     });
   });
 
+  describe('Podman/OCI containerization owner resolution', () => {
+    it('resolves a root-level generic Podman config folder to the repository root', () => {
+      const result = analyze([
+        directory('quadlet'),
+        file('quadlet/api.container'),
+        file('quadlet/api.pod'),
+      ]);
+
+      expect(areaByName(result, 'Containerization', '.')).toMatchObject({
+        confidence: 1,
+        evidence: ['quadlet/api.container', 'quadlet/api.pod'],
+        inferredTechnologies: {
+          primary: 'Podman/OCI',
+          related: ['Quadlet'],
+        },
+      });
+    });
+
+    it('resolves a monorepo member with its own quadlet folder to that member', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/web'),
+        directory('apps/web/quadlet'),
+        file('apps/web/quadlet/api.container'),
+        file('apps/web/quadlet/api.pod'),
+      ]);
+
+      expect(
+        areaByName(result, 'Containerization', 'apps/web'),
+      ).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'apps/web/quadlet/api.container',
+          'apps/web/quadlet/api.pod',
+        ],
+        inferredTechnologies: {
+          primary: 'Podman/OCI',
+          related: ['Quadlet'],
+        },
+      });
+    });
+
+    it('resolves a shared quadlet folder directly under a monorepo root to the root', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/quadlet'),
+        file('apps/quadlet/api.container'),
+        file('apps/quadlet/api.pod'),
+      ]);
+
+      expect(areaByName(result, 'Containerization', 'apps')).toMatchObject({
+        confidence: 1,
+        evidence: ['apps/quadlet/api.container', 'apps/quadlet/api.pod'],
+        inferredTechnologies: {
+          primary: 'Podman/OCI',
+          related: ['Quadlet'],
+        },
+      });
+    });
+
+    it('resolves a deeply nested etc/containers/systemd mirror to its owning component', () => {
+      const result = analyze([
+        directory('subsystems'),
+        directory('subsystems/video'),
+        directory('subsystems/video/etc'),
+        directory('subsystems/video/etc/containers'),
+        directory('subsystems/video/etc/containers/systemd'),
+        file('subsystems/video/etc/containers/systemd/rear-camera.container'),
+        file('subsystems/video/etc/containers/systemd/rear-camera.pod'),
+      ]);
+
+      expect(
+        areaByName(result, 'Containerization', 'subsystems/video'),
+      ).toMatchObject({
+        confidence: 1,
+        evidence: [
+          'subsystems/video/etc/containers/systemd/rear-camera.container',
+          'subsystems/video/etc/containers/systemd/rear-camera.pod',
+        ],
+        inferredTechnologies: {
+          primary: 'Podman/OCI',
+          related: ['Quadlet'],
+        },
+      });
+    });
+
+    it('keeps decisive and support-only monorepo owners isolated', () => {
+      const result = analyze([
+        directory('apps'),
+        directory('apps/web'),
+        file('apps/web/api.container'),
+        file('apps/web/api.pod'),
+        directory('apps/api'),
+        file('apps/api/api.image'),
+      ]);
+
+      expect(
+        areaByName(result, 'Containerization', 'apps/web'),
+      ).toMatchObject({
+        confidence: 1,
+        evidence: ['apps/web/api.container', 'apps/web/api.pod'],
+        inferredTechnologies: {
+          primary: 'Podman/OCI',
+          related: ['Quadlet'],
+        },
+      });
+      expect(
+        areaByName(result, 'Containerization', 'apps/api'),
+      ).toBeUndefined();
+    });
+  });
+
   it('does not emit unfinished support areas before their rule groups are implemented', () => {
     const result = analyze([
       directory('.github'),

@@ -217,6 +217,14 @@ const DOCKER_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES = new Set([
   'ops',
 ]);
 
+const PODMAN_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES = new Set([
+  'quadlet',
+  'containers',
+  'systemd',
+  'deploy',
+  'etc',
+]);
+
 /**
  * Returns the shared SQLAlchemy/Alembic database owner path.
  * Alembic environments and SQLAlchemy model/session files can be split across
@@ -360,7 +368,10 @@ export function ownerPathForDockerContainerizationArea(path: string): string {
 
   // Known monorepo roots use a stricter member-or-root ownership contract.
   const containerizationMonorepoOwnerPath =
-    containerizationMonorepoOwnerPathFromParts(parts);
+    containerizationMonorepoOwnerPathFromParts({
+      parts,
+      configDirectories: DOCKER_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES,
+    });
   if (containerizationMonorepoOwnerPath) {
     return containerizationMonorepoOwnerPath;
   }
@@ -376,6 +387,62 @@ export function ownerPathForDockerContainerizationArea(path: string): string {
   }
 
   // Non-monorepo evidence falls back to the directory containing the artifact.
+  return parentPathFromPath({ path });
+}
+
+/**
+ * Resolves a matched Podman/OCI evidence path to the repository area that owns
+ * the inferred containerization configuration.
+ *
+ * @param path - Repository-relative path already classified as Podman/OCI
+ * evidence.
+ * @returns The monorepo member, monorepo root, repository root, or local
+ * parent directory that most conservatively owns the evidence.
+ *
+ * @remarks Unlike Docker's resolver, this scans every path segment (not only
+ * the top-level one) for the first recognized Podman/OCI config directory
+ * (`quadlet`, `containers`, `systemd`, `deploy`, `etc`) and collapses the
+ * owner to everything before it, so deeply nested layouts such as
+ * `subsystems/video/etc/containers/systemd/*.container` resolve to
+ * `subsystems/video` rather than the config mirror folder itself. Matching is
+ * case-sensitive against lowercase directory names only, so a differently
+ * cased real-world folder (for example `Quadlet/`) falls through to the local
+ * parent-directory fallback instead of being recognized. This pure path-only
+ * resolver does not inspect Quadlet or Containerfile contents and cannot
+ * distinguish an application literally named `quadlet`, `containers`,
+ * `systemd`, `deploy`, or `etc` from one of these config directories.
+ */
+export function ownerPathForPodmanOciContainerizationArea(
+  path: string,
+): string {
+  const parts = path.split('/');
+  const containerizationMonorepoOwnerPath =
+    containerizationMonorepoOwnerPathFromParts({
+      parts,
+      configDirectories: PODMAN_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES,
+    });
+  if (containerizationMonorepoOwnerPath) {
+    return containerizationMonorepoOwnerPath;
+  }
+
+  const podmanRepoConfigDirectoryIndex = parts.findIndex((part) =>
+    PODMAN_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES.has(part),
+  );
+
+  if (podmanRepoConfigDirectoryIndex >= 0) {
+    const ownerParts = parts.slice(0, podmanRepoConfigDirectoryIndex);
+
+    if (ownerParts.length > 0) {
+      return ownerParts.join('/');
+    } else {
+      return '.';
+    }
+  }
+
+  if (parts.length <= 1) {
+    return '.';
+  }
+
   return parentPathFromPath({ path });
 }
 
@@ -405,22 +472,35 @@ function databaseMonorepoOwnerPathFromParts(parts: string[]): string | null {
 }
 
 /**
- * Resolves Docker evidence under a recognized monorepo container to either the
- * container root or its named member.
+ * Resolves containerization evidence under a recognized monorepo container to
+ * either the container root or its named member. Shared by the Docker and
+ * Podman/OCI owner resolvers.
  *
- * @param parts - Ordered path segments from a matched Docker evidence path.
+ * @param parts - Ordered path segments from a matched containerization
+ * evidence path.
+ * @param configDirectories - The calling resolver's own runtime-specific
+ * config directory names (for example Docker's or Podman/OCI's set). Callers
+ * must pass only their own set; passing a shared or combined set would let
+ * one runtime's config directory names collapse the other runtime's evidence
+ * to the monorepo root.
  * @returns The recognized monorepo root/member owner, or `null` when the path
  * does not begin with a supported monorepo container.
  *
  * @remarks Two-segment paths are known matched files directly under the
- * monorepo root. Generic Docker config directories in the second segment also
- * belong to that root. Other second segments are treated as arbitrary member
- * names. This path-only heuristic has no side effects and cannot distinguish an
- * application literally named `docker` from a Docker config directory.
+ * monorepo root. A second segment found in the caller's `configDirectories`
+ * also belongs to that root. Other second segments are treated as arbitrary
+ * member names. This path-only heuristic has no side effects and cannot
+ * distinguish an application literally named after one of the caller's config
+ * directory names (for example `docker` or `quadlet`) from that config
+ * directory itself.
  */
-function containerizationMonorepoOwnerPathFromParts(
-  parts: string[],
-): string | null {
+function containerizationMonorepoOwnerPathFromParts({
+  parts,
+  configDirectories,
+}: {
+  parts: string[];
+  configDirectories: Set<string>;
+}): string | null {
   const [ownerRoot, ownerName] = parts;
   // Reject ordinary nested paths so they retain local parent-path ownership.
   if (!ownerRoot || !ownerName || !MONOREPO_OWNER_DIRECTORIES.has(ownerRoot)) {
@@ -428,10 +508,7 @@ function containerizationMonorepoOwnerPathFromParts(
   }
 
   // Direct evidence and generic config folders belong to the monorepo root.
-  if (
-    parts.length === 2 ||
-    DOCKER_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES.has(ownerName)
-  ) {
+  if (parts.length === 2 || configDirectories.has(ownerName)) {
     return ownerRoot;
   }
 
