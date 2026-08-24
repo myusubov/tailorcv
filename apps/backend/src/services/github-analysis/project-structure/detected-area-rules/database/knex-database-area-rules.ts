@@ -5,7 +5,6 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForKnexDatabaseArea } from '../../project-structure-path-utils';
 
 type KnexDatabaseSignal =
   | 'knex-config-file'
@@ -71,7 +70,6 @@ export function addKnexDatabaseAreas({
       entry: knexConfigFile,
       score: KNEX_DATABASE_SIGNAL_SCORES['knex-config-file'],
       signal: 'knex-config-file',
-      resolveOwnerPath: ownerPathForKnexDatabaseArea,
     });
   }
 
@@ -81,7 +79,6 @@ export function addKnexDatabaseAreas({
       entry: knexCustomConfigFile,
       score: KNEX_DATABASE_SIGNAL_SCORES['knex-custom-config-file'],
       signal: 'knex-custom-config-file',
-      resolveOwnerPath: ownerPathForKnexDatabaseArea,
     });
   }
 
@@ -91,7 +88,6 @@ export function addKnexDatabaseAreas({
       entry: knexMigrationFile,
       score: KNEX_DATABASE_SIGNAL_SCORES['knex-migration-file'],
       signal: 'knex-migration-file',
-      resolveOwnerPath: ownerPathForKnexDatabaseArea,
     });
   }
 
@@ -101,7 +97,6 @@ export function addKnexDatabaseAreas({
       entry: knexSeedFile,
       score: KNEX_DATABASE_SIGNAL_SCORES['knex-seed-file'],
       signal: 'knex-seed-file',
-      resolveOwnerPath: ownerPathForKnexDatabaseArea,
     });
   }
 

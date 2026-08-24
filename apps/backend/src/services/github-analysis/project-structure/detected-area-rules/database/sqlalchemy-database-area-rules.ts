@@ -5,7 +5,6 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForSqlAlchemyDatabaseArea } from '../../project-structure-path-utils';
 
 type SqlAlchemyDatabaseSignal =
   | 'alembic-config-file'
@@ -86,7 +85,6 @@ export function addSqlAlchemyDatabaseAreas({
       entry: alembicConfigFile,
       score: SQLALCHEMY_DATABASE_SIGNAL_SCORES['alembic-config-file'],
       signal: 'alembic-config-file',
-      resolveOwnerPath: ownerPathForSqlAlchemyDatabaseArea,
     });
   }
 
@@ -96,7 +94,6 @@ export function addSqlAlchemyDatabaseAreas({
       entry: alembicEnvFile,
       score: SQLALCHEMY_DATABASE_SIGNAL_SCORES['alembic-env-file'],
       signal: 'alembic-env-file',
-      resolveOwnerPath: ownerPathForSqlAlchemyDatabaseArea,
     });
   }
 
@@ -106,7 +103,6 @@ export function addSqlAlchemyDatabaseAreas({
       entry: alembicVersionFile,
       score: SQLALCHEMY_DATABASE_SIGNAL_SCORES['alembic-version-file'],
       signal: 'alembic-version-file',
-      resolveOwnerPath: ownerPathForSqlAlchemyDatabaseArea,
     });
   }
 
@@ -116,7 +112,6 @@ export function addSqlAlchemyDatabaseAreas({
       entry: alembicScriptTemplateFile,
       score: SQLALCHEMY_DATABASE_SIGNAL_SCORES['alembic-script-template'],
       signal: 'alembic-script-template',
-      resolveOwnerPath: ownerPathForSqlAlchemyDatabaseArea,
     });
   }
 
@@ -126,7 +121,6 @@ export function addSqlAlchemyDatabaseAreas({
       entry: sqlAlchemyModelFile,
       score: SQLALCHEMY_DATABASE_SIGNAL_SCORES['sqlalchemy-model-file'],
       signal: 'sqlalchemy-model-file',
-      resolveOwnerPath: ownerPathForSqlAlchemyDatabaseArea,
     });
   }
 
@@ -136,7 +130,6 @@ export function addSqlAlchemyDatabaseAreas({
       entry: sqlAlchemyDbFile,
       score: SQLALCHEMY_DATABASE_SIGNAL_SCORES['sqlalchemy-db-file'],
       signal: 'sqlalchemy-db-file',
-      resolveOwnerPath: ownerPathForSqlAlchemyDatabaseArea,
     });
   }
 

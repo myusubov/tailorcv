@@ -5,7 +5,6 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForTypeOrmDatabaseArea } from '../../project-structure-path-utils';
 
 type TypeOrmDatabaseSignal =
   | 'typeorm-legacy-config-file'
@@ -87,7 +86,6 @@ export function addTypeOrmDatabaseAreas({
       entry: typeOrmLegacyConfigFile,
       score: TYPEORM_DATABASE_SIGNAL_SCORES['typeorm-legacy-config-file'],
       signal: 'typeorm-legacy-config-file',
-      resolveOwnerPath: ownerPathForTypeOrmDatabaseArea,
     });
   }
 
@@ -97,7 +95,6 @@ export function addTypeOrmDatabaseAreas({
       entry: typeOrmExampleConfigFile,
       score: TYPEORM_DATABASE_SIGNAL_SCORES['typeorm-example-config-file'],
       signal: 'typeorm-example-config-file',
-      resolveOwnerPath: ownerPathForTypeOrmDatabaseArea,
     });
   }
 
@@ -107,7 +104,6 @@ export function addTypeOrmDatabaseAreas({
       entry: typeOrmDataSourceFile,
       score: TYPEORM_DATABASE_SIGNAL_SCORES['typeorm-data-source-file'],
       signal: 'typeorm-data-source-file',
-      resolveOwnerPath: ownerPathForTypeOrmDatabaseArea,
     });
   }
 
@@ -117,7 +113,6 @@ export function addTypeOrmDatabaseAreas({
       entry: typeOrmEntityFile,
       score: TYPEORM_DATABASE_SIGNAL_SCORES['typeorm-entity-file'],
       signal: 'typeorm-entity-file',
-      resolveOwnerPath: ownerPathForTypeOrmDatabaseArea,
     });
   }
 
@@ -127,7 +122,6 @@ export function addTypeOrmDatabaseAreas({
       entry: typeOrmMigrationFile,
       score: TYPEORM_DATABASE_SIGNAL_SCORES['typeorm-migration-file'],
       signal: 'typeorm-migration-file',
-      resolveOwnerPath: ownerPathForTypeOrmDatabaseArea,
     });
   }
 

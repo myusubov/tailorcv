@@ -5,7 +5,6 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForSequelizeDatabaseArea } from '../../project-structure-path-utils';
 
 type SequelizeDatabaseSignal =
   | 'sequelize-cli-config-file'
@@ -99,7 +98,6 @@ export function addSequelizeDatabaseAreas({
       entry: sequelizeCliConfigFile,
       score: SEQUELIZE_DATABASE_SIGNAL_SCORES['sequelize-cli-config-file'],
       signal: 'sequelize-cli-config-file',
-      resolveOwnerPath: ownerPathForSequelizeDatabaseArea,
     });
   }
 
@@ -109,7 +107,6 @@ export function addSequelizeDatabaseAreas({
       entry: sequelizeConfigFile,
       score: SEQUELIZE_DATABASE_SIGNAL_SCORES['sequelize-config-file'],
       signal: 'sequelize-config-file',
-      resolveOwnerPath: ownerPathForSequelizeDatabaseArea,
     });
   }
 
@@ -119,7 +116,6 @@ export function addSequelizeDatabaseAreas({
       entry: sequelizeModelIndexFile,
       score: SEQUELIZE_DATABASE_SIGNAL_SCORES['sequelize-model-index-file'],
       signal: 'sequelize-model-index-file',
-      resolveOwnerPath: ownerPathForSequelizeDatabaseArea,
     });
   }
 
@@ -129,7 +125,6 @@ export function addSequelizeDatabaseAreas({
       entry: sequelizeModelFile,
       score: SEQUELIZE_DATABASE_SIGNAL_SCORES['sequelize-model-file'],
       signal: 'sequelize-model-file',
-      resolveOwnerPath: ownerPathForSequelizeDatabaseArea,
     });
   }
 
@@ -139,7 +134,6 @@ export function addSequelizeDatabaseAreas({
       entry: sequelizeMigrationFile,
       score: SEQUELIZE_DATABASE_SIGNAL_SCORES['sequelize-migration-file'],
       signal: 'sequelize-migration-file',
-      resolveOwnerPath: ownerPathForSequelizeDatabaseArea,
     });
   }
 
@@ -149,7 +143,6 @@ export function addSequelizeDatabaseAreas({
       entry: sequelizeSeederFile,
       score: SEQUELIZE_DATABASE_SIGNAL_SCORES['sequelize-seeder-file'],
       signal: 'sequelize-seeder-file',
-      resolveOwnerPath: ownerPathForSequelizeDatabaseArea,
     });
   }
 

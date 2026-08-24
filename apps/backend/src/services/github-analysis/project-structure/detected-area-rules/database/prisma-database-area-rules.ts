@@ -5,7 +5,6 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForDatabaseArea } from '../../project-structure-path-utils';
 
 type PrismaDatabaseSignal =
   | 'prisma-schema'
@@ -84,7 +83,6 @@ export function addPrismaDatabaseAreas({
       entry: prismaSchemaFile,
       score: PRISMA_DATABASE_SIGNAL_SCORES['prisma-schema'],
       signal: 'prisma-schema',
-      resolveOwnerPath: ownerPathForDatabaseArea,
     });
   }
 
@@ -94,7 +92,6 @@ export function addPrismaDatabaseAreas({
       entry: prismaSchemaFragmentFile,
       score: PRISMA_DATABASE_SIGNAL_SCORES['prisma-schema-fragment'],
       signal: 'prisma-schema-fragment',
-      resolveOwnerPath: ownerPathForDatabaseArea,
     });
   }
 
@@ -104,7 +101,6 @@ export function addPrismaDatabaseAreas({
       entry: prismaConfigFile,
       score: PRISMA_DATABASE_SIGNAL_SCORES['prisma-config'],
       signal: 'prisma-config',
-      resolveOwnerPath: ownerPathForDatabaseArea,
     });
   }
 
@@ -114,7 +110,6 @@ export function addPrismaDatabaseAreas({
       entry: prismaMigrationsDirectory,
       score: PRISMA_DATABASE_SIGNAL_SCORES['prisma-migrations-directory'],
       signal: 'prisma-migrations-directory',
-      resolveOwnerPath: ownerPathForDatabaseArea,
     });
   }
 
@@ -124,7 +119,6 @@ export function addPrismaDatabaseAreas({
       entry: prismaMigrationFile,
       score: PRISMA_DATABASE_SIGNAL_SCORES['prisma-migration-file'],
       signal: 'prisma-migration-file',
-      resolveOwnerPath: ownerPathForDatabaseArea,
     });
   }
 
@@ -134,7 +128,6 @@ export function addPrismaDatabaseAreas({
       entry: prismaMigrationLockFile,
       score: PRISMA_DATABASE_SIGNAL_SCORES['prisma-migration-lock'],
       signal: 'prisma-migration-lock',
-      resolveOwnerPath: ownerPathForDatabaseArea,
     });
   }
 

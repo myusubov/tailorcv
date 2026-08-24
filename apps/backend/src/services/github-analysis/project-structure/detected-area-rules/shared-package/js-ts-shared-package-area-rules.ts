@@ -1,6 +1,5 @@
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForSharedPackageArea } from '../../project-structure-path-utils';
 import {
   type AreaRuleSignalScores,
   countAreaRuleSignal,
@@ -69,7 +68,6 @@ export function addJsTsSharedPackageAreas({
           'js-ts-shared-package-workspace-manifest'
         ],
       signal: 'js-ts-shared-package-workspace-manifest',
-      resolveOwnerPath: ownerPathForSharedPackageArea,
     });
   }
 
@@ -79,7 +77,6 @@ export function addJsTsSharedPackageAreas({
       entry: sharedPackageNameDirectory,
       score: JS_TS_SHARED_PACKAGE_SIGNAL_SCORES['js-ts-shared-package-name'],
       signal: 'js-ts-shared-package-name',
-      resolveOwnerPath: ownerPathForSharedPackageArea,
     });
   }
 
@@ -90,7 +87,6 @@ export function addJsTsSharedPackageAreas({
       score:
         JS_TS_SHARED_PACKAGE_SIGNAL_SCORES['js-ts-shared-package-entrypoint'],
       signal: 'js-ts-shared-package-entrypoint',
-      resolveOwnerPath: ownerPathForSharedPackageArea,
     });
   }
 
