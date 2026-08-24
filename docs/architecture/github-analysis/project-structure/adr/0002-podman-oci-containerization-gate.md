@@ -41,6 +41,7 @@ Core `.container`, `.pod`, `.kube`, and `.build` signals score `3`; `.image` sco
 - Generic OCI evidence never attributes Podman without a qualifying Quadlet core unit.
 - Signal scores improve confidence only for a gate-qualified owner.
 - Owner resolution is implemented in `ownerPathForPodmanOciContainerizationArea` (`docs/architecture/github-analysis/project-structure/changelog.md#podmanoci-owner-resolution`). Consistent with this analyzer's general policy against directory-name exclusions (`docs/architecture/github-analysis/project-structure/README.md`), test, fixture, example, and documentation paths are not excluded by name; the combination gate remains the sole precision mechanism.
+- **2026-08-24 amendment:** `ownerPathForPodmanOciContainerizationArea` was removed. Owner resolution now falls back to the shared generic `ownerPathForApplicationArea` resolver instead of the deep-nested-path Podman/OCI-specific scan described above. The combination-gate decision recorded in this ADR is unaffected. See [Containerization and Database Owner Resolvers Removed](../changelog.md#containerization-and-database-owner-resolvers-removed).
 
 ## References
 

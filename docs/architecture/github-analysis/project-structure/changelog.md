@@ -6,6 +6,31 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-08-24
+
+### Containerization and Database Owner Resolvers Removed
+
+- **Decision:** Resolve every detected-area owner path -- Docker, Podman/OCI, Prisma, Drizzle, Knex, SQLAlchemy, TypeORM, Sequelize, and JS/TS shared-package evidence -- through the single shared `ownerPathForApplicationArea` resolver instead of a dedicated per-technology resolver.
+- **Problem:** Per explicit maintenance request, the specialized owner-path resolvers in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` (`ownerPathForBackendArea`, `ownerPathForConfigArea`, `ownerPathForDatabaseArea`, `ownerPathForDrizzleDatabaseArea`, `ownerPathForKnexDatabaseArea`, `ownerPathForSqlAlchemyDatabaseArea`, `ownerPathForTypeOrmDatabaseArea`, `ownerPathForSequelizeDatabaseArea`, `ownerPathForSharedPackageArea`, `ownerPathForDockerContainerizationArea`, `ownerPathForPodmanOciContainerizationArea`, plus the already-unused `parentPathOrSelf`/`topLevelPath` helpers and their private constant sets) were removed, leaving only `normalizePath` and `ownerPathForApplicationArea`.
+- **Solution:**
+  1. Removed every function above from `project-structure-path-utils.ts` except `normalizePath` and `ownerPathForApplicationArea`.
+  2. Removed the `resolveOwnerPath: ownerPathForXxxArea` argument and its matching import from every `countAreaRuleSignal` call in `detected-area-rules/containerization/docker-containerization-area-rules.ts`, `detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `detected-area-rules/database/knex-database-area-rules.ts`, `detected-area-rules/database/prisma-database-area-rules.ts`, `detected-area-rules/database/sqlalchemy-database-area-rules.ts`, `detected-area-rules/database/typeorm-database-area-rules.ts`, `detected-area-rules/database/drizzle-database-area-rules.ts`, `detected-area-rules/database/sequelize-database-area-rules.ts`, and `detected-area-rules/shared-package/js-ts-shared-package-area-rules.ts`; each call now relies on `countAreaRuleSignal`'s existing `resolveOwnerPath?.(path) ?? ownerPathForApplicationArea(path)` fallback, so no call site was deleted.
+  3. Emptied `project-structure-path-utils.test.ts`, which exclusively covered the two removed containerization resolvers.
+  4. Corrected the stale `@link` reference and owner-resolution description in `podman-oci-containerization-area-rules.ts`, and annotated the affected bullet in `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md` rather than rewriting its original decision record.
+- **Affected files:** `project-structure-path-utils.ts`, `project-structure-path-utils.test.ts`, the nine call-site rule files listed above, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** Every detected-area detector now resolves owners through one shared, less precise heuristic (`apps/*`, `packages/*`, `src`-relative, or repository root `.`). The deep-nested Podman/OCI config-directory scan, the Docker monorepo/config-folder contract, and every database technology's dedicated schema-folder owner grouping described in prior changelog entries and README rules no longer apply. `project-structure-analyzer.test.ts` fixtures that asserted the old precise owner paths were not re-verified as part of this documentation-only pass and may now be stale -- typecheck/test were not run.
+
+### Test Suite Detected-Area Category (Jest Implemented; Other Runners Scaffolded)
+
+- **Problem:** Detected areas had no way to identify test-runner ownership, so repositories with dedicated Jest, Vitest, Playwright, Cypress, or Mocha test suites produced no `Test suite` area evidence.
+- **Solution:**
+  1. Added `TestDetectedAreaTechnology` (`Jest`, `Vitest`, `Mocha`, `Cypress`, `Playwright`) to the `DetectedAreaTechnology` union in `project-structure-analyzer.types.ts`.
+  2. Added `detected-area-rules/test/test-area-rules.ts` dispatching to per-runner modules, wired as `addTestAreas` from `project-structure-detected-area-rules.ts` and run last, after containerization.
+  3. Implemented `addJestTestAreas` in `detected-area-rules/test/jest-test-area-rules.ts`: scores `jest.config.*`, `jest[.-]setup.*`, `setupTests.*`, `__tests__`, `__mocks__`, `__snapshots__`, and `*.test.*`/`*.spec.*` evidence, gated by `hasJestAppShape` so that only a config file alone, a named setup file plus supporting test evidence, or `__mocks__` plus `__snapshots__` together can unlock emission -- every other signal is shared with other runners and cannot unlock alone.
+  4. Added `addVitestTestAreas`, `addCypressTestAreas`, `addMochaTestAreas`, and `addPlaywrightTestAreas` as side-effect-free stub functions wired into dispatch but with no matching, scoring, or emission logic implemented yet.
+- **Affected files:** `project-structure-analyzer.types.ts`, `project-structure-detected-area-rules.ts`, `detected-area-rules/test/test-area-rules.ts`, `detected-area-rules/test/jest-test-area-rules.ts`, `detected-area-rules/test/vitest-test-area-rules.ts`, `detected-area-rules/test/cypress-test-area-rules.ts`, `detected-area-rules/test/mocha-test-area-rules.ts`, `detected-area-rules/test/playwright-test-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** `Test suite` areas now emit for Jest-shaped repositories from conservative path-only evidence. Vitest, Cypress, Mocha, and Playwright detection remains unimplemented and their stub functions always contribute zero candidates.
+
 ## 2026-08-22
 
 ### Podman/OCI Owner Resolution

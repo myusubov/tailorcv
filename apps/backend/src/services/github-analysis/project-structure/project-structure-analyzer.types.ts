@@ -133,6 +133,13 @@ export type DatabaseDetectedAreaTechnology =
   | 'SQLAlchemy'
   | 'TypeORM';
 
+export type TestDetectedAreaTechnology =
+  | 'Jest'
+  | 'Vitest'
+  | 'Mocha'
+  | 'Cypress'
+  | 'Playwright';
+
 /**
  * Technology labels inferred for a detected repository area from path evidence.
  */
@@ -142,7 +149,8 @@ export type DetectedAreaTechnology =
   | ContainerizationDetectedAreaTechnology
   | RuntimeDetectedAreaTechnology
   | TemplateDetectedAreaTechnology
-  | DatabaseDetectedAreaTechnology;
+  | DatabaseDetectedAreaTechnology
+  | TestDetectedAreaTechnology;
 
 /**
  * Primary and related technologies exposed for a detected repository area.

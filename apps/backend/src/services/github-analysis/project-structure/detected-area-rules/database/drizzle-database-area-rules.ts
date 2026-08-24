@@ -5,7 +5,6 @@ import {
 } from '../project-structure-area-rule-candidates';
 import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { ownerPathForDrizzleDatabaseArea } from '../../project-structure-path-utils';
 
 type DrizzleDatabaseSignal =
     | 'drizzle-config'
@@ -84,7 +83,6 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleConfigFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-config'],
             signal: 'drizzle-config',
-            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -94,7 +92,6 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleCustomConfigFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-custom-config'],
             signal: 'drizzle-custom-config',
-            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -104,7 +101,6 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleSchemaFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-schema-file'],
             signal: 'drizzle-schema-file',
-            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -114,7 +110,6 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleMigrationSqlFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-migration-sql-file'],
             signal: 'drizzle-migration-sql-file',
-            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -124,7 +119,6 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleMigrationJournalFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-migration-journal'],
             signal: 'drizzle-migration-journal',
-            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 
@@ -134,7 +128,6 @@ export function addDrizzleDatabaseAreas({
             entry: drizzleMigrationSnapshotFile,
             score: DRIZZLE_DATABASE_SIGNAL_SCORES['drizzle-migration-snapshot'],
             signal: 'drizzle-migration-snapshot',
-            resolveOwnerPath: ownerPathForDrizzleDatabaseArea,
         });
     }
 

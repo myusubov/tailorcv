@@ -3,6 +3,7 @@ import { addContainerizationAreas } from './detected-area-rules/containerization
 import { addDatabaseAreas } from './detected-area-rules/database/database-area-rules';
 import { addFrontendAreas } from './detected-area-rules/frontend/frontend-area-rules';
 import { addSharedPackageAreas } from './detected-area-rules/shared-package/shared-package-area-rules';
+import { addTestAreas } from './detected-area-rules/test/test-area-rules';
 import type { DetectedAreaRuleContext } from './project-structure-detected-areas.types';
 
 /**
@@ -18,4 +19,5 @@ export function applyDetectedAreaRules({
   addDatabaseAreas({ candidates, index });
   addSharedPackageAreas({ candidates, index });
   addContainerizationAreas({ candidates, index });
+  addTestAreas({ candidates, index });
 }
