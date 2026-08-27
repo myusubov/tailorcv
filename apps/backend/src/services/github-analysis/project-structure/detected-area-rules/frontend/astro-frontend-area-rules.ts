@@ -1,19 +1,5 @@
-import {
-  countAreaRuleSignal,
-  createAreaRuleCandidateMap,
-  type AreaRuleSignalScores,
-} from '../project-structure-area-rule-candidates';
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-
-type AstroFrontendSignal =
-  | 'astro-config'
-  | 'astro-page'
-  | 'astro-content-page'
-  | 'astro-endpoint'
-  | 'astro-layout'
-  | 'astro-component'
-  | 'astro-pages-directory';
+import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
 
 const ASTRO_FRONTEND_SIGNAL_SCORES = {
   'astro-config': 4,
@@ -23,18 +9,9 @@ const ASTRO_FRONTEND_SIGNAL_SCORES = {
   'astro-component': 2,
   'astro-content-page': 1,
   'astro-pages-directory': 1,
-} satisfies AreaRuleSignalScores<AstroFrontendSignal>;
+} as const;
 
-function hasAstroAppShape({
-  countedSignals,
-}: {
-  countedSignals: Set<AstroFrontendSignal>;
-}): boolean {
-  const hasAstroConfig = countedSignals.has('astro-config');
-  const hasAstroPage = countedSignals.has('astro-page');
-
-  return hasAstroConfig || hasAstroPage;
-}
+type AstroFrontendSignal = keyof typeof ASTRO_FRONTEND_SIGNAL_SCORES;
 
 /**
  * Adds `Frontend app` candidates from Astro path evidence.
@@ -44,112 +21,55 @@ export function addAstroFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const astroAreasByOwner = createAreaRuleCandidateMap<AstroFrontendSignal>();
-
-  const astroConfigFiles = index.findFilesByNameMatching({
-    pattern: /^astro\.config\.(js|mjs|cjs|ts)$/,
+  applyDeclarativeAreaDetector<AstroFrontendSignal>({
+    candidates,
+    index,
+    detectedArea: 'Frontend app',
+    primaryTech: 'Astro',
+    signalScores: ASTRO_FRONTEND_SIGNAL_SCORES,
+    entrySchemas: [
+      {
+        signalType: 'astro-config',
+        regex: /^astro\.config\.(js|mjs|cjs|ts)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'astro-page',
+        regex: /(^|\/)src\/pages\/(?:.*\/)?.+\.astro$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'astro-content-page',
+        regex: /(^|\/)src\/pages\/(?:.*\/)?.+\.(md|mdx|html)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'astro-endpoint',
+        regex: /(^|\/)src\/pages\/(?:.*\/)?.+\.(js|ts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'astro-layout',
+        regex: /(^|\/)src\/layouts\/(?:.*\/)?.+\.astro$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'astro-component',
+        regex: /(^|\/)src\/components\/(?:.*\/)?.+\.astro$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'astro-pages-directory',
+        regex: /(^|\/)src\/pages$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+    ],
+    gateBlocker: {
+      where: {
+        countedSignals: {
+          hasOneOf: ['astro-config', 'astro-page'],
+        },
+      },
+    },
   });
-
-  const astroPageFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/pages\/(?:.*\/)?.+\.astro$/,
-  });
-
-  const astroContentPageFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/pages\/(?:.*\/)?.+\.(md|mdx|html)$/,
-  });
-
-  const astroEndpointFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/pages\/(?:.*\/)?.+\.(js|ts)$/,
-  });
-
-  const astroLayoutFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/layouts\/(?:.*\/)?.+\.astro$/,
-  });
-
-  const astroComponentFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/components\/(?:.*\/)?.+\.astro$/,
-  });
-
-  const astroPagesDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)src\/pages$/,
-  });
-
-  for (const astroConfigFile of astroConfigFiles) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroConfigFile,
-      signal: 'astro-config',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-config'],
-    });
-  }
-
-  for (const astroPageFile of astroPageFiles) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroPageFile,
-      signal: 'astro-page',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-page'],
-    });
-  }
-
-  for (const astroContentPageFile of astroContentPageFiles) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroContentPageFile,
-      signal: 'astro-content-page',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-content-page'],
-    });
-  }
-
-  for (const astroEndpointFile of astroEndpointFiles) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroEndpointFile,
-      signal: 'astro-endpoint',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-endpoint'],
-    });
-  }
-
-  for (const astroLayoutFile of astroLayoutFiles) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroLayoutFile,
-      signal: 'astro-layout',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-layout'],
-    });
-  }
-
-  for (const astroComponentFile of astroComponentFiles) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroComponentFile,
-      signal: 'astro-component',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-component'],
-    });
-  }
-
-  for (const astroPagesDirectory of astroPagesDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: astroAreasByOwner,
-      entry: astroPagesDirectory,
-      signal: 'astro-pages-directory',
-      score: ASTRO_FRONTEND_SIGNAL_SCORES['astro-pages-directory'],
-    });
-  }
-
-  for (const [ownerPath, ownerCandidate] of astroAreasByOwner) {
-    if (!hasAstroAppShape({ countedSignals: ownerCandidate.countedSignals })) {
-      continue;
-    }
-
-    addAreaScore({
-      candidates,
-      name: 'Frontend app',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
-      primaryTechnology: 'Astro',
-      relatedTechnologies: [],
-    });
-  }
 }

@@ -1,19 +1,5 @@
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import {
-  countAreaRuleSignal,
-  createAreaRuleCandidateMap,
-  type AreaRuleSignalScores,
-} from '../project-structure-area-rule-candidates';
-
-type JestTestSignal =
-  | 'jest-config-file'
-  | 'jest-setup-file'
-  | 'jest-setup-tests-file'
-  | 'jest-tests-directory'
-  | 'jest-mocks-directory'
-  | 'jest-snapshots-directory'
-  | 'jest-test-file';
+import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
 
 const JEST_TEST_SIGNAL_SCORES = {
   'jest-config-file': 3,
@@ -23,10 +9,12 @@ const JEST_TEST_SIGNAL_SCORES = {
   'jest-mocks-directory': 2,
   'jest-snapshots-directory': 2,
   'jest-test-file': 1,
-} satisfies AreaRuleSignalScores<JestTestSignal>;
+} as const;
+
+type JestTestSignal = keyof typeof JEST_TEST_SIGNAL_SCORES;
 
 /**
- * Returns whether one owner has a conservative Jest shape.
+ * Adds `Test suite` candidates from Jest path evidence.
  * `jest.config.*` is the only path-only signal that names Jest unambiguously,
  * so it unlocks alone. Every other signal is a convention Jest shares with at
  * least one other runner (`__tests__`, `*.test.*`, and `setupTests.*` are also
@@ -43,151 +31,72 @@ const JEST_TEST_SIGNAL_SCORES = {
  *   couples manual mocks with its own on-disk `.snap` serialization by
  *   default, so the pair co-occurring is strong enough on its own.
  */
-function hasJestAppShape({
-  countedSignals,
-}: {
-  countedSignals: Set<JestTestSignal>;
-}): boolean {
-  const hasJestConfigFile = countedSignals.has('jest-config-file');
-  const hasJestSetupFile = countedSignals.has('jest-setup-file');
-  const hasJestSetupTestsFile = countedSignals.has('jest-setup-tests-file');
-  const hasJestTestsDirectory = countedSignals.has('jest-tests-directory');
-  const hasJestMocksDirectory = countedSignals.has('jest-mocks-directory');
-  const hasJestSnapshotsDirectory = countedSignals.has(
-    'jest-snapshots-directory',
-  );
-  const hasJestTestFile = countedSignals.has('jest-test-file');
-
-  const hasSupportingTestEvidence =
-    hasJestTestFile ||
-    hasJestTestsDirectory ||
-    hasJestMocksDirectory ||
-    hasJestSnapshotsDirectory ||
-    hasJestSetupTestsFile;
-
-  const hasNamedSetupShape = hasJestSetupFile && hasSupportingTestEvidence;
-
-  const hasMockSnapshotPairShape =
-    hasJestMocksDirectory && hasJestSnapshotsDirectory;
-
-  return hasJestConfigFile || hasNamedSetupShape || hasMockSnapshotPairShape;
-}
-
-/**
- * Counts owner-scoped Jest signal evidence from conservative path-only
- * evidence. Emission gating against a confirmed Jest shape is not
- * implemented yet, so this only accumulates score and evidence per owner.
- */
 export function addJestTestAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const jestAreasByOwner = createAreaRuleCandidateMap<JestTestSignal>();
-
-  const jestConfigFiles = index.findFilesByNameMatching({
-    pattern: /^jest\.config\.(?:js|ts|mjs|mts|cjs|cts|json)$/,
+  applyDeclarativeAreaDetector<JestTestSignal>({
+    candidates,
+    index,
+    detectedArea: 'Test suite',
+    primaryTech: 'Jest',
+    signalScores: JEST_TEST_SIGNAL_SCORES,
+    entrySchemas: [
+      {
+        signalType: 'jest-config-file',
+        regex: /^jest\.config\.(?:js|ts|mjs|mts|cjs|cts|json)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'jest-setup-file',
+        regex: /^jest[.-]setup\.(?:js|ts|mjs|cjs)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'jest-setup-tests-file',
+        regex: /^setuptests\.(?:js|jsx|ts|tsx)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'jest-tests-directory',
+        regex: /(^|\/)__tests__$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'jest-mocks-directory',
+        regex: /(^|\/)__mocks__$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'jest-snapshots-directory',
+        regex: /(^|\/)__snapshots__$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'jest-test-file',
+        regex: /(^|\/)[^/]+\.(?:test|spec)\.(?:js|jsx|ts|tsx|mjs|cjs)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+    ],
+    gateBlocker: {
+      where: {
+        countedSignals: {
+          or: [
+            { has: 'jest-config-file' },
+            {
+              has: 'jest-setup-file',
+              or: [
+                { has: 'jest-test-file' },
+                { has: 'jest-tests-directory' },
+                { has: 'jest-mocks-directory' },
+                { has: 'jest-snapshots-directory' },
+                { has: 'jest-setup-tests-file' },
+              ],
+            },
+            { hasAllOf: ['jest-mocks-directory', 'jest-snapshots-directory'] },
+          ],
+        },
+      },
+    },
   });
-
-  const jestSetupFiles = index.findFilesByNameMatching({
-    pattern: /^jest[.-]setup\.(?:js|ts|mjs|cjs)$/,
-  });
-
-  const jestSetupTestsFiles = index.findFilesByNameMatching({
-    pattern: /^setuptests\.(?:js|jsx|ts|tsx)$/,
-  });
-
-  const jestTestsDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)__tests__$/,
-  });
-
-  const jestMocksDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)__mocks__$/,
-  });
-
-  const jestSnapshotsDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)__snapshots__$/,
-  });
-
-  const jestTestFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)[^/]+\.(?:test|spec)\.(?:js|jsx|ts|tsx|mjs|cjs)$/,
-  });
-
-  for (const jestConfigFile of jestConfigFiles) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestConfigFile,
-      signal: 'jest-config-file',
-      score: JEST_TEST_SIGNAL_SCORES['jest-config-file'],
-    });
-  }
-
-  for (const jestSetupFile of jestSetupFiles) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestSetupFile,
-      signal: 'jest-setup-file',
-      score: JEST_TEST_SIGNAL_SCORES['jest-setup-file'],
-    });
-  }
-
-  for (const jestSetupTestsFile of jestSetupTestsFiles) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestSetupTestsFile,
-      signal: 'jest-setup-tests-file',
-      score: JEST_TEST_SIGNAL_SCORES['jest-setup-tests-file'],
-    });
-  }
-
-  for (const jestTestsDirectory of jestTestsDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestTestsDirectory,
-      signal: 'jest-tests-directory',
-      score: JEST_TEST_SIGNAL_SCORES['jest-tests-directory'],
-    });
-  }
-
-  for (const jestMocksDirectory of jestMocksDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestMocksDirectory,
-      signal: 'jest-mocks-directory',
-      score: JEST_TEST_SIGNAL_SCORES['jest-mocks-directory'],
-    });
-  }
-
-  for (const jestSnapshotsDirectory of jestSnapshotsDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestSnapshotsDirectory,
-      signal: 'jest-snapshots-directory',
-      score: JEST_TEST_SIGNAL_SCORES['jest-snapshots-directory'],
-    });
-  }
-
-  for (const jestTestFile of jestTestFiles) {
-    countAreaRuleSignal({
-      areasByOwner: jestAreasByOwner,
-      entry: jestTestFile,
-      signal: 'jest-test-file',
-      score: JEST_TEST_SIGNAL_SCORES['jest-test-file'],
-    });
-  }
-
-  for (const [ownerPath, ownerCandidate] of jestAreasByOwner) {
-    if (!hasJestAppShape({ countedSignals: ownerCandidate.countedSignals })) {
-      continue;
-    }
-
-    addAreaScore({
-      candidates,
-      name: 'Test suite',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
-      primaryTechnology: 'Jest',
-      relatedTechnologies: [],
-    });
-  }
 }

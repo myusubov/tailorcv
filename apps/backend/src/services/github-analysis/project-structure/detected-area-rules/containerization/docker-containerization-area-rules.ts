@@ -1,17 +1,5 @@
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import {
-  countAreaRuleSignal,
-  createAreaRuleCandidateMap,
-  type AreaRuleSignalScores,
-} from '../project-structure-area-rule-candidates';
-
-type DockerContainerizationSignal =
-  | 'docker-build-file'
-  | 'docker-ignore-file'
-  | 'docker-compose-file'
-  | 'devcontainer-config'
-  | 'docker-bake-file';
+import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
 
 const DOCKER_CONTAINERIZATION_SIGNAL_SCORES = {
   'docker-build-file': 4,
@@ -19,133 +7,60 @@ const DOCKER_CONTAINERIZATION_SIGNAL_SCORES = {
   'docker-bake-file': 3,
   'docker-ignore-file': 2,
   'devcontainer-config': 2,
-} satisfies AreaRuleSignalScores<DockerContainerizationSignal>;
+} as const;
+
+type DockerContainerizationSignal =
+  keyof typeof DOCKER_CONTAINERIZATION_SIGNAL_SCORES;
 
 /**
- * Determines whether one owner's path evidence proves Docker application
- * build or runtime containerization strongly enough to emit an area.
- *
- * @param countedSignals - Docker signal types counted once for one owner.
- * @returns `true` when the owner has a Dockerfile, Compose file, or Bake file;
- * otherwise `false`.
- *
- * @remarks Docker build, Compose, and Bake files independently define Docker
- * workflows. `.dockerignore` and devcontainer configuration remain supporting
- * score/evidence only and cannot unlock emission, even together. This pure
- * path-only gate has no side effects and cannot validate file contents.
- */
-function hasDockerContainerizationAreaShape(
-  countedSignals: Set<DockerContainerizationSignal>,
-): boolean {
-  // Each anchor independently defines a Docker build or container runtime flow.
-  const hasDockerBuildFile = countedSignals.has('docker-build-file');
-  const hasDockerComposeFile = countedSignals.has('docker-compose-file');
-  const hasDockerBakeFile = countedSignals.has('docker-bake-file');
-
-  // Support-only ignore/devcontainer signals can raise confidence but not emit.
-  return hasDockerBuildFile || hasDockerComposeFile || hasDockerBakeFile;
-}
-
-/**
- * Detects owner-scoped Docker containerization areas from repository paths.
- *
- * @param context - Shared detected-area candidates and the normalized project
- * entry index used to find Docker evidence.
- * @returns Nothing; qualifying Docker candidates are added to the shared map.
- *
- * @remarks Dockerfile, Compose, and Bake paths independently unlock emission.
- * Docker ignore and devcontainer paths only strengthen an already qualifying
- * owner. Signals are counted once per resolved owner, and this path-only
- * detector does not read or validate file contents.
+ * Adds `Containerization` candidates from Docker path evidence. Dockerfile,
+ * Compose, and Bake files independently unlock emission; `.dockerignore` and
+ * devcontainer configuration remain supporting score/evidence only and
+ * cannot unlock emission alone or together.
  */
 export function addDockerContainerizationAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const dockerContainerizationAreasByOwner =
-    createAreaRuleCandidateMap<DockerContainerizationSignal>();
-
-  const dockerBuildFiles = index.findFilesByNameMatching({
-    pattern: /^(?:dockerfile|[^/]+\.dockerfile)(?:\.[^/]+)?$/,
+  applyDeclarativeAreaDetector<DockerContainerizationSignal>({
+    candidates,
+    index,
+    detectedArea: 'Containerization',
+    primaryTech: 'Docker',
+    signalScores: DOCKER_CONTAINERIZATION_SIGNAL_SCORES,
+    entrySchemas: [
+      {
+        signalType: 'docker-build-file',
+        regex: /^(?:dockerfile|[^/]+\.dockerfile)(?:\.[^/]+)?$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'docker-ignore-file',
+        regex: /^(?:\.dockerignore|[^/]+\.dockerfile\.dockerignore)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'docker-compose-file',
+        regex: /^(?:docker-)?compose(?:\.[^/]+)?\.(?:yml|yaml)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'devcontainer-config',
+        regex: /(^|\/)\.devcontainer\/devcontainer\.json$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'docker-bake-file',
+        regex: /^docker-bake(?:\.override)?\.(?:hcl|json)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+    ],
+    gateBlocker: {
+      where: {
+        countedSignals: {
+          hasOneOf: ['docker-build-file', 'docker-compose-file', 'docker-bake-file'],
+        },
+      },
+    },
   });
-
-  const dockerIgnoreFiles = index.findFilesByNameMatching({
-    pattern: /^(?:\.dockerignore|[^/]+\.dockerfile\.dockerignore)$/,
-  });
-
-  const dockerComposeFiles = index.findFilesByNameMatching({
-    pattern: /^(?:docker-)?compose(?:\.[^/]+)?\.(?:yml|yaml)$/,
-  });
-
-  const devcontainerConfigFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)\.devcontainer\/devcontainer\.json$/,
-  });
-
-  const dockerBakeFiles = index.findFilesByNameMatching({
-    pattern: /^docker-bake(?:\.override)?\.(?:hcl|json)$/,
-  });
-
-  for (const dockerBuildFile of dockerBuildFiles) {
-    countAreaRuleSignal({
-      areasByOwner: dockerContainerizationAreasByOwner,
-      entry: dockerBuildFile,
-      score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-build-file'],
-      signal: 'docker-build-file',
-    });
-  }
-
-  for (const dockerIgnoreFile of dockerIgnoreFiles) {
-    countAreaRuleSignal({
-      areasByOwner: dockerContainerizationAreasByOwner,
-      entry: dockerIgnoreFile,
-      score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-ignore-file'],
-      signal: 'docker-ignore-file',
-    });
-  }
-
-  for (const dockerComposeFile of dockerComposeFiles) {
-    countAreaRuleSignal({
-      areasByOwner: dockerContainerizationAreasByOwner,
-      entry: dockerComposeFile,
-      score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-compose-file'],
-      signal: 'docker-compose-file',
-    });
-  }
-
-  for (const dockerBakeFile of dockerBakeFiles) {
-    countAreaRuleSignal({
-      areasByOwner: dockerContainerizationAreasByOwner,
-      entry: dockerBakeFile,
-      score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['docker-bake-file'],
-      signal: 'docker-bake-file',
-    });
-  }
-
-  for (const devcontainerConfigFile of devcontainerConfigFiles) {
-    countAreaRuleSignal({
-      areasByOwner: dockerContainerizationAreasByOwner,
-      entry: devcontainerConfigFile,
-      score: DOCKER_CONTAINERIZATION_SIGNAL_SCORES['devcontainer-config'],
-      signal: 'devcontainer-config',
-    });
-  }
-
-  for (const [
-    ownerPath,
-    ownerCandidate,
-  ] of dockerContainerizationAreasByOwner) {
-    if (!hasDockerContainerizationAreaShape(ownerCandidate.countedSignals)) {
-      continue;
-    }
-
-    addAreaScore({
-      candidates,
-      name: 'Containerization',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
-      primaryTechnology: 'Docker',
-      relatedTechnologies: [],
-    });
-  }
 }
