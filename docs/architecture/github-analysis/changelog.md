@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-08-26
+
+### Temporary Analyze Endpoint Resumed
+
+- **Decision:** Invoke the real `analyzeGithubRepositories` orchestration from the analyze endpoint instead of the placeholder empty response, and align the surrounding types with the current `github.service.ts`/`github-tree-fetcher.ts` return shapes.
+- **Problem:** `analyzeGithubRepos` had been temporarily short-circuited to `return successResponse(res, {}, 200)` while `analyzeGithubRepositories` was implemented against an older `fetchGithubRepos` (array return) and `fetchRepositoryTree` (`{ tree: { tree, truncated } }`) contract; those services had since moved to `{ repositories }` and `{ tree, truncated }` respectively, and `GitHubRepo` had no `default_branch` field, so re-enabling the call needed matching fixes rather than a one-line revert.
+- **Solution:**
+  1. Re-enabled the call in `analyzeGithubRepos` (`github.controller.ts`), passing `githubConnection.installationAccessToken` and returning `{ result }`.
+  2. Updated `analyzeGithubRepositories` (`github-analysis.service.ts`) to destructure `{ repositories }` from `fetchGithubRepos` and `{ tree, truncated }` from `fetchRepositoryTree`, and removed the now-redundant local `GitHubRepoForAnalysis` type.
+  3. Added `default_branch?: string` to the shared `GitHubRepo` type (`packages/shared/src/types/github.ts`) so `repo.default_branch` is typed instead of cast.
+  4. Changed frontend `AnalyzeGithubReposInput` from a bare `number[]` to `{ repoIds: number[] }` and updated `GitHubStep`'s `handleAnalyze` to match the action's object input.
+  5. Simplified `splitRepositoryFullName` from an object-parameter to a single string parameter, matching the project convention that single-input functions take the value directly.
+- **Affected files:** `apps/backend/src/controllers/github.controller.ts`, `apps/backend/src/services/github-analysis.service.ts`, `apps/backend/src/utils/github-utils.ts`, `packages/shared/src/types/github.ts`, `apps/frontend/lib/types/github.ts`, `apps/frontend/app/components/onboarding/github/github-step.tsx`, `docs/architecture/github-analysis/pipeline/README.md`, `docs/architecture/github-analysis/changelog.md`.
+- **Outcome:** Selecting repositories in onboarding and clicking Analyze now returns real project-structure summaries and detected areas end-to-end instead of an empty placeholder. This entry documents only the endpoint-wiring fix; it does not cover the in-progress declarative detected-area rule engine migration recorded separately in [project-structure/changelog.md](project-structure/changelog.md).
+
 ## 2026-05-15
 
 ### GitHub Analysis Doc Split
