@@ -23,7 +23,9 @@ export interface InitiateGithubAuthOutput {
   authUrl: string;
 }
 
-export type AnalyzeGithubReposInput = number[];
+export type AnalyzeGithubReposInput = {
+  repoIds: number[];
+};
 
 export interface AnalyzeGithubReposOutput {
   summaries: Array<{

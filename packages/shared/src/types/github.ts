@@ -50,6 +50,7 @@ export interface GitHubRepo {
   open_issues_count: number;
   topics?: string[];
   updated_at: string;
+  default_branch?: string;
 }
 
 export interface GitHubConnection {

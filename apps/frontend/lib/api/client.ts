@@ -95,11 +95,12 @@ async function backendFetch(
 
   if (token) requestHeaders.set('Authorization', `Bearer ${token}`);
 
+  const requestBody = body === undefined ? undefined : isFormData ? body : JSON.stringify(body);
+
   return fetch(url, {
     ...init,
     headers: requestHeaders,
-    body:
-      body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+    body: requestBody,
     next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
   });
 }
