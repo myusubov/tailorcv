@@ -1,21 +1,5 @@
-import {
-  countAreaRuleSignal,
-  createAreaRuleCandidateMap,
-  hasCompetingAreaProof,
-  type AreaRuleSignalScores,
-} from '../project-structure-area-rule-candidates';
-import { addAreaScore } from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import { findNuxtFrontendProofEntries } from './frontend-area-competing-proof';
-
-type VueFrontendSignal =
-  | 'vue-vite-config'
-  | 'vue-cli-config'
-  | 'vue-root-component'
-  | 'vue-main-entry'
-  | 'vue-router'
-  | 'vue-view-component'
-  | 'vue-component';
+import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
 
 const VUE_FRONTEND_SIGNAL_SCORES = {
   'vue-root-component': 4,
@@ -25,24 +9,9 @@ const VUE_FRONTEND_SIGNAL_SCORES = {
   'vue-cli-config': 2,
   'vue-view-component': 2,
   'vue-component': 1,
-} satisfies AreaRuleSignalScores<VueFrontendSignal>;
+} as const;
 
-function hasVueAppShape({
-  countedSignals,
-}: {
-  countedSignals: Set<VueFrontendSignal>;
-}): boolean {
-  const hasVueRoot = countedSignals.has('vue-root-component');
-  const hasVueMainEntry = countedSignals.has('vue-main-entry');
-  const hasVueRouter = countedSignals.has('vue-router');
-  const hasVueCliConfig = countedSignals.has('vue-cli-config');
-
-  const hasVueAppShape = hasVueRoot && hasVueMainEntry;
-  const hasVueRouterAppShape = hasVueRoot && hasVueRouter;
-  const hasVueCliAppShape = hasVueCliConfig && hasVueRoot;
-
-  return hasVueAppShape || hasVueRouterAppShape || hasVueCliAppShape;
-}
+type VueFrontendSignal = keyof typeof VUE_FRONTEND_SIGNAL_SCORES;
 
 /**
  * Adds `Frontend app` candidates from Vue path evidence.
@@ -52,120 +21,77 @@ export function addVueFrontendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const vueAreasByOwner = createAreaRuleCandidateMap<VueFrontendSignal>();
-  const vueCompetingProofEntries = findNuxtFrontendProofEntries({ index });
-
-  const vueViteConfigFiles = index.findFilesByNameMatching({
-    pattern: /^vite\.config\.(js|mjs|cjs|ts)$/,
+  applyDeclarativeAreaDetector<VueFrontendSignal>({
+    candidates,
+    index,
+    detectedArea: 'Frontend app',
+    primaryTech: 'Vue',
+    signalScores: VUE_FRONTEND_SIGNAL_SCORES,
+    entrySchemas: [
+      {
+        signalType: 'vue-vite-config',
+        regex: /^vite\.config\.(js|mjs|cjs|ts)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'vue-cli-config',
+        regex: /^vue\.config\.(js|mjs|cjs|ts)$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'vue-root-component',
+        regex: /(^|\/)src\/app\.vue$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'vue-main-entry',
+        regex: /(^|\/)src\/main\.(js|mjs|ts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'vue-router',
+        regex: /(^|\/)src\/router(\/index)?\.(js|mjs|ts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'vue-view-component',
+        regex: /(^|\/)src\/(views|pages)\/(?:.*\/)?.+\.vue$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'vue-component',
+        regex: /(^|\/)src\/components\/(?:.*\/)?.+\.vue$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+    ],
+    gateBlocker: {
+      where: {
+        countedSignals: {
+          has: 'vue-root-component',
+          or: [
+            {
+              has: 'vue-router',
+            },
+            {
+              has: 'vue-cli-config',
+            },
+            {
+              has: 'vue-main-entry',
+            },
+          ],
+        },
+      },
+    },
+    competingProofSchemas: [
+      {
+        indexMethod: 'findFilesByNameMatching',
+        regex: /^nuxt\.config\.(js|mjs|cjs|ts)$/,
+      },
+      {
+        indexMethod: 'findEntriesByPathMatching',
+        regex:
+          /^(app\.vue|app\/app\.vue|apps\/[^/]+\/(app\.vue|app\/app\.vue)|packages\/[^/]+\/(app\.vue|app\/app\.vue))$/,
+      },
+    ],
   });
-
-  const vueCliConfigFiles = index.findFilesByNameMatching({
-    pattern: /^vue\.config\.(js|mjs|cjs|ts)$/,
-  });
-
-  const vueRootComponentFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/app\.vue$/,
-  });
-
-  const vueMainEntryFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/main\.(js|mjs|ts)$/,
-  });
-
-  const vueRouterFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/router(\/index)?\.(js|mjs|ts)$/,
-  });
-
-  const vueViewComponentFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/(views|pages)\/(?:.*\/)?.+\.vue$/,
-  });
-
-  const vueComponentFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/components\/(?:.*\/)?.+\.vue$/,
-  });
-
-  for (const vueViteConfigFile of vueViteConfigFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueViteConfigFile,
-      signal: 'vue-vite-config',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-vite-config'],
-    });
-  }
-
-  for (const vueCliConfigFile of vueCliConfigFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueCliConfigFile,
-      signal: 'vue-cli-config',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-cli-config'],
-    });
-  }
-
-  for (const vueRootComponentFile of vueRootComponentFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueRootComponentFile,
-      signal: 'vue-root-component',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-root-component'],
-    });
-  }
-
-  for (const vueMainEntryFile of vueMainEntryFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueMainEntryFile,
-      signal: 'vue-main-entry',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-main-entry'],
-    });
-  }
-
-  for (const vueRouterFile of vueRouterFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueRouterFile,
-      signal: 'vue-router',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-router'],
-    });
-  }
-
-  for (const vueViewComponentFile of vueViewComponentFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueViewComponentFile,
-      signal: 'vue-view-component',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-view-component'],
-    });
-  }
-
-  for (const vueComponentFile of vueComponentFiles) {
-    countAreaRuleSignal({
-      areasByOwner: vueAreasByOwner,
-      entry: vueComponentFile,
-      signal: 'vue-component',
-      score: VUE_FRONTEND_SIGNAL_SCORES['vue-component'],
-    });
-  }
-
-  for (const [ownerPath, ownerCandidate] of vueAreasByOwner) {
-    const hasCompetingProof = hasCompetingAreaProof({
-      ownerPath,
-      evidenceEntries: vueCompetingProofEntries,
-    });
-
-    if (hasCompetingProof) continue;
-
-    if (!hasVueAppShape({ countedSignals: ownerCandidate.countedSignals })) {
-      continue;
-    }
-
-    addAreaScore({
-      candidates,
-      name: 'Frontend app',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
-      primaryTechnology: 'Vue',
-      relatedTechnologies: [],
-    });
-  }
 }

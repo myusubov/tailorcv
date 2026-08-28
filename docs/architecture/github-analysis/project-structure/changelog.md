@@ -6,6 +6,40 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-08-27
+
+### Declarative Area-Rule Engine Migration Completed (17 Detectors, Two Waves)
+
+- **Decision:** Migrate every framework/database/containerization/test detector that fits the existing `applyDeclarativeAreaDetector` schema onto it, and leave the detectors that genuinely need capabilities the engine does not have as permanent hand-written exceptions rather than extending the engine to cover them.
+- **Problem:** Following the Next.js pilot, `applyDeclarativeAreaDetector` had no emission gate and was proven on only one detector, while the rest of the ~24 real detectors each still hand-rolled their own `findX` calls, `countAreaRuleSignal` loops, and shape-gate functions. A full survey found that most detectors' gates are expressible with a small set of AND/OR primitives, but four kinds of detector needs genuinely exceed what a static, per-owner-agnostic schema can declare.
+- **Solution:**
+  1. Added `gateBlocker` (an arbitrarily nested `hasAllOf`/`hasOneOf`/`has`/`or` condition, evaluated per owner via `evaluateCondition`) and `competingProofSchemas` (a raw file-evidence veto against a sibling framework's proof paths) to `applyDeclarativeAreaDetector`, matching the shape checks Next.js and Vue.js already needed.
+  2. Migrated 10 detectors with a flat gate and no competing proof (Prisma, Drizzle, Knex, Sequelize, SQLAlchemy, TypeORM, Nuxt, Astro, Docker, Jest).
+  3. Migrated 7 detectors needing nested `gateBlocker` conditions or `competingProofSchemas` (Svelte, React Router, Angular, SvelteKit, Django, JS/TS shared package, Podman/OCI), each hand-verified against its original boolean gate before being written as a `ConditionShape`.
+  4. Left 7 detectors permanently hand-written because they need a capability the engine does not support: dynamically determined related technology per owner (Spring Boot, Laravel, Rails), gating on the shared candidate map instead of raw file evidence (Static frontend, Express), a per-entry exclusion predicate (ASP.NET Core), and a two-independent-OR-groups condition shape in one gate node (React).
+  5. Corrected stale docstrings on `applyDeclarativeAreaDetector` and `addJestTestAreas` that no longer matched their implemented gating behavior.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts` and the 17 migrated detector files under `detected-area-rules/{database,frontend,backend,containerization,shared-package,test}/`, plus this README and changelog.
+- **Outcome:** 17 of the real framework/database/containerization/test detectors are now pure declarative config with no engine changes required to support them; dispatch order and per-owner emission behavior are unchanged. The 7 hand-written exceptions and 5 dispatched stub detectors are unchanged by this migration. Typecheck/lint/tests were not run as part of this change.
+
+## 2026-08-26
+
+### Declarative Area-Rule Engine Started (Next.js Pilot, In Progress)
+
+- **Decision:** Introduce a generic schema-driven detector runner, `applyDeclarativeAreaDetector` in `detected-area-rules/declarative-area-rule-engine.ts`, so framework detectors can declare their signal-to-regex/index-method mapping as data instead of hand-writing a `findX` call plus `countAreaRuleSignal` loop per signal.
+- **Problem:** Every per-framework detector repeats the same shape -- one `index.findXByYMatching` call, one `countAreaRuleSignal` loop, and one final loop over the owner candidate map calling `addAreaScore` -- for each signal type, which the maintainer wants to reduce to a declared list of `{ signalType, regex, indexMethod }` entries.
+- **Solution:**
+  1. Added `applyDeclarativeAreaDetector`, which takes `entrySchemas`, `signalScores`, `detectedArea`, `primaryTech`, and optional `relatedTechs`, runs the matching `index` method per schema entry, scores each match with the existing `countAreaRuleSignal`, and adds a candidate for every owner with at least one matched signal.
+  2. Migrated `addNextFrontendAreas` (`detected-area-rules/frontend/next-frontend-area-rules.ts`) to call it as the first pilot conversion.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/frontend/next-frontend-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** Incomplete. `applyDeclarativeAreaDetector` has no per-detector emission gate: it adds a candidate for every owner with any matched signal, so the migrated Next.js detector no longer enforces the `hasNextAppShape` rule (config, App Router core, or Pages Router special proof required) documented in this README's Detected Area Generation rules -- that gating function is now defined in `next-frontend-area-rules.ts` but never called. `next-frontend-area-rules.ts` also carries leftover unused imports (`countAreaRuleSignal`, `createAreaRuleCandidateMap`) and the new engine file has a duplicated `EntrySchema` interface declaration and a commented-out gate call from the migration draft. Only Next.js is migrated; no other framework detector has been converted, and none of the other detectors' bespoke emission gates (Nuxt, Vue, React, static, etc.) have an equivalent in the declarative schema yet. Typecheck/lint/tests were not run as part of this documentation pass.
+
+### Submodule Entries Excluded from `maxDepth`
+
+- **Problem:** `buildProjectStructureSummary`'s `maxDepth` calculation reduced over every normalized entry, including `submodule`-type entries, so a repository with a deeply nested Git submodule reported a `maxDepth` reflecting the submodule's mount depth rather than the depth of real tracked files and directories.
+- **Solution:** Filtered out `type === 'submodule'` entries before the `maxDepth` reduce in `project-structure-summary.ts`.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** `summary.maxDepth` now reflects real file/directory nesting depth and is unaffected by submodule mount points.
+
 ## 2026-08-24
 
 ### Containerization and Database Owner Resolvers Removed

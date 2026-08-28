@@ -21,10 +21,9 @@ export function buildProjectStructureSummary({
     .filter((entry) => entry.type === 'directory' && entry.depth === 0)
     .map((entry) => entry.path)
     .sort();
-  const maxDepth = entries.reduce(
-    (max, entry) => Math.max(max, entry.depth),
-    0,
-  );
+  const maxDepth = entries
+    .filter((entry) => entry.type !== 'submodule')
+    .reduce((max, entry) => Math.max(max, entry.depth), 0);
   const projectShape = detectProjectShape({ entries });
   const inferredStack = detectPrimaryStack({ entries, projectShape });
 

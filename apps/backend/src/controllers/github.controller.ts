@@ -138,12 +138,12 @@ export async function analyzeGithubRepos(
   try {
     const { clerkUserId, githubConnection } = res.locals;
     const { repoIds } = req.body;
-    // const result = await analyzeGithubRepositories({
-    //   clerkUserId,
-    //   accessToken: githubConnection.accessToken,
-    //   repoIds,
-    // });
-    return successResponse(res, {}, 200);
+    const result = await analyzeGithubRepositories({
+      clerkUserId,
+      accessToken: githubConnection.installationAccessToken,
+      repoIds,
+    });
+    return successResponse(res, { result }, 200);
   } catch (error) {
     next(error);
   }

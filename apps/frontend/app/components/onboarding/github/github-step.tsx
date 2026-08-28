@@ -32,6 +32,9 @@ interface GitHubStepProps {
 export function GitHubStep({ onBack }: GitHubStepProps) {
   const analyzeMutation = useActionMutation(analyzeGithubReposAction, {
     showErrorToast: true,
+    // onSuccess: (data) => {
+    //   console.log("data", data);
+    // },
   });
 
   const connectMutation = useActionMutation(initiateGithubAuthAction, {
@@ -68,7 +71,6 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     retry: 1, // Retry once automatically before showing error
   });
 
-
   const hasHandledOauthStatus = useRef(false);
   useEffect(() => {
     if (oauthParams.status && !hasHandledOauthStatus.current) {
@@ -90,7 +92,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    analyzeMutation.mutate(selectedRepoIds);
+    analyzeMutation.mutate({ repoIds: selectedRepoIds });
   };
 
   // Show loading state while checking connection status

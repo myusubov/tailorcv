@@ -13,22 +13,19 @@ import type {
   AnalyzeGithubRepositoriesOutput,
 } from '../types/github';
 
-interface GitHubRepoForAnalysis extends GitHubRepo {
-  default_branch?: string;
-}
-
 /**
  * Runs the temporary GitHub project-structure analysis flow for selected repositories.
- * It fetches each repository tree, logs the summary, and returns summaries for manual testing.
+ * It fetches each repository's tree, analyzes project structure, and returns each
+ * repository's summary and detected areas for manual testing.
  */
 export async function analyzeGithubRepositories({
   clerkUserId,
   accessToken,
   repoIds,
 }: AnalyzeGithubRepositoriesInput) {
-  const repos = (await fetchGithubRepos(
-    accessToken,
-  )) as GitHubRepoForAnalysis[];
+  const { repositories: repos } =
+    await fetchGithubRepos(accessToken);
+
   const selectedRepos = repos.filter((repo) => repoIds.includes(repo.id));
 
   if (selectedRepos.length !== repoIds.length) {
@@ -41,28 +38,27 @@ export async function analyzeGithubRepositories({
 
   const summaries = await Promise.all(
     selectedRepos.map(async (repo) => {
-      const { owner, repo: repoName } = splitRepositoryFullName({
-        repositoryFullName: repo.full_name,
-      });
-      const tree = await fetchRepositoryTree({
+      const repoFullName = repo.full_name;
+      const { owner, repo: repoName } = splitRepositoryFullName(repoFullName);
+      const { tree, truncated } = await fetchRepositoryTree({
         accessToken,
         owner,
         repo: repoName,
         treeRef: repo.default_branch ?? 'HEAD',
       });
-      const entries = normalizeTreeEntries({ entries: tree.tree });
+      const entries = normalizeTreeEntries({ entries: tree });
       const analysis = analyzeProjectStructure({
         repository: {
           id: repo.id,
           repositoryFullName: repo.full_name,
         },
         entries,
-        isTruncated: tree.truncated,
+        isTruncated: truncated,
       });
 
-      const { summary, detectedAreas } = analysis
+      const { summary, detectedAreas } = analysis;
 
-      return { summary, detectedAreas }
+      return { summary, detectedAreas };
     }),
   );
 
