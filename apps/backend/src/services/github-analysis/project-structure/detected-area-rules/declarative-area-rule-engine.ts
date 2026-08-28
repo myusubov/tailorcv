@@ -51,6 +51,7 @@ interface ApplyDeclarativeAreaDetectorParams<
   detectedArea: DetectedAreaName;
   primaryTech: DetectedAreaTechnology;
   relatedTechs?: DetectedAreaTechnology[];
+  dynamicRelatedTechMap?: Partial<Record<Signal, DetectedAreaTechnology>>;
   gateBlocker?: GateBlocker<Signal>;
   competingProofSchemas?: CompetingProofSchema[];
 }
@@ -118,6 +119,10 @@ function evaluateCondition<Signal extends string>({
  * when given, is matched against the repository index once up front and
  * vetoes an owner whose path also carries that evidence (see
  * `hasCompetingAreaProof`), independent of the owner's own gate result.
+ * `dynamicRelatedTechMap`, when given, unions in a related technology for
+ * every signal counted for that owner (e.g. attributing `Java`/`Kotlin`
+ * per owner from language-specific signal variants) in addition to any
+ * static `relatedTechs`.
  */
 export function applyDeclarativeAreaDetector<Signal extends string>({
   detectedArea,
@@ -129,6 +134,7 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
   index,
   gateBlocker,
   competingProofSchemas,
+  dynamicRelatedTechMap,
 }: ApplyDeclarativeAreaDetectorParams<Signal>): void {
   const areaCandidateMap = createAreaRuleCandidateMap<Signal>();
   const competingProofEntries: RepoTreeEntry[] = [];
@@ -197,6 +203,17 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
       continue;
     }
 
+    const dynamicRelatedTechs: DetectedAreaTechnology[] = [];
+
+    if (dynamicRelatedTechMap) {
+      for (const signal of Object.keys(dynamicRelatedTechMap) as Signal[]) {
+        const tech = dynamicRelatedTechMap[signal];
+        if (tech && ownerCandidate.countedSignals.has(signal)) {
+          dynamicRelatedTechs.push(tech);
+        }
+      }
+    }
+
     addAreaScore({
       candidates,
       name: detectedArea,
@@ -204,7 +221,7 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
       score: ownerCandidate.score,
       evidence: ownerCandidate.evidence,
       primaryTechnology: primaryTech,
-      relatedTechnologies: relatedTechs ?? [],
+      relatedTechnologies: [...(relatedTechs ?? []), ...dynamicRelatedTechs],
     });
   }
 }

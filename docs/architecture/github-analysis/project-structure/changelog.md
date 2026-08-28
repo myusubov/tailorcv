@@ -6,6 +6,20 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-08-28
+
+### Laravel, Rails, and Spring Boot Migrated onto the Declarative Engine (Related-Tech Primitive Added)
+
+- **Decision:** Add a `dynamicRelatedTechMap` primitive to `applyDeclarativeAreaDetector` instead of a general per-owner related-tech callback, then migrate the three detectors previously left hand-written solely because of dynamic related technology (Spring Boot, Laravel, Rails).
+- **Problem:** The 2026-08-27 migration left Spring Boot, Laravel, and Rails permanently hand-written because none could declare related technology that depends on which files were actually matched (Blade/ERB view presence, Java/Kotlin source extension) -- `applyDeclarativeAreaDetector` only supported a static `relatedTechs` array. Laravel and Rails already had a discrete, unambiguous signal for the conditional case (`laravel-blade-view`, `rails-erb-view`); Spring Boot's six source-file signals (main application, web controller, REST resource, data repository, service, configuration class) each matched both `.java` and `.kt` under one signal type, so no counted signal could distinguish the language.
+- **Solution:**
+  1. Added `dynamicRelatedTechMap?: Partial<Record<Signal, DetectedAreaTechnology>>` to `applyDeclarativeAreaDetector`: for every signal counted for an owner that has an entry in the map, its technology is unioned into that owner's related technologies alongside any static `relatedTechs`.
+  2. Migrated `addLaravelBackendAreas` and `addRailsBackendAreas` onto `applyDeclarativeAreaDetector` with signal shape unchanged -- `dynamicRelatedTechMap: { 'laravel-blade-view': 'Blade' }` and `{ 'rails-erb-view': 'ERB' }` replace the hand-written `hasBladeView`/`hasErbView` ternaries; their gates translate directly to nested `ConditionShape` with no new engine surface.
+  3. Split each of Spring Boot's six language-ambiguous signals into `-java`/`-kotlin` variants (e.g. `spring-boot-main-application` becomes `spring-boot-main-application-java`/`-kotlin`), each scored identically to the original unsplit signal, and mapped all twelve split signals to `Java`/`Kotlin` in `dynamicRelatedTechMap`. Migrated `addSpringBootBackendAreas` onto `applyDeclarativeAreaDetector`, translating `hasSpringBootBackendShape`'s three-branch boolean gate into a four-branch `ConditionShape` (one branch needed splitting into two because it ANDs three independent OR-groups together, one more than a single `ConditionShape` node's `hasOneOf`+`or` capacity absorbs). Removed `hasSpringBootBackendShape`, `addLanguageEvidence`, and the parallel `springBootLanguagesByOwner` map entirely.
+  4. Corrected the `applyDeclarativeAreaDetector` docstring, which did not mention `dynamicRelatedTechMap`.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`, `detected-area-rules/backend/laravel-backend-area-rules.ts`, `detected-area-rules/backend/rails-backend-area-rules.ts`, `detected-area-rules/backend/spring-boot-backend-area-rules.ts`, this README and changelog.
+- **Outcome:** 20 of the real framework/database/containerization/test detectors are now pure declarative config; only ASP.NET Core, React, Static frontend, and Express remain hand-written, for reasons unrelated to related technology (a per-entry exclusion predicate, a two-independent-OR-groups condition in one gate node, and gating on the shared candidate map instead of raw file evidence). An owner with both a Java file and a Kotlin file in the same Spring Boot signal category (e.g. one Java controller and one Kotlin controller) now scores that category's points twice instead of once, since the two extensions are now distinct signal types -- a minor, accepted scoring change limited to mixed-language owners. Typecheck/lint/tests were not run as part of this change.
+
 ## 2026-08-27
 
 ### Declarative Area-Rule Engine Migration Completed (17 Detectors, Two Waves)
