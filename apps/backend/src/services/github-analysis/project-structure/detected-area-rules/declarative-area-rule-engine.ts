@@ -1,4 +1,3 @@
-import { logger } from 'src/lib';
 import {
   DetectedAreaTechnology,
   RepoTreeEntry,
@@ -33,6 +32,7 @@ interface ConditionShape<Signal extends string> {
   hasOneOf?: Signal[];
   has?: Signal;
   or?: ConditionShape<Signal>[];
+  and?: ConditionShape<Signal>[];
 }
 
 interface GateBlocker<Signal extends string> {
@@ -60,6 +60,16 @@ interface ApplyDeclarativeAreaDetectorParams<
   checkForExistingCandidate?: boolean;
 }
 
+/**
+ * Evaluates one `ConditionShape` against a counted-signal set.
+ *
+ * Every key present on the node is ANDed together: `hasAllOf` requires all
+ * listed signals, `hasOneOf` requires at least one, `has` requires that single
+ * signal, `and` requires every nested condition to hold, and `or` requires at
+ * least one nested condition to hold. Absent keys contribute `true`, so an
+ * empty node matches. `and` and `or` recurse, allowing arbitrarily nested
+ * AND/OR shape checks (such as ANDing two independent `hasOneOf` groups).
+ */
 function evaluateCondition<Signal extends string>({
   signals,
   conditions,
@@ -97,11 +107,16 @@ function evaluateCondition<Signal extends string>({
     },
   };
 
-  const { hasAllOf, hasOneOf, has, or } = conditions;
+  const { hasAllOf, hasOneOf, has, or, and } = conditions;
   return (
     (hasAllOf ? funcObj.hasAllOf(hasAllOf) : true) &&
     (hasOneOf ? funcObj.hasOneOf(hasOneOf) : true) &&
     (has ? funcObj.has(has) : true) &&
+    (and
+      ? and.every((nestedCondition) =>
+          evaluateCondition({ signals, conditions: nestedCondition }),
+        )
+      : true) &&
     (or
       ? or.some((nestedCondition) =>
           evaluateCondition({ signals, conditions: nestedCondition }),
