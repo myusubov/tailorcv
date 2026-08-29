@@ -19,9 +19,13 @@ flowchart TD
   Input[AnalyzeProjectStructureInput] --> Summary[buildProjectStructureSummary]
   Summary --> Shape[detectProjectShape]
   Summary --> Stack[detectPrimaryStack]
+  Summary --> Languages[detectLanguages]
+  Summary --> Manifests[detectRootManifests]
   Summary --> Areas[buildDetectedAreas]
   Shape --> Result[ProjectStructureAnalysisResult]
   Stack --> Result
+  Languages --> Result
+  Manifests --> Result
   Areas --> Result
   Result --> Future[Future analyzers and evidence aggregator]
 ```
@@ -29,7 +33,7 @@ flowchart TD
 The analyzer accepts already-fetched data:
 
 - repository identity: `id`, `repositoryFullName`
-- normalized tree entries: `path`, `name`, `type`, `depth`, `parentPath`, `extension`, `sizeBytes`
+- normalized tree entries: `path`, `name`, `type`, `depth`, `parentPath`, `extension` (lowercased at normalization), `sizeBytes`
 - GitHub tree truncation flag: `isTruncated`
 
 The analyzer does not fetch GitHub data, read file contents, or call AI.
@@ -45,6 +49,8 @@ The analyzer does not fetch GitHub data, read file contents, or call AI.
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-entry-index.ts`                   | Path/name/extension lookup helpers built from normalized GitHub tree entries.     | Adding path-based detection rules        |
 | `apps/backend/src/services/github-analysis/project-structure/project-shape-detector.ts`                          | Score-based project shape detection.                                              | Changing `summary.projectShape`          |
 | `apps/backend/src/services/github-analysis/project-structure/primary-stack-detector.ts`                          | Structure-inferred stack detection.                                               | Changing `summary.inferredStack`         |
+| `apps/backend/src/services/github-analysis/project-structure/language-detector.ts`                               | File-extension to programming-language mapping.                                   | Changing `summary.detectedLanguages`     |
+| `apps/backend/src/services/github-analysis/project-structure/root-manifest-detector.ts`                          | Root dependency-manifest filename to ecosystem mapping.                           | Changing `summary.rootManifests`         |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`                       | Builds the summary block from tree entries.                                       | Changing summary fields                  |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-areas.ts`                | Orchestrates score-based detected area generation from path evidence.             | Changing `detectedAreas` output          |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-*.ts`               | Detected-area rule, candidate, and internal type helpers.                         | Changing detected-area scoring internals |
@@ -64,6 +70,8 @@ RepoTreeEntry[]
   -> buildProjectStructureSummary()
        -> detectProjectShape()
        -> detectPrimaryStack()
+       -> detectLanguages()
+       -> detectRootManifests()
   -> buildDetectedAreas()
   -> ProjectStructureAnalysisResult
 ```
@@ -79,6 +87,8 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── project-structure-entry-index.ts
 ├── project-shape-detector.ts
 ├── primary-stack-detector.ts
+├── language-detector.ts
+├── root-manifest-detector.ts
 ├── project-structure-summary.ts
 ├── project-structure-detected-areas.ts
 ├── project-structure-detected-area-rules.ts
@@ -157,7 +167,20 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Path-only stack inference may include distinctive config or structure signals such as Next.js, Vite, Prisma, Docker, Turborepo, Nx, NestJS, Expo, React Native, native Android/iOS, and Flutter.
 - **Rule**: Dependency/config analyzer will later confirm stack from files such as `package.json`, lockfiles, Prisma schema, Docker config, and framework config.
 
-### 6.3 Detected Area Generation
+### 6.3 Language Detection
+
+- **Rule**: `summary.detectedLanguages` is presence-only from file extensions -- no file counts and no primary-language ranking. Output is de-duplicated and sorted by name, matching `inferredStack`.
+- **Rule**: The extension-to-language map in `language-detector.ts` keeps lowercase keys; lookups lowercase the entry extension defensively even though normalization already lowercases it.
+- **Rule**: Keep the language union intentionally small (widely used languages); add new languages as demand appears rather than exhaustively up front.
+- **Rule**: `.h` is always attributed to C; no vendored or generated directory exclusion is applied.
+
+### 6.4 Root Manifest Detection
+
+- **Rule**: `summary.rootManifests` records dependency manifests at the repository root (`depth === 0`) only, by presence and ecosystem, without reading file contents.
+- **Rule**: Per-package manifests inside a monorepo are intentionally out of scope and left for the dependency/config analyzer.
+- **Rule**: The manifest-filename-to-ecosystem map in `root-manifest-detector.ts` keeps lowercase keys; unmapped manifest filenames are ignored.
+
+### 6.5 Detected Area Generation
 
 - **Rule**: `detectedAreas` identifies meaningful repository regions from path evidence only.
 - **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
@@ -282,6 +305,8 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Path lookup helper created
 - [x] Project shape detector implemented
 - [x] Structure-inferred stack detector implemented
+- [x] Structure-inferred language detector implemented (`summary.detectedLanguages`)
+- [x] Root dependency-manifest detector implemented (`summary.rootManifests`)
 - [x] Focused tests added for current detection behavior
 - [x] Detected areas builder
 - [x] Backend detector module scaffold
