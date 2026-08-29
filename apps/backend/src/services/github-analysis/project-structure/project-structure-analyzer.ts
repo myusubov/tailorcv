@@ -31,6 +31,8 @@ export type {
   RepoTreeEntry,
   RepoTreeEntryType,
   ResumeSignalHint,
+  RootManifest,
+  RootManifestEcosystem,
   SignalStrength,
 } from './project-structure-analyzer.types';
 

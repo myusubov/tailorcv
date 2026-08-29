@@ -57,6 +57,7 @@ export function splitRepositoryFullName(repositoryFullName: string): {
 /**
  * Converts raw GitHub tree entries into the analyzer's normalized tree entry shape.
  * Unknown Git tree entry types are ignored because the project structure analyzer cannot use them.
+ * File extensions are lowercased so downstream extension lookups are case-insensitive.
  */
 export function normalizeTreeEntries({
   entries,
@@ -78,7 +79,7 @@ export function normalizeTreeEntries({
         type,
         depth: parts.length - 1,
         parentPath: parts.length > 1 ? parts.slice(0, -1).join('/') : null,
-        extension: extensionMatch?.[1] ?? null,
+        extension: extensionMatch?.[1]?.toLowerCase() ?? null,
         sizeBytes: entry.size ?? null,
       };
     })

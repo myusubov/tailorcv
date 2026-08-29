@@ -8,6 +8,18 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ## 2026-08-29
 
+### Summary Gains Structure-Inferred Languages and Root Manifests
+
+- **Decision:** Add two path-only descriptive fields to `ProjectStructureSummary` -- `detectedLanguages` (programming languages present, from file extensions) and `rootManifests` (dependency manifests at the repository root, with ecosystem) -- as their own detectors rather than folding them into `inferredStack` or `detectedAreas`.
+- **Problem:** Language mix and root dependency-manifest presence are useful descriptive signals for the future evidence aggregator and dependency/config analyzer, but nothing in the analyzer produced them: `detectedAreas` detectors are per-framework and never emit a repository-wide language list or a manifest inventory, and `inferredStack` is explicitly non-authoritative and slated for later supersession.
+- **Solution:**
+  1. Added `language-detector.ts` with `detectLanguages(entries)`: a static lowercase extension-to-language map (14 languages) accumulated into a `Set` over file entries, returned de-duplicated and sorted by name (matching `inferredStack`). `.h` is attributed to C; unmapped extensions are ignored.
+  2. Added `root-manifest-detector.ts` with `detectRootManifests(entries)`: a static lowercase manifest-filename-to-ecosystem map matched against `depth === 0` file entries only, returned as `{ file, ecosystem }[]` sorted by filename. Per-package monorepo manifests are intentionally left for the dependency/config analyzer.
+  3. Added `RootManifest` and `RootManifestEcosystem` to `project-structure-analyzer.types.ts`, added `detectedLanguages: string[]` and `rootManifests: RootManifest[]` to `ProjectStructureSummary`, wired both detectors into `buildProjectStructureSummary`, and re-exported the two new types from the analyzer barrel.
+  4. Changed `normalizeTreeEntries` in `apps/backend/src/utils/github-utils.ts` to lowercase `extension` at normalization so extension-keyed lookups are case-insensitive by default; `EntryIndex` already lowercased its own extension set.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/language-detector.ts` (new), `root-manifest-detector.ts` (new), `project-structure-analyzer.types.ts`, `project-structure-summary.ts`, `project-structure-analyzer.ts`, `apps/backend/src/utils/github-utils.ts`, this README and changelog.
+- **Outcome:** `summary.detectedLanguages` and `summary.rootManifests` now flow through the analyzer result and the temporary analyze endpoint. No consumer reads them yet; both are additive. The stale `AnalyzeGithubRepositoriesOutput`/`AnalyzeGithubReposOutput` request/response types were left unchanged pending a real endpoint contract.
+
 ### React Migrated onto the Declarative Engine (`and` Conjunction Node Added)
 
 - **Decision:** Add an `and` node to the engine's `ConditionShape` so a single gate node can AND together multiple independent sub-conditions, then migrate the React frontend detector -- the last frontend detector still hand-written -- onto `applyDeclarativeAreaDetector`.
@@ -315,73 +327,3 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 - **Problem:** Project-structure detection could infer Prisma in the summary, but `detectedAreas` did not have a framework-specific database schema rule, so Prisma schema and migration evidence could not reliably point later analyzers to the exact persistent data-model folder.
 - **Solution:** Added `detected-area-rules/database/database-area-rules.ts` and `prisma-database-area-rules.ts`, allowed area-rule signal counting to use a database owner resolver, emitted `Database schema` with `Prisma` technology metadata from schema/migration/config-backed evidence, and added public-analyzer fixtures for conventional schema, root schema, migration history, config-backed fragments, monorepo isolation, repeated signals, and weak-signal rejection.
 - **Outcome:** Prisma schema and migration folders now emit precise database areas such as `apps/backend/prisma`, while config-only, fragment-only, lock-only, directory-only, and generic SQL migration shapes remain non-emitting for Prisma.
-
-## 2026-06-25
-
-### Express.js Backend Area Detection
-
-- **Decision:** Add conservative path-only Express.js backend detection after stronger backend framework detectors.
-- **Problem:** Express is common in JavaScript/TypeScript backend repositories, but its path conventions are weak and generic Node folders such as `routes`, `controllers`, `middleware`, and `services` can appear outside Express applications.
-- **Solution:** Added owner-scoped Express.js signal scoring and a guarded generator/layered-API shape gate in `detected-area-rules/backend/express-backend-area-rules.ts`, skipped owners already claimed by stronger backend detectors, exposed `Express.js` with `Node.js` runtime metadata, and added public-analyzer fixtures for generator, layered, server-owned, monorepo, repeated-signal, framework-interference, frontend-like, and weak Node shapes.
-- **Outcome:** Conventional Express.js JavaScript and TypeScript applications now emit `Backend API`, while generic Node packages, weak folder clusters, and same-owner stronger backend framework claims remain non-emitting for Express.js.
-
-## 2026-06-24
-
-### Ruby on Rails Backend Area Detection
-
-- **Decision:** Detect Ruby on Rails application owners through root-scoped, three-part application boot and routing shapes.
-- **Problem:** The Rails detector scaffold had no behavior, while Ruby projects, Rails engines, and embedded test applications can contain Gemfiles, Rakefiles, controllers, routes, migrations, and even `bin/rails` without representing a deployable Rails application owner.
-- **Solution:** Added owner-scoped Rails signal scoring and an application-config-anchored gate in `detected-area-rules/backend/rails-backend-area-rules.ts`, restricted evidence to repository-root and recognized monorepo-owner paths, exposed `Ruby on Rails`, `Ruby`, and conditional `ERB` metadata, and added public-analyzer fixtures for full, API-only, legacy, monorepo, engine, dummy-app, generator-template, repeated-signal, and weak Ruby structures.
-- **Outcome:** Full and API-only Rails applications now emit `Backend API` with Ruby context and conditional ERB metadata, while Rails engines, generic Rack/Ruby projects, nested test applications, and weak-only file clusters remain non-emitting.
-
-## 2026-06-22
-
-### Laravel Backend Area Detection
-
-- **Decision:** Detect Laravel backend owners through multi-version application bootstrap and ownership anchors instead of broad PHP conventions.
-- **Problem:** The Laravel backend detector scaffold had no behavior, while Composer manifests, controllers, models, migrations, views, and package service providers are too broad to prove a runnable Laravel application by path alone.
-- **Solution:** Added owner-scoped Laravel signal scoring and an explicit application-shape gate in `detected-area-rules/backend/laravel-backend-area-rules.ts`, exposed `Laravel`, `PHP`, and conditional `Blade` technology metadata, and added public-analyzer fixtures for current, canonical, modern, legacy, API, Blade, monorepo, package, repeated-signal, and weak PHP structures.
-- **Outcome:** Recognized Laravel application owners now emit `Backend API` with Laravel as the primary technology, PHP as related context, and Blade when directly evidenced, while generic PHP projects and reusable Laravel packages remain non-emitting.
-
-## 2026-06-20
-
-### Backend Detector Evidence Folder Policy
-
-- **Decision:** Let backend framework gates evaluate matching repository paths without a generic `docs`, `test`, `tests`, or `fixtures` exclusion policy.
-- **Problem:** Django, Spring Boot, and ASP.NET Core had backend-only folder exclusions that were not shared by frontend detectors and were not based on observed user-repository false positives.
-- **Solution:** Removed the generic ignored-prefix helpers from the three backend detectors and removed their documentation-sample negative fixtures, while preserving ASP.NET Core's signal-specific rejection of `wwwroot/appsettings*.json` as server configuration evidence.
-- **Outcome:** Backend detector precision now comes from owner-scoped signal combinations consistently, and folder exclusions can be reintroduced later only when real repository evidence demonstrates a concrete false-positive pattern.
-
-### ASP.NET Core Backend Area Detection
-
-- **Decision:** Detect ASP.NET Core backend owners through path-only web host and project shape anchors.
-- **Problem:** `.NET`/C# project files, `Program.cs`, and appsettings files are too generic to prove ASP.NET Core backend usage without same-owner web structure.
-- **Solution:** Added owner-scoped ASP.NET Core signal scoring and an explicit shape gate in `detected-area-rules/backend/asp-net-core-backend-area-rules.ts`, exposed `ASP.NET Core`, `.NET`, and `C#` technology metadata, and added public-analyzer fixtures for controller Web API, minimal endpoint, legacy Startup, launch-settings, Razor Pages, MVC Views, monorepo, repeated-signal, weak-signal, and client-config structures.
-- **Outcome:** Recognized ASP.NET Core Web API, minimal API, MVC, and Razor Pages shapes now emit `Backend API` with ASP.NET Core as the primary technology and `.NET`/`C#` as related context, while generic C# project structures remain non-emitting.
-
-## 2026-06-17
-
-### Spring Boot Backend Area Detection
-
-- **Decision:** Detect Spring Boot backend owners through path-only application shape anchors instead of generic Java file conventions.
-- **Problem:** The Spring Boot backend detector scaffold had no behavior, and most high-confidence Spring Boot proof lives inside build files or source annotations that the project-structure analyzer does not read.
-- **Solution:** Added owner-scoped Spring Boot signal scoring and an explicit shape gate in `detected-area-rules/backend/spring-boot-backend-area-rules.ts`, exposed `Spring Boot`, `Java`, and `Kotlin` technology metadata, and added public-analyzer fixtures for simple, Gradle-backed, JHipster-style, config-backed, Kotlin, mixed-language, monorepo, repeated-signal, weak-signal, and documentation-sample structures.
-- **Outcome:** Recognized Spring Boot repository shapes now emit `Backend API` with `Spring Boot` as the primary technology and Java/Kotlin as related context, while build-only, config-only, generic Java, and docs/test sample structures remain non-emitting.
-
-## 2026-06-16
-
-### Django Backend Area Detection
-
-- **Decision:** Detect Django backend owners through project-level path anchors before accepting broader Django app conventions.
-- **Problem:** The Django backend detector scaffold had no behavior, and Python app files such as `models.py`, `views.py`, `admin.py`, and `apps.py` are too broad to prove Django without `manage.py`, settings, URL, WSGI, or ASGI evidence.
-- **Solution:** Added owner-scoped Django signal scoring and an explicit shape gate in `detected-area-rules/backend/django-backend-area-rules.ts`, exposed `Django` and `Python` technology metadata, and added public-analyzer fixtures for official startproject, manage-backed, split-settings, app-supported, settings-backed, monorepo, repeated-signal, weak-signal, reusable-package, documentation-sample, and Flask/FastAPI-like structures.
-- **Outcome:** Deployable Django project shapes now emit `Backend API` with `Django` as the primary technology and `Python` as related context, while weak app-only and generic Python structures remain non-emitting.
-
-## 2026-06-15
-
-### NestJS Runtime Metadata
-
-- **Decision:** Expose `Node.js` as related runtime context for path-detected NestJS backend areas.
-- **Problem:** NestJS detection identified the framework but omitted the broader backend runtime context useful to downstream resume analysis.
-- **Solution:** Added `Node.js` to the detected-area technology union and emitted it as a related technology from `detected-area-rules/backend/nest-backend-area-rules.ts`.
-- **Outcome:** NestJS backend areas now communicate both the specific framework and its inherent Node.js runtime without incorrectly inferring an HTTP adapter such as Express.

@@ -1,5 +1,7 @@
+import { detectLanguages } from './language-detector';
 import { detectPrimaryStack } from './primary-stack-detector';
 import { detectProjectShape } from './project-shape-detector';
+import { detectRootManifests } from './root-manifest-detector';
 import type {
   ProjectStructureSummary,
   RepoTreeEntry,
@@ -26,6 +28,8 @@ export function buildProjectStructureSummary({
     .reduce((max, entry) => Math.max(max, entry.depth), 0);
   const projectShape = detectProjectShape({ entries });
   const inferredStack = detectPrimaryStack({ entries, projectShape });
+  const detectedLanguages = detectLanguages(entries);
+  const rootManifests = detectRootManifests(entries);
 
   return {
     projectShape,
@@ -34,5 +38,7 @@ export function buildProjectStructureSummary({
     topLevelFolders,
     maxDepth,
     isTreeTruncated: isTruncated,
+    detectedLanguages,
+    rootManifests,
   };
 }

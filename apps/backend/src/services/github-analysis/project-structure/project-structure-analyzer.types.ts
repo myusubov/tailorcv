@@ -57,6 +57,28 @@ export interface AnalyzeProjectStructureInput {
 }
 
 /**
+ * Dependency-ecosystem labels attached to a detected root manifest file.
+ * Intentionally limited to widely used ecosystems; more are added on demand.
+ */
+export type RootManifestEcosystem =
+  | 'Node.js'
+  | 'Python'
+  | 'Go'
+  | 'Rust'
+  | 'Java/Kotlin'
+  | 'Ruby'
+  | 'PHP';
+
+/**
+ * A dependency manifest present at the repository root, recorded by presence
+ * and ecosystem only; the file contents are not read.
+ */
+export interface RootManifest {
+  file: string;
+  ecosystem: RootManifestEcosystem;
+}
+
+/**
  * High-level repository shape summary derived from normalized tree entries.
  */
 export interface ProjectStructureSummary {
@@ -66,6 +88,8 @@ export interface ProjectStructureSummary {
   topLevelFolders: string[];
   maxDepth: number;
   isTreeTruncated: boolean;
+  detectedLanguages: string[];
+  rootManifests: RootManifest[];
 }
 
 /**
