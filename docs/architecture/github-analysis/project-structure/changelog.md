@@ -8,6 +8,17 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ## 2026-08-29
 
+### React Migrated onto the Declarative Engine (`and` Conjunction Node Added)
+
+- **Decision:** Add an `and` node to the engine's `ConditionShape` so a single gate node can AND together multiple independent sub-conditions, then migrate the React frontend detector -- the last frontend detector still hand-written -- onto `applyDeclarativeAreaDetector`.
+- **Problem:** `ConditionShape` allowed only one `hasOneOf` array per node and its sole recursive combinator (`or`) is disjunctive, so it could not express React's Create React App shape: `public/index.html` AND (`src/index.js` OR `src/index.jsx`) AND (`src/App.js` OR `src/App.jsx`) -- two independent OR-groups ANDed in one branch. Collapsing the OR-groups would have changed detection precision, so React stayed hand-written.
+- **Solution:**
+  1. Added `and?: ConditionShape<Signal>[]` to `ConditionShape` and a conjunctive branch to `evaluateCondition` (`and.every(evaluateCondition)`), mirroring the existing disjunctive `or` branch (`or.some(...)`); an absent or empty `and` contributes `true`. Added a docstring to `evaluateCondition`. Removed the now-unused `logger` import.
+  2. Migrated `addReactFrontendAreas` (`detected-area-rules/frontend/react-frontend-area-rules.ts`) onto `applyDeclarativeAreaDetector`: the eleven finders became `entrySchemas`, the two competing-proof helpers became inline `competingProofSchemas`, and `hasReactAppShape`'s three-branch boolean gate became a three-branch `ConditionShape` `or` -- Vite React shell (`hasAllOf`), CRA shell (`has` + `and` of two `hasOneOf` groups), and structured React layout (`has` + `hasOneOf`). Removed `hasReactAppShape`.
+  3. Deleted `detected-area-rules/frontend/frontend-area-competing-proof.ts`; its Next.js and React Router proof helpers were React's only remaining consumers (the Nuxt and SvelteKit helpers were already dead after earlier waves inlined their `competingProofSchemas`).
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`, `detected-area-rules/frontend/react-frontend-area-rules.ts`, `detected-area-rules/frontend/frontend-area-competing-proof.ts` (deleted), this README and changelog.
+- **Outcome:** 23 of the real framework/database/containerization/test detectors are now pure declarative config; only ASP.NET Core (per-entry exclusion predicate) remains permanently hand-written. React's dispatch order, signal scores, competing-proof veto, and gated emission behavior are unchanged; the existing React analyzer fixtures were not re-run. Typecheck/lint/tests were not run as part of this change.
+
 ### Static Frontend and Express Migrated onto the Declarative Engine (Shared-Candidate-Map Veto Added)
 
 - **Decision:** Add a `checkForExistingCandidate` flag to `applyDeclarativeAreaDetector` that vetoes an owner already claimed for the same detected area in the shared candidate map, then migrate the two detectors previously left hand-written solely for that reason (Static frontend, Express).
@@ -374,21 +385,3 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 - **Problem:** NestJS detection identified the framework but omitted the broader backend runtime context useful to downstream resume analysis.
 - **Solution:** Added `Node.js` to the detected-area technology union and emitted it as a related technology from `detected-area-rules/backend/nest-backend-area-rules.ts`.
 - **Outcome:** NestJS backend areas now communicate both the specific framework and its inherent Node.js runtime without incorrectly inferring an HTTP adapter such as Express.
-
-## 2026-06-13
-
-### NestJS Backend Area Detection
-
-- **Decision:** Detect NestJS backend owners through anchored path combinations while keeping generic service conventions score-only.
-- **Problem:** The backend detector scaffold had no NestJS behavior, and broad TypeScript conventions such as `main.ts`, `*.module.ts`, and `*.service.ts` could not safely prove NestJS without stronger same-owner structure.
-- **Solution:** Added owner-scoped NestJS signal scoring and an explicit shape gate in `detected-area-rules/backend/nest-backend-area-rules.ts`, exposed `NestJS` technology metadata, and added public-analyzer fixtures for official starter, REST/microservice, WebSocket, GraphQL, backend-package, Nx-style, monorepo, interference, weak-signal, and repeated-signal structures.
-- **Outcome:** Recognized NestJS repository shapes now emit `Backend API` with `NestJS` as the primary technology, while CLI-only, Angular-like, service-only, and unanchored generic clusters remain non-emitting.
-
-## 2026-06-12
-
-### Backend Detector Module Scaffold
-
-- **Decision:** Establish the backend detected-area module structure before implementing framework-specific path rules.
-- **Problem:** The modular detected-area dispatcher only had frontend rule modules, so backend detector work lacked isolated entry points and an explicit framework-before-fallback execution order.
-- **Solution:** Added `detected-area-rules/backend/backend-area-rules.ts`, empty exported detector modules for NestJS, Django, Spring Boot, ASP.NET Core, Laravel, and Rails, an empty generic backend fallback module, and wired the backend dispatcher after frontend rules in `project-structure-detected-area-rules.ts`.
-- **Outcome:** Backend detectors now have stable file and function boundaries ready for incremental signal, scoring, gate, competing-proof, and fallback implementation without changing analyzer output.
