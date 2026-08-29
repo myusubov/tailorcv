@@ -4,6 +4,178 @@
 
 ---
 
+## 2026-06-10
+
+### Standalone Svelte Frontend Detection
+
+- **Decision:** Add standalone Svelte detection and treat `svelte.config.*` as shared Svelte ecosystem support rather than sufficient SvelteKit proof.
+- **Problem:** Official Vite Svelte applications contain `svelte.config.js`, so the previous SvelteKit config-only gate classified standalone Svelte projects as SvelteKit and left no path for emitting `Svelte` as the primary technology.
+- **Solution:** Added `svelte-frontend-area-rules.ts` with owner-scoped Vite and legacy Rollup signals gated by `src/App.svelte + src/main.*`, lowered SvelteKit config evidence to support-only, added a same-owner SvelteKit proof blocker, retired the unused generic frontend detector, and expanded realistic public-analyzer fixtures.
+- **Outcome:** Standalone Svelte applications now emit `Frontend app` with primary technology `Svelte`, while SvelteKit remains primary with related technology `Svelte` and keeps precedence for the same owner.
+
+## 2026-06-09
+
+### Detected Area Inferred Technologies
+
+- **Decision:** Include path-inferred primary and related technology metadata on every emitted detected area.
+- **Problem:** Role labels such as `Frontend app` identified an area's purpose but discarded the framework-specific knowledge already established by the detector that created it.
+- **Solution:** Added required technology metadata to `addAreaScore`, assigned explicit primary/related values in every frontend detector, accumulated related technologies with an internal `Set`, exposed stable arrays in `DetectedProjectArea`, and added detector-matrix plus candidate-merge regression tests.
+- **Outcome:** Consumers can distinguish Next.js, React Router, Nuxt, Vue, React, Angular, SvelteKit, Astro, and static frontend areas while preserving the existing owner, score, and evidence model.
+
+## 2026-06-08
+
+### Static Frontend Competing-Owner Gate
+
+- **Decision:** Treat static frontend detection as the broad fallback and block it only when the same owner satisfies an existing non-static frontend detector gate.
+- **Problem:** Framework repositories with root `index.html`, CSS, or JavaScript files could merge static evidence into the same `Frontend app` candidate even after a stronger framework detector had identified the owner.
+- **Solution:** Added a normalized candidate-presence helper in `project-structure-detected-area-candidates.ts`, moved static detection after every stronger frontend detector in `frontend-area-rules.ts`, and updated `static-frontend-area-rules.ts` to skip owners already claimed as `Frontend app`.
+- **Outcome:** Framework-owned frontend areas no longer receive static fallback evidence, while sibling static sites and sites containing incomplete framework-like hints remain detectable.
+
+## 2026-06-05
+
+### React and Static Frontend Confidence Fixtures
+
+- **Decision:** Add realistic React fallback and static frontend repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused React and static gates, but the broad fallback detectors lacked grouped confidence coverage for realistic app shapes, framework interference, monorepo isolation, and weak-hint structures.
+- **Solution:** Added dedicated React and static fixture sections in `project-structure-analyzer.test.ts` that run full analyzer inputs and assert emitted `Frontend app` owners and evidence.
+- **Outcome:** The full frontend detector confidence pass now covers framework-specific, broad React fallback, and plain static frontend layouts through public analyzer output.
+
+### SvelteKit and Astro Frontend Confidence Fixtures
+
+- **Decision:** Add realistic SvelteKit and Astro repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused SvelteKit and Astro gates, but the detectors lacked grouped confidence coverage for realistic full-app, config-only, monorepo, support-evidence, and weak-hint structures.
+- **Solution:** Added dedicated SvelteKit and Astro fixture sections in `project-structure-analyzer.test.ts` that run full analyzer inputs and assert emitted `Frontend app` owners and evidence.
+- **Outcome:** SvelteKit and Astro detector behavior is now protected against regressions across common layouts, weak hints, owner isolation, and support-evidence gates.
+
+### Angular Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Angular repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused Angular gates, but the detector lacked grouped confidence coverage for CLI workspace, standalone, classic NgModule, config-only, monorepo, and weak-hint structures.
+- **Solution:** Added a dedicated Angular fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Angular detector behavior is now protected against regressions across common Angular layouts, weak hints, and owner isolation.
+
+### Vue Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Vue repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused Vue gates, but the detector lacked grouped confidence coverage for Vite Vue, Vue Router, file-based Vue Router, Vue CLI, monorepo, and Nuxt fallback-interference structures.
+- **Solution:** Added a dedicated Vue fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Vue detector behavior is now protected against regressions across common Vue layouts, weak hints, owner isolation, and same-owner Nuxt fallback interference.
+
+## 2026-06-04
+
+### Nuxt Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Nuxt repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered focused Nuxt gates, but the detector lacked grouped confidence coverage for realistic Nuxt 3, Nuxt 4, config-only, monorepo, and Vue fallback-interference structures.
+- **Solution:** Added a dedicated Nuxt fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Nuxt detector behavior is now protected against regressions across common Nuxt layouts, weak hints, owner isolation, and same-owner Vue fallback interference.
+
+## 2026-06-03
+
+### React Router Frontend Confidence Fixtures
+
+- **Decision:** Add realistic React Router Framework Mode repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered React Router gate behavior, but the detector lacked grouped confidence coverage for route-config, file-route, custom-entry, monorepo, and fallback-interference structures.
+- **Solution:** Added a dedicated React Router fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** React Router detector behavior is now protected against regressions across common Framework Mode layouts, weak hints, owner isolation, and same-owner React fallback interference.
+
+### Next.js Frontend Confidence Fixtures
+
+- **Decision:** Add realistic Next.js repository-shape fixtures around the public project-structure analyzer output.
+- **Problem:** Existing tests covered individual Next.js behaviors, but the detector lacked a grouped confidence suite for common App Router, Pages Router, config-only, monorepo, and fallback-interference structures.
+- **Solution:** Added a dedicated Next.js fixture section in `project-structure-analyzer.test.ts` that runs full analyzer inputs and asserts emitted `Frontend app` owners and evidence.
+- **Outcome:** Next.js detector behavior is now protected against regressions across common valid layouts, weak-only hints, owner isolation, and same-owner React/static fallback interference.
+
+## 2026-06-01
+
+### SvelteKit and Astro Frontend Shape Gates
+
+- **Decision:** Make SvelteKit and Astro output gates explicit so weak/support signals cannot emit frontend areas by score threshold alone.
+- **Problem:** SvelteKit app templates or load files and Astro layout/component files could independently cross the global frontend area threshold without enough framework app proof.
+- **Solution:** Split SvelteKit route components from load files, gated SvelteKit output on config, route components, or load/server evidence paired with `src/app.html`, and replaced Astro's score-threshold gate with explicit config or `.astro` page proof.
+- **Outcome:** SvelteKit and Astro detection now preserve strong framework conventions while support-only evidence remains non-emitting.
+
+### Angular Frontend Shape Gate
+
+- **Decision:** Require Angular frontend output to have Angular CLI workspace proof or a complete root app shape before emitting a `Frontend app` area.
+- **Problem:** The previous `angular-app-component` signal treated root component templates and styles as strong proof, so weak Angular-looking files could emit an area without TypeScript root component or bootstrap evidence.
+- **Solution:** Split Angular root component evidence into TypeScript and view signals, added standalone `app.config.ts` support, and gated output on workspace config or root component/module/standalone combinations.
+- **Outcome:** Angular detection now covers CLI, classic module-based, and standalone app layouts while support-only files remain evidence boosters instead of emit triggers.
+
+## 2026-05-27
+
+### React Router Frontend Shape Gate
+
+- **Decision:** Require React Router framework output to have explicit config or root-route-based framework structure before emitting a `Frontend app` area.
+- **Problem:** Optional entry files or `app/routes` file routes could reach the global score threshold without proving a React Router framework app by themselves.
+- **Solution:** Added a final React Router app-shape gate that allows `react-router.config.*` alone or `app/root.*` combined with routes config, file routes, or custom entry files.
+- **Outcome:** React Router detection still covers common framework layouts while weak support-only evidence no longer emits frontend areas.
+
+### Next.js Frontend Shape Gate
+
+- **Decision:** Require Next.js frontend output to have strong Next-specific proof before adding a `Frontend app` area.
+- **Problem:** Weak Next-like hints such as support files, route directories, or generic `src/pages/*.tsx` files could reach the global score threshold without proving a Next.js app.
+- **Solution:** Added a final Next.js app-shape gate that allows config, App Router core files, or Pages Router special files while leaving support and generic route evidence as score/evidence boosters only.
+- **Outcome:** Next.js detection still emits for common App Router and Pages Router applications, but weak-only route hints no longer produce frontend areas.
+
+### Vue Frontend Competing-Proof Gate
+
+- **Decision:** Move Vue's Nuxt blocker onto the shared competing-proof helper pattern used by broad frontend detectors.
+- **Problem:** Vue locally duplicated Nuxt proof lookup and owner tracking instead of using the shared same-owner competing-proof flow.
+- **Solution:** Added blocker-grade Nuxt proof lookup and updated Vue output gating to skip only owners with matching Nuxt config or app-entry proof.
+- **Outcome:** Vue keeps its existing app-shape gate while using the same competing-proof model as React for meta-framework suppression.
+
+### React Frontend Competing-Proof Gate
+
+- **Decision:** Add the first owner-scoped competing-proof gate to the broad React frontend detector.
+- **Problem:** Generic React evidence such as `index.html` and `src/App.tsx` could merge into the same `Frontend app` candidate as stronger Next.js or React Router framework proof for the same owner.
+- **Solution:** Added blocker-grade frontend proof helpers for Next.js and React Router, finalized same-owner competing proof checks, and gated React output so those stronger framework proofs suppress only the matching owner.
+- **Outcome:** React fallback detection remains available for standalone React apps while avoiding mixed React evidence on same-owner Next.js and React Router areas.
+
+### React Frontend Shape Gate
+
+- **Decision:** Require broad React fallback evidence to form a recognized app shape before emitting a frontend area.
+- **Problem:** Single broad signals such as `src/App.tsx` could pass the global area threshold without enough surrounding React app structure.
+- **Solution:** Added final React shape checks for Vite React, CRA-style React, and structured React component/page layouts.
+- **Outcome:** React detection now stays available for common React app layouts while weak isolated React-like files no longer emit `Frontend app`.
+
+### Frontend Area Rule Modularization
+
+- **Decision:** Migrate the remaining active frontend owner-scoped detectors to the shared area-rule candidate infrastructure after proving the pattern on Next.js.
+- **Problem:** Nuxt, Vue, React Router, React, Static, Angular, SvelteKit, and Astro still repeated the same owner lookup, candidate creation, counted-signal mutation, and score/evidence update logic in every signal loop.
+- **Solution:** Updated those rule modules to use shared owner candidate map creation, typed signal-score maps, and once-per-owner signal counting while preserving each detector's finder variables, signal scores, gates, and output behavior.
+- **Outcome:** Active frontend detectors now share the same candidate mutation path, reducing boilerplate before future gate-blocker work without changing detected-area semantics.
+
+## 2026-05-25
+
+### Detected Area Rule Candidate Infrastructure
+
+- **Decision:** Start modularizing repeated detected-area rule candidate types before changing existing framework rule behavior.
+- **Problem:** Frontend rule modules repeatedly define the same owner-scoped candidate shape and map typing, which makes future gate-blocker refactors noisier than necessary.
+- **Solution:** Added `detected-area-rules/project-structure-area-rule-candidates.ts` with shared generic candidate, score-map, owner-map factory, once-per-owner signal counting, and area-candidate adding exports, then migrated the Next.js frontend rule to use them while keeping its finder loops explicit.
+- **Outcome:** Future detector cleanup can migrate one rule at a time to shared infrastructure without mixing framework-specific signal meanings or changing analyzer output.
+
+### Static Frontend Area Rule
+
+- **Decision:** Add a plain static frontend detected-area rule for repositories that do not use a framework-specific frontend convention.
+- **Problem:** Frontend detection covered framework and library app shapes, but simple HTML/CSS/JavaScript sites with root `index.html`, stylesheet evidence, static asset folders, or Vite static structure still lacked a conservative owner-scoped rule.
+- **Solution:** Added `detected-area-rules/frontend/static-frontend-area-rules.ts` with fixed per-owner signal scoring for root HTML/CSS/JS files, `css`/`js` directory files, Vite config, and `src` static support files, then gated output on supported static page combinations.
+- **Outcome:** Plain static site regions can now emit role-based `Frontend app` candidates without treating isolated HTML files or nested generated docs as frontend apps.
+
+### React Frontend Area Rule
+
+- **Decision:** Add React as a non-framework frontend detected-area rule separate from React Router framework mode.
+- **Problem:** Frontend detection covered React meta-frameworks and other framework families, but common React SPA layouts such as Vite React and CRA-style apps still lacked a dedicated owner-scoped rule.
+- **Solution:** Added `detected-area-rules/frontend/react-frontend-area-rules.ts` with fixed per-owner signal scoring for Vite config, root/public index HTML, JSX/TSX entry files, `src/App.*`, starter CSS files, components, and page/view hints, then wired it after React Router.
+- **Outcome:** React app regions can now emit role-based `Frontend app` candidates from common path-only React structure while leaving future React-specific output gates for a later refinement.
+
+### React Router Frontend Area Rule
+
+- **Decision:** Add React Router framework-mode frontend area detection as a separate framework-specific rule.
+- **Problem:** Frontend detected-area rules covered multiple frameworks, but React Router framework apps with `app/root.*`, `app/routes.*`, optional entry files, and `react-router.config.*` still lacked owner-scoped path evidence.
+- **Solution:** Added `detected-area-rules/frontend/react-router-frontend-area-rules.ts` with owner-scoped signal scoring for framework config, root route, routes config, optional client/server entry files, file routes, and weak Vite/routes directory support, then wired it from `frontend-area-rules.ts`.
+- **Outcome:** React Router framework project regions can now emit role-based `Frontend app` candidates without scoring repeated route files individually.
+
 ## 2026-05-23
 
 ### Vue Frontend Area Rule
