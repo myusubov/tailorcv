@@ -39,8 +39,10 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
 
   const connectMutation = useActionMutation(initiateGithubAuthAction, {
     showErrorToast: true,
-    onSuccess: (data) => {
-      window.location.href = data.authUrl;
+    onSuccess: ({ authUrl }) => {
+      if (authUrl) {
+        window.location.href = authUrl;
+      }
     },
   });
 
