@@ -79,8 +79,10 @@ export function detectLanguages(
     if (entry.type !== 'file' || !entry.extension) {
       continue;
     }
-    const languageByExtension =
-      EXTENSION_LANGUAGE_MAP[entry.extension.toLowerCase()];
+    const extensionKey = entry.extension.toLowerCase();
+    const languageByExtension = Object.hasOwn(EXTENSION_LANGUAGE_MAP, extensionKey)
+      ? EXTENSION_LANGUAGE_MAP[extensionKey]
+      : undefined;
     if (languageByExtension) {
       languages.add(languageByExtension);
     }

@@ -47,7 +47,9 @@ export function detectRootManifests(
     }
 
     const manifestKey = entry.name.toLowerCase();
-    const ecosystem = MANIFEST_FILE_ECOSYSTEM[manifestKey];
+    const ecosystem = Object.hasOwn(MANIFEST_FILE_ECOSYSTEM, manifestKey)
+      ? MANIFEST_FILE_ECOSYSTEM[manifestKey]
+      : undefined;
     if (!ecosystem) {
       continue;
     }
