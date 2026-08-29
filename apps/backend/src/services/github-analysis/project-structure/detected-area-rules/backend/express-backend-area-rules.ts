@@ -1,31 +1,5 @@
-import {
-  addAreaScore,
-  hasAreaCandidate,
-} from '../../project-structure-detected-area-candidates';
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
-import {
-  countAreaRuleSignal,
-  createAreaRuleCandidateMap,
-  type AreaRuleSignalScores,
-} from '../project-structure-area-rule-candidates';
-
-type ExpressBackendSignal =
-  | 'express-generator-bin-www'
-  | 'express-root-app-entry'
-  | 'express-src-app-entry'
-  | 'express-server-entry'
-  | 'express-package-manifest'
-  | 'express-routes-directory'
-  | 'express-route-file'
-  | 'express-generator-default-route'
-  | 'express-controllers-directory'
-  | 'express-controller-file'
-  | 'express-middleware-directory'
-  | 'express-middleware-file'
-  | 'express-services-directory'
-  | 'express-service-file'
-  | 'express-public-directory'
-  | 'express-views-directory';
+import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
 
 const EXPRESS_BACKEND_SIGNAL_SCORES = {
   'express-generator-bin-www': 3,
@@ -44,309 +18,171 @@ const EXPRESS_BACKEND_SIGNAL_SCORES = {
   'express-service-file': 1,
   'express-public-directory': 1,
   'express-views-directory': 1,
-} satisfies AreaRuleSignalScores<ExpressBackendSignal>;
+} as const;
 
-/**
- * Returns whether one owner has a conservative Express.js backend shape.
- * Express has no mandatory path conventions, so accepted combinations require
- * a generator shape or an app/server entry plus actual route and handler files.
- */
-function hasExpressBackendShape({
-  countedSignals,
-}: {
-  countedSignals: Set<ExpressBackendSignal>;
-}): boolean {
-  const hasBinWww = countedSignals.has('express-generator-bin-www');
-  const hasRootAppEntry = countedSignals.has('express-root-app-entry');
-  const hasSrcAppEntry = countedSignals.has('express-src-app-entry');
-  const hasServerEntry = countedSignals.has('express-server-entry');
-  const hasPackageManifest = countedSignals.has('express-package-manifest');
-  const hasRouteFile = countedSignals.has('express-route-file');
-  const hasGeneratorDefaultRoute = countedSignals.has(
-    'express-generator-default-route',
-  );
-  const hasControllerFile = countedSignals.has('express-controller-file');
-  const hasMiddlewareFile = countedSignals.has('express-middleware-file');
-  const hasServiceFile = countedSignals.has('express-service-file');
-  const hasServicesDirectory = countedSignals.has('express-services-directory');
-  const hasPublicDirectory = countedSignals.has('express-public-directory');
-  const hasViewsDirectory = countedSignals.has('express-views-directory');
-
-  const hasAppEntry = hasRootAppEntry || hasSrcAppEntry;
-  const hasSupport =
-    hasMiddlewareFile || hasServiceFile || hasServicesDirectory;
-
-  const hasGeneratorShape =
-    hasBinWww &&
-    hasRootAppEntry &&
-    hasRouteFile &&
-    (hasViewsDirectory || hasPublicDirectory || hasGeneratorDefaultRoute);
-
-  const hasLayeredApiShape =
-    hasAppEntry && hasRouteFile && hasControllerFile && hasSupport;
-
-  const hasServerOwnedApiShape =
-    hasServerEntry &&
-    hasRouteFile &&
-    hasControllerFile &&
-    hasSupport &&
-    hasPackageManifest;
-
-  return hasGeneratorShape || hasLayeredApiShape || hasServerOwnedApiShape;
-}
+type ExpressBackendSignal = keyof typeof EXPRESS_BACKEND_SIGNAL_SCORES;
 
 /**
  * Adds owner-scoped `Backend API` candidates from conservative Express.js path
- * evidence. Mutates the shared candidate map only when no stronger backend
- * detector has already claimed the same owner.
+ * evidence.
+ *
+ * Express runs after every stronger backend framework detector, and
+ * `checkForExistingCandidate` makes the engine skip an owner that already has a
+ * `Backend API` claim so weak Express-like folder structure never pollutes
+ * NestJS or other framework metadata.
+ *
+ * Express has no mandatory path conventions, so an owner passes the gate only
+ * via a generator shape or an app/server entry paired with real route and
+ * handler files: generator `bin/www` + root `app.*` + a route file + generator
+ * support (`views/`, `public/`, or a default `routes/index|users` file); a root
+ * or `src/` `app.*` entry + a route file + a controller file + support (a
+ * middleware file, a `*.service.*` file, or a `services/` directory); or a
+ * `server.*` entry + a route file + a controller file + support + a
+ * `package.json`. `Node.js` is always related; package contents and source
+ * calls such as `express()` are left for later analyzers.
  */
 export function addExpressBackendAreas({
   candidates,
   index,
 }: DetectedAreaRuleContext): void {
-  const expressAreasByOwner =
-    createAreaRuleCandidateMap<ExpressBackendSignal>();
-
-  const expressGeneratorBinWwwFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)bin\/www$/,
+  applyDeclarativeAreaDetector<ExpressBackendSignal>({
+    candidates,
+    index,
+    detectedArea: 'Backend API',
+    primaryTech: 'Express.js',
+    relatedTechs: ['Node.js'],
+    checkForExistingCandidate: true,
+    signalScores: EXPRESS_BACKEND_SIGNAL_SCORES,
+    entrySchemas: [
+      {
+        signalType: 'express-generator-bin-www',
+        regex: /(^|\/)bin\/www$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-root-app-entry',
+        regex:
+          /^(app\.(?:js|cjs|mjs|ts|cts|mts)|(?:apps|packages)\/[^/]+\/app\.(?:js|cjs|mjs|ts|cts|mts))$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-src-app-entry',
+        regex: /(^|\/)src\/app\.(?:js|cjs|mjs|ts|cts|mts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-server-entry',
+        regex:
+          /^(server\.(?:js|cjs|mjs|ts|cts|mts)|(?:apps|packages)\/[^/]+\/server\.(?:js|cjs|mjs|ts|cts|mts)|(?:^|.*\/)src\/server\.(?:js|cjs|mjs|ts|cts|mts))$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-package-manifest',
+        regex: /^package\.json$/,
+        indexMethod: 'findFilesByNameMatching',
+      },
+      {
+        signalType: 'express-routes-directory',
+        regex: /(^|\/)src\/routes$|(^|\/)routes$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'express-route-file',
+        regex:
+          /(^|\/)(?:src\/)?routes\/(?:.*\/)?[^/]+\.(?:js|cjs|mjs|ts|cts|mts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-generator-default-route',
+        regex:
+          /(^|\/)(?:src\/)?routes\/(?:index|users)\.(?:js|cjs|mjs|ts|cts|mts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-controllers-directory',
+        regex: /(^|\/)src\/controllers$|(^|\/)controllers$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'express-controller-file',
+        regex:
+          /(^|\/)(?:src\/)?controllers\/(?:.*\/)?[^/]+\.(?:js|cjs|mjs|ts|cts|mts)$|(^|\/)[^/]+\.controller\.(?:js|cjs|mjs|ts|cts|mts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-middleware-directory',
+        regex: /(^|\/)src\/middlewares?$|(^|\/)middlewares?$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'express-middleware-file',
+        regex:
+          /(^|\/)(?:src\/)?middlewares?\/(?:.*\/)?[^/]+\.(?:js|cjs|mjs|ts|cts|mts)$|(^|\/)[^/]+\.middleware\.(?:js|cjs|mjs|ts|cts|mts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-services-directory',
+        regex: /(^|\/)src\/services$|(^|\/)services$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'express-service-file',
+        regex:
+          /(^|\/)(?:src\/)?services\/(?:.*\/)?[^/]+\.service\.(?:js|cjs|mjs|ts|cts|mts)$/,
+        indexMethod: 'findEntriesByPathMatching',
+      },
+      {
+        signalType: 'express-public-directory',
+        regex: /(^|\/)public$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+      {
+        signalType: 'express-views-directory',
+        regex: /(^|\/)views$/,
+        indexMethod: 'findDirectoriesByPathMatching',
+      },
+    ],
+    gateBlocker: {
+      where: {
+        countedSignals: {
+          or: [
+            {
+              hasAllOf: [
+                'express-generator-bin-www',
+                'express-root-app-entry',
+                'express-route-file',
+              ],
+              hasOneOf: [
+                'express-views-directory',
+                'express-public-directory',
+                'express-generator-default-route',
+              ],
+            },
+            {
+              hasAllOf: ['express-route-file', 'express-controller-file'],
+              hasOneOf: ['express-root-app-entry', 'express-src-app-entry'],
+              or: [
+                { has: 'express-middleware-file' },
+                { has: 'express-service-file' },
+                { has: 'express-services-directory' },
+              ],
+            },
+            {
+              hasAllOf: [
+                'express-server-entry',
+                'express-route-file',
+                'express-controller-file',
+                'express-package-manifest',
+              ],
+              hasOneOf: [
+                'express-middleware-file',
+                'express-service-file',
+                'express-services-directory',
+              ],
+            },
+          ],
+        },
+      },
+    },
   });
-
-  const expressRootAppEntryFiles = index.findEntriesByPathMatching({
-    pattern:
-      /^(app\.(?:js|cjs|mjs|ts|cts|mts)|(?:apps|packages)\/[^/]+\/app\.(?:js|cjs|mjs|ts|cts|mts))$/,
-  });
-
-  const expressSrcAppEntryFiles = index.findEntriesByPathMatching({
-    pattern: /(^|\/)src\/app\.(?:js|cjs|mjs|ts|cts|mts)$/,
-  });
-
-  const expressServerEntryFiles = index.findEntriesByPathMatching({
-    pattern:
-      /^(server\.(?:js|cjs|mjs|ts|cts|mts)|(?:apps|packages)\/[^/]+\/server\.(?:js|cjs|mjs|ts|cts|mts)|(?:^|.*\/)src\/server\.(?:js|cjs|mjs|ts|cts|mts))$/,
-  });
-
-  const expressPackageManifestFiles = index.findFilesByNameMatching({
-    pattern: /^package\.json$/,
-  });
-
-  const expressRouteDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)src\/routes$|(^|\/)routes$/,
-  });
-
-  const expressRouteFiles = index.findEntriesByPathMatching({
-    pattern:
-      /(^|\/)(?:src\/)?routes\/(?:.*\/)?[^/]+\.(?:js|cjs|mjs|ts|cts|mts)$/,
-  });
-
-  const expressGeneratorDefaultRouteFiles = index.findEntriesByPathMatching({
-    pattern:
-      /(^|\/)(?:src\/)?routes\/(?:index|users)\.(?:js|cjs|mjs|ts|cts|mts)$/,
-  });
-
-  const expressControllerDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)src\/controllers$|(^|\/)controllers$/,
-  });
-
-  const expressControllerFiles = index.findEntriesByPathMatching({
-    pattern:
-      /(^|\/)(?:src\/)?controllers\/(?:.*\/)?[^/]+\.(?:js|cjs|mjs|ts|cts|mts)$|(^|\/)[^/]+\.controller\.(?:js|cjs|mjs|ts|cts|mts)$/,
-  });
-
-  const expressMiddlewareDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)src\/middlewares?$|(^|\/)middlewares?$/,
-  });
-
-  const expressMiddlewareFiles = index.findEntriesByPathMatching({
-    pattern:
-      /(^|\/)(?:src\/)?middlewares?\/(?:.*\/)?[^/]+\.(?:js|cjs|mjs|ts|cts|mts)$|(^|\/)[^/]+\.middleware\.(?:js|cjs|mjs|ts|cts|mts)$/,
-  });
-
-  const expressServiceDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)src\/services$|(^|\/)services$/,
-  });
-
-  const expressServiceFiles = index.findEntriesByPathMatching({
-    pattern:
-      /(^|\/)(?:src\/)?services\/(?:.*\/)?[^/]+\.service\.(?:js|cjs|mjs|ts|cts|mts)$/,
-  });
-
-  const expressPublicDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)public$/,
-  });
-
-  const expressViewDirectories = index.findDirectoriesByPathMatching({
-    pattern: /(^|\/)views$/,
-  });
-
-  for (const expressGeneratorBinWwwFile of expressGeneratorBinWwwFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressGeneratorBinWwwFile,
-      signal: 'express-generator-bin-www',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-generator-bin-www'],
-    });
-  }
-
-  for (const expressRootAppEntryFile of expressRootAppEntryFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressRootAppEntryFile,
-      signal: 'express-root-app-entry',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-root-app-entry'],
-    });
-  }
-
-  for (const expressSrcAppEntryFile of expressSrcAppEntryFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressSrcAppEntryFile,
-      signal: 'express-src-app-entry',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-src-app-entry'],
-    });
-  }
-
-  for (const expressServerEntryFile of expressServerEntryFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressServerEntryFile,
-      signal: 'express-server-entry',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-server-entry'],
-    });
-  }
-
-  for (const expressPackageManifestFile of expressPackageManifestFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressPackageManifestFile,
-      signal: 'express-package-manifest',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-package-manifest'],
-    });
-  }
-
-  for (const expressRouteDirectory of expressRouteDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressRouteDirectory,
-      signal: 'express-routes-directory',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-routes-directory'],
-    });
-  }
-
-  for (const expressRouteFile of expressRouteFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressRouteFile,
-      signal: 'express-route-file',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-route-file'],
-    });
-  }
-
-  for (const expressGeneratorDefaultRouteFile of expressGeneratorDefaultRouteFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressGeneratorDefaultRouteFile,
-      signal: 'express-generator-default-route',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-generator-default-route'],
-    });
-  }
-
-  for (const expressControllerDirectory of expressControllerDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressControllerDirectory,
-      signal: 'express-controllers-directory',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-controllers-directory'],
-    });
-  }
-
-  for (const expressControllerFile of expressControllerFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressControllerFile,
-      signal: 'express-controller-file',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-controller-file'],
-    });
-  }
-
-  for (const expressMiddlewareDirectory of expressMiddlewareDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressMiddlewareDirectory,
-      signal: 'express-middleware-directory',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-middleware-directory'],
-    });
-  }
-
-  for (const expressMiddlewareFile of expressMiddlewareFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressMiddlewareFile,
-      signal: 'express-middleware-file',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-middleware-file'],
-    });
-  }
-
-  for (const expressServiceDirectory of expressServiceDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressServiceDirectory,
-      signal: 'express-services-directory',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-services-directory'],
-    });
-  }
-
-  for (const expressServiceFile of expressServiceFiles) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressServiceFile,
-      signal: 'express-service-file',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-service-file'],
-    });
-  }
-
-  for (const expressPublicDirectory of expressPublicDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressPublicDirectory,
-      signal: 'express-public-directory',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-public-directory'],
-    });
-  }
-
-  for (const expressViewDirectory of expressViewDirectories) {
-    countAreaRuleSignal({
-      areasByOwner: expressAreasByOwner,
-      entry: expressViewDirectory,
-      signal: 'express-views-directory',
-      score: EXPRESS_BACKEND_SIGNAL_SCORES['express-views-directory'],
-    });
-  }
-
-  for (const [ownerPath, ownerCandidate] of expressAreasByOwner) {
-    const hasExistingBackendCandidate = hasAreaCandidate({
-      candidates,
-      name: 'Backend API',
-      path: ownerPath,
-    });
-
-    if (hasExistingBackendCandidate) continue;
-
-    if (
-      !hasExpressBackendShape({
-        countedSignals: ownerCandidate.countedSignals,
-      })
-    ) {
-      continue;
-    }
-
-    addAreaScore({
-      candidates,
-      name: 'Backend API',
-      path: ownerPath,
-      score: ownerCandidate.score,
-      evidence: ownerCandidate.evidence,
-      primaryTechnology: 'Express.js',
-      relatedTechnologies: ['Node.js'],
-    });
-  }
 }

@@ -3,7 +3,10 @@ import {
   DetectedAreaTechnology,
   RepoTreeEntry,
 } from '../project-structure-analyzer.types';
-import { addAreaScore } from '../project-structure-detected-area-candidates';
+import {
+  addAreaScore,
+  hasAreaCandidate,
+} from '../project-structure-detected-area-candidates';
 import {
   DetectedAreaName,
   DetectedAreaRuleContext,
@@ -54,6 +57,7 @@ interface ApplyDeclarativeAreaDetectorParams<
   dynamicRelatedTechMap?: Partial<Record<Signal, DetectedAreaTechnology>>;
   gateBlocker?: GateBlocker<Signal>;
   competingProofSchemas?: CompetingProofSchema[];
+  checkForExistingCandidate?: boolean;
 }
 
 function evaluateCondition<Signal extends string>({
@@ -110,8 +114,9 @@ function evaluateCondition<Signal extends string>({
  * Runs a schema-declared detected-area detector: matches each `entrySchema`
  * against the repository index, scores signals once per owner via
  * `countAreaRuleSignal`, and adds a `detectedArea` candidate to `candidates`
- * for every owner that passes the optional `gateBlocker` shape check and has
- * no competing-framework proof at its path.
+ * for every owner that passes the optional `gateBlocker` shape check, has no
+ * competing-framework proof at its path, and (when `checkForExistingCandidate`
+ * is set) has no prior `detectedArea` claim for that owner.
  * `gateBlocker.where.countedSignals` is evaluated per owner via
  * `evaluateCondition`, supporting arbitrarily nested AND/OR shape checks
  * (such as Next.js's or Vue's app-shape requirements); omitting it allows any
@@ -123,6 +128,14 @@ function evaluateCondition<Signal extends string>({
  * every signal counted for that owner (e.g. attributing `Java`/`Kotlin`
  * per owner from language-specific signal variants) in addition to any
  * static `relatedTechs`.
+ * `checkForExistingCandidate`, when `true`, vetoes an owner that already has
+ * a `(detectedArea, ownerPath)` claim in the shared `candidates` map before
+ * any file-evidence gate runs. This is the shared-map fallback guard used by
+ * the last-resort detectors (Static frontend, Express) so weak generic path
+ * shapes never accumulate score, evidence, or related technologies onto a
+ * stronger detector's existing claim for the same owner. It is checked
+ * independently of `competingProofSchemas`, which vetoes from raw repository
+ * file evidence rather than emitted-candidate state.
  */
 export function applyDeclarativeAreaDetector<Signal extends string>({
   detectedArea,
@@ -135,6 +148,7 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
   gateBlocker,
   competingProofSchemas,
   dynamicRelatedTechMap,
+  checkForExistingCandidate,
 }: ApplyDeclarativeAreaDetectorParams<Signal>): void {
   const areaCandidateMap = createAreaRuleCandidateMap<Signal>();
   const competingProofEntries: RepoTreeEntry[] = [];
@@ -195,6 +209,13 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
   };
 
   for (const [ownerPath, ownerCandidate] of areaCandidateMap) {
+    if (
+      checkForExistingCandidate &&
+      hasAreaCandidate({ candidates, name: detectedArea, path: ownerPath })
+    ) {
+      continue;
+    }
+
     if (hasCompetingProof(ownerPath)) {
       continue;
     }
