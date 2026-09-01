@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import type { GitHubRepo } from 'shared';
 import { GitHubRepoCard } from './github-repo-card';
 import { GitHubRepoGridSkeleton } from './github-repo-grid-skeleton';
@@ -27,12 +26,7 @@ export function GitHubRepoSelectionResults({
       {isReposLoading ? (
         <GitHubRepoGridSkeleton />
       ) : (
-        <motion.div
-          className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
+        <div className="grid auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-2">
           {repos.map((repo) => {
             const isSelected = selectedRepos.has(repo.id);
             const isDisabled = !isSelected && selectedRepos.size >= maxRepos;
@@ -43,13 +37,14 @@ export function GitHubRepoSelectionResults({
                 repo={repo}
                 isSelected={isSelected}
                 isDisabled={isDisabled}
+                maxRepos={maxRepos}
                 onToggle={() => onToggleRepo(repo.id)}
               />
             );
           })}
 
           {repos.length === 0 && <GitHubRepoSelectionEmptyState />}
-        </motion.div>
+        </div>
       )}
     </div>
   );
