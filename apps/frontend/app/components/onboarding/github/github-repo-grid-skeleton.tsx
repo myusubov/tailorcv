@@ -47,6 +47,7 @@ function RepoCardSkeleton({ item }: RepoCardSkeletonProps) {
                 </div>
               )}
             </div>
+            <div className="bg-surface-secondary size-5 shrink-0 animate-pulse rounded-md" />
           </div>
         </div>
 

@@ -1,9 +1,8 @@
 'use client';
 
-import { Card } from '@heroui/react';
+import { Card, Checkbox } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { formatDistanceToNow } from 'date-fns';
-import { motion } from 'framer-motion';
 import type { GitHubRepo } from 'shared';
 import { LANGUAGE_COLORS } from '@/lib/constants/github';
 
@@ -11,18 +10,31 @@ interface GitHubRepoCardProps {
   repo: GitHubRepo;
   isSelected: boolean;
   isDisabled: boolean;
+  maxRepos: number;
   onToggle: () => void;
 }
 
 /**
  * Renders a selectable GitHub repository card with language, stars, forks, and update metadata.
+ *
+ * Selection is conveyed by a persistent square checkbox indicator (not card color alone) and
+ * exposed to assistive tech through `role="checkbox"` + `aria-checked` so the control reads as a
+ * multi-select toggle. `isDisabled` is only ever true for unselected cards once `maxRepos` is
+ * reached; a selected card always stays interactive so it can be deselected.
  */
 export function GitHubRepoCard({
   repo,
   isSelected,
   isDisabled,
+  maxRepos,
   onToggle,
 }: GitHubRepoCardProps) {
+  const stateClassName = isSelected
+    ? 'border-accent bg-accent/5 shadow-sm hover:bg-accent/10'
+    : isDisabled
+      ? 'border-border cursor-not-allowed opacity-45'
+      : 'border-border hover:border-accent/40 hover:bg-surface-secondary';
+
   return (
     <Card
       onClick={() => {
@@ -41,17 +53,14 @@ export function GitHubRepoCard({
           onToggle();
         }
       }}
-      role="button"
+      role="checkbox"
       tabIndex={isDisabled ? -1 : 0}
-      aria-pressed={isSelected}
+      aria-checked={isSelected}
       aria-disabled={isDisabled}
-      className={`focus-visible:ring-accent/70 group relative cursor-pointer rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none ${
-        isSelected
-          ? 'border-accent bg-accent/5 ring-accent/20 ring-1'
-          : isDisabled
-            ? 'cursor-not-allowed opacity-45'
-            : 'hover:border-accent/40 hover:bg-surface-secondary'
-      }`}
+      title={
+        isDisabled ? `You can select up to ${maxRepos} repositories` : undefined
+      }
+      className={`focus-visible:ring-accent/70 group cursor-default focus-visible:ring-offset-background relative  border transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${stateClassName}`}
     >
       <Card.Content className="flex flex-col gap-2.5">
         <div className="min-w-0">
@@ -72,15 +81,22 @@ export function GitHubRepoCard({
                 )}
               </div>
             </div>
-            {isSelected && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="bg-accent flex size-5 shrink-0 items-center justify-center rounded-full"
-              >
-                <Icon icon="lucide:check" className="text-background size-3.5" />
-              </motion.div>
-            )}
+           <span inert>
+             <Checkbox
+              isReadOnly
+              excludeFromTabOrder
+              aria-hidden="true"
+              className="pointer-events-none"
+              isSelected={isSelected}
+              variant="secondary"
+            >
+              <Checkbox.Content>
+                <Checkbox.Control className="size-5">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+              </Checkbox.Content>
+            </Checkbox>
+           </span>
           </div>
 
           {repo.description && (

@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-09-01
+
+### GitHub Repo Card Selection Indicator and Checkbox Semantics
+
+- **Problem:** The GitHub repo picker card signalled selection mainly through card border/background color plus a checkmark badge that only appeared after selection, so nothing communicated that the list was multi-select before the first click, and the card exposed itself as `role="button"` with `aria-pressed`, which does not read as a multi-select toggle. Cards in a row also varied in height with description length.
+- **Solution:**
+  1. **Persistent selection control — `apps/frontend/app/components/onboarding/github/github-repo-card.tsx`**: Replaced the conditional `framer-motion` checkmark badge with an always-rendered HeroUI `Checkbox` wrapped in an `inert` span (plus `isReadOnly` to silence the controlled-without-`onChange` warning) so the box is visible in every state, stays out of focus and the accessibility tree, and lets clicks fall through to the card.
+  2. **Toggle semantics — same file**: Switched the card from `role="button"` + `aria-pressed` to `role="checkbox"` + `aria-checked`, added a `maxRepos` prop used for a `title` hint on limit-disabled cards, and simplified the selected treatment (dropped the redundant `ring`, added `shadow-sm` and a selected-state hover).
+  3. **Equal-height rows — `github-repo-selection-results.tsx`**: Added `auto-rows-fr` to the grid, passed `maxRepos` through, and removed the `framer-motion` grid fade-in wrapper.
+  4. **Skeleton parity — `github-repo-grid-skeleton.tsx`**: Added a `size-5` rounded placeholder so the loading card matches the new indicator slot.
+- **Outcome:** The repo picker shows a checkbox affordance before any selection, exposes a multi-select toggle to assistive tech, and renders uniform-height cards; `framer-motion` is no longer imported by the card or results components.
+
 ## 2026-08-21
 
 ### GitHub-Only Method Selection
