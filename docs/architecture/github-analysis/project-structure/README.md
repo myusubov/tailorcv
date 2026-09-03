@@ -95,6 +95,7 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── detected-area-rules/
 │   ├── project-structure-area-rule-candidates.ts
 │   ├── declarative-area-rule-engine.ts
+│   ├── declarative-area-rule-engine.test.ts
 │   ├── owner-adapters/
 │   │   ├── index.ts
 │   │   ├── resolve-unit-root-owner.ts
@@ -304,7 +305,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Structure-inferred stack detector implemented
 - [x] Structure-inferred language detector implemented (`summary.detectedLanguages`)
 - [x] Root dependency-manifest detector implemented (`summary.rootManifests`)
-- [ ] End-to-end analyzer tests (`project-structure-analyzer.test.ts` deleted 2026-09-03; only candidate-merge and `resolve-unit-root-owner` unit coverage remain)
+- [ ] End-to-end analyzer tests (`project-structure-analyzer.test.ts` deleted 2026-09-03; only candidate-merge, `resolve-unit-root-owner`, and `evaluateCondition` unit coverage remain)
 - [x] Detected areas builder
 - [x] Backend detector module scaffold
 - [x] NestJS backend detector path rules
@@ -324,7 +325,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Docker containerization detector path rules
 - [x] Podman/OCI containerization detector path rules (gate implemented; owner resolution now uses the generic `ownerPathForApplicationArea` resolver, see 2026-08-24 changelog entry)
 - [ ] Generic backend fallback path rules
-- [x] Declarative area-rule engine for framework detectors (23 detectors migrated across five waves with gate, nested `and`/`or` condition nodes, competing-proof, shared-candidate-map veto, and dynamic related-tech support; only ASP.NET Core remains permanently hand-written, see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries)
+- [x] Declarative area-rule engine for framework detectors (23 detectors migrated across five waves with gate, nested `and`/`or` condition nodes, competing-proof, shared-candidate-map veto, and dynamic related-tech support; only ASP.NET Core remains permanently hand-written, see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries); `evaluateCondition` shape evaluation has direct unit coverage (`declarative-area-rule-engine.test.ts`)
 - [x] Per-framework owner adapters for the declarative engine (`ownerAdapter` param, anchor-signal two-pass, `resolveUnitRootOwner` wired into Next.js and Nuxt)
 - [ ] ~~Test suite detectors (Jest / Vitest / Cypress / Mocha / Playwright)~~ removed; see changelog
 - [ ] Architecture signals builder
@@ -344,7 +345,7 @@ apps/backend/src/services/github-analysis/project-structure/
 | Weak repos produce bad resume claims                                                                                                                                                                                                                                                                                            | Feed gaps, limitations, and improvement suggestions into user-facing feedback before final synthesis.                                                                                 |
 | Consolidated generic owner resolver (2026-08-24) is less precise than the removed per-technology resolvers, so schema/containerization areas may now group under a broader application owner than before                                                                                                                        | Revisit `project-structure-path-utils.ts` if repository evidence shows the generic resolver misattributing schema or containerization ownership.                                      |
 | ASP.NET Core cannot be expressed in the declarative schema as it exists today -- its per-entry exclusion predicate (treating `wwwroot/appsettings*.json` as client config rather than server proof) is unsupported                                                                                                              | Keep ASP.NET Core hand-written; only extend `applyDeclarativeAreaDetector` if a concrete need arises, see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries.               |
-| `project-structure-analyzer.test.ts` was deleted, removing the end-to-end coverage that asserted `(area, owner)` output across detectors; only `project-structure-detected-area-candidates.ts`, `project-structure-path-utils.ts` (currently an empty stub), and the new `resolve-unit-root-owner.test.ts` retain unit coverage | Rebuild analyzer-level fixtures per detector before further behavior changes; `resolve-unit-root-owner` two-pass owner resolution is unit-covered but has no analyzer-output fixture. |
+| `project-structure-analyzer.test.ts` was deleted, removing the end-to-end coverage that asserted `(area, owner)` output across detectors; only `project-structure-detected-area-candidates.ts`, `project-structure-path-utils.ts` (currently an empty stub), `resolve-unit-root-owner.test.ts`, and `declarative-area-rule-engine.test.ts` (`evaluateCondition`) retain unit coverage | Rebuild analyzer-level fixtures per detector before further behavior changes; `resolve-unit-root-owner` two-pass owner resolution and `evaluateCondition` shape evaluation are unit-covered but no analyzer-output fixture exercises them end to end. |
 
 ---
 
