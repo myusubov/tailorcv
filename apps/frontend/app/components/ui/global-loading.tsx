@@ -10,7 +10,6 @@ export interface GlobalLoadingProps {
   className?: string;
 }
 
-
 /**
  * Renders a blocking, full-viewport loading status directly under the document body.
  *
@@ -24,8 +23,7 @@ export function GlobalLoading({
   description,
   className,
 }: GlobalLoadingProps) {
-
-  const isHydrated = useIsHydrated()
+  const isHydrated = useIsHydrated();
 
   useEffect(() => {
     if (!isHydrated) return undefined;
@@ -53,16 +51,14 @@ export function GlobalLoading({
       )}
     >
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">
-        <div className="bg-accent/10 text-accent flex size-14 items-center justify-center rounded-full ring-1 ring-accent/15">
+        <div className="bg-accent/10 text-accent ring-accent/15 flex size-14 items-center justify-center rounded-full ring-1">
           <Spinner aria-hidden="true" color="current" size="lg" />
         </div>
 
         <div className="space-y-1.5">
           <p className="text-foreground text-base font-semibold">{title}</p>
           {description ? (
-            <p className="text-muted text-sm leading-relaxed">
-              {description}
-            </p>
+            <p className="text-muted text-sm leading-relaxed">{description}</p>
           ) : null}
         </div>
       </div>

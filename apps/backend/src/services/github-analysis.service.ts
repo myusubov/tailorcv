@@ -23,8 +23,7 @@ export async function analyzeGithubRepositories({
   accessToken,
   repoIds,
 }: AnalyzeGithubRepositoriesInput) {
-  const { repositories: repos } =
-    await fetchGithubRepos(accessToken);
+  const { repositories: repos } = await fetchGithubRepos(accessToken);
 
   const selectedRepos = repos.filter((repo) => repoIds.includes(repo.id));
 

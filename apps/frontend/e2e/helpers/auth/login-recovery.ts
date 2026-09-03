@@ -15,11 +15,7 @@ interface LoginAttemptState {
   usedEmailCodeVerification: boolean;
 }
 
-async function sleep({
-  ms,
-}: {
-  ms: number;
-}) {
+async function sleep({ ms }: { ms: number }) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -162,7 +158,8 @@ async function loginWithPassword({
       if (secondFactorResult === 'success') {
         const pathname = new URL(page.url()).pathname;
         return {
-          attempt: pathname === '/forgot-password' ? 'reset_required' : 'success',
+          attempt:
+            pathname === '/forgot-password' ? 'reset_required' : 'success',
           usedEmailCodeVerification: true,
         };
       }

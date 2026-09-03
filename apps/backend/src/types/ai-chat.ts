@@ -10,7 +10,6 @@ export interface ChatRequestBody {
   assistantMessageId?: string;
 }
 
-
 /**
  * Service input parameters for streaming chat
  */
@@ -50,5 +49,8 @@ export type OpenAIStreamEvent =
   | { type: 'response.function_call_arguments.delta'; delta: string }
   | { type: 'response.tool_call_arguments.delta'; delta: string }
   | { type: 'response.function_call_arguments.done'; arguments: string }
-  | { type: 'response.output_item.done'; item: { type: 'function_call'; arguments: string } }
+  | {
+      type: 'response.output_item.done';
+      item: { type: 'function_call'; arguments: string };
+    }
   | { type: 'response.completed'; response: { id: string } };

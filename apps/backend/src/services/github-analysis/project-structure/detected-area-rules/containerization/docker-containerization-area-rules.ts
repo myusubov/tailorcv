@@ -58,7 +58,11 @@ export function addDockerContainerizationAreas({
     gateBlocker: {
       where: {
         countedSignals: {
-          hasOneOf: ['docker-build-file', 'docker-compose-file', 'docker-bake-file'],
+          hasOneOf: [
+            'docker-build-file',
+            'docker-compose-file',
+            'docker-bake-file',
+          ],
         },
       },
     },

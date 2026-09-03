@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { requireClerkAuth } from '../middleware/auth';
-import {
-  getOnboardingStatusController,
-} from '../controllers/onboarding.controller';
+import { getOnboardingStatusController } from '../controllers/onboarding.controller';
 
 export const onboardingRouter = Router();
 

@@ -1,7 +1,7 @@
 # TailorCV | AI-Driven Resume Engineering for Developers
 
 **The Pitch**  
-An automated pipeline that translates technical *Proof of Work* (GitHub repositories, raw text, and legacy documents) into ATS-optimized, professional resumes using an asynchronous AI transformation engine.
+An automated pipeline that translates technical _Proof of Work_ (GitHub repositories, raw text, and legacy documents) into ATS-optimized, professional resumes using an asynchronous AI transformation engine.
 
 [Live Demo](https://tailorcv.xyz) | [System Architecture](#) | [API Documentation](#)
 
@@ -9,7 +9,7 @@ An automated pipeline that translates technical *Proof of Work* (GitHub reposito
 
 ## 🚀 The Core Problem
 
-Generic resume builders suffer from *blank canvas paralysis* and heavy manual formatting overhead.  
+Generic resume builders suffer from _blank canvas paralysis_ and heavy manual formatting overhead.  
 **TailorCV** eliminates this by treating existing technical artifacts as the single source of truth—automatically extracting skills and experience without requiring users to write descriptions themselves.
 
 ---
@@ -69,13 +69,13 @@ The system is built as an **Event-Driven Modular Monolith** with a shared domain
 
 ## 🧰 Technology Ecosystem
 
-| Component  | Choice               | Engineering Rationale                                      |
-|-----------|----------------------|------------------------------------------------------------|
-| Framework | Next.js 15 + Express | SSE stability on the backend; RSC efficiency on frontend   |
-| Queueing  | BullMQ + Redis       | Reliable job persistence and priority handling             |
-| AI        | GPT-4o Mini          | High-speed structured data extraction                      |
-| ORM       | Prisma               | Type-safe DB access with singleton client management       |
-| Auth      | Clerk                | Offloaded identity and JWT-based session security          |
+| Component | Choice               | Engineering Rationale                                    |
+| --------- | -------------------- | -------------------------------------------------------- |
+| Framework | Next.js 15 + Express | SSE stability on the backend; RSC efficiency on frontend |
+| Queueing  | BullMQ + Redis       | Reliable job persistence and priority handling           |
+| AI        | GPT-4o Mini          | High-speed structured data extraction                    |
+| ORM       | Prisma               | Type-safe DB access with singleton client management     |
+| Auth      | Clerk                | Offloaded identity and JWT-based session security        |
 
 ---
 
@@ -104,3 +104,4 @@ npx prisma migrate dev
 
 # Start services
 pnpm dev
+```

@@ -27,7 +27,11 @@ export function hydrateProposalIds({
   proposal: unknown;
   currentData: BaseResumeData;
 }): unknown {
-  if (typeof proposal !== 'object' || proposal === null || Array.isArray(proposal)) {
+  if (
+    typeof proposal !== 'object' ||
+    proposal === null ||
+    Array.isArray(proposal)
+  ) {
     return proposal;
   }
 
@@ -35,7 +39,9 @@ export function hydrateProposalIds({
 
   if (Array.isArray(result.skills)) {
     result.skills = hydrateArray({
-      items: result.skills as WithOptionalId<BaseResumeData['skills'][number]>[],
+      items: result.skills as WithOptionalId<
+        BaseResumeData['skills'][number]
+      >[],
       existing: currentData.skills,
       getKey: (s) => s.name?.toLowerCase() ?? '',
     });
@@ -43,7 +49,9 @@ export function hydrateProposalIds({
 
   if (Array.isArray(result.experiences)) {
     result.experiences = hydrateArrayWithBullets({
-      items: result.experiences as WithOptionalId<BaseResumeData['experiences'][number]>[],
+      items: result.experiences as WithOptionalId<
+        BaseResumeData['experiences'][number]
+      >[],
       existing: currentData.experiences,
       getKey: (e) => `${e.company?.toLowerCase()}|${e.title?.toLowerCase()}`,
     });
@@ -51,7 +59,9 @@ export function hydrateProposalIds({
 
   if (Array.isArray(result.projects)) {
     result.projects = hydrateArrayWithBullets({
-      items: result.projects as WithOptionalId<BaseResumeData['projects'][number]>[],
+      items: result.projects as WithOptionalId<
+        BaseResumeData['projects'][number]
+      >[],
       existing: currentData.projects,
       getKey: (p) => p.name?.toLowerCase() ?? '',
     });
@@ -59,7 +69,9 @@ export function hydrateProposalIds({
 
   if (Array.isArray(result.education)) {
     result.education = hydrateArray({
-      items: result.education as WithOptionalId<NonNullable<BaseResumeData['education']>[number]>[],
+      items: result.education as WithOptionalId<
+        NonNullable<BaseResumeData['education']>[number]
+      >[],
       existing: currentData.education ?? [],
       getKey: (e) => `${e.school?.toLowerCase()}|${e.degree?.toLowerCase()}`,
     });
@@ -67,7 +79,9 @@ export function hydrateProposalIds({
 
   if (Array.isArray(result.certifications)) {
     result.certifications = hydrateArray({
-      items: result.certifications as WithOptionalId<NonNullable<BaseResumeData['certifications']>[number]>[],
+      items: result.certifications as WithOptionalId<
+        NonNullable<BaseResumeData['certifications']>[number]
+      >[],
       existing: currentData.certifications ?? [],
       getKey: (c) => c.name?.toLowerCase() ?? '',
     });
@@ -75,7 +89,9 @@ export function hydrateProposalIds({
 
   if (Array.isArray(result.languages)) {
     result.languages = hydrateArray({
-      items: result.languages as WithOptionalId<NonNullable<BaseResumeData['languages']>[number]>[],
+      items: result.languages as WithOptionalId<
+        NonNullable<BaseResumeData['languages']>[number]
+      >[],
       existing: currentData.languages ?? [],
       getKey: (l) => l.name?.toLowerCase() ?? '',
     });

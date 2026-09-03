@@ -60,7 +60,7 @@ export function GitHubRepoCard({
       title={
         isDisabled ? `You can select up to ${maxRepos} repositories` : undefined
       }
-      className={`focus-visible:ring-accent/70 group cursor-default focus-visible:ring-offset-background relative  border transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${stateClassName}`}
+      className={`focus-visible:ring-accent/70 group focus-visible:ring-offset-background relative cursor-default border transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${stateClassName}`}
     >
       <Card.Content className="flex flex-col gap-2.5">
         <div className="min-w-0">
@@ -81,22 +81,22 @@ export function GitHubRepoCard({
                 )}
               </div>
             </div>
-           <span inert>
-             <Checkbox
-              isReadOnly
-              excludeFromTabOrder
-              aria-hidden="true"
-              className="pointer-events-none"
-              isSelected={isSelected}
-              variant="secondary"
-            >
-              <Checkbox.Content>
-                <Checkbox.Control className="size-5">
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-              </Checkbox.Content>
-            </Checkbox>
-           </span>
+            <span inert>
+              <Checkbox
+                isReadOnly
+                excludeFromTabOrder
+                aria-hidden="true"
+                className="pointer-events-none"
+                isSelected={isSelected}
+                variant="secondary"
+              >
+                <Checkbox.Content>
+                  <Checkbox.Control className="size-5">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                </Checkbox.Content>
+              </Checkbox>
+            </span>
           </div>
 
           {repo.description && (

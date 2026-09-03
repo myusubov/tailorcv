@@ -73,7 +73,7 @@ export function ProjectCard({
     <div className="border-border space-y-4 rounded-lg border p-4">
       {/* Action toolbar — decoupled from form fields so inputs get full width */}
       <div className="flex items-center justify-between">
-        <span className="text-muted text-xs font-medium uppercase tracking-wide">
+        <span className="text-muted text-xs font-medium tracking-wide uppercase">
           Project {index + 1}
         </span>
         <div className="flex items-center gap-1">
@@ -234,35 +234,43 @@ export function ProjectCard({
                 <DateField.Input>
                   {(segment) => <DateSegmentFilter segment={segment as any} />}
                 </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger>
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover>
-                  <Calendar maxValue={parseResumeDateValue({ value: endDate }) ?? undefined}>
-                    <Calendar.Header>
-                      <Calendar.YearPickerTrigger>
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <Calendar.NavButton slot="previous" />
-                      <Calendar.NavButton slot="next" />
-                    </Calendar.Header>
-                    <Calendar.Grid>
-                      <Calendar.GridHeader>
-                        {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
-                    </Calendar.Grid>
-                    <Calendar.YearPickerGrid>
-                      <Calendar.YearPickerGridBody>
-                        {({year}) => <Calendar.YearPickerCell year={year} />}
-                      </Calendar.YearPickerGridBody>
-                    </Calendar.YearPickerGrid>
-                  </Calendar>
-                </DatePicker.Popover>
+                <DateField.Suffix>
+                  <DatePicker.Trigger>
+                    <DatePicker.TriggerIndicator />
+                  </DatePicker.Trigger>
+                </DateField.Suffix>
+              </DateField.Group>
+              <DatePicker.Popover>
+                <Calendar
+                  maxValue={
+                    parseResumeDateValue({ value: endDate }) ?? undefined
+                  }
+                >
+                  <Calendar.Header>
+                    <Calendar.YearPickerTrigger>
+                      <Calendar.YearPickerTriggerHeading />
+                      <Calendar.YearPickerTriggerIndicator />
+                    </Calendar.YearPickerTrigger>
+                    <Calendar.NavButton slot="previous" />
+                    <Calendar.NavButton slot="next" />
+                  </Calendar.Header>
+                  <Calendar.Grid>
+                    <Calendar.GridHeader>
+                      {(day) => (
+                        <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                      )}
+                    </Calendar.GridHeader>
+                    <Calendar.GridBody>
+                      {(date) => <Calendar.Cell date={date} />}
+                    </Calendar.GridBody>
+                  </Calendar.Grid>
+                  <Calendar.YearPickerGrid>
+                    <Calendar.YearPickerGridBody>
+                      {({ year }) => <Calendar.YearPickerCell year={year} />}
+                    </Calendar.YearPickerGridBody>
+                  </Calendar.YearPickerGrid>
+                </Calendar>
+              </DatePicker.Popover>
               {fieldState.error && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
@@ -288,37 +296,47 @@ export function ProjectCard({
                 <Label>End Date</Label>
                 <DateField.Group>
                   <DateField.Input>
-                    {(segment) => <DateSegmentFilter segment={segment as any} />}
+                    {(segment) => (
+                      <DateSegmentFilter segment={segment as any} />
+                    )}
                   </DateField.Input>
-                    <DateField.Suffix>
-                      <DatePicker.Trigger>
-                        <DatePicker.TriggerIndicator />
-                      </DatePicker.Trigger>
-                    </DateField.Suffix>
-                  </DateField.Group>
-                  <DatePicker.Popover>
-                    <Calendar minValue={parseResumeDateValue({ value: startDate }) ?? undefined}>
-                      <Calendar.Header>
-                        <Calendar.YearPickerTrigger>
-                          <Calendar.YearPickerTriggerHeading />
-                          <Calendar.YearPickerTriggerIndicator />
-                        </Calendar.YearPickerTrigger>
-                        <Calendar.NavButton slot="previous" />
-                        <Calendar.NavButton slot="next" />
-                      </Calendar.Header>
-                      <Calendar.Grid>
-                        <Calendar.GridHeader>
-                          {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-                        </Calendar.GridHeader>
-                        <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
-                      </Calendar.Grid>
-                      <Calendar.YearPickerGrid>
-                        <Calendar.YearPickerGridBody>
-                          {({year}) => <Calendar.YearPickerCell year={year} />}
-                        </Calendar.YearPickerGridBody>
-                      </Calendar.YearPickerGrid>
-                    </Calendar>
-                  </DatePicker.Popover>
+                  <DateField.Suffix>
+                    <DatePicker.Trigger>
+                      <DatePicker.TriggerIndicator />
+                    </DatePicker.Trigger>
+                  </DateField.Suffix>
+                </DateField.Group>
+                <DatePicker.Popover>
+                  <Calendar
+                    minValue={
+                      parseResumeDateValue({ value: startDate }) ?? undefined
+                    }
+                  >
+                    <Calendar.Header>
+                      <Calendar.YearPickerTrigger>
+                        <Calendar.YearPickerTriggerHeading />
+                        <Calendar.YearPickerTriggerIndicator />
+                      </Calendar.YearPickerTrigger>
+                      <Calendar.NavButton slot="previous" />
+                      <Calendar.NavButton slot="next" />
+                    </Calendar.Header>
+                    <Calendar.Grid>
+                      <Calendar.GridHeader>
+                        {(day) => (
+                          <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                        )}
+                      </Calendar.GridHeader>
+                      <Calendar.GridBody>
+                        {(date) => <Calendar.Cell date={date} />}
+                      </Calendar.GridBody>
+                    </Calendar.Grid>
+                    <Calendar.YearPickerGrid>
+                      <Calendar.YearPickerGridBody>
+                        {({ year }) => <Calendar.YearPickerCell year={year} />}
+                      </Calendar.YearPickerGridBody>
+                    </Calendar.YearPickerGrid>
+                  </Calendar>
+                </DatePicker.Popover>
                 {fieldState.error && (
                   <FieldError>{fieldState.error.message}</FieldError>
                 )}

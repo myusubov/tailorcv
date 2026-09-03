@@ -10,7 +10,6 @@ export async function POST(req: Request) {
 
     const response = await streamChat(body);
 
-
     if (!response.ok || !response.body) {
       const errorData = await response.json().catch(async () => ({
         message: await response.text().catch(() => 'Unknown error'),
@@ -20,7 +19,6 @@ export async function POST(req: Request) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
 
     return new Response(response.body, {
       headers: {

@@ -9,21 +9,21 @@ import { Skeleton } from '@heroui/react';
  */
 export function AIThinkingIndicatorCompact() {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 8, filter: 'blur(4px)' }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="flex items-center gap-3 py-1"
     >
       {/* Icon Orb */}
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
-        transition={{ 
-          type: "spring",
+        transition={{
+          type: 'spring',
           stiffness: 260,
           damping: 20,
-          delay: 0.1 
+          delay: 0.1,
         }}
         className="relative flex size-8 shrink-0 items-center justify-center"
       >
@@ -38,14 +38,14 @@ export function AIThinkingIndicatorCompact() {
         />
         <div className="bg-background relative z-10 flex size-[95%] items-center justify-center rounded-full">
           <motion.div
-            animate={{ 
+            animate={{
               opacity: [0.4, 1, 0.4],
-              scale: [0.95, 1.05, 0.95]
+              scale: [0.95, 1.05, 0.95],
             }}
-            transition={{ 
-              duration: 2, 
-              repeat: Infinity, 
-              ease: "easeInOut" 
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
             }}
           >
             <Icon

@@ -1,10 +1,7 @@
 import { parseDate } from '@internationalized/date';
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseResumeDateValue,
-  serializeResumeDateValue,
-} from './resume-date';
+import { parseResumeDateValue, serializeResumeDateValue } from './resume-date';
 
 describe('resume date helpers', () => {
   it('parses legacy year and month values while preserving full dates', () => {
@@ -20,9 +17,9 @@ describe('resume date helpers', () => {
   });
 
   it('serializes selected dates without dropping the day', () => {
-    expect(
-      serializeResumeDateValue({ value: parseDate('2026-04-20') }),
-    ).toBe('2026-04-20');
+    expect(serializeResumeDateValue({ value: parseDate('2026-04-20') })).toBe(
+      '2026-04-20',
+    );
     expect(serializeResumeDateValue({ value: null })).toBe('');
   });
 });

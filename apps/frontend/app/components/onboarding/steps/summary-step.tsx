@@ -52,10 +52,10 @@ export function SummaryStep({ onNext, onBack }: SummaryStepProps) {
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
               <Description className="text-balance">
-                Include role, seniority, technologies, and one measurable strength. You can
-                leave this blank. TailorCV can generate a draft later.
+                Include role, seniority, technologies, and one measurable
+                strength. You can leave this blank. TailorCV can generate a
+                draft later.
               </Description>
-
             </TextField>
           )}
         />

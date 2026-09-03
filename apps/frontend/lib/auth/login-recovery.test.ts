@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  resolveLoginOutcome,
-} from '@/e2e/helpers/auth/login-recovery';
+import { resolveLoginOutcome } from '@/e2e/helpers/auth/login-recovery';
 
 describe('resolveLoginOutcome', () => {
   it('returns signed_in for direct successful login attempts', () => {

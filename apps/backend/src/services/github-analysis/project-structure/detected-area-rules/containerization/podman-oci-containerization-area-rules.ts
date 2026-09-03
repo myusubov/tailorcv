@@ -125,7 +125,10 @@ export function addPodmanOciContainerizationAreas({
                   ],
                 },
                 {
-                  hasAllOf: ['podman-quadlet-pod-unit', 'podman-quadlet-kube-unit'],
+                  hasAllOf: [
+                    'podman-quadlet-pod-unit',
+                    'podman-quadlet-kube-unit',
+                  ],
                 },
                 { has: 'podman-quadlet-build-unit' },
                 { has: 'podman-quadlet-image-unit' },

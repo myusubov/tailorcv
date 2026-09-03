@@ -17,11 +17,11 @@ Declare `@heroui/react` and `@heroui/styles` with the same exact version in `app
 
 ## Considered Options
 
-| Option | Tradeoff |
-| ------ | -------- |
-| Exact matching versions | Prevents unreviewed HeroUI updates but requires deliberate maintenance. |
-| Caret ranges | Receives compatible releases automatically but can introduce unreviewed component or styling behavior. |
-| Independent React and Styles versions | Allows partial updates but risks mismatched public component and CSS contracts. |
+| Option                                | Tradeoff                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Exact matching versions               | Prevents unreviewed HeroUI updates but requires deliberate maintenance.                                |
+| Caret ranges                          | Receives compatible releases automatically but can introduce unreviewed component or styling behavior. |
+| Independent React and Styles versions | Allows partial updates but risks mismatched public component and CSS contracts.                        |
 
 ## Consequences
 

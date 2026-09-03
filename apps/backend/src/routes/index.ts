@@ -24,4 +24,3 @@ router.use('/onboarding', onboardingRouter);
 router.use('/ai/chat', aiChatRouter);
 
 export const v1Router = router;
-

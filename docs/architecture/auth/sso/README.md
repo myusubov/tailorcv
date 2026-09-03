@@ -35,14 +35,14 @@ User clicks "Continue with Google/Apple"
 
 ## 3. Key Files & Entry Points
 
-| File                                                                 | Purpose                                                                                                 | When to Read                                           |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts` | Core v7 SSO callback hook — all OAuth finalization logic                                                | Any SSO flow change                                    |
-| `apps/frontend/app/components/auth/register/use-register-flow.ts`   | Registration password/OTP controller and direct `signUp.sso()` provider initiation                      | Registration OAuth-entry changes                       |
-| `apps/frontend/app/sso-callback/page.tsx`                            | SSO callback page — delegates to `useSSOCallback`                                                       | SSO flow changes                                       |
-| `apps/frontend/app/(auth)/sso-continue/page.tsx`                     | Retired continuation route that redirects to registration                                               | Defensive route behavior changes                       |
-| `apps/frontend/lib/auth/login-auth-reason.ts`                        | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in                          | OAuth fallback UX changes                              |
-| `apps/frontend/proxy.ts`                                             | Clerk middleware — public/auth/protected route matchers                                                 | Route protection changes                               |
+| File                                                                 | Purpose                                                                            | When to Read                     |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------- |
+| `apps/frontend/app/components/auth/sso-callback/use-sso-callback.ts` | Core v7 SSO callback hook — all OAuth finalization logic                           | Any SSO flow change              |
+| `apps/frontend/app/components/auth/register/use-register-flow.ts`    | Registration password/OTP controller and direct `signUp.sso()` provider initiation | Registration OAuth-entry changes |
+| `apps/frontend/app/sso-callback/page.tsx`                            | SSO callback page — delegates to `useSSOCallback`                                  | SSO flow changes                 |
+| `apps/frontend/app/(auth)/sso-continue/page.tsx`                     | Retired continuation route that redirects to registration                          | Defensive route behavior changes |
+| `apps/frontend/lib/auth/login-auth-reason.ts`                        | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in     | OAuth fallback UX changes        |
+| `apps/frontend/proxy.ts`                                             | Clerk middleware — public/auth/protected route matchers                            | Route protection changes         |
 
 ---
 
@@ -161,16 +161,16 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 
 ## 9. Risks & Mitigations
 
-| Risk                                                                                    | Mitigation                                                                                                                                                                                            |
-| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Login and registration initiate against the wrong Clerk resource                       | Use `signIn.sso()` for login and `signUp.sso()` for registration, with `redirectCallbackUrl` pointing to `/sso-callback` and `redirectUrl` pointing to the flow-specific destination                 |
-| Clerk still requires first/last name after app removal                                  | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled                                                    |
-| Cancelled registration provider state leaks into the next attempt                       | Keep direct `signUp.sso()` aligned with Clerk's current contract and manually verify same-provider and cross-provider cancellation retries                                                              |
-| Transfer mutations return an error without throwing                                     | Inspect the `{ error }` result from both transfer calls and replace the spinner with callback-page error state                                                                                        |
-| Clerk reports `missing_requirements` before or after external verification settles      | Surface configuration drift for every remaining `missing_requirements` state instead of leaving the public callback pending                                                                           |
-| React StrictMode double-execution on SSO callback                                       | `hasRun = useRef(false)` guard in `useSSOCallback`                                                                                                                                                    |
-| Direct navigation to `/sso-callback` with no usable Clerk callback state                | Fall through to `/login` instead of relying on a local sessionStorage marker                                                                                                                          |
-| Direct navigation to `/sso-continue`                                                    | Redirect to `/register`; the continuation form has been retired                                                                                                                                       |
+| Risk                                                                               | Mitigation                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Login and registration initiate against the wrong Clerk resource                   | Use `signIn.sso()` for login and `signUp.sso()` for registration, with `redirectCallbackUrl` pointing to `/sso-callback` and `redirectUrl` pointing to the flow-specific destination |
+| Clerk still requires first/last name after app removal                             | Surface the missing-requirements state as configuration drift on `/sso-callback`; update Clerk dashboard so account names are optional or disabled                                   |
+| Cancelled registration provider state leaks into the next attempt                  | Keep direct `signUp.sso()` aligned with Clerk's current contract and manually verify same-provider and cross-provider cancellation retries                                           |
+| Transfer mutations return an error without throwing                                | Inspect the `{ error }` result from both transfer calls and replace the spinner with callback-page error state                                                                       |
+| Clerk reports `missing_requirements` before or after external verification settles | Surface configuration drift for every remaining `missing_requirements` state instead of leaving the public callback pending                                                          |
+| React StrictMode double-execution on SSO callback                                  | `hasRun = useRef(false)` guard in `useSSOCallback`                                                                                                                                   |
+| Direct navigation to `/sso-callback` with no usable Clerk callback state           | Fall through to `/login` instead of relying on a local sessionStorage marker                                                                                                         |
+| Direct navigation to `/sso-continue`                                               | Redirect to `/register`; the continuation form has been retired                                                                                                                      |
 
 ---
 

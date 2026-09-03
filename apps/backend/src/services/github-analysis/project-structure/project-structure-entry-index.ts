@@ -17,9 +17,11 @@ export interface EntryIndex {
   hasFileNameMatching: (input: { pattern: RegExp }) => boolean;
   hasDirectory: (input: { path: string }) => boolean;
   hasDirectoryNamed: (input: { name: string }) => boolean;
-  findFilesByNameMatching: (input: { pattern: RegExp }) => RepoTreeEntry[]
-  findDirectoriesByPathMatching: (input: { pattern: RegExp }) => RepoTreeEntry[]
-  findEntriesByPathMatching: (input: { pattern: RegExp }) => RepoTreeEntry[]
+  findFilesByNameMatching: (input: { pattern: RegExp }) => RepoTreeEntry[];
+  findDirectoriesByPathMatching: (input: {
+    pattern: RegExp;
+  }) => RepoTreeEntry[];
+  findEntriesByPathMatching: (input: { pattern: RegExp }) => RepoTreeEntry[];
 }
 
 /**
@@ -71,7 +73,8 @@ export function buildEntryIndex({
     },
     findFilesByNameMatching: ({ pattern }) => {
       return entries.filter(
-        (entry) => entry.type === 'file' && pattern.test(entry.name.toLowerCase()),
+        (entry) =>
+          entry.type === 'file' && pattern.test(entry.name.toLowerCase()),
       );
     },
     findDirectoriesByPathMatching: ({ pattern }) => {

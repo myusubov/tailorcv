@@ -48,7 +48,10 @@ export const idempotency = (options: IdempotencyOptions = {}) => {
         const { status } = JSON.parse(existing);
 
         if (status === 'processing') {
-          logger.warn({ redisKey }, 'Duplicate request detected - already processing');
+          logger.warn(
+            { redisKey },
+            'Duplicate request detected - already processing',
+          );
           return next(
             new AppError(
               'Request already in progress',
@@ -59,7 +62,10 @@ export const idempotency = (options: IdempotencyOptions = {}) => {
         }
 
         if (status === 'completed') {
-          logger.info({ redisKey }, 'Duplicate request detected - already completed');
+          logger.info(
+            { redisKey },
+            'Duplicate request detected - already completed',
+          );
           req.isIdempotentReplay = true;
           return next();
         }

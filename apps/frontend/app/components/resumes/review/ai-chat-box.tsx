@@ -150,7 +150,10 @@ export function AIChatBox({ className }: AIChatBoxProps) {
                 />
 
                 {messages.length <= 1 && !isTyping && !isInputFullscreen && (
-                  <ChatQuickActions hasResumeContext={!!currentResume} onActionClick={handleQuickAction} />
+                  <ChatQuickActions
+                    hasResumeContext={!!currentResume}
+                    onActionClick={handleQuickAction}
+                  />
                 )}
 
                 <ChatInputArea

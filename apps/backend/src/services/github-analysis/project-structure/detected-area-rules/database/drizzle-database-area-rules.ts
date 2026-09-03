@@ -77,7 +77,10 @@ export function addDrizzleDatabaseAreas({
             },
             {
               has: 'drizzle-migration-sql-file',
-              hasOneOf: ['drizzle-migration-journal', 'drizzle-migration-snapshot'],
+              hasOneOf: [
+                'drizzle-migration-journal',
+                'drizzle-migration-snapshot',
+              ],
             },
           ],
         },

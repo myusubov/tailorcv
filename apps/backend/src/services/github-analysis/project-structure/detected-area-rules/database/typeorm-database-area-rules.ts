@@ -62,11 +62,17 @@ export function addTypeOrmDatabaseAreas({
         countedSignals: {
           or: [
             {
-              hasOneOf: ['typeorm-legacy-config-file', 'typeorm-data-source-file'],
+              hasOneOf: [
+                'typeorm-legacy-config-file',
+                'typeorm-data-source-file',
+              ],
               has: 'typeorm-entity-file',
             },
             {
-              hasOneOf: ['typeorm-legacy-config-file', 'typeorm-data-source-file'],
+              hasOneOf: [
+                'typeorm-legacy-config-file',
+                'typeorm-data-source-file',
+              ],
               has: 'typeorm-migration-file',
             },
             {

@@ -80,7 +80,10 @@ export function detectLanguages(
       continue;
     }
     const extensionKey = entry.extension.toLowerCase();
-    const languageByExtension = Object.hasOwn(EXTENSION_LANGUAGE_MAP, extensionKey)
+    const languageByExtension = Object.hasOwn(
+      EXTENSION_LANGUAGE_MAP,
+      extensionKey,
+    )
       ? EXTENSION_LANGUAGE_MAP[extensionKey]
       : undefined;
     if (languageByExtension) {

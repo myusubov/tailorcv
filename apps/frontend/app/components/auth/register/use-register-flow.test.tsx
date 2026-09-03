@@ -148,7 +148,9 @@ describe('useRegisterFlow', () => {
   it('reports returned password sign-up errors through HeroUI danger feedback', async () => {
     const signUp = createSignUpMock();
     signUp.password.mockResolvedValue({
-      error: createFlowError({ message: 'Email address is already registered' }),
+      error: createFlowError({
+        message: 'Email address is already registered',
+      }),
     });
     mockSignUpState.signUp = signUp;
 
@@ -245,7 +247,9 @@ describe('useRegisterFlow', () => {
 
     expect(result.current.mode).toBe('verification');
     if (result.current.mode !== 'verification') {
-      throw new Error('Expected verification to remain active after reset failure');
+      throw new Error(
+        'Expected verification to remain active after reset failure',
+      );
     }
     expect(toastMocks.danger).toHaveBeenCalledWith('Sign-up reset failed');
     expect(mockSetValue).not.toHaveBeenCalled();
@@ -327,7 +331,13 @@ describe('useRegisterFlow', () => {
       await current.formViewProps.onAppleSignUp();
     });
 
-    expect(toastMocks.danger).toHaveBeenNthCalledWith(1, 'Google sign-up failed');
-    expect(toastMocks.danger).toHaveBeenNthCalledWith(2, 'Apple sign-up failed');
+    expect(toastMocks.danger).toHaveBeenNthCalledWith(
+      1,
+      'Google sign-up failed',
+    );
+    expect(toastMocks.danger).toHaveBeenNthCalledWith(
+      2,
+      'Apple sign-up failed',
+    );
   });
 });

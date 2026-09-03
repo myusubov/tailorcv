@@ -21,7 +21,7 @@ export interface GitHubTokenErrorResponse {
 }
 
 export interface SaveGitHubConnectionInput {
-  userId: string; 
+  userId: string;
   installationId: string;
   installationAccessToken: string;
   installationAccessTokenExpiresAt: Date;

@@ -78,7 +78,7 @@ export function ProjectsEditor() {
     // undo action
     const allProjects = getValues('projects');
     const project = allProjects?.[deleteIndex];
-    
+
     toast.info('Project was deleted', {
       action: {
         label: 'Undo',

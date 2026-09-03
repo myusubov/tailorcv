@@ -73,7 +73,10 @@ export function addSequelizeDatabaseAreas({
               hasOneOf: ['sequelize-model-file', 'sequelize-model-index-file'],
             },
             {
-              hasAllOf: ['sequelize-cli-config-file', 'sequelize-migration-file'],
+              hasAllOf: [
+                'sequelize-cli-config-file',
+                'sequelize-migration-file',
+              ],
             },
             {
               hasAllOf: ['sequelize-cli-config-file', 'sequelize-seeder-file'],

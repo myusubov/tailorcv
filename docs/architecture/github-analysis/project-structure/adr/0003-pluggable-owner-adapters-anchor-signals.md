@@ -36,12 +36,12 @@ This does not reverse the 2026-08-24 consolidation. Containerization, database, 
 
 ## Considered Options
 
-| Option | Tradeoff |
-| --- | --- |
-| Anchor signal plus two-pass adapter, generic resolver as default and fallback | Fixes fragmentation for config-anchored frameworks; keeps owner logic in one small reviewed directory; deterministic. Selected. |
-| Keep the generic resolver everywhere | No new surface, but Next.js/Nuxt units with split evidence keep fragmenting into multiple candidates. |
+| Option                                                                                      | Tradeoff                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Anchor signal plus two-pass adapter, generic resolver as default and fallback               | Fixes fragmentation for config-anchored frameworks; keeps owner logic in one small reviewed directory; deterministic. Selected.                                            |
+| Keep the generic resolver everywhere                                                        | No new surface, but Next.js/Nuxt units with split evidence keep fragmenting into multiple candidates.                                                                      |
 | Walk upward from each evidence path to the nearest boundary marker (LSP-style root markers) | Matches common tooling, but an open-ended marker list is exactly the bespoke path logic 2026-08-24 removed, and upward walks are not obviously deterministic across trees. |
-| Reintroduce free-form per-technology resolver functions | Maximum flexibility, but recreates the unauditable per-detector path logic the 2026-08-24 change deleted. |
+| Reintroduce free-form per-technology resolver functions                                     | Maximum flexibility, but recreates the unauditable per-detector path logic the 2026-08-24 change deleted.                                                                  |
 
 ## Consequences
 

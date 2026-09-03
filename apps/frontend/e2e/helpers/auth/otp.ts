@@ -15,10 +15,7 @@ interface VerifyForgotPasswordResetCodeArgs {
  * The helper supports both HeroUI's single-textbox OTP control and fallback
  * multi-input numeric OTP layouts used by auth verification screens.
  */
-export async function fillOtpCode({
-  page,
-  code,
-}: FillOtpCodeArgs) {
+export async function fillOtpCode({ page, code }: FillOtpCodeArgs) {
   const textboxes = page.getByRole('textbox');
   const textboxCount = await textboxes.count();
 

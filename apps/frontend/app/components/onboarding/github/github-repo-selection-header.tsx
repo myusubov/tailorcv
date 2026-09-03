@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 
-
 interface GitHubRepoSelectionHeaderProps {
   repositoryCount: number;
   maxRepos: number;
@@ -17,8 +16,6 @@ export function GitHubRepoSelectionHeader({
   maxRepos,
   isRepositoryCountLoading,
 }: GitHubRepoSelectionHeaderProps) {
-
-
   return (
     <header className="mb-8 text-center">
       <motion.div

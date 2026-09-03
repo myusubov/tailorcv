@@ -16,7 +16,7 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className="fixed left-6 bottom-6 z-50">
+    <div className="fixed bottom-6 left-6 z-50">
       <Button
         isIconOnly
         variant="secondary"

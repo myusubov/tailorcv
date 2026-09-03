@@ -116,7 +116,7 @@ export function defineQuery<TParams, TResponse>(
       // Legacy API: unwrap ClientGetFn
       const clientFn = configOrFn as ClientGetFn<TParams, TResponse>;
       const result = await clientFn(params);
-      
+
       if (!result) {
         throw new Error('No result returned from client function');
       }

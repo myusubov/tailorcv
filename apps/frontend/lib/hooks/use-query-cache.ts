@@ -38,9 +38,9 @@ export function useQueryCache<
         setData((old) => {
           if (!Array.isArray(old)) return [item] as unknown as TData;
           const list = old as TItem[];
-          return (
-            position === 'start' ? [item, ...list] : [...list, item]
-          ) as unknown as TData;
+          return (position === 'start'
+            ? [item, ...list]
+            : [...list, item]) as unknown as TData;
         });
       },
       [setData],

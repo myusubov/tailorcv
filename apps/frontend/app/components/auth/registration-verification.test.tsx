@@ -28,7 +28,8 @@ vi.mock('@/lib/config', () => ({
 }));
 
 vi.mock('@heroui/react', async () => {
-  const actual = await vi.importActual<typeof import('@heroui/react')>('@heroui/react');
+  const actual =
+    await vi.importActual<typeof import('@heroui/react')>('@heroui/react');
 
   return {
     ...actual,
@@ -36,7 +37,15 @@ vi.mock('@heroui/react', async () => {
       danger: toastMocks.danger,
       success: toastMocks.success,
     },
-    InputOTP: ({ value, onChange, maxLength }: { value: string; onChange: (value: string) => void; maxLength: number }) => (
+    InputOTP: ({
+      value,
+      onChange,
+      maxLength,
+    }: {
+      value: string;
+      onChange: (value: string) => void;
+      maxLength: number;
+    }) => (
       <input
         aria-label="Verification code"
         value={value}
@@ -124,7 +133,9 @@ describe('RegistrationVerification', () => {
     await user.click(screen.getByRole('button', { name: 'Verify Email' }));
 
     await waitFor(() => {
-      expect(toastMocks.danger).toHaveBeenCalledWith('Invalid verification code');
+      expect(toastMocks.danger).toHaveBeenCalledWith(
+        'Invalid verification code',
+      );
     });
   });
 
@@ -150,7 +161,9 @@ describe('RegistrationVerification', () => {
     await user.click(screen.getByRole('button', { name: 'Verify Email' }));
 
     await waitFor(() => {
-      expect(toastMocks.danger).toHaveBeenCalledWith('Unable to finish sign up');
+      expect(toastMocks.danger).toHaveBeenCalledWith(
+        'Unable to finish sign up',
+      );
     });
   });
 

@@ -37,11 +37,7 @@ const loginAuthReasonNotices: Record<LoginAuthReason, LoginAuthNotice> = {
  * When a reason is provided it is encoded as the `auth_reason` query param so the login page can
  * show a contextual inline notice before cleaning the param from the URL.
  */
-export function buildLoginUrl({
-  reason,
-}: {
-  reason?: LoginAuthReason;
-}) {
+export function buildLoginUrl({ reason }: { reason?: LoginAuthReason }) {
   if (!reason) return '/login';
 
   const searchParams = new URLSearchParams({

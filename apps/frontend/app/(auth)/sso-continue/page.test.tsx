@@ -1,9 +1,11 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const mockRedirect = vi.hoisted(() => vi.fn(() => {
-  throw new Error('NEXT_REDIRECT');
-}));
+const mockRedirect = vi.hoisted(() =>
+  vi.fn(() => {
+    throw new Error('NEXT_REDIRECT');
+  }),
+);
 
 vi.mock('next/navigation', () => ({
   redirect: mockRedirect,

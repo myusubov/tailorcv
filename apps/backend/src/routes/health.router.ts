@@ -46,7 +46,8 @@ healthRouter.get('/', async (req, res) => {
       responseTime: dbTime,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     logger.error({ err: error }, 'Database health check failed');
     healthCheck.dependencies.database = {
       status: 'error',
@@ -65,7 +66,8 @@ healthRouter.get('/', async (req, res) => {
       responseTime: redisTime,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     logger.error({ err: error }, 'Redis health check failed');
     healthCheck.dependencies.redis = {
       status: 'error',

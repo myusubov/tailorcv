@@ -37,9 +37,7 @@ export function DeleteDialog({
                   <Modal.Heading>{title}</Modal.Heading>
                 </Modal.Header>
                 <Modal.Body>
-                  <div className="text-muted text-sm">
-                    {description}
-                  </div>
+                  <div className="text-muted text-sm">{description}</div>
                 </Modal.Body>
                 <Modal.Footer>
                   <Button variant="tertiary" onPress={close}>

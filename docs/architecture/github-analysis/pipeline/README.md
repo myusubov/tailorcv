@@ -31,19 +31,19 @@ GitHub App installation
 
 ## 3. Key Files & Entry Points
 
-| File                                                               | Purpose                                                                                                       | When to Read                               |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `apps/backend/src/routes/github.router.ts`                         | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                              | GitHub endpoint changes                    |
-| `apps/backend/src/schemas/github.schema.ts`                        | Zod request body schema and inferred type for temporary GitHub analysis.                                      | GitHub request validation changes          |
-| `apps/backend/src/controllers/github.controller.ts`                | Reads validated selected repo IDs and calls GitHub analysis service.                                          | GitHub request/response changes            |
-| `apps/backend/src/mappers/github.mapper.ts`                        | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                    | GitHub response DTO changes                |
-| `apps/backend/src/middleware/github-auth.ts`                       | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.         | GitHub-protected route changes             |
-| `packages/shared/src/types/github.ts`                              | Defines full backend GitHub connection and client-safe public connection response types.                      | GitHub API contract changes                |
-| `apps/backend/prisma/schema.prisma`                                | Persists the installation ID plus the cached, expiring installation token for each Clerk user.                | GitHub connection persistence changes      |
-| `apps/backend/src/services/github.service.ts`                       | Initiates the installation flow, verifies callbacks, manages installation tokens, and fetches repositories.   | GitHub connection or token lifecycle changes |
-| `apps/backend/src/services/github-analysis.service.ts`             | Runs the temporary analyze orchestration: fetches selected repos and trees, normalizes entries, and returns per-repository summaries and detected areas.     | GitHub analysis orchestration changes     |
-| `apps/backend/src/services/github-analysis/github-tree-fetcher.ts` | Fetches recursive GitHub tree metadata for a selected repository.                                             | GitHub tree API changes                    |
-| `apps/backend/src/utils/github-utils.ts`                           | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                  | Tree normalization or repo parsing changes |
+| File                                                               | Purpose                                                                                                                                                  | When to Read                                 |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `apps/backend/src/routes/github.router.ts`                         | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                                                                         | GitHub endpoint changes                      |
+| `apps/backend/src/schemas/github.schema.ts`                        | Zod request body schema and inferred type for temporary GitHub analysis.                                                                                 | GitHub request validation changes            |
+| `apps/backend/src/controllers/github.controller.ts`                | Reads validated selected repo IDs and calls GitHub analysis service.                                                                                     | GitHub request/response changes              |
+| `apps/backend/src/mappers/github.mapper.ts`                        | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                                                               | GitHub response DTO changes                  |
+| `apps/backend/src/middleware/github-auth.ts`                       | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.                                                    | GitHub-protected route changes               |
+| `packages/shared/src/types/github.ts`                              | Defines full backend GitHub connection and client-safe public connection response types.                                                                 | GitHub API contract changes                  |
+| `apps/backend/prisma/schema.prisma`                                | Persists the installation ID plus the cached, expiring installation token for each Clerk user.                                                           | GitHub connection persistence changes        |
+| `apps/backend/src/services/github.service.ts`                      | Initiates the installation flow, verifies callbacks, manages installation tokens, and fetches repositories.                                              | GitHub connection or token lifecycle changes |
+| `apps/backend/src/services/github-analysis.service.ts`             | Runs the temporary analyze orchestration: fetches selected repos and trees, normalizes entries, and returns per-repository summaries and detected areas. | GitHub analysis orchestration changes        |
+| `apps/backend/src/services/github-analysis/github-tree-fetcher.ts` | Fetches recursive GitHub tree metadata for a selected repository.                                                                                        | GitHub tree API changes                      |
+| `apps/backend/src/utils/github-utils.ts`                           | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                                                             | Tree normalization or repo parsing changes   |
 
 ---
 
@@ -150,13 +150,13 @@ The backend validates GitHub App configuration through `apps/backend/src/config/
 
 ## 9. Risks & Mitigations
 
-| Risk                                                           | Mitigation                                                                             |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| OAuth token leaks into client response                         | Always map internal GitHub connection models through `github.mapper.ts`.               |
-| Legacy OAuth connections are treated as GitHub App installations | Delete incompatible records in the migration and require affected users to reconnect. |
-| An installation token expires during a protected request       | Refresh cached tokens five minutes before expiry in `requireGithubConnection`.         |
-| Analyzers refetch the same GitHub data repeatedly              | Keep analyzers pure and pass normalized tree/file data from the service layer.         |
-| Temporary endpoint response becomes a final contract too early | Keep temporary analyze output explicit and document future pipeline stages separately. |
+| Risk                                                             | Mitigation                                                                             |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| OAuth token leaks into client response                           | Always map internal GitHub connection models through `github.mapper.ts`.               |
+| Legacy OAuth connections are treated as GitHub App installations | Delete incompatible records in the migration and require affected users to reconnect.  |
+| An installation token expires during a protected request         | Refresh cached tokens five minutes before expiry in `requireGithubConnection`.         |
+| Analyzers refetch the same GitHub data repeatedly                | Keep analyzers pure and pass normalized tree/file data from the service layer.         |
+| Temporary endpoint response becomes a final contract too early   | Keep temporary analyze output explicit and document future pipeline stages separately. |
 
 ---
 

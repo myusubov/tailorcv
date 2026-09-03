@@ -7,7 +7,12 @@ import type {
   ReactNode,
   TextareaHTMLAttributes,
 } from 'react';
-import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form';
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { OnboardingFormInput } from '@/lib/schemas/onboarding';
@@ -43,7 +48,9 @@ vi.mock('@heroui/react', () => ({
       Cell: ({ date }: { date: unknown }): ReactElement => (
         <button type="button">{String(date)}</button>
       ),
-      Grid: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
+      Grid: ({ children }: ChildrenProps): ReactElement => (
+        <div>{children}</div>
+      ),
       GridBody: ({
         children,
       }: {
@@ -54,13 +61,15 @@ vi.mock('@heroui/react', () => ({
       }: {
         children: (day: string) => ReactNode;
       }): ReactElement => <div>{children('Mon')}</div>,
-      Header: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
+      Header: ({ children }: ChildrenProps): ReactElement => (
+        <div>{children}</div>
+      ),
       HeaderCell: ({ children }: ChildrenProps): ReactElement => (
         <span>{children}</span>
       ),
-      NavButton: (props: ButtonHTMLAttributes<HTMLButtonElement>): ReactElement => (
-        <button type="button" {...props} />
-      ),
+      NavButton: (
+        props: ButtonHTMLAttributes<HTMLButtonElement>,
+      ): ReactElement => <button type="button" {...props} />,
       YearPickerCell: ({ year }: { year: number }): ReactElement => (
         <button type="button">{year}</button>
       ),
@@ -123,15 +132,21 @@ vi.mock('@heroui/react', () => ({
       </label>
     ),
     {
-      Content: ({ children }: ChildrenProps): ReactElement => <span>{children}</span>,
-      Control: ({ children }: ChildrenProps): ReactElement => <span>{children}</span>,
+      Content: ({ children }: ChildrenProps): ReactElement => (
+        <span>{children}</span>
+      ),
+      Control: ({ children }: ChildrenProps): ReactElement => (
+        <span>{children}</span>
+      ),
       Indicator: (): ReactElement => <span />,
     },
   ),
   DateField: Object.assign(
     {},
     {
-      Group: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
+      Group: ({ children }: ChildrenProps): ReactElement => (
+        <div>{children}</div>
+      ),
       Input: ({
         children,
       }: {
@@ -140,7 +155,9 @@ vi.mock('@heroui/react', () => ({
       Segment: ({ segment }: { segment: string }): ReactElement => (
         <span>{segment}</span>
       ),
-      Suffix: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
+      Suffix: ({ children }: ChildrenProps): ReactElement => (
+        <div>{children}</div>
+      ),
     },
   ),
   DatePicker: Object.assign(
@@ -170,7 +187,9 @@ vi.mock('@heroui/react', () => ({
       </div>
     ),
     {
-      Popover: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
+      Popover: ({ children }: ChildrenProps): ReactElement => (
+        <div>{children}</div>
+      ),
       Trigger: ({ children }: ChildrenProps): ReactElement => (
         <button type="button">{children}</button>
       ),
@@ -186,7 +205,9 @@ vi.mock('@heroui/react', () => ({
     children,
     isRequired,
     ...props
-  }: HTMLAttributes<HTMLLabelElement> & { isRequired?: boolean }): ReactElement => (
+  }: HTMLAttributes<HTMLLabelElement> & {
+    isRequired?: boolean;
+  }): ReactElement => (
     <label data-required={isRequired ? 'true' : 'false'} {...props}>
       {children}
     </label>
@@ -202,13 +223,13 @@ vi.mock('@heroui/react', () => ({
   }: HTMLAttributes<HTMLDivElement> & {
     isInvalid?: boolean;
     isRequired?: boolean;
-  }): ReactElement => (
-    <div {...props}>{children}</div>
-  ),
+  }): ReactElement => <div {...props}>{children}</div>,
   Tooltip: Object.assign(
     ({ children }: ChildrenProps): ReactElement => <>{children}</>,
     {
-      Content: ({ children }: ChildrenProps): ReactElement => <div>{children}</div>,
+      Content: ({ children }: ChildrenProps): ReactElement => (
+        <div>{children}</div>
+      ),
     },
   ),
 }));
@@ -223,7 +244,9 @@ vi.mock('@iconify/react', () => ({
 }));
 
 vi.mock('@/app/components/ui', () => ({
-  ArrayInput: ({ label }: { label: string }): ReactElement => <div>{label}</div>,
+  ArrayInput: ({ label }: { label: string }): ReactElement => (
+    <div>{label}</div>
+  ),
 }));
 
 interface ExperienceItemContentHarnessProps {

@@ -137,10 +137,13 @@ export async function completeForgotPasswordResetWithCandidates({
 
     const submissionResult = await Promise.race([
       page
-        .waitForURL((url) => {
-          const pathname = new URL(url.toString()).pathname;
-          return pathname !== '/forgot-password' && pathname !== '/login';
-        }, { timeout: 8_000 })
+        .waitForURL(
+          (url) => {
+            const pathname = new URL(url.toString()).pathname;
+            return pathname !== '/forgot-password' && pathname !== '/login';
+          },
+          { timeout: 8_000 },
+        )
         .then(() => 'success' as const)
         .catch(() => null),
       page

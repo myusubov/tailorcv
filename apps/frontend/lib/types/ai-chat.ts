@@ -25,7 +25,6 @@ export interface AIChatRequest {
   assistantMessageId?: string;
 }
 
-
 /**
  * SSE event types from AI chat stream
  */
@@ -75,4 +74,3 @@ export interface ConversationDetails {
   updatedAt: string;
   messages: ConversationMessage[];
 }
-

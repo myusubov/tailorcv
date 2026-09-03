@@ -5,8 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ManualEntryStep } from '../../onboarding/types';
 import { ProgressBar } from './progress-bar';
 
-interface MockMotionProps<Element extends HTMLElement>
-  extends HTMLAttributes<Element> {
+interface MockMotionProps<
+  Element extends HTMLElement,
+> extends HTMLAttributes<Element> {
   initial?: unknown;
   animate?: unknown;
   exit?: unknown;
@@ -36,7 +37,9 @@ vi.mock('framer-motion', () => ({
 
 describe('ProgressBar', () => {
   it('fails closed for an invalid current step', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
 
     try {
       const { container } = render(

@@ -331,8 +331,7 @@ export function ProjectItemContent({
                   <DatePicker.Popover>
                     <Calendar
                       minValue={
-                        parseResumeDateValue({ value: startDate }) ??
-                        undefined
+                        parseResumeDateValue({ value: startDate }) ?? undefined
                       }
                     >
                       <Calendar.Header>

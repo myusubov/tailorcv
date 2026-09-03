@@ -10,7 +10,11 @@ import {
 
 import { logger } from '../lib/logger';
 import { handleResilienceError } from '../lib/resilience';
-import { initSseResponse, setupStreamTermination, writeSseEvent } from '../utils/ai-stream-sse';
+import {
+  initSseResponse,
+  setupStreamTermination,
+  writeSseEvent,
+} from '../utils/ai-stream-sse';
 
 /**
  * Handles POST /api/v1/ai/chat
@@ -24,22 +28,31 @@ export const postChatMessage = async (
 ) => {
   try {
     const { clerkUserId } = res.locals;
-    const { conversationId: requestedId, message, resumeContext, assistantMessageId } = req.body;
+    const {
+      conversationId: requestedId,
+      message,
+      resumeContext,
+      assistantMessageId,
+    } = req.body;
 
     // 1. Idempotency Check
     if (req.isIdempotentReplay) {
       initSseResponse(res);
-      writeSseEvent(res, { type: 'text', content: 'Replaying processed request.' });
+      writeSseEvent(res, {
+        type: 'text',
+        content: 'Replaying processed request.',
+      });
       writeSseEvent(res, { type: 'done' });
       return res.end();
     }
 
     // 2. Orchestrate Conversation
-    const { activeConversationId, previousResponseId } = await ensureChatSession({
-      clerkUserId,
-      conversationId: requestedId,
-      initialMessage: message
-    });
+    const { activeConversationId, previousResponseId } =
+      await ensureChatSession({
+        clerkUserId,
+        conversationId: requestedId,
+        initialMessage: message,
+      });
     await addMessage({
       conversationId: activeConversationId,
       clerkUserId,
@@ -58,7 +71,7 @@ export const postChatMessage = async (
       onTerminate: () => {
         wasAborted = true;
         streamController?.abort();
-      }
+      },
     });
 
     // 4. Start AI Stream
@@ -86,7 +99,10 @@ export const postChatMessage = async (
       }
     } catch (err) {
       wasAborted = (err as Error).name === 'AbortError';
-      logger.warn({ err, conversationId: activeConversationId }, 'Stream iteration interrupted');
+      logger.warn(
+        { err, conversationId: activeConversationId },
+        'Stream iteration interrupted',
+      );
     }
 
     // 6. Finalize & Persist
@@ -99,12 +115,14 @@ export const postChatMessage = async (
         responseId: finalResponseId,
         id: assistantMessageId,
         content: lastProposal ? lastProposal.explanation : accumulatedText,
-        metadata: lastProposal ? {
-          type: 'proposal',
-          proposal: lastProposal.data,
-          explanation: lastProposal.explanation,
-        } : undefined,
-        markIdempotentCompleted: res.markIdempotentCompleted
+        metadata: lastProposal
+          ? {
+              type: 'proposal',
+              proposal: lastProposal.data,
+              explanation: lastProposal.explanation,
+            }
+          : undefined,
+        markIdempotentCompleted: res.markIdempotentCompleted,
       });
     }
 
@@ -123,7 +141,11 @@ export const postChatMessage = async (
 
     if (!res.headersSent) next(appError);
     else {
-      writeSseEvent(res, { type: 'error', message: appError.message, code: appError.errorCode });
+      writeSseEvent(res, {
+        type: 'error',
+        message: appError.message,
+        code: appError.errorCode,
+      });
       res.end();
     }
   }

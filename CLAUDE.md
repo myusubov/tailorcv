@@ -28,22 +28,22 @@ when editing files.
 
 ## Tech Stack
 
-| Layer         | Technology                         | Version                     |
-| ------------- | ---------------------------------- | --------------------------- |
-| Runtime       | Node.js                            | 22.x                        |
-| Frontend      | Next.js (App Router)               | 16.x                        |
-| Backend       | Express.js                         | 4.x                         |
-| Database      | PostgreSQL + Prisma                | Prisma 7.x                  |
-| Auth          | Clerk                              | v7 (frontend), v1 (backend) |
-| UI            | HeroUI v3.2.3 + Tailwind CSS 4     | -                           |
-| Icons         | Iconify (`@iconify/react`)         | -                           |
-| AI            | OpenAI (Responses API) + Anthropic | -                           |
-| Queue         | BullMQ + Redis                     | -                           |
-| Validation    | Zod 4                              | -                           |
-| Data Fetching | TanStack React Query v5            | -                           |
-| Forms         | react-hook-form + Zod              | -                           |
-| Toasts        | HeroUI Toast (`showErrorToast`, `useActionMutation`) + sonner (other call sites, see `docs/architecture/ui/README.md`) | -    |
-| Resilience    | cockatiel                          | -                           |
+| Layer         | Technology                                                                                                             | Version                     |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| Runtime       | Node.js                                                                                                                | 22.x                        |
+| Frontend      | Next.js (App Router)                                                                                                   | 16.x                        |
+| Backend       | Express.js                                                                                                             | 4.x                         |
+| Database      | PostgreSQL + Prisma                                                                                                    | Prisma 7.x                  |
+| Auth          | Clerk                                                                                                                  | v7 (frontend), v1 (backend) |
+| UI            | HeroUI v3.2.3 + Tailwind CSS 4                                                                                         | -                           |
+| Icons         | Iconify (`@iconify/react`)                                                                                             | -                           |
+| AI            | OpenAI (Responses API) + Anthropic                                                                                     | -                           |
+| Queue         | BullMQ + Redis                                                                                                         | -                           |
+| Validation    | Zod 4                                                                                                                  | -                           |
+| Data Fetching | TanStack React Query v5                                                                                                | -                           |
+| Forms         | react-hook-form + Zod                                                                                                  | -                           |
+| Toasts        | HeroUI Toast (`showErrorToast`, `useActionMutation`) + sonner (other call sites, see `docs/architecture/ui/README.md`) | -                           |
+| Resilience    | cockatiel                                                                                                              | -                           |
 
 ## Project Structure
 

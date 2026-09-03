@@ -13,14 +13,8 @@ vi.mock('./use-registration-verification-flow', () => ({
 }));
 
 vi.mock('./registration-verification-view', () => ({
-  RegistrationVerificationView: ({
-    email,
-  }: {
-    email: string;
-  }) => (
-    <div data-testid="registration-verification-view">
-      {email}
-    </div>
+  RegistrationVerificationView: ({ email }: { email: string }) => (
+    <div data-testid="registration-verification-view">{email}</div>
   ),
 }));
 
