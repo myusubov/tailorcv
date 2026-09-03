@@ -54,10 +54,10 @@ The analyzer does not fetch GitHub data, read file contents, or call AI.
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-summary.ts`                       | Builds the summary block from tree entries.                                       | Changing summary fields                  |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-areas.ts`                | Orchestrates score-based detected area generation from path evidence.             | Changing `detectedAreas` output          |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-*.ts`               | Detected-area rule, candidate, and internal type helpers.                         | Changing detected-area scoring internals |
-| `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts` | Generic schema-driven detector runner used by 23 of the framework, database, containerization, and test detectors; supports `gateBlocker` shape checks with nested `and`/`or` condition nodes, `competingProofSchemas` file-evidence vetoes, a `checkForExistingCandidate` shared-candidate-map veto, and a `dynamicRelatedTechMap` per-signal related-technology union (see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries). One detector (ASP.NET Core) remains permanently hand-written -- see Risks & Mitigations below. | Changing shared detector matching/gating/veto behavior |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`                    | Shared path normalization plus the single generic application-area owner-path resolver used as the default across every detected-area detector. | Adding reusable path helpers             |
+| `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts` | Generic schema-driven detector runner used by 22 of the framework, database, and containerization detectors (23 were migrated; the Jest detector was removed with the Test-suite category); supports `gateBlocker` shape checks with nested `and`/`or` condition nodes, `competingProofSchemas` file-evidence vetoes, a `checkForExistingCandidate` shared-candidate-map veto, a `dynamicRelatedTechMap` per-signal related-technology union (see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries), and an optional `ownerAdapter` with anchor-signal two-pass owner resolution. One detector (ASP.NET Core) remains permanently hand-written -- see Risks & Mitigations below. | Changing shared detector matching/gating/veto behavior |
+| `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/`                | Per-framework-shape owner resolvers passed to the engine as `ownerAdapter`; `resolve-unit-root-owner.ts` (Next.js, Nuxt) anchors on the framework config file. | Adding an owner adapter for a new framework shape |
+| `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`                    | Shared path normalization plus the generic application-area owner-path resolver used as the default and the fallback for every detected-area detector. | Adding reusable path helpers             |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-score-candidates.ts`              | Shared score candidate helpers for deterministic structure detectors.             | Adding score-based detector helpers      |
-| `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`                 | Focused coverage for current project shape and inferred stack rules.              | Updating detection behavior              |
 | `apps/backend/src/services/github-analysis/project-structure/project-structure-detected-area-candidates.test.ts` | Candidate merge and inferred-technology contract coverage.                        | Updating candidate accumulation behavior |
 
 ---
@@ -94,6 +94,11 @@ apps/backend/src/services/github-analysis/project-structure/
 ├── project-structure-detected-area-rules.ts
 ├── detected-area-rules/
 │   ├── project-structure-area-rule-candidates.ts
+│   ├── declarative-area-rule-engine.ts
+│   ├── owner-adapters/
+│   │   ├── index.ts
+│   │   ├── resolve-unit-root-owner.ts
+│   │   └── resolve-unit-root-owner.test.ts
 │   ├── backend/
 │   │   ├── asp-net-core-backend-area-rules.ts
 │   │   ├── backend-area-rules.ts
@@ -119,31 +124,23 @@ apps/backend/src/services/github-analysis/project-structure/
 │   │   ├── containerization-area-rules.ts
 │   │   ├── docker-containerization-area-rules.ts
 │   │   └── podman-oci-containerization-area-rules.ts
-│   ├── frontend/
-│   │   ├── angular-frontend-area-rules.ts
-│   │   ├── astro-frontend-area-rules.ts
-│   │   ├── frontend-area-rules.ts
-│   │   ├── next-frontend-area-rules.ts
-│   │   ├── nuxt-frontend-area-rules.ts
-│   │   ├── react-frontend-area-rules.ts
-│   │   ├── react-router-frontend-area-rules.ts
-│   │   ├── static-frontend-area-rules.ts
-│   │   ├── svelte-frontend-area-rules.ts
-│   │   ├── sveltekit-frontend-area-rules.ts
-│   │   └── vue-frontend-area-rules.ts
-│   └── test/
-│       ├── cypress-test-area-rules.ts
-│       ├── jest-test-area-rules.ts
-│       ├── mocha-test-area-rules.ts
-│       ├── playwright-test-area-rules.ts
-│       ├── test-area-rules.ts
-│       └── vitest-test-area-rules.ts
+│   └── frontend/
+│       ├── angular-frontend-area-rules.ts
+│       ├── astro-frontend-area-rules.ts
+│       ├── frontend-area-rules.ts
+│       ├── next-frontend-area-rules.ts
+│       ├── nuxt-frontend-area-rules.ts
+│       ├── react-frontend-area-rules.ts
+│       ├── react-router-frontend-area-rules.ts
+│       ├── static-frontend-area-rules.ts
+│       ├── svelte-frontend-area-rules.ts
+│       ├── sveltekit-frontend-area-rules.ts
+│       └── vue-frontend-area-rules.ts
 ├── project-structure-detected-area-candidates.ts
 ├── project-structure-detected-area-candidates.test.ts
 ├── project-structure-detected-areas.types.ts
 ├── project-structure-path-utils.ts
-├── project-structure-score-candidates.ts
-└── project-structure-analyzer.test.ts
+└── project-structure-score-candidates.ts
 ```
 
 ---
@@ -182,6 +179,8 @@ apps/backend/src/services/github-analysis/project-structure/
 
 ### 6.5 Detected Area Generation
 
+> **Coverage note (2026-09-03):** the per-detector "confidence coverage uses ... fixtures through the public analyzer output" rules below describe fixtures that lived in `project-structure-analyzer.test.ts`, which was deleted. They record the intended fixture matrix, not tests that currently run, until that coverage is rebuilt (see Risks & Mitigations).
+
 - **Rule**: `detectedAreas` identifies meaningful repository regions from path evidence only.
 - **Rule**: Score concrete `(name, path)` candidates where `path` is the area owner root, not the individual evidence path.
 - **Rule**: Evidence arrays must contain actual repository paths, not prose explanations.
@@ -190,6 +189,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: `DetectedAreaTechnology` is composed from frontend, backend, containerization, runtime/platform, template, database, and test technology unions in `project-structure-analyzer.types.ts`; keep the public union stable while adding new labels to the narrow category that owns them.
 - **Rule**: The first detector that creates an `(area name, owner path)` candidate owns its primary technology; later score additions preserve that primary and may only accumulate score, evidence, and related technologies.
 - **Rule**: Reusable detected-area rule infrastructure such as `AreaRuleCandidate<Signal>`, owner candidate map creation, once-per-owner signal counting, and adding local owner candidates to the shared candidate map lives in `detected-area-rules/project-structure-area-rule-candidates.ts`; all active owner-scoped frontend detectors use it while still owning their signal unions, scores, finder variables, and output gates.
+- **Rule**: The declarative engine (`detected-area-rules/declarative-area-rule-engine.ts`) resolves every signal's owner through the generic `ownerPathForApplicationArea` unless the detector passes an `ownerAdapter`. With an adapter, the engine evaluates anchor schemas (`isAnchorSignal: true`) first, collects each anchor signal's resolved owner into an `anchorOwners` set, then resolves non-anchor signals against that completed set in a second pass. The only adapter is `detected-area-rules/owner-adapters/resolve-unit-root-owner.ts`, used by the Next.js and Nuxt detectors: an anchor signal (`next.config.*`, `nuxt.config.*`) resolves to the directory holding the config file; a non-anchor signal resolves to the longest `anchorOwners` entry that encloses it (a path with no directory segment resolves to `.`), otherwise it falls back to `ownerPathForApplicationArea`. This is the bounded, per-framework-shape exception to the 2026-08-24 generic-resolver rule below; see [ADR 0003](adr/0003-pluggable-owner-adapters-anchor-signals.md).
 - **Rule**: Backend detected-area rules are dispatched from `detected-area-rules/backend/backend-area-rules.ts`. NestJS, Django, Spring Boot, ASP.NET Core, Laravel, Ruby on Rails, and Express.js run first with implemented path rules before the scaffolded generic backend fallback.
 - **Rule**: Shared package detected-area rules are dispatched from `detected-area-rules/shared-package/shared-package-area-rules.ts`. Language-specific shared-package detectors live in separate modules, starting with the implemented JavaScript/TypeScript workspace-package detector.
 - **Rule**: Containerization detected-area rules are dispatched from `detected-area-rules/containerization/containerization-area-rules.ts`. Runtime-specific containerization detectors live in separate modules: Docker and the Podman/OCI combination gate are implemented. Podman/OCI collects basename-only Quadlet unit, `Containerfile`, and `.containerignore` evidence and counts each signal once per provisional application owner, then resolves it through the shared generic `ownerPathForApplicationArea` resolver (see the owner-resolution rule below); no fixture/example/test path exclusions are applied, consistent with the general directory-name-exclusion policy below.
@@ -257,9 +257,9 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Framework detectors do not discard evidence solely because it appears under generic `docs`, `test`, `tests`, or `fixtures` paths. Framework-specific signal combinations remain responsible for precision; directory exclusions should be introduced only from demonstrated false-positive repository shapes.
 - **Rule**: Known tool conventions should merge related evidence under one owner, such as Prisma `schema.prisma`/`migrations` under a `prisma` database owner or Drizzle split artifacts under the owning app/package/repository path.
 - **Rule**: Backend API areas require strong backend structure such as `routes`, `controllers`, and `services` under the same owner, or an explicit backend entry file; frontend `src/routes` plus `src/services` alone is not enough.
-- **Rule**: Next.js frontend area evidence is grouped by owner path and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints; Next.js areas emit only from config, App Router core, or Pages Router special proof.
+- **Rule**: Next.js frontend area evidence is grouped by owner path (resolved through `resolve-unit-root-owner`, anchored on `next.config.*`) and scored once per signal type: `next.config.*`, App Router convention files, Pages Router files, and weaker `app`/`pages` directory hints; Next.js areas emit only from config, App Router core, or Pages Router special proof.
 - **Rule**: Next.js detector confidence coverage uses realistic App Router, Pages Router, config-only, monorepo owner-isolation, and same-owner fallback-interference fixtures through the public analyzer output.
-- **Rule**: Nuxt frontend area evidence is grouped by owner path and scored once per signal type: `nuxt.config.*`, `app.vue`/`app/app.vue`, Vue page/layout files, weaker script pages and server routes, and weak `pages` directory hints; Nuxt areas emit only from config or Nuxt app-entry proof.
+- **Rule**: Nuxt frontend area evidence is grouped by owner path (resolved through `resolve-unit-root-owner`, anchored on `nuxt.config.*`) and scored once per signal type: `nuxt.config.*`, `app.vue`/`app/app.vue`, Vue page/layout files, weaker script pages and server routes, and weak `pages` directory hints; Nuxt areas emit only from config or Nuxt app-entry proof.
 - **Rule**: Nuxt detector confidence coverage uses realistic Nuxt 4 app-directory, Nuxt 3 root-directory, config-only, monorepo owner-isolation, same-owner Vue fallback-interference, and weak-hint fixtures through the public analyzer output.
 - **Rule**: Vue frontend area evidence is grouped by owner path and scored once per signal type: `src/App.vue`, `src/main.*`, Vue Router files, Vue view/page components, Vue CLI config, and Vite config support; Vue areas emit only from root app component combinations and skip owners with stronger same-owner Nuxt proof.
 - **Rule**: Vue detector confidence coverage uses realistic Vite Vue, Vue Router, file-based Vue Router, Vue CLI, monorepo owner-isolation, same-owner Nuxt fallback-interference, and weak-hint fixtures through the public analyzer output.
@@ -280,10 +280,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - **Rule**: Standalone Svelte detector confidence coverage uses current Vite JavaScript/TypeScript, legacy Rollup, structured component, SvelteKit interference, monorepo owner-isolation, technology metadata, and weak-hint fixtures through the public analyzer output.
 - **Rule**: Astro frontend area evidence is grouped by owner path and scored once per signal type: `astro.config.*`, strong `src/pages/*.astro` page files, weak `src/pages/*.{md,mdx,html}` content page hints, endpoint files, support `src/layouts/*.astro`/`src/components/*.astro`, and weak `src/pages` hints; Astro areas emit only from config or `.astro` page proof.
 - **Rule**: Astro detector confidence coverage uses realistic content-site, endpoint/content-rich, config-only, monorepo owner-isolation, and weak-hint fixtures through the public analyzer output.
-- **Rule**: Test suite detected-area rules are dispatched from `detected-area-rules/test/test-area-rules.ts`, run last after containerization. Only the Jest detector is implemented; Vitest, Cypress, Mocha, and Playwright detectors (`detected-area-rules/test/vitest-test-area-rules.ts`, `cypress-test-area-rules.ts`, `mocha-test-area-rules.ts`, `playwright-test-area-rules.ts`) are wired into dispatch as empty stub functions that never add candidates.
-- **Rule**: Jest evidence is grouped by owner (the generic `ownerPathForApplicationArea` resolver) and scored once per signal type across `jest.config.*`, `jest[.-]setup.*`, `setupTests.*`, `__tests__`, `__mocks__`, and `__snapshots__` directories, and `*.test.*`/`*.spec.*` files.
-- **Rule**: Jest output emits `Test suite` with primary technology `Jest`. `jest.config.*` unlocks emission alone; every other signal is shared with at least one other test runner (Vitest, AVA, or CRA-with-Vitest reuse `__tests__`, `*.test.*`, and `setupTests.*`; Vitest also mirrors `__snapshots__`) and cannot unlock alone. A named `jest[.-]setup.*` file unlocks only alongside other test evidence, and `__mocks__` plus `__snapshots__` together unlock as a Jest-specific pairing.
-- **Rule**: Emission gating for Vitest, Cypress, Mocha, and Playwright is not implemented yet; their stub detectors exist only so `addTestAreas` has a stable dispatch surface to fill in.
+- **Rule**: There is no `Test suite` detected-area detector. The `detected-area-rules/test/` modules (Jest implemented; Vitest, Cypress, Mocha, Playwright stubs) and their `addTestAreas` dispatch were removed; see the changelog. `'Test suite'` remains in the `DetectedAreaName` union and the priority orderings but is never emitted.
 - **Rule**: The temporary analyze endpoint can keep returning summaries while later pipeline stages consume the full internal analyzer result.
 
 ---
@@ -307,7 +304,7 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Structure-inferred stack detector implemented
 - [x] Structure-inferred language detector implemented (`summary.detectedLanguages`)
 - [x] Root dependency-manifest detector implemented (`summary.rootManifests`)
-- [x] Focused tests added for current detection behavior
+- [ ] End-to-end analyzer tests (`project-structure-analyzer.test.ts` deleted 2026-09-03; only candidate-merge and `resolve-unit-root-owner` unit coverage remain)
 - [x] Detected areas builder
 - [x] Backend detector module scaffold
 - [x] NestJS backend detector path rules
@@ -326,13 +323,10 @@ apps/backend/src/services/github-analysis/project-structure/
 - [x] Shared package detector path rules
 - [x] Docker containerization detector path rules
 - [x] Podman/OCI containerization detector path rules (gate implemented; owner resolution now uses the generic `ownerPathForApplicationArea` resolver, see 2026-08-24 changelog entry)
-- [x] Jest test suite detector path rules
-- [ ] Vitest test suite detector path rules (dispatched stub only)
-- [ ] Cypress test suite detector path rules (dispatched stub only)
-- [ ] Mocha test suite detector path rules (dispatched stub only)
-- [ ] Playwright test suite detector path rules (dispatched stub only)
 - [ ] Generic backend fallback path rules
 - [x] Declarative area-rule engine for framework detectors (23 detectors migrated across five waves with gate, nested `and`/`or` condition nodes, competing-proof, shared-candidate-map veto, and dynamic related-tech support; only ASP.NET Core remains permanently hand-written, see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries)
+- [x] Per-framework owner adapters for the declarative engine (`ownerAdapter` param, anchor-signal two-pass, `resolveUnitRootOwner` wired into Next.js and Nuxt)
+- [ ] ~~Test suite detectors (Jest / Vitest / Cypress / Mocha / Playwright)~~ removed; see changelog
 - [ ] Architecture signals builder
 - [ ] Maturity signals builder
 - [ ] Candidate files builder
@@ -348,8 +342,9 @@ apps/backend/src/services/github-analysis/project-structure/
 | Path-based rules misclassify unusual repo layouts | Use scoring, return `unknown` for weak evidence, and later compare against dependency/config evidence. |
 | `inferredStack` is mistaken for confirmed stack   | Keep the field name explicit and document that dependency/config analysis owns final stack confidence. |
 | Weak repos produce bad resume claims              | Feed gaps, limitations, and improvement suggestions into user-facing feedback before final synthesis.  |
-| Consolidated generic owner resolver (2026-08-24) is less precise than the removed per-technology resolvers, so schema/containerization areas may now group under a broader application owner than before | Revisit `project-structure-path-utils.ts` if repository evidence shows the generic resolver misattributing schema or containerization ownership; `project-structure-analyzer.test.ts` fixtures asserting the old precise owner paths were not re-verified against this change. |
+| Consolidated generic owner resolver (2026-08-24) is less precise than the removed per-technology resolvers, so schema/containerization areas may now group under a broader application owner than before | Revisit `project-structure-path-utils.ts` if repository evidence shows the generic resolver misattributing schema or containerization ownership. |
 | ASP.NET Core cannot be expressed in the declarative schema as it exists today -- its per-entry exclusion predicate (treating `wwwroot/appsettings*.json` as client config rather than server proof) is unsupported | Keep ASP.NET Core hand-written; only extend `applyDeclarativeAreaDetector` if a concrete need arises, see the 2026-08-27, 2026-08-28, and 2026-08-29 changelog entries. |
+| `project-structure-analyzer.test.ts` was deleted, removing the end-to-end coverage that asserted `(area, owner)` output across detectors; only `project-structure-detected-area-candidates.ts`, `project-structure-path-utils.ts` (currently an empty stub), and the new `resolve-unit-root-owner.test.ts` retain unit coverage | Rebuild analyzer-level fixtures per detector before further behavior changes; `resolve-unit-root-owner` two-pass owner resolution is unit-covered but has no analyzer-output fixture. |
 
 ---
 

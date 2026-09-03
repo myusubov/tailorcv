@@ -35,7 +35,6 @@ A Dockerfile, Compose file, or Docker Bake file independently unlocks Docker `Co
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`
-- `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`
 - [Dockerfile overview](https://docs.docker.com/build/concepts/dockerfile/)
 - [Compose file reference](https://docs.docker.com/reference/compose-file/)
 - [Docker Bake reference](https://docs.docker.com/build/bake/reference/)

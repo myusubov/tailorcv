@@ -46,6 +46,5 @@ Core `.container`, `.pod`, `.kube`, and `.build` signals score `3`; `.image` sco
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`
-- `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`
 - [Podman Quadlet unit documentation](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)
 - [Podman build documentation](https://docs.podman.io/en/stable/markdown/podman-build.1.html)
