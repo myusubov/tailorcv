@@ -6,6 +6,32 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-09-03
+
+### Per-Framework Owner Adapters via Anchor Signals and a Two-Pass Engine
+
+- **Decision:** Reintroduce per-framework owner resolution as a bounded, pluggable `ownerAdapter` on `applyDeclarativeAreaDetector`, distinct from the arbitrary per-technology resolver functions removed on 2026-08-24. Detection (does framework X exist) and owner resolution (where is its root) stay separate concerns; the generic `ownerPathForApplicationArea` remains the default and the fallback.
+- **Problem:** Next.js and Nuxt evidence spread across one unit (`next.config.ts`, `app/page.tsx`, `pages/_app.tsx`) resolved every signal through the generic resolver independently, so anchor evidence and nested convention files could land on different owners (`apps/web` vs `.`) and fragment one app into multiple `Frontend app` candidates. The generic resolver has no way to know a framework's config file pins the unit root.
+- **Solution:**
+  1. Added `isAnchorSignal?: boolean` to `EntrySchema` and an optional `ownerAdapter?: (args: OwnerAdapterArgs) => string` to `ApplyDeclarativeAreaDetectorParams`; `OwnerAdapterArgs` carries `path`, `isAnchorSignal`, and a `ReadonlySet<string>` `anchorOwners`.
+  2. Made `applyDeclarativeAreaDetector` evaluate anchor schemas first (`orderedSchemas`) when an adapter is set, and wrapped the adapter in the `resolveOwnerPath` callback so each anchor signal's resolved owner is collected into a run-scoped `anchorOwners` set before any non-anchor signal resolves against it (two-pass).
+  3. Added `detected-area-rules/owner-adapters/` with `resolve-unit-root-owner.ts` and an `index.ts` barrel. `resolveUnitRootOwner`: a path with no directory segment returns `.`; an anchor signal returns the directory holding the config file; a non-anchor signal returns the longest `anchorOwners` entry that encloses the path (segment-boundary match, longest wins for nested apps), otherwise `ownerPathForApplicationArea`.
+  4. Wired `ownerAdapter: resolveUnitRootOwner` plus `isAnchorSignal: true` (on `next-config` / `nuxt-config`) into the Next.js and Nuxt detectors.
+  5. Added `resolve-unit-root-owner.test.ts` (9 cases) covering every branch, both halves of the enclosure predicate, the length-guard/anchor ordering, and the repository-root anchor not greedily claiming unenclosed paths.
+- **Affected files:** `detected-area-rules/declarative-area-rule-engine.ts`, `detected-area-rules/owner-adapters/index.ts` (new), `detected-area-rules/owner-adapters/resolve-unit-root-owner.ts` (new), `detected-area-rules/owner-adapters/resolve-unit-root-owner.test.ts` (new), `detected-area-rules/frontend/next-frontend-area-rules.ts`, `detected-area-rules/frontend/nuxt-frontend-area-rules.ts`, this README and changelog.
+- **Outcome:** Next.js and Nuxt evidence for one unit now groups under a single owner anchored on the config file; every other detector is unchanged and still uses the generic resolver. No analyzer-output fixture exercises the two-pass yet (see Risks). Typecheck/lint/tests were not run as part of this change.
+
+### Test-Suite Detection and the Analyzer End-to-End Test Removed
+
+- **Problem:** Two pieces of analyzer code were unreviewed AI-authored scaffolding the maintainer chose not to carry. The `Test suite` category was mostly unimplemented -- only the Jest detector emitted candidates; the Vitest, Cypress, Mocha, and Playwright modules were empty stubs wired into dispatch as placeholders (see [Test Suite Detected-Area Category](#test-suite-detected-area-category-jest-implemented-other-runners-scaffolded)). `project-structure-analyzer.test.ts` (~7,300 lines) was the domain's only end-to-end test, asserting `(area, owner)` output for every detector from hand-built tree fixtures.
+- **Solution:**
+  1. Deleted `detected-area-rules/test/` (`test-area-rules.ts`, `jest-test-area-rules.ts`, `vitest-test-area-rules.ts`, `cypress-test-area-rules.ts`, `mocha-test-area-rules.ts`, `playwright-test-area-rules.ts`).
+  2. Removed the `addTestAreas` import and call from `project-structure-detected-area-rules.ts`; `applyDetectedAreaRules` now ends after containerization. Jest was a declarative detector, so this drops the declarative detector count from 23 to 22.
+  3. Left `'Test suite'` in the `DetectedAreaName` union and the three priority orderings in `project-structure-detected-areas.ts`, and `TestDetectedAreaTechnology` in `project-structure-analyzer.types.ts`, as now-unused type members for a follow-up cleanup.
+  4. Deleted `project-structure-analyzer.test.ts`. Remaining automated coverage is `project-structure-detected-area-candidates.test.ts` (candidate merge / inferred-technology contract) and the new `resolve-unit-root-owner.test.ts`; `project-structure-path-utils.test.ts` is an empty stub.
+- **Affected files:** `detected-area-rules/test/*` (deleted), `project-structure-detected-area-rules.ts`, `project-structure-analyzer.test.ts` (deleted), this README and changelog.
+- **Outcome:** The analyzer no longer emits `Test suite` areas and has no end-to-end coverage; per-detector analyzer fixtures need rebuilding before further behavior changes (see Risks). Dead `'Test suite'` / `TestDetectedAreaTechnology` type members remain. Typecheck/lint/tests were not run as part of this change.
+
 ## 2026-08-29
 
 ### Summary Gains Structure-Inferred Languages and Root Manifests
