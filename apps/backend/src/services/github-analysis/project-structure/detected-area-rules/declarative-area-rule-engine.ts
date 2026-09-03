@@ -78,7 +78,7 @@ interface ApplyDeclarativeAreaDetectorParams<
  * empty node matches. `and` and `or` recurse, allowing arbitrarily nested
  * AND/OR shape checks (such as ANDing two independent `hasOneOf` groups).
  */
-function evaluateCondition<Signal extends string>({
+export function evaluateCondition<Signal extends string>({
   signals,
   conditions,
 }: {
