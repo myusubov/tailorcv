@@ -7,10 +7,10 @@ import {
   type ListItem,
 } from './proposal-fields';
 
-export function ProposalContent({ 
-  proposal, 
-  originalData 
-}: { 
+export function ProposalContent({
+  proposal,
+  originalData,
+}: {
   proposal: Partial<BaseResumeData>;
   originalData?: BaseResumeData;
 }) {
@@ -43,13 +43,15 @@ export function ProposalContent({
         }
 
         if (
-          (key === 'experiences' || key === 'projects' || key === 'education') &&
+          (key === 'experiences' ||
+            key === 'projects' ||
+            key === 'education') &&
           Array.isArray(value)
         ) {
           return (
-            <ListProposal 
-              key={key} 
-              label={key} 
+            <ListProposal
+              key={key}
+              label={key}
               items={value as ListItem[]}
               originalItems={originalValue as ListItem[]}
             />
@@ -58,10 +60,10 @@ export function ProposalContent({
 
         if (typeof value === 'string') {
           return (
-            <TextProposal 
-              key={key} 
-              label={key} 
-              text={value} 
+            <TextProposal
+              key={key}
+              label={key}
+              text={value}
               originalText={originalValue as string}
             />
           );

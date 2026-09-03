@@ -39,7 +39,8 @@ export async function streamChatResponse(
 
   // 1. Determine Model based on Intent
   const intent = await classifyIntent(input);
-  const model = intent === 'complex' || intent === 'edit' ? 'gpt-4o' : 'gpt-4o-mini';
+  const model =
+    intent === 'complex' || intent === 'edit' ? 'gpt-4o' : 'gpt-4o-mini';
 
   logger.info({ intent, model }, 'AI Chat model selection');
 
@@ -140,9 +141,11 @@ export async function generateConversationTitle(
 
     return title;
   } catch (error) {
-    logger.error({ err: error, input }, 'Failed to generate conversation title');
+    logger.error(
+      { err: error, input },
+      'Failed to generate conversation title',
+    );
     // Fallback to slice
     return input.slice(0, 50);
   }
-
 }

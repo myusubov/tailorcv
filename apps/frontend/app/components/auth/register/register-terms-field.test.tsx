@@ -96,9 +96,8 @@ describe('RegisterTermsField', () => {
       'href',
       '#',
     );
-    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute(
-      'href',
-      '#',
-    );
+    expect(
+      screen.getByRole('link', { name: 'Privacy Policy' }),
+    ).toHaveAttribute('href', '#');
   });
 });

@@ -33,7 +33,10 @@ export const getConversations = defineGet<ConversationListItem[]>({
 /**
  * Fetches a single conversation with details.
  */
-export const getConversationDetails = defineGet<{ id: string }, ConversationDetails>({
+export const getConversationDetails = defineGet<
+  { id: string },
+  ConversationDetails
+>({
   path: ({ id }) => `ai/chat/conversations/${id}`,
   keyPrefix: 'ai-conversation-details',
   dynamicParts: ({ id }) => [id],

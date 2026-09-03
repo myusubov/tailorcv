@@ -71,7 +71,7 @@ export function GitHubRepoSelectionView({
   };
 
   return (
-    <div className="flex min-h-dvh max-h-dvh flex-col justify-center py-8">
+    <div className="flex max-h-dvh min-h-dvh flex-col justify-center py-8">
       <motion.div
         className="mx-auto flex min-h-0 w-full max-w-3xl flex-col overflow-hidden"
         initial={{ opacity: 0, y: 20 }}

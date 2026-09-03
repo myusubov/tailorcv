@@ -68,7 +68,7 @@ export function RegistrationVerificationView({
                   pattern="^[0-9]*$"
                   inputMode="numeric"
                   className="justify-center"
-                  variant='secondary'
+                  variant="secondary"
                 >
                   <InputOTP.Group>
                     <InputOTP.Slot index={0} />

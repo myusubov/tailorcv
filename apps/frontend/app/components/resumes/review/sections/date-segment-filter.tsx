@@ -30,6 +30,5 @@ interface DateSegmentFilterProps {
  * </DateField>
  */
 export function DateSegmentFilter({ segment }: DateSegmentFilterProps) {
-
   return <DateField.Segment segment={segment} />;
 }

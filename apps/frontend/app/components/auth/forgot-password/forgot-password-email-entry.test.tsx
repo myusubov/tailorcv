@@ -4,9 +4,10 @@ import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/link', () => ({
-  default: ({ children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a {...props}>{children}</a>
-  ),
+  default: ({
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a>,
 }));
 
 vi.mock('framer-motion', () => ({

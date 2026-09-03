@@ -136,8 +136,7 @@ export function ChatInputArea({
                     onPress={stopResponse}
                     aria-label="Stop generating"
                   >
-                    <motion.div
-                    >
+                    <motion.div>
                       <Icon icon="solar:stop-circle-bold" width={20} />
                     </motion.div>
                   </Button>

@@ -7,7 +7,9 @@ export default function RegisterForm() {
   const registerFlow = useRegisterFlow();
 
   if (registerFlow.mode === 'verification') {
-    return <RegistrationVerificationView {...registerFlow.verificationViewProps} />;
+    return (
+      <RegistrationVerificationView {...registerFlow.verificationViewProps} />
+    );
   }
 
   return <RegisterFormView {...registerFlow.formViewProps} />;

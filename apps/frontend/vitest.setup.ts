@@ -5,12 +5,13 @@ import { vi } from 'vitest';
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, className, ...props }: any) => 
+    div: ({ children, className, ...props }: any) =>
       React.createElement('div', { className, ...props }, children),
-    section: ({ children, className, ...props }: any) => 
+    section: ({ children, className, ...props }: any) =>
       React.createElement('section', { className, ...props }, children),
   },
-  AnimatePresence: ({ children }: any) => React.createElement(React.Fragment, null, children),
+  AnimatePresence: ({ children }: any) =>
+    React.createElement(React.Fragment, null, children),
 }));
 
 // Mock ResizeObserver which is often missing in JSDOM
@@ -23,7 +24,7 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,

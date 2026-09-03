@@ -8,12 +8,12 @@
 
 ### 1.1 Design Pillars
 
-| Pillar | Description |
-| ------ | ----------- |
-| **No prebuilt Clerk UI** | All auth flows are custom — no `<SignIn />` or `<SignUp />` components. Full control over UX. |
-| **Controller/View split** | Route files stay thin, flow hooks own Clerk orchestration, and view files are render-only. |
-| **v7 Future Resource API** | Uses `SignInFutureResource` / `SignUpFutureResource` from `useSignIn()` / `useSignUp()` — not the legacy v6 resource types. |
-| **`decorateUrl` everywhere** | All `finalize()` and `setActive()` calls use the `navigate` callback with `decorateUrl` for Safari ITP cookie refresh. |
+| Pillar                       | Description                                                                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **No prebuilt Clerk UI**     | All auth flows are custom — no `<SignIn />` or `<SignUp />` components. Full control over UX.                               |
+| **Controller/View split**    | Route files stay thin, flow hooks own Clerk orchestration, and view files are render-only.                                  |
+| **v7 Future Resource API**   | Uses `SignInFutureResource` / `SignUpFutureResource` from `useSignIn()` / `useSignUp()` — not the legacy v6 resource types. |
+| **`decorateUrl` everywhere** | All `finalize()` and `setActive()` calls use the `navigate` callback with `decorateUrl` for Safari ITP cookie refresh.      |
 
 ### 1.2 Key Decisions
 
@@ -49,11 +49,11 @@ Auth smoke / real auth testing  -> testing/README.md
 
 ## 3. Key Files & Entry Points
 
-| File | Purpose | When to Read |
-| ---- | ------- | ------------ |
-| `docs/architecture/auth/flows/README.md` | Main doc for login, register, forgot-password, and shared auth-controller patterns | Any non-SSO auth UI or flow change |
-| `docs/architecture/auth/sso/README.md` | Main doc for OAuth start/callback/continuation behavior | Any Google/Apple auth or SSO routing change |
-| `docs/architecture/auth/testing/README.md` | Main doc for auth browser automation, Gmail polling, and test env setup | Any auth test or E2E change |
+| File                                       | Purpose                                                                            | When to Read                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------- |
+| `docs/architecture/auth/flows/README.md`   | Main doc for login, register, forgot-password, and shared auth-controller patterns | Any non-SSO auth UI or flow change          |
+| `docs/architecture/auth/sso/README.md`     | Main doc for OAuth start/callback/continuation behavior                            | Any Google/Apple auth or SSO routing change |
+| `docs/architecture/auth/testing/README.md` | Main doc for auth browser automation, Gmail polling, and test env setup            | Any auth test or E2E change                 |
 
 ---
 
@@ -105,12 +105,12 @@ docs/architecture/
 
 ## 7. Integration Points
 
-| Domain | Relationship | Key Interface |
-| ------ | ------------ | ------------- |
-| Middleware (`proxy.ts`) | Auth determines public/protected route access | `isPublicRoute`, `isAuthRoute`, `isProtectedRoute` matchers |
-| Onboarding | After sign-up, user is sent to onboarding | `config.auth.afterSignUpUrl` |
-| Dashboard | After sign-in, user is sent to dashboard | `config.auth.afterSignInUrl` |
-| Frontend E2E | Playwright exercises auth pages and route guards in a real browser | `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/` |
+| Domain                  | Relationship                                                       | Key Interface                                               |
+| ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Middleware (`proxy.ts`) | Auth determines public/protected route access                      | `isPublicRoute`, `isAuthRoute`, `isProtectedRoute` matchers |
+| Onboarding              | After sign-up, user is sent to onboarding                          | `config.auth.afterSignUpUrl`                                |
+| Dashboard               | After sign-in, user is sent to dashboard                           | `config.auth.afterSignInUrl`                                |
+| Frontend E2E            | Playwright exercises auth pages and route guards in a real browser | `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/`  |
 
 ---
 
@@ -140,11 +140,11 @@ docs/architecture/
 
 ## 9. Risks & Mitigations
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| Auth guidance grows too large to retrieve reliably | Keep flows, SSO, and testing in separate sub-docs with a stable hub |
-| OAuth behavior and password flows drift apart in docs | Link all auth entry points back to this hub and update cross-doc references together |
-| Test helper history overwhelms implementation guidance | Keep test setup and E2E history isolated in `testing/README.md` |
+| Risk                                                   | Mitigation                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Auth guidance grows too large to retrieve reliably     | Keep flows, SSO, and testing in separate sub-docs with a stable hub                  |
+| OAuth behavior and password flows drift apart in docs  | Link all auth entry points back to this hub and update cross-doc references together |
+| Test helper history overwhelms implementation guidance | Keep test setup and E2E history isolated in `testing/README.md`                      |
 
 ---
 

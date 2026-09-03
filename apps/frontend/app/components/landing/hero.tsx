@@ -2,13 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  Play,
-  Sparkles,
-  FileText,
-  Download,
-} from 'lucide-react';
+import { ArrowRight, Play, Sparkles, FileText, Download } from 'lucide-react';
 import { GithubIcon } from '../icons/brand-icons';
 
 // Animation variants

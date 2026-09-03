@@ -49,11 +49,7 @@ export function getMissingLoginE2EEnvKeys() {
 /**
  * Detects whether an email address uses Clerk's fixed-OTP test email convention.
  */
-export function isClerkTestEmail({
-  emailAddress,
-}: {
-  emailAddress: string;
-}) {
+export function isClerkTestEmail({ emailAddress }: { emailAddress: string }) {
   return emailAddress.toLowerCase().includes(CLERK_TEST_EMAIL_MARKER);
 }
 

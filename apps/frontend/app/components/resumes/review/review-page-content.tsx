@@ -21,8 +21,16 @@ import type { BaseResumeData } from 'shared';
  */
 export function ReviewPageContent() {
   const { control } = useFormContext<BaseResumeData>();
-  const { applyUpdate, isSaving, lastSaved, undo, redo, canUndo, canRedo, isDirty } =
-    useResumeForm();
+  const {
+    applyUpdate,
+    isSaving,
+    lastSaved,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    isDirty,
+  } = useResumeForm();
   const { setCurrentResume, registerApplyUpdate } = useAIChat();
 
   // Use useWatch for reliable updates to the feedback panel and preview
@@ -97,7 +105,7 @@ export function ReviewPageContent() {
                     <p className="text-xs font-medium">Undo AI change</p>
                   </Tooltip.Content>
                 </Tooltip>
-                
+
                 <Tooltip delay={0}>
                   <Tooltip.Trigger>
                     <Button

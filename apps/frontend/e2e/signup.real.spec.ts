@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { getClerkTestVerificationCode, generateSignUpTestEmail } from './helpers/env';
+import {
+  getClerkTestVerificationCode,
+  generateSignUpTestEmail,
+} from './helpers/env';
 import { fillOtpCode } from './helpers/auth/otp';
 
 test.describe.serial('Real Clerk sign-up flow', () => {
@@ -22,7 +25,9 @@ test.describe.serial('Real Clerk sign-up flow', () => {
     ).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
-    await expect(page.getByLabel('Confirm password', { exact: true })).toBeVisible();
+    await expect(
+      page.getByLabel('Confirm password', { exact: true }),
+    ).toBeVisible();
     const emailInput = page.getByLabel('Email');
     const passwordInput = page.getByLabel('Password', { exact: true });
     const confirmPasswordInput = page.getByLabel('Confirm password', {

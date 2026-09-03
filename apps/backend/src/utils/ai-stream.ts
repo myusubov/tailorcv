@@ -61,7 +61,9 @@ function parseToolCallArguments(jsonString: string): any {
   } catch (err) {
     // If simple closure fails, it might be cut off in a key or strictly invalid syntax
     // fallback to original behavior (or just fail)
-    throw new Error('Unable to parse tool call arguments even with auto-closure');
+    throw new Error(
+      'Unable to parse tool call arguments even with auto-closure',
+    );
   }
 }
 

@@ -93,10 +93,10 @@ export function ReviewAccordion({
   onExpandedChange,
 }: ReviewAccordionProps) {
   const { control } = useFormContext<BaseResumeData>();
-  
+
   // Watch all data for analysis, but inside this component
   const data = useWatch({ control }) as BaseResumeData;
-  
+
   const { items: analysisItems } = useResumeAnalysis(data);
 
   // Map section names to their analysis status

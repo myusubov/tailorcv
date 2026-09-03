@@ -150,7 +150,9 @@ export const baseResumeDataSchema = z.object({
       firstName: z.string().trim().min(1, 'First name is required'),
       lastName: z.string().trim().min(1, 'Last name is required'),
       headline: optionalStringSchema('Headline cannot be empty'),
-      email: z.string().email({ message: 'Please enter a valid email address' }),
+      email: z
+        .string()
+        .email({ message: 'Please enter a valid email address' }),
       phone: optionalStringSchema('Phone number cannot be empty'),
       location: optionalStringSchema('Location cannot be empty'),
       websiteUrl: z

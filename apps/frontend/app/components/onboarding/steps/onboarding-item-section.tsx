@@ -49,9 +49,7 @@ export function OnboardingItemSection({
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-foreground text-lg font-semibold">{title}</h3>
         {count > 0 && (
-          <span className="text-muted text-sm font-medium">
-            {countLabel}
-          </span>
+          <span className="text-muted text-sm font-medium">{countLabel}</span>
         )}
       </div>
 

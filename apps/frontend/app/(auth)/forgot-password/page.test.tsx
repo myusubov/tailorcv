@@ -3,9 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 const mockUseForgotPasswordFlow = vi.fn();
 
-vi.mock('@/app/components/auth/forgot-password/use-forgot-password-flow', () => ({
-  useForgotPasswordFlow: () => mockUseForgotPasswordFlow(),
-}));
+vi.mock(
+  '@/app/components/auth/forgot-password/use-forgot-password-flow',
+  () => ({
+    useForgotPasswordFlow: () => mockUseForgotPasswordFlow(),
+  }),
+);
 
 vi.mock('@/app/components/auth/forgot-password', () => ({
   ForgotPasswordEmailEntry: ({ email }: { email?: string }) => (

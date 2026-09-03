@@ -25,9 +25,7 @@ export function GitHubRepoSelectionToolbar({
 }: GitHubRepoSelectionToolbarProps) {
   const isMaxSelected = selectedCount === maxRepos;
   const hasSelection = selectedCount > 0;
-  const selectedCountClassName = isMaxSelected
-    ? 'text-warning'
-    : 'text-muted';
+  const selectedCountClassName = isMaxSelected ? 'text-warning' : 'text-muted';
 
   const handleEscapeKey = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape') {
@@ -45,15 +43,19 @@ export function GitHubRepoSelectionToolbar({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        <SearchField name="repository-search"
-        >
+        <SearchField name="repository-search">
           <Label className="sr-only">Search repositories</Label>
 
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input onKeyDown={(event) => {
-              handleEscapeKey(event);
-            }} value={searchQuery} onChange={(event) => onSearchChange(event.target.value)} placeholder="Search..." />
+            <SearchField.Input
+              onKeyDown={(event) => {
+                handleEscapeKey(event);
+              }}
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Search..."
+            />
             <SearchField.ClearButton onPress={() => onSearchChange('')} />
           </SearchField.Group>
         </SearchField>

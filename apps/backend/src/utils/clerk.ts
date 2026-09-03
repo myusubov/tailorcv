@@ -30,7 +30,10 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
         where: { clerkUserId },
       });
     } catch (error) {
-      logger.error({ clerkUserId, error }, 'Clerk webhook: failed to delete user');
+      logger.error(
+        { clerkUserId, error },
+        'Clerk webhook: failed to delete user',
+      );
     }
     return;
   }
@@ -54,7 +57,10 @@ export const handleClerkUserWebhook = async (evt: WebhookEvent) => {
     });
     logger.info({ clerkUserId }, 'Clerk webhook: upserted user');
   } catch (error) {
-    logger.error({ clerkUserId, error }, 'Clerk webhook: failed to upsert user');
+    logger.error(
+      { clerkUserId, error },
+      'Clerk webhook: failed to upsert user',
+    );
     throw error;
   }
 };

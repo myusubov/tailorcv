@@ -16,7 +16,7 @@ export function GitHubConnectView({
   onBack,
 }: GitHubConnectViewProps) {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center py-8 px-4 sm:px-6">
+    <div className="flex min-h-svh flex-col items-center justify-center px-4 py-8 sm:px-6">
       <motion.div
         className="w-full max-w-2xl"
         initial={{ opacity: 0, y: 30 }}
@@ -32,7 +32,11 @@ export function GitHubConnectView({
             transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
           >
             <div className="bg-surface-secondary flex size-16 items-center justify-center rounded-2xl shadow-lg">
-              <Icon aria-hidden="true" icon="mdi:github" className="text-foreground size-9" />
+              <Icon
+                aria-hidden="true"
+                icon="mdi:github"
+                className="text-foreground size-9"
+              />
             </div>
           </motion.div>
 
@@ -47,7 +51,7 @@ export function GitHubConnectView({
           </motion.div>
 
           <motion.h1
-            className="text-foreground text-balance text-3xl font-bold tracking-tight sm:text-4xl"
+            className="text-foreground text-3xl font-bold tracking-tight text-balance sm:text-4xl"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -145,7 +149,6 @@ export function GitHubConnectView({
             variant="primary"
             onPress={onConnect}
             className="w-full sm:w-auto"
-
           >
             <Icon
               icon={

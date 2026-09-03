@@ -87,7 +87,6 @@ async function backendFetch(
     requestHeaders.set('Accept', 'application/json');
   }
 
-
   const isFormData = body instanceof FormData;
   if (body !== undefined && !isFormData) {
     requestHeaders.set('Content-Type', 'application/json');
@@ -95,7 +94,8 @@ async function backendFetch(
 
   if (token) requestHeaders.set('Authorization', `Bearer ${token}`);
 
-  const requestBody = body === undefined ? undefined : isFormData ? body : JSON.stringify(body);
+  const requestBody =
+    body === undefined ? undefined : isFormData ? body : JSON.stringify(body);
 
   return fetch(url, {
     ...init,

@@ -61,7 +61,10 @@ const server = app.listen(PORT, () => {
 
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string) => {
-  logger.info({ signal }, 'Received shutdown signal, starting graceful shutdown...');
+  logger.info(
+    { signal },
+    'Received shutdown signal, starting graceful shutdown...',
+  );
 
   // Stop accepting new connections
   server.close(async (err) => {

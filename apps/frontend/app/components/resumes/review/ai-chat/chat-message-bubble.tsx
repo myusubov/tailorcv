@@ -132,9 +132,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
                     <code
                       className={cn(
                         'rounded px-1.5 py-0.5 font-mono text-xs font-semibold',
-                        isUser
-                          ? 'bg-white/20'
-                          : 'bg-default text-foreground',
+                        isUser ? 'bg-white/20' : 'bg-default text-foreground',
                       )}
                       {...props}
                     >

@@ -124,7 +124,10 @@ export function ResumeFormProvider({
    * Uses isSavingRef instead of isSaving in deps to keep a stable reference.
    */
   const saveNow = useCallback(async () => {
-    console.log({ isSavingRef: isSavingRef.current, isDirty: form.formState.isDirty })
+    console.log({
+      isSavingRef: isSavingRef.current,
+      isDirty: form.formState.isDirty,
+    });
     if (isSavingRef.current) return;
     // After onSuccess resets dirty state, this prevents the watch-triggered
     // callback from re-saving. For real changes (typing, append, remove),
@@ -132,7 +135,7 @@ export function ResumeFormProvider({
     if (!form.formState.isDirty) return;
 
     const isValid = await form.trigger();
-    console.log({ isValid, errors: form.formState.errors })
+    console.log({ isValid, errors: form.formState.errors });
     if (!isValid) {
       console.warn('[ResumeFormProvider] Save aborted: Form is invalid');
       return;

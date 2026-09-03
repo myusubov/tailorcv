@@ -61,7 +61,7 @@ export function ReviewPageSkeleton() {
 
         {/* Data Analysis Panel skeleton */}
         <motion.div
-          className="border-border mb-6 rounded-xl border bg-default-soft p-4 shadow"
+          className="border-border bg-default-soft mb-6 rounded-xl border p-4 shadow"
           variants={itemVariants}
         >
           <div className="mb-3 flex items-center justify-between">

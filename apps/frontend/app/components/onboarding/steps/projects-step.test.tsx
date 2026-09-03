@@ -143,11 +143,9 @@ vi.mock('@/app/components/projects/delete-project-modal', () => ({
 }));
 
 vi.mock('@/app/components/ui/reorderable-item', () => ({
-  ReorderableItem: ({
-    children,
-  }: {
-    children: ReactElement;
-  }): ReactElement => <div>{children}</div>,
+  ReorderableItem: ({ children }: { children: ReactElement }): ReactElement => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock('./project-item-content', () => ({

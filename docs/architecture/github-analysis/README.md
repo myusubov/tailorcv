@@ -47,11 +47,11 @@ GitHub repo IDs selected by user
 
 ## 3. Key Files & Entry Points
 
-| File                                                     | Purpose                                                                  | When to Read                              |
-| -------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------- |
+| File                                                            | Purpose                                                                  | When to Read                              |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------- |
 | `docs/architecture/github-analysis/pipeline/README.md`          | Endpoint, service, GitHub connection, and orchestration documentation    | GitHub route/service/request changes      |
 | `docs/architecture/github-analysis/project-structure/README.md` | Project structure analyzer contracts, modules, scoring rules, and status | Any analyzer summary/detected-area change |
-| `docs/architecture/github-analysis/changelog.md`         | Historical dev log for GitHub analysis decisions                         | Understanding why current rules exist     |
+| `docs/architecture/github-analysis/changelog.md`                | Historical dev log for GitHub analysis decisions                         | Understanding why current rules exist     |
 
 ---
 
@@ -99,11 +99,11 @@ docs/architecture/
 
 ## 7. Integration Points
 
-| Domain            | Relationship                                                                                                      | Key Interface                    |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Onboarding        | GitHub repo selection loads installation repositories and calls the temporary analyze endpoint, which currently returns an empty response. | `FetchGithubReposResponse` |
-| GitHub service    | Protected GitHub routes refresh a saved installation token before accessing installation repositories. | `GitHubConnection` |
-| Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps.            | `ProjectStructureAnalysisResult` |
+| Domain            | Relationship                                                                                                                               | Key Interface                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| Onboarding        | GitHub repo selection loads installation repositories and calls the temporary analyze endpoint, which currently returns an empty response. | `FetchGithubReposResponse`       |
+| GitHub service    | Protected GitHub routes refresh a saved installation token before accessing installation repositories.                                     | `GitHubConnection`               |
+| Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps.                                     | `ProjectStructureAnalysisResult` |
 
 ---
 

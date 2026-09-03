@@ -18,7 +18,6 @@ const ResumeReview = () => {
     isLoading,
   } = useBaseResumeQuery({ id }, { enabled: !!id });
 
-
   if (error?.status === 404) {
     notFound();
   }
@@ -35,4 +34,3 @@ const ResumeReview = () => {
 };
 
 export default ResumeReview;
-

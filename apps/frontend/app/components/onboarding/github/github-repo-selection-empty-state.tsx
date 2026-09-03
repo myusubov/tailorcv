@@ -12,9 +12,7 @@ export function GitHubRepoSelectionEmptyState() {
         icon="lucide:search-x"
         className="text-muted mx-auto mb-3 size-12"
       />
-      <p className="text-muted">
-        No repositories match your search.
-      </p>
+      <p className="text-muted">No repositories match your search.</p>
     </div>
   );
 }

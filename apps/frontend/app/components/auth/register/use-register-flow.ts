@@ -196,7 +196,8 @@ export function useRegisterFlow(): UseRegisterFlowResult {
         return;
       }
 
-      const { error: sendEmailError } = await signUp.verifications.sendEmailCode();
+      const { error: sendEmailError } =
+        await signUp.verifications.sendEmailCode();
 
       if (sendEmailError) {
         console.error(JSON.stringify(sendEmailError, null, 2));

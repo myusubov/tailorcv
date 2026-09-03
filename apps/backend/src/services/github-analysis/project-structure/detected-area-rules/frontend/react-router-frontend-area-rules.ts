@@ -79,7 +79,10 @@ export function addReactRouterFrontendAreas({
           or: [
             { has: 'react-router-config' },
             {
-              hasAllOf: ['react-router-root-route', 'react-router-routes-config'],
+              hasAllOf: [
+                'react-router-root-route',
+                'react-router-routes-config',
+              ],
             },
             {
               hasAllOf: ['react-router-root-route', 'react-router-file-route'],

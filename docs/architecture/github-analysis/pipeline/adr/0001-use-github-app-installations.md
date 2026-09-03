@@ -19,11 +19,11 @@ Initiate the installation flow with an opaque random state stored in Redis for f
 
 ## Considered Options
 
-| Option | Tradeoff |
-| ------ | -------- |
-| Persist broad user OAuth tokens | Simpler legacy flow, but grants broader access and does not model selected installations. |
-| Use GitHub App installations with renewable tokens | Requires app credentials, token refresh, and reconnection of legacy users, but scopes access to installed repositories. |
-| Generate an installation token for every request without persistence | Avoids storing a token, but adds avoidable GitHub API calls and does not provide a defined cached-token lifecycle. |
+| Option                                                               | Tradeoff                                                                                                                |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Persist broad user OAuth tokens                                      | Simpler legacy flow, but grants broader access and does not model selected installations.                               |
+| Use GitHub App installations with renewable tokens                   | Requires app credentials, token refresh, and reconnection of legacy users, but scopes access to installed repositories. |
+| Generate an installation token for every request without persistence | Avoids storing a token, but adds avoidable GitHub API calls and does not provide a defined cached-token lifecycle.      |
 
 ## Consequences
 

@@ -39,4 +39,3 @@ export async function fetchRepositoryTree({
 
   return (await response.json()) as GitHubTreeApiResponse;
 }
-

@@ -1,7 +1,4 @@
-import {
-  getClerkTestVerificationCode,
-  isClerkTestEmail,
-} from '../env';
+import { getClerkTestVerificationCode, isClerkTestEmail } from '../env';
 
 interface PollForEmailCodeArgs {
   emailAddress: string;

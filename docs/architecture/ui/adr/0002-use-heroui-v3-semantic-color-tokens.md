@@ -42,11 +42,11 @@ intentional inverse content. It does not introduce a feature-specific palette.
 
 ## Considered Alternatives
 
-| Option | Tradeoff |
-| ------ | -------- |
-| Retain compatibility aliases | Minimizes edits but preserves two competing theme vocabularies and prevents reliable v3 behavior. |
-| Create feature-specific color classes | Shortens component markup but hides semantic intent and duplicates the global token system. |
-| Adopt HeroUI v3 semantic tokens | Requires a coordinated migration but gives every consumer one theme-aware contract. |
+| Option                                | Tradeoff                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Retain compatibility aliases          | Minimizes edits but preserves two competing theme vocabularies and prevents reliable v3 behavior. |
+| Create feature-specific color classes | Shortens component markup but hides semantic intent and duplicates the global token system.       |
+| Adopt HeroUI v3 semantic tokens       | Requires a coordinated migration but gives every consumer one theme-aware contract.               |
 
 ## Consequences
 

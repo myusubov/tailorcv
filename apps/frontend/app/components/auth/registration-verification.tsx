@@ -27,5 +27,7 @@ export function RegistrationVerification({
     signUp,
   });
 
-  return <RegistrationVerificationView {...registrationVerificationFlow.viewProps} />;
+  return (
+    <RegistrationVerificationView {...registrationVerificationFlow.viewProps} />
+  );
 }

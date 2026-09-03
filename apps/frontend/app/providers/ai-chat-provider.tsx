@@ -72,7 +72,6 @@ interface AIChatContextType {
   toggleExpand: () => void;
   closeChat: () => void;
 
-
   // Stop response
   canStopResponse: boolean;
   stopResponse: () => void;
@@ -203,7 +202,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
       // 4. Handle internal state instantly
       if (conversationId === id) {
         setConversationId(null);
-
       }
 
       return { previous };
@@ -310,7 +308,6 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-
   /**
    * Can stop response if we're currently streaming
    */
@@ -358,7 +355,7 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
         currentDetailsKey,
         (old: ConversationDetails | undefined) => {
           if (!old) {
-          // Initialize new conversation structure
+            // Initialize new conversation structure
             return {
               id: activeConversationId!,
               userId: '', // Placeholder
@@ -510,7 +507,11 @@ export function AIChatProvider({ children }: { children: React.ReactNode }) {
                       ...old,
                       messages: old.messages.map((msg: ConversationMessage) =>
                         msg.id === assistantMsgId
-                          ? { ...msg, content: accumulatedContent, isThinking: false }
+                          ? {
+                              ...msg,
+                              content: accumulatedContent,
+                              isThinking: false,
+                            }
                           : msg,
                       ),
                     };

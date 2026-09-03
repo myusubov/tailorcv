@@ -59,7 +59,8 @@ export function addNuxtFrontendAreas({
       },
       {
         signalType: 'nuxt-server-route',
-        regex: /(^|\/)server\/(api|routes|middleware)\/(?:.*\/)?.+\.(js|mjs|ts)$/,
+        regex:
+          /(^|\/)server\/(api|routes|middleware)\/(?:.*\/)?.+\.(js|mjs|ts)$/,
         indexMethod: 'findEntriesByPathMatching',
       },
       {
@@ -75,6 +76,6 @@ export function addNuxtFrontendAreas({
         },
       },
     },
-    ownerAdapter: resolveUnitRootOwner
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

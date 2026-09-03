@@ -1,9 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import {
-  getLoginE2EEnv,
-  hasLoginE2EEnv,
-} from './helpers/env';
+import { getLoginE2EEnv, hasLoginE2EEnv } from './helpers/env';
 import { attemptRealLogin } from './helpers/auth/login-recovery';
 
 /**

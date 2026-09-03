@@ -65,7 +65,10 @@ const createCircuitBreakerPolicy = (name: string) => {
   });
 
   policy.onReset((data) => {
-    logger.info({ data, service: name }, 'Circuit breaker closed - service recovered');
+    logger.info(
+      { data, service: name },
+      'Circuit breaker closed - service recovered',
+    );
   });
 
   policy.onHalfOpen((data) => {
@@ -127,7 +130,10 @@ export async function executeWithPolicy<T>(
     return await policy.execute(fn);
   } catch (error: any) {
     if (context) {
-      logger.error({ err: error, context }, 'Resilience policy execution failed');
+      logger.error(
+        { err: error, context },
+        'Resilience policy execution failed',
+      );
       // Attach context to the error object so the global middleware can use it
       error.context = context;
     }

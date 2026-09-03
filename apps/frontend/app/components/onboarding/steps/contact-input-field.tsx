@@ -53,7 +53,7 @@ export function ContactInputField({
           <Label>{label}</Label>
           <Input
             {...field}
-            value={useEmptyFallback ? field.value || '' : field.value ?? ''}
+            value={useEmptyFallback ? field.value || '' : (field.value ?? '')}
             type={type}
             placeholder={placeholder}
           />
