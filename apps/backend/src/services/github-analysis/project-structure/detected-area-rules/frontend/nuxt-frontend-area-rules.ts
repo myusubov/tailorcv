@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const NUXT_FRONTEND_SIGNAL_SCORES = {
   'nuxt-config': 4,
@@ -33,6 +34,7 @@ export function addNuxtFrontendAreas({
         signalType: 'nuxt-config',
         regex: /^nuxt\.config\.(js|mjs|cjs|ts)$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'nuxt-app-entry',
@@ -73,5 +75,6 @@ export function addNuxtFrontendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner
   });
 }

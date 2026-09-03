@@ -25,6 +25,7 @@ export interface EntrySchema<Signal extends string> {
   signalType: Signal;
   regex: RegExp;
   indexMethod: IndexMethod;
+  isAnchorSignal?: boolean;
 }
 
 interface ConditionShape<Signal extends string> {
@@ -46,6 +47,12 @@ interface CompetingProofSchema {
   regex: RegExp;
 }
 
+interface OwnerAdapterArgs {
+  path: string;
+  isAnchorSignal: boolean;
+  anchorOwners: ReadonlySet<string>;
+}
+
 interface ApplyDeclarativeAreaDetectorParams<
   Signal extends string,
 > extends DetectedAreaRuleContext {
@@ -58,6 +65,7 @@ interface ApplyDeclarativeAreaDetectorParams<
   gateBlocker?: GateBlocker<Signal>;
   competingProofSchemas?: CompetingProofSchema[];
   checkForExistingCandidate?: boolean;
+  ownerAdapter?: (args: OwnerAdapterArgs) => string;
 }
 
 /**
@@ -151,6 +159,10 @@ function evaluateCondition<Signal extends string>({
  * stronger detector's existing claim for the same owner. It is checked
  * independently of `competingProofSchemas`, which vetoes from raw repository
  * file evidence rather than emitted-candidate state.
+ * When an `ownerAdapter` is given, signals are matched anchor-schemas-first:
+ * each anchor signal's resolved owner is collected into `anchorOwners`, so that
+ * set is complete before any non-anchor signal resolves against it (see
+ * `resolveUnitRootOwner`).
  */
 export function applyDeclarativeAreaDetector<Signal extends string>({
   detectedArea,
@@ -164,12 +176,22 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
   competingProofSchemas,
   dynamicRelatedTechMap,
   checkForExistingCandidate,
+  ownerAdapter,
 }: ApplyDeclarativeAreaDetectorParams<Signal>): void {
   const areaCandidateMap = createAreaRuleCandidateMap<Signal>();
+  const anchorOwners = new Set<string>();
+
   const competingProofEntries: RepoTreeEntry[] = [];
 
-  for (const entrySchema of entrySchemas) {
-    const { indexMethod, regex, signalType } = entrySchema;
+  // Anchor schemas first so `anchorOwners` is fully populated before any
+  // non-anchor signal is resolved against it (see `resolveUnitRootOwner`).
+  const orderedSchemas = [
+    ...entrySchemas.filter((entrySchema) => entrySchema.isAnchorSignal),
+    ...entrySchemas.filter((entrySchema) => !entrySchema.isAnchorSignal),
+  ];
+
+  for (const entrySchema of orderedSchemas) {
+    const { indexMethod, regex, signalType, isAnchorSignal } = entrySchema;
     const score = signalScores[signalType];
 
     if (score === undefined) {
@@ -186,6 +208,19 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
         signal: signalType,
         score,
         entry,
+        resolveOwnerPath: ownerAdapter
+          ? (path) => {
+              const owner = ownerAdapter({
+                path,
+                isAnchorSignal: isAnchorSignal ?? false,
+                anchorOwners,
+              });
+              if (isAnchorSignal) {
+                anchorOwners.add(owner);
+              }
+              return owner;
+            }
+          : undefined,
       });
     }
   }

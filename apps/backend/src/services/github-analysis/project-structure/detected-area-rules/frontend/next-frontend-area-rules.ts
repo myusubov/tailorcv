@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const NEXT_FRONTEND_SIGNAL_SCORES = {
   'next-config': 4,
@@ -32,6 +33,7 @@ export function addNextFrontendAreas({
         signalType: 'next-config',
         regex: /^next\.config\./,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'app-router-core',
@@ -69,5 +71,6 @@ export function addNextFrontendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }
