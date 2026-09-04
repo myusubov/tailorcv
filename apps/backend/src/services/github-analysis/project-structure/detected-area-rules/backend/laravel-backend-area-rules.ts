@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const LARAVEL_BACKEND_SIGNAL_SCORES = {
   'laravel-artisan-entry': 4,
@@ -26,6 +27,10 @@ type LaravelBackendSignal = keyof typeof LARAVEL_BACKEND_SIGNAL_SCORES;
 
 /**
  * Adds owner-scoped `Backend API` candidates from Laravel path evidence.
+ * Owners are resolved through `resolve-unit-root-owner` anchored on `artisan`
+ * (the Laravel project root), otherwise the generic resolver, so a Laravel app
+ * in a bare subdirectory and sibling Laravel apps in one repo each resolve to
+ * their own owner.
  * An owner passes the gate via any one of: artisan entry + bootstrap app;
  * bootstrap app/providers plus a service provider or route file; bootstrap
  * app + HTTP kernel plus a route-service provider or route file; or artisan
@@ -51,6 +56,7 @@ export function addLaravelBackendAreas({
         signalType: 'laravel-artisan-entry',
         regex: /^artisan$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'laravel-bootstrap-app',
@@ -180,5 +186,6 @@ export function addLaravelBackendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

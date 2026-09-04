@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const SQLALCHEMY_DATABASE_SIGNAL_SCORES = {
   'alembic-config-file': 3,
@@ -16,6 +17,17 @@ type SqlAlchemyDatabaseSignal = keyof typeof SQLALCHEMY_DATABASE_SIGNAL_SCORES;
  * Adds `Database schema` candidates from SQLAlchemy and Alembic path
  * evidence. Alembic is treated as migration support for SQLAlchemy-owned
  * database areas.
+ *
+ * Evidence is grouped by owner through `resolveUnitRootOwner`, anchored on the
+ * `alembic.ini` file that `alembic init` writes to the project root. A
+ * per-service `alembic.ini` in a non-`apps`/`packages` subdirectory, and
+ * sibling services each with their own `alembic.ini`, then resolve to their own
+ * owner instead of collapsing to the repository root. A single repository-root
+ * `alembic.ini` that fans out to several services via `version_locations`
+ * anchors the repository root, whose `.` owner does not claim the sub-service
+ * paths, so those still fall back to the generic resolver exactly as today.
+ * When no `alembic.ini` is committed, every signal falls back to the generic
+ * resolver and the env-plus-versions gate branch still applies.
  */
 export function addSqlAlchemyDatabaseAreas({
   candidates,
@@ -33,6 +45,7 @@ export function addSqlAlchemyDatabaseAreas({
         signalType: 'alembic-config-file',
         regex: /(^|\/)alembic\.ini$/,
         indexMethod: 'findEntriesByPathMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'alembic-env-file',
@@ -81,5 +94,6 @@ export function addSqlAlchemyDatabaseAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

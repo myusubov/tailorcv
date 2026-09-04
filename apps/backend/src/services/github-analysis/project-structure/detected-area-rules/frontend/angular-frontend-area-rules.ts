@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const ANGULAR_FRONTEND_SIGNAL_SCORES = {
   'angular-workspace-config': 4,
@@ -33,6 +34,7 @@ export function addAngularFrontendAreas({
         signalType: 'angular-workspace-config',
         regex: /^angular\.json$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'angular-root-component-ts',
@@ -88,5 +90,6 @@ export function addAngularFrontendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

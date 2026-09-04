@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const SVELTEKIT_FRONTEND_SIGNAL_SCORES = {
   'sveltekit-config': 1,
@@ -34,6 +35,7 @@ export function addSvelteKitFrontendAreas({
         signalType: 'sveltekit-config',
         regex: /^svelte\.config\.(js|mjs|cjs|ts)$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'sveltekit-page-component',
@@ -84,5 +86,6 @@ export function addSvelteKitFrontendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

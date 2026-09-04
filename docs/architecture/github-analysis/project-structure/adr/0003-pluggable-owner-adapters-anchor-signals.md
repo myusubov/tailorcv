@@ -52,6 +52,27 @@ This does not reverse the 2026-08-24 consolidation. Containerization, database, 
 - A future contributor must not "consolidate" `resolveUnitRootOwner` into the generic resolver citing the 2026-08-24 rule; that rule is scoped to containerization/database/shared-package detectors, and this ADR is the reason the adapter exists.
 - `resolveUnitRootOwner` has unit coverage (`resolve-unit-root-owner.test.ts`) but no analyzer-output fixture exercises the two-pass end to end yet.
 
+## Update 2026-09-04: Adapter extended to backend frameworks and schema tools
+
+The mechanism above is unchanged, but its scope has widened. `resolveUnitRootOwner` is now also passed by:
+
+- **Backend frameworks** with a root-level project or CLI file: Django (`manage.py`), ASP.NET Core (`*.csproj`), Laravel (`artisan`).
+- **Config-anchored frontend meta-frameworks:** Angular (`angular.json`), Astro (`astro.config.*`), React Router (`react-router.config.*`), SvelteKit (`svelte.config.*`).
+- **Schema tools** with a root-level config file: Prisma (`prisma.config.*` only -- the `.config/prisma.*` variant stays a non-anchor match), Drizzle (`drizzle.config.*`), SQLAlchemy (`alembic.ini`), Sequelize (`.sequelizerc`), Knex (`knexfile.*`).
+
+All fourteen detectors share the one adapter because their anchor file sits at the unit root -- the shape `resolveUnitRootOwner` already handles. No new adapter file was added.
+
+This **narrows the Decision section's final paragraph**: database detectors no longer use the generic resolver only. Containerization and shared-package detectors still do. Detectors deliberately left on the generic resolver, with reasons:
+
+- **TypeORM** -- `ormconfig.*` is deprecated and being removed; `data-source.ts` has no contract location (the CLI requires an explicit `-d` path) and its common `src/data-source.ts` placement sits below the unit root.
+- **Spring Boot** -- `pom.xml` / `build.gradle` is a build-tool file, not Spring-specific, and Spring's `src/main/**` layout is already grouped correctly by the generic `src` boundary.
+- **Rails** -- `config/application.rb` and `bin/rails` sit one directory below the unit root, which `resolveUnitRootOwner`'s one-segment anchor branch cannot resolve; Rails engine dummy apps (`spec/dummy`, `test/dummy`) would also false-positive.
+- **Vue, standalone Svelte, plain React** -- delegate layout to the build tool; no framework-owned root config exists.
+
+The "a future contributor must not consolidate `resolveUnitRootOwner` into the generic resolver" consequence now covers these detectors too.
+
+See [Owner Adapters Extended to Backend Frameworks and Schema Tools](../changelog.md#owner-adapters-extended-to-backend-frameworks-and-schema-tools) (2026-09-04).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`

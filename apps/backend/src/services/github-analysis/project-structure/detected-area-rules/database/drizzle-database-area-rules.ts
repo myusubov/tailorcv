@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const DRIZZLE_DATABASE_SIGNAL_SCORES = {
   'drizzle-config': 4,
@@ -14,6 +15,17 @@ type DrizzleDatabaseSignal = keyof typeof DRIZZLE_DATABASE_SIGNAL_SCORES;
 
 /**
  * Adds `Database schema` candidates from Drizzle path evidence.
+ *
+ * Evidence is grouped by owner through `resolveUnitRootOwner`, anchored on the
+ * `drizzle.config.*` file (or a `drizzle-<name>.config.*` variant) that
+ * drizzle-kit reads from the project root by default. A Drizzle setup in a
+ * non-`apps`/`packages` subdirectory, and sibling Drizzle setups in one repo,
+ * then resolve to their own owner instead of collapsing to the repository root.
+ * A config relocated with `--config` to a non-root directory is not a real unit
+ * root, so its owner degrades to the generic resolver; when no config file is
+ * present every signal falls back to the generic resolver, so `packages/*` and
+ * `apps/*` layouts still resolve correctly.
+ *
  * Drizzle-specific signals stay internal while emitted areas remain role-based.
  */
 export function addDrizzleDatabaseAreas({
@@ -31,11 +43,13 @@ export function addDrizzleDatabaseAreas({
         signalType: 'drizzle-config',
         regex: /(^|\/)drizzle\.config\.(?:ts|js|mjs|cjs|mts|cts)$/,
         indexMethod: 'findEntriesByPathMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'drizzle-custom-config',
         regex: /(^|\/)drizzle-[^/]+\.config\.(?:ts|js|mjs|cjs|mts|cts)$/,
         indexMethod: 'findEntriesByPathMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'drizzle-schema-file',
@@ -86,5 +100,6 @@ export function addDrizzleDatabaseAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const REACT_ROUTER_FRONTEND_SIGNAL_SCORES = {
   'react-router-config': 4,
@@ -36,6 +37,7 @@ export function addReactRouterFrontendAreas({
         signalType: 'react-router-config',
         regex: /^react-router\.config\.(js|mjs|cjs|ts)$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'react-router-root-route',
@@ -98,5 +100,6 @@ export function addReactRouterFrontendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }
