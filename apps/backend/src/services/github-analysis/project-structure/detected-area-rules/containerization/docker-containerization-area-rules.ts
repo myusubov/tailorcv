@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveContainerRootOwner } from '../owner-adapters/resolve-container-root-owner';
 
 const DOCKER_CONTAINERIZATION_SIGNAL_SCORES = {
   'docker-build-file': 4,
@@ -17,6 +18,10 @@ type DockerContainerizationSignal =
  * Compose, and Bake files independently unlock emission; `.dockerignore` and
  * devcontainer configuration remain supporting score/evidence only and
  * cannot unlock emission alone or together.
+ *
+ * Candidates are keyed by `resolveContainerRootOwner` instead of the generic
+ * owner resolver, so a container file one directory deep is attributed to that
+ * directory unless it is a known infra/tooling folder.
  */
 export function addDockerContainerizationAreas({
   candidates,
@@ -66,5 +71,6 @@ export function addDockerContainerizationAreas({
         },
       },
     },
+    ownerAdapter: ({ path }) => resolveContainerRootOwner(path),
   });
 }

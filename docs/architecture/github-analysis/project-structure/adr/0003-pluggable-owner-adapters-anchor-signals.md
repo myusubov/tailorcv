@@ -73,6 +73,14 @@ The "a future contributor must not consolidate `resolveUnitRootOwner` into the g
 
 See [Owner Adapters Extended to Backend Frameworks and Schema Tools](../changelog.md#owner-adapters-extended-to-backend-frameworks-and-schema-tools) (2026-09-04).
 
+## Update 2026-09-08: Containerization carved out into its own adapter
+
+The Docker containerization detector no longer uses the generic resolver only. It now passes a **non-anchor** `ownerAdapter`, `resolveContainerRootOwner`, with a fixed infra/tooling-folder denylist and a one-directory-deep rule; the shared `ownerPathForApplicationArea` was widened (workspace-root array, `@scope` depth, an optional `extraRootDirectories` argument) in the same change. Docker has no contract-located config file, so this is deliberately not the anchor-signal mechanism above -- it is a separate decision recorded in [ADR 0004](0004-containerization-owner-resolution.md).
+
+This narrows this ADR's Decision paragraph and its 2026-09-04 update once more: **only Podman/OCI and the (now removed) shared-package detector** were left on the generic resolver by that update; containerization is covered by ADR 0004. The "a future contributor must not consolidate an adapter into the generic resolver" consequence extends to `resolveContainerRootOwner`.
+
+See [Containerization Owner Resolution via `resolveContainerRootOwner`](../changelog.md#containerization-owner-resolution-via-resolvecontainerrootowner) (2026-09-08).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`

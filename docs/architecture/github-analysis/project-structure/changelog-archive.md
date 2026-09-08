@@ -4,6 +4,61 @@
 
 ---
 
+## 2026-07-04
+
+### Knex Database Schema Area Detection
+
+- **Decision:** Detect Knex database areas from conservative path combinations across canonical/custom Knex config files plus migration or seed artifacts.
+- **Problem:** Knex is a query builder and migration tool rather than a model/entity ORM, and migration or seed folders alone are too generic to prove Knex usage by path.
+- **Solution:** Added `knex-database-area-rules.ts`, added the `Knex` technology label, introduced a Drizzle-like Knex owner resolver in `project-structure-path-utils.ts`, registered the detector in the database dispatcher, and covered root, nested `src/db`, `database/`, custom config, monorepo isolation, repeated-signal, and weak-signal fixtures in public analyzer tests.
+- **Outcome:** Knex database schema areas now emit at repository or monorepo owner paths such as `.` or `apps/api` only when Knex config is paired with migration or seed evidence, while config-only, migration-only, seed-only, migration-plus-seed, and generic connection files remain non-emitting.
+
+### Sequelize Database Schema Area Detection
+
+- **Decision:** Detect Sequelize database areas from conservative path combinations across CLI config, database config, model files, migrations, and seeders.
+- **Problem:** Sequelize does not have a Prisma-style single schema folder; official CLI projects split `config/`, `models/`, `migrations/`, and `seeders/`, while real repositories also use `.sequelizerc` to route artifacts into folders such as `sequelize/`, `src/infra/sequelize/`, `db/`, or `database/`.
+- **Solution:** Added `sequelize-database-area-rules.ts`, added the `Sequelize` technology label, introduced a Sequelize-specific owner resolver in `project-structure-path-utils.ts`, registered the detector in the database dispatcher, and covered default CLI, dedicated `sequelize/`, `src/infra/sequelize`, split DDD, monorepo isolation, repeated-signal, and weak-signal fixtures in public analyzer tests.
+- **Outcome:** Sequelize database schema areas now emit at stable owners such as `.`, `apps/api`, `sequelize`, or `src/infra/sequelize`, while CLI-config-only, config-only, model-only, migration-only, seeder-only, generic model-plus-seeder, and non-migration timestamp files remain non-emitting.
+
+### TypeORM Database Schema Area Detection
+
+- **Decision:** Detect TypeORM database areas from conservative path combinations across legacy config, data-source files, entities, and generated migration files.
+- **Problem:** TypeORM does not have a Prisma-style schema folder; real projects use shapes such as `ormconfig.*` plus `*.entity.ts`, `src/data-source.ts` plus `src/migrations`, package-level `entities` plus `migrations`, or explicit `db`/`database` folders.
+- **Solution:** Added `typeorm-database-area-rules.ts`, added the `TypeORM` technology label, introduced a TypeORM-specific owner resolver in `project-structure-path-utils.ts`, and covered legacy config, data-source-backed migrations, entity-plus-migration detection, example config support, package ownership, explicit database-folder ownership, monorepo isolation, repeated signals, and weak-signal rejection in public analyzer tests.
+- **Outcome:** TypeORM database schema areas now emit at stable owners such as `.`, `apps/api`, `packages/db`, or `backend/app/db`, while config-only, data-source-only, entity-only, migration-only, generic timestamp files, and broad schema files remain non-emitting.
+
+### SQLAlchemy Database Schema Area Detection
+
+- **Decision:** Detect SQLAlchemy database areas through combined ORM/model and Alembic migration structure, with Alembic exposed as related technology rather than the primary detected area.
+- **Problem:** SQLAlchemy does not have a canonical Prisma-style schema folder; real projects place models in files such as `models.py`, `models/`, or `orm_models.py`, while Alembic migration environments may live under `alembic/`, `migrations/`, or `_migrations/versions/{dialect}`.
+- **Solution:** Added `sqlalchemy-database-area-rules.ts`, added `SQLAlchemy` and `Alembic` technology labels, introduced a SQLAlchemy-specific owner resolver in `project-structure-path-utils.ts`, and covered root Alembic, FastAPI-style `backend/app`, Superset/Airflow-style package migrations, Prefect-style database modules, monorepo isolation, repeated signal counting, and weak-signal rejection in public analyzer tests.
+- **Outcome:** SQLAlchemy database schema areas now emit with primary technology `SQLAlchemy` and related `Alembic`/`Python` context at the nearest shared schema/migration code owner, while generic models, database files, Alembic config/env files, version folders, and SQL migrations remain non-emitting on their own.
+
+## 2026-07-02
+
+### Drizzle Database Schema Area Detection
+
+- **Decision:** Detect Drizzle database evidence at the owning repository, app, package, service, or library path instead of pretending there is one canonical Drizzle schema folder.
+- **Problem:** Drizzle projects can split `drizzle.config.*`, schema files, SQL migrations, journal files, and snapshots across folders such as `src/db`, `src/lib/db`, `drizzle`, and `migrations`, so artifact-folder ownership produced false splits like config at `.` and schema at `src/db`.
+- **Solution:** Added a Drizzle-specific owner resolver in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, routed Drizzle signal counting through it in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/database/drizzle-database-area-rules.ts`, expanded schema matching for `src/lib/db/schema.*`, and aligned public analyzer fixtures around root/app/package/service/library owner output plus weak-signal rejection.
+- **Outcome:** Drizzle evidence now combines under stable owners such as `.`, `apps/api`, `packages/db`, `services/api`, or `libs/db`, while config-only, schema-only, SQL-only, metadata-only, and generic SQL shapes remain non-emitting.
+
+## 2026-07-01
+
+### Detected Area Technology Type Composition
+
+- **Decision:** Split the detected-area technology labels into composed category unions while keeping the public `DetectedAreaTechnology` type stable.
+- **Problem:** `project-structure-analyzer.types.ts` kept frontend, backend, runtime, template, and database labels in one long flat union, which made detector ownership harder to scan as new database technologies such as Drizzle were added.
+- **Solution:** Added `FrontendDetectedAreaTechnology`, `BackendDetectedAreaTechnology`, `RuntimeDetectedAreaTechnology`, `TemplateDetectedAreaTechnology`, and `DatabaseDetectedAreaTechnology` in `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`, then rebuilt `DetectedAreaTechnology` from those narrower unions without changing `addAreaScore` or analyzer output contracts.
+- **Outcome:** Future detector labels can be added to the category that owns them while existing detected-area candidate APIs continue to accept the same public technology union.
+
+### Prisma Database Schema Area Detection
+
+- **Decision:** Detect Prisma-owned database schema areas separately from frontend and backend application owners.
+- **Problem:** Project-structure detection could infer Prisma in the summary, but `detectedAreas` did not have a framework-specific database schema rule, so Prisma schema and migration evidence could not reliably point later analyzers to the exact persistent data-model folder.
+- **Solution:** Added `detected-area-rules/database/database-area-rules.ts` and `prisma-database-area-rules.ts`, allowed area-rule signal counting to use a database owner resolver, emitted `Database schema` with `Prisma` technology metadata from schema/migration/config-backed evidence, and added public-analyzer fixtures for conventional schema, root schema, migration history, config-backed fragments, monorepo isolation, repeated signals, and weak-signal rejection.
+- **Outcome:** Prisma schema and migration folders now emit precise database areas such as `apps/backend/prisma`, while config-only, fragment-only, lock-only, directory-only, and generic SQL migration shapes remain non-emitting for Prisma.
+
 ## 2026-06-25
 
 ### Express.js Backend Area Detection

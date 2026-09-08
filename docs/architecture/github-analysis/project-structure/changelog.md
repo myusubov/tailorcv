@@ -6,6 +6,32 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-09-08
+
+### Containerization Owner Resolution via `resolveContainerRootOwner`
+
+- **Decision:** Resolve Docker containerization owners through a dedicated non-anchor `ownerAdapter`, `resolveContainerRootOwner`, and widen the shared generic `ownerPathForApplicationArea` rather than route every detector through the wider rules. This carves containerization out of [ADR 0003](adr/0003-pluggable-owner-adapters-anchor-signals.md)'s "generic resolver only" statement; recorded as [ADR 0004](adr/0004-containerization-owner-resolution.md).
+- **Problem:** After the 2026-08-24 consolidation, Docker evidence resolved through `ownerPathForApplicationArea`, which recognized only `apps/<name>` and `packages/<name>` plus the `src` boundary. A recursive tree scan of 466 container-file paths across 36 well-known repositories (next.js, nx, turborepo, cal.com, immich, n8n, posthog, backstage, airflow, dagger, zitadel, budibase, langfuse, supabase, grafana, and more) showed three unhandled shapes: real deployable units under `libs/`, `services/`, `modules/`, `products/` (posthog), `plugins/` (backstage), `providers/` (airflow); scoped npm packages collapsing to the bare scope folder (`packages/@n8n/benchmark` -> `packages/@n8n`); and multi-image repos shipping separate images from bare top-level directories (`server/`, `web/`, `worker/`, `machine-learning/` in immich and langfuse) or from a container file one directory below the root, all collapsing to `.` so a three-image repo produced one `Containerization` area. Docker has no contract-located config file (`docker build -f` relocates the Dockerfile; compose/bake are searched from the working directory), so the anchor-signal mechanism from ADR 0003 does not apply.
+- **Solution:**
+  1. Added `detected-area-rules/owner-adapters/resolve-container-root-owner.ts`: a path with no directory segment resolves to `.`; a container file (case-insensitive `Dockerfile`/`*.dockerfile` variants, `.dockerignore`, Compose, Bake -- mirroring the Docker signal regexes) exactly one directory deep resolves to that directory unless it is in `NON_UNIT_TOP_LEVEL_DIRECTORIES` (the exported `MONOREPO_OWNER_ROOT_DIRECTORIES` and `products`/`plugins`/`providers`, plus infra/tooling/dev-env names: `docker`, `.devcontainer`, `.github`, `deploy`, `deployments`, `packaging`, `hosting`, ...), in which case `.`; every deeper path delegates to `ownerPathForApplicationArea` with `products`/`plugins`/`providers` passed as extra roots.
+  2. Widened `ownerPathForApplicationArea` in `project-structure-path-utils.ts`: replaced the two `apps`/`packages` `if` blocks with an exported `MONOREPO_OWNER_ROOT_DIRECTORIES` array (`apps`, `packages`, `libs`, `services`, `modules` -- a superset of `project-shape-detector.ts`'s roots, and the source the container adapter's denylist is composed from); added an `@scope` branch that keeps one extra segment (`packages/@n8n/benchmark`); added an optional `extraRootDirectories` parameter and moved the function to a single object parameter.
+  3. Wired `ownerAdapter: ({ path }) => resolveContainerRootOwner(path)` onto the Docker detector in `docker-containerization-area-rules.ts` with no `isAnchorSignal` schema, so the engine calls the adapter once per matched entry.
+  4. Updated the three existing callers of `ownerPathForApplicationArea` (`project-structure-area-rule-candidates.ts` x2, `resolve-unit-root-owner.ts`) to the object-parameter signature.
+  5. Added `resolve-container-root-owner.test.ts` with cases derived from the 36-repo scan (root, monorepo, deep-subdir, infra folders, `.devcontainer`, scoped packages, unrecognized roots, bare top-level units); the one unresolved shape -- cal.com's `apps/api/v2` versioned sub-service collapsing to `apps/api` -- is an `it.fails` case.
+  6. Added [ADR 0004](adr/0004-containerization-owner-resolution.md); amended [ADR 0003](adr/0003-pluggable-owner-adapters-anchor-signals.md) with a 2026-09-08 update section; reconciled the README key-files table, owner-resolution rules in section 6.5, the Docker per-detector rules, Implementation Status, and Risks & Mitigations.
+- **Affected files:** `detected-area-rules/owner-adapters/resolve-container-root-owner.ts` (new) and `.test.ts` (new), `detected-area-rules/owner-adapters/resolve-unit-root-owner.ts`, `detected-area-rules/containerization/docker-containerization-area-rules.ts`, `detected-area-rules/project-structure-area-rule-candidates.ts`, `project-structure-path-utils.ts`, `adr/0004-containerization-owner-resolution.md` (new), `adr/0003-pluggable-owner-adapters-anchor-signals.md`, `adr/README.md`, this README and changelog.
+- **Outcome:** Docker `Containerization` areas split per deployable unit in multi-image repos and attribute `products/`/`plugins/`/`providers/` and scoped-package units to their real owner. The anchored detectors' generic fallback also benefits from the wider workspace-root set and `@scope` depth. The one-directory-deep rule is a heuristic (a monolith with sibling `frontend/` + `backend/` folders resolves to two owners); `apps/api/v2` is a known unresolved shape. Podman/OCI is unchanged. Typecheck, lint, and tests were not run as part of this change.
+
+### `Shared package` Detector Removed
+
+- **Problem:** The JavaScript/TypeScript shared-package detector (`Shared package` area, added 2026-07-08) produced low-signal output: reusable-package path shapes such as `packages/*/package.json` and `libs/*/index.ts` overlap heavily with ordinary monorepo packages and app-internal folders, so the detector emitted more noise and misattributed owners than useful `Shared package` areas.
+- **Solution:**
+  1. Deleted `detected-area-rules/shared-package/js-ts-shared-package-area-rules.ts` and `detected-area-rules/shared-package/shared-package-area-rules.ts`.
+  2. Removed the `addSharedPackageAreas` import and its call from `project-structure-detected-area-rules.ts`, so the dispatcher no longer runs any shared-package rules.
+  3. Reconciled the README: dropped the `shared-package/` module from the component tree, the shared-package dispatch rule and owner-resolution rules from section 6.5, the Implementation Status line, and the shared-package mentions in the engine key-file row and Risks table.
+- **Affected files:** `detected-area-rules/shared-package/js-ts-shared-package-area-rules.ts` (deleted), `detected-area-rules/shared-package/shared-package-area-rules.ts` (deleted), `project-structure-detected-area-rules.ts`, this README and changelog.
+- **Outcome:** The analyzer no longer emits a `Shared package` detected area. `'Shared package'` remains in the `DetectedAreaName` union and priority orderings (like the earlier `'Test suite'` removal) but is never produced. No other detector depended on the removed modules.
+
 ## 2026-09-04
 
 ### Owner Adapters Extended to Backend Frameworks and Schema Tools
@@ -323,58 +349,3 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 - **Problem:** Shared-package evidence such as `packages/ui/package.json`, `libs/types/index.ts`, or `modules/schemas/src/index.mts` describes reusable package containers, while app-internal paths such as `apps/web/src/shared/index.ts` should not emit a repo-level `Shared package` area.
 - **Solution:** Added `detected-area-rules/shared-package/js-ts-shared-package-area-rules.ts`, kept `detected-area-rules/shared-package/shared-package-area-rules.ts` as the group dispatcher, wired shared-package rules into `project-structure-detected-area-rules.ts`, added `ownerPathForSharedPackageArea` in `project-structure-path-utils.ts`, emitted `Shared package` with `Node.js` technology metadata, and covered `packages`, scoped packages, `libs`, `modules`, root `shared`, root `common`, repeated-signal, and weak-signal fixtures in public analyzer tests.
 - **Outcome:** JavaScript/TypeScript reusable package evidence now emits stable shared-package owners such as `packages`, `libs`, `modules`, `shared`, or `common`, while package-name-only, manifest-only, entrypoint-only, app-internal shared modules, and top-level `utils` remain non-emitting.
-
-## 2026-07-04
-
-### Knex Database Schema Area Detection
-
-- **Decision:** Detect Knex database areas from conservative path combinations across canonical/custom Knex config files plus migration or seed artifacts.
-- **Problem:** Knex is a query builder and migration tool rather than a model/entity ORM, and migration or seed folders alone are too generic to prove Knex usage by path.
-- **Solution:** Added `knex-database-area-rules.ts`, added the `Knex` technology label, introduced a Drizzle-like Knex owner resolver in `project-structure-path-utils.ts`, registered the detector in the database dispatcher, and covered root, nested `src/db`, `database/`, custom config, monorepo isolation, repeated-signal, and weak-signal fixtures in public analyzer tests.
-- **Outcome:** Knex database schema areas now emit at repository or monorepo owner paths such as `.` or `apps/api` only when Knex config is paired with migration or seed evidence, while config-only, migration-only, seed-only, migration-plus-seed, and generic connection files remain non-emitting.
-
-### Sequelize Database Schema Area Detection
-
-- **Decision:** Detect Sequelize database areas from conservative path combinations across CLI config, database config, model files, migrations, and seeders.
-- **Problem:** Sequelize does not have a Prisma-style single schema folder; official CLI projects split `config/`, `models/`, `migrations/`, and `seeders/`, while real repositories also use `.sequelizerc` to route artifacts into folders such as `sequelize/`, `src/infra/sequelize/`, `db/`, or `database/`.
-- **Solution:** Added `sequelize-database-area-rules.ts`, added the `Sequelize` technology label, introduced a Sequelize-specific owner resolver in `project-structure-path-utils.ts`, registered the detector in the database dispatcher, and covered default CLI, dedicated `sequelize/`, `src/infra/sequelize`, split DDD, monorepo isolation, repeated-signal, and weak-signal fixtures in public analyzer tests.
-- **Outcome:** Sequelize database schema areas now emit at stable owners such as `.`, `apps/api`, `sequelize`, or `src/infra/sequelize`, while CLI-config-only, config-only, model-only, migration-only, seeder-only, generic model-plus-seeder, and non-migration timestamp files remain non-emitting.
-
-### TypeORM Database Schema Area Detection
-
-- **Decision:** Detect TypeORM database areas from conservative path combinations across legacy config, data-source files, entities, and generated migration files.
-- **Problem:** TypeORM does not have a Prisma-style schema folder; real projects use shapes such as `ormconfig.*` plus `*.entity.ts`, `src/data-source.ts` plus `src/migrations`, package-level `entities` plus `migrations`, or explicit `db`/`database` folders.
-- **Solution:** Added `typeorm-database-area-rules.ts`, added the `TypeORM` technology label, introduced a TypeORM-specific owner resolver in `project-structure-path-utils.ts`, and covered legacy config, data-source-backed migrations, entity-plus-migration detection, example config support, package ownership, explicit database-folder ownership, monorepo isolation, repeated signals, and weak-signal rejection in public analyzer tests.
-- **Outcome:** TypeORM database schema areas now emit at stable owners such as `.`, `apps/api`, `packages/db`, or `backend/app/db`, while config-only, data-source-only, entity-only, migration-only, generic timestamp files, and broad schema files remain non-emitting.
-
-### SQLAlchemy Database Schema Area Detection
-
-- **Decision:** Detect SQLAlchemy database areas through combined ORM/model and Alembic migration structure, with Alembic exposed as related technology rather than the primary detected area.
-- **Problem:** SQLAlchemy does not have a canonical Prisma-style schema folder; real projects place models in files such as `models.py`, `models/`, or `orm_models.py`, while Alembic migration environments may live under `alembic/`, `migrations/`, or `_migrations/versions/{dialect}`.
-- **Solution:** Added `sqlalchemy-database-area-rules.ts`, added `SQLAlchemy` and `Alembic` technology labels, introduced a SQLAlchemy-specific owner resolver in `project-structure-path-utils.ts`, and covered root Alembic, FastAPI-style `backend/app`, Superset/Airflow-style package migrations, Prefect-style database modules, monorepo isolation, repeated signal counting, and weak-signal rejection in public analyzer tests.
-- **Outcome:** SQLAlchemy database schema areas now emit with primary technology `SQLAlchemy` and related `Alembic`/`Python` context at the nearest shared schema/migration code owner, while generic models, database files, Alembic config/env files, version folders, and SQL migrations remain non-emitting on their own.
-
-## 2026-07-02
-
-### Drizzle Database Schema Area Detection
-
-- **Decision:** Detect Drizzle database evidence at the owning repository, app, package, service, or library path instead of pretending there is one canonical Drizzle schema folder.
-- **Problem:** Drizzle projects can split `drizzle.config.*`, schema files, SQL migrations, journal files, and snapshots across folders such as `src/db`, `src/lib/db`, `drizzle`, and `migrations`, so artifact-folder ownership produced false splits like config at `.` and schema at `src/db`.
-- **Solution:** Added a Drizzle-specific owner resolver in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, routed Drizzle signal counting through it in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/database/drizzle-database-area-rules.ts`, expanded schema matching for `src/lib/db/schema.*`, and aligned public analyzer fixtures around root/app/package/service/library owner output plus weak-signal rejection.
-- **Outcome:** Drizzle evidence now combines under stable owners such as `.`, `apps/api`, `packages/db`, `services/api`, or `libs/db`, while config-only, schema-only, SQL-only, metadata-only, and generic SQL shapes remain non-emitting.
-
-## 2026-07-01
-
-### Detected Area Technology Type Composition
-
-- **Decision:** Split the detected-area technology labels into composed category unions while keeping the public `DetectedAreaTechnology` type stable.
-- **Problem:** `project-structure-analyzer.types.ts` kept frontend, backend, runtime, template, and database labels in one long flat union, which made detector ownership harder to scan as new database technologies such as Drizzle were added.
-- **Solution:** Added `FrontendDetectedAreaTechnology`, `BackendDetectedAreaTechnology`, `RuntimeDetectedAreaTechnology`, `TemplateDetectedAreaTechnology`, and `DatabaseDetectedAreaTechnology` in `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`, then rebuilt `DetectedAreaTechnology` from those narrower unions without changing `addAreaScore` or analyzer output contracts.
-- **Outcome:** Future detector labels can be added to the category that owns them while existing detected-area candidate APIs continue to accept the same public technology union.
-
-### Prisma Database Schema Area Detection
-
-- **Decision:** Detect Prisma-owned database schema areas separately from frontend and backend application owners.
-- **Problem:** Project-structure detection could infer Prisma in the summary, but `detectedAreas` did not have a framework-specific database schema rule, so Prisma schema and migration evidence could not reliably point later analyzers to the exact persistent data-model folder.
-- **Solution:** Added `detected-area-rules/database/database-area-rules.ts` and `prisma-database-area-rules.ts`, allowed area-rule signal counting to use a database owner resolver, emitted `Database schema` with `Prisma` technology metadata from schema/migration/config-backed evidence, and added public-analyzer fixtures for conventional schema, root schema, migration history, config-backed fragments, monorepo isolation, repeated signals, and weak-signal rejection.
-- **Outcome:** Prisma schema and migration folders now emit precise database areas such as `apps/backend/prisma`, while config-only, fragment-only, lock-only, directory-only, and generic SQL migration shapes remain non-emitting for Prisma.

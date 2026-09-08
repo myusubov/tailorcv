@@ -4,3 +4,4 @@
  * area-rule engine import adapters from here by name.
  */
 export { resolveUnitRootOwner } from './resolve-unit-root-owner';
+export { resolveContainerRootOwner } from './resolve-container-root-owner';
