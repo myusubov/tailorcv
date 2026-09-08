@@ -56,5 +56,5 @@ export function resolveUnitRootOwner({
     }
   }
 
-  return ownerPathForApplicationArea(path);
+  return ownerPathForApplicationArea({ path });
 }

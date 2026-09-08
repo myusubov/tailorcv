@@ -1,6 +1,7 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import type { AreaRuleSignalScores } from '../project-structure-area-rule-candidates';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 type AspNetCoreBackendSignal =
   | 'asp-net-core-project-file'
@@ -39,8 +40,14 @@ const ASP_NET_CORE_BACKEND_SIGNAL_SCORES = {
  * technologies `.NET` and `C#`) per owner path whose counted signals form a
  * web-host application shape.
  *
- * Signals are grouped by the generic `ownerPathForApplicationArea` owner and
- * counted once per signal type across `.csproj` files, `Program.cs`,
+ * Signals are grouped by owner through `resolveUnitRootOwner`, anchored on the
+ * project's `.csproj` file (the .NET project root by SDK contract), so a
+ * project in a non-`apps`/`packages` subdirectory, a multi-project solution
+ * (web host beside class-library and test projects), and sibling web hosts in
+ * one repo each resolve to their own owner instead of collapsing to the
+ * repository root. Non-web `.csproj` owners collect only the project-file
+ * signal and never pass the gate. Each signal is counted once per owner across
+ * `.csproj` files, `Program.cs`,
  * `Startup.cs`, `appsettings.json` / `appsettings.<env>.json`,
  * `Properties/launchSettings.json`, `Controllers/*Controller.cs`, an
  * `Endpoints/` folder, Razor Pages under `Pages/`, MVC views under `Views/`,
@@ -78,6 +85,7 @@ export function addAspNetCoreBackendAreas({
         signalType: 'asp-net-core-project-file',
         regex: /^[^/]+\.csproj$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'asp-net-core-program-entry',
@@ -209,5 +217,6 @@ export function addAspNetCoreBackendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

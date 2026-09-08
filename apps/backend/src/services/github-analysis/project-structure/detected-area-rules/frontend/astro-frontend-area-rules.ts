@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const ASTRO_FRONTEND_SIGNAL_SCORES = {
   'astro-config': 4,
@@ -32,6 +33,7 @@ export function addAstroFrontendAreas({
         signalType: 'astro-config',
         regex: /^astro\.config\.(js|mjs|cjs|ts)$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'astro-page',
@@ -71,5 +73,6 @@ export function addAstroFrontendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

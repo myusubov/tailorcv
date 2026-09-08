@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const SEQUELIZE_DATABASE_SIGNAL_SCORES = {
   'sequelize-cli-config-file': 4,
@@ -16,6 +17,17 @@ type SequelizeDatabaseSignal = keyof typeof SEQUELIZE_DATABASE_SIGNAL_SCORES;
  * Adds `Database schema` candidates from Sequelize path evidence. Generic
  * model, migration, config, and seeder paths remain support signals and do
  * not emit Sequelize unless combined.
+ *
+ * Evidence is grouped by owner through `resolveUnitRootOwner`, anchored on the
+ * `.sequelizerc` file that sequelize-cli only honours when run from the
+ * directory containing it (the project root). A Sequelize setup in a
+ * non-`apps`/`packages` subdirectory, and sibling Sequelize setups in one repo,
+ * then resolve to their own owner instead of collapsing to the repository root
+ * -- sequelize-cli places `config/`, `models/`, `migrations/`, and `seeders/`
+ * at the project root rather than under `src/`, so the generic resolver has no
+ * boundary to group them by on its own. When no `.sequelizerc` is committed
+ * every signal falls back to the generic resolver and the config-plus-model
+ * gate branches still apply.
  */
 export function addSequelizeDatabaseAreas({
   candidates,
@@ -32,6 +44,7 @@ export function addSequelizeDatabaseAreas({
         signalType: 'sequelize-cli-config-file',
         regex: /(^|\/)\.sequelizerc(?:\.js)?$/,
         indexMethod: 'findEntriesByPathMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'sequelize-config-file',
@@ -100,5 +113,6 @@ export function addSequelizeDatabaseAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

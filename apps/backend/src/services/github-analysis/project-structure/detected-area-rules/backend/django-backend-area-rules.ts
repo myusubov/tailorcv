@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveUnitRootOwner } from '../owner-adapters';
 
 const DJANGO_BACKEND_SIGNAL_SCORES = {
   'django-manage-entry': 4,
@@ -20,6 +21,10 @@ type DjangoBackendSignal = keyof typeof DJANGO_BACKEND_SIGNAL_SCORES;
 
 /**
  * Adds `Backend API` candidates from Django path evidence.
+ * Evidence is grouped by owner through `resolveUnitRootOwner`, anchored on
+ * `manage.py` (the project root), so a Django project in a non-`apps`/`packages`
+ * subdirectory and sibling Django projects in one repo each resolve to their own
+ * owner instead of collapsing to the repository root.
  */
 export function addDjangoBackendAreas({
   candidates,
@@ -37,6 +42,7 @@ export function addDjangoBackendAreas({
         signalType: 'django-manage-entry',
         regex: /^manage\.py$/,
         indexMethod: 'findFilesByNameMatching',
+        isAnchorSignal: true,
       },
       {
         signalType: 'django-settings-module',
@@ -125,5 +131,6 @@ export function addDjangoBackendAreas({
         },
       },
     },
+    ownerAdapter: resolveUnitRootOwner,
   });
 }

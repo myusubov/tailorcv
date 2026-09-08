@@ -57,7 +57,7 @@ export function countAreaRuleSignal<Signal extends string>({
 }): void {
   const path = entry.path;
   const ownerPath =
-    resolveOwnerPath?.(path) ?? ownerPathForApplicationArea(path);
+    resolveOwnerPath?.(path) ?? ownerPathForApplicationArea({ path });
   const ownerCandidate =
     areasByOwner.get(ownerPath) ??
     ({
@@ -89,7 +89,7 @@ export function hasCompetingAreaProof({
   evidenceEntries: Pick<RepoTreeEntry, 'path'>[];
 }): boolean {
   for (const { path } of evidenceEntries) {
-    const evidenceOwnerPath = ownerPathForApplicationArea(path);
+    const evidenceOwnerPath = ownerPathForApplicationArea({ path });
     if (ownerPath === evidenceOwnerPath) return true;
   }
 
