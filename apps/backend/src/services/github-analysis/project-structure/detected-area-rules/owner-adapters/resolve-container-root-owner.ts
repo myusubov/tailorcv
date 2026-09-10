@@ -11,11 +11,19 @@ import {
  * inside single applications, so it is only trusted for container evidence,
  * where a Dockerfile under `plugins/<name>/` reliably marks `<name>` as the
  * deployable unit.
+ *
+ * `quadlet/` and `quadlets/` are Podman Quadlet collection folders whose
+ * immediate subdirectories each hold one service's unit files
+ * (`quadlet/<svc>/<svc>.container`), so `<svc>` is the deployable unit. They
+ * are also spread into `NON_UNIT_TOP_LEVEL_DIRECTORIES` below, so a unit file
+ * sitting directly in the collection folder resolves to `.` instead.
  */
 const CONTAINER_DEPLOYMENT_ROOT_DIRECTORIES: readonly string[] = [
   'products',
   'plugins',
   'providers',
+  'quadlet',
+  'quadlets',
 ];
 
 /**
@@ -58,6 +66,30 @@ const NON_UNIT_TOP_LEVEL_DIRECTORIES: ReadonlySet<string> = new Set<string>([
 ]);
 
 /**
+ * Podman/OCI counterpart to `NON_UNIT_TOP_LEVEL_DIRECTORIES`, applied when the
+ * two-segment file name matched `PODMAN_OCI_CONTAINER_FILE_NAME`. Extends that
+ * denylist with folders that carry Quadlet or OCI unit files for deployment or
+ * host administration rather than for a unit named after the folder:
+ * `systemd` and `containers` (repo-committed mirrors of the Quadlet search
+ * path `.../containers/systemd/`), `.quadlet`, `kube`, and `sysadmin`.
+ * `quadlet` / `quadlets` are already present via
+ * `CONTAINER_DEPLOYMENT_ROOT_DIRECTORIES` and are re-listed for locality: they
+ * are collection roots when a service subdirectory sits between them and the
+ * unit file, but non-unit holders when a unit file sits directly inside.
+ */
+const PODMAN_OCI_NON_UNIT_TOP_LEVEL_DIRECTORIES: ReadonlySet<string> =
+  new Set<string>([
+    ...NON_UNIT_TOP_LEVEL_DIRECTORIES,
+    'systemd',
+    'quadlet',
+    'quadlets',
+    '.quadlet',
+    'containers', // `containers/systemd/` holder, `containers/<x>.container`
+    'kube',
+    'sysadmin',
+  ]);
+
+/**
  * Container file base names (case-insensitive): `Dockerfile` and its
  * `*.dockerfile` / suffixed variants, `.dockerignore`, Compose files, and
  * Bake files. Covers the same files as the signal regexes in
@@ -69,8 +101,30 @@ const CONTAINER_FILE_NAME =
   /^(?:dockerfile|[^/]+\.dockerfile)(?:\.[^/]+)?$|^\.dockerignore$|^(?:docker-)?compose(?:\.[^/]+)?\.ya?ml$|^docker-bake(?:\.override)?\.(?:hcl|json)$/i;
 
 /**
- * Resolves the owner root for one Docker containerization signal
- * (`Dockerfile`, `compose`, `docker-bake`, `.dockerignore`, `devcontainer`).
+ * Podman / OCI container file base names (case-insensitive):
+ * - Quadlet unit files -- `<name>.container`, `<name>.pod`, `<name>.kube`,
+ *   `<name>.build`, `<name>.image`, `<name>.network`, `<name>.volume`,
+ *   `<name>.artifact` (at least one character before the extension, matching
+ *   the `^.+\.<ext>$` signal regexes in
+ *   `podman-oci-containerization-area-rules.ts`);
+ * - the OCI build file `Containerfile` and its suffixed variants
+ *   (`Containerfile.cross`), mirroring `^containerfile(?:\.[^/]+)?$`;
+ * - `.containerignore`.
+ *
+ * Companion to `CONTAINER_FILE_NAME` for the Podman/OCI side. Extension
+ * collisions (`.build`, `.network`, ... also belong to unrelated formats) are
+ * the detector gate's concern, not this resolver's: only paths the detector
+ * already matched reach owner resolution.
+ */
+const PODMAN_OCI_CONTAINER_FILE_NAME =
+  /^[^/]+\.(?:container|pod|kube|build|image|network|volume|artifact)$|^containerfile(?:\.[^/]+)?$|^\.containerignore$/i;
+
+/**
+ * Resolves the owner root for one Docker or Podman/OCI containerization
+ * signal: a `Dockerfile`, `compose`, `docker-bake`, or `.dockerignore` path,
+ * or a Quadlet unit (`.container`, `.pod`, `.kube`, `.build`, `.image`,
+ * `.network`, `.volume`, `.artifact`), `Containerfile`, or `.containerignore`
+ * path.
  *
  * Inputs:
  * - `path`: repo-tree path of a matched signal entry (forward slashes,
@@ -81,10 +135,12 @@ const CONTAINER_FILE_NAME =
  * - A path with no directory segment (a bare root-level file) resolves to `.`.
  * - A container file exactly one directory deep resolves to that directory
  *   (`server/Dockerfile` -> `server`; immich, langfuse), unless the directory
- *   is a known infra/tooling folder (`NON_UNIT_TOP_LEVEL_DIRECTORIES`), which
- *   resolves to `.`.
+ *   is a known infra/tooling folder, which resolves to `.`. Docker file names
+ *   check `NON_UNIT_TOP_LEVEL_DIRECTORIES`; Quadlet unit and `Containerfile`
+ *   names check the wider `PODMAN_OCI_NON_UNIT_TOP_LEVEL_DIRECTORIES`.
  * - Otherwise delegates to `ownerPathForApplicationArea`, additionally
- *   treating `CONTAINER_DEPLOYMENT_ROOT_DIRECTORIES` as workspace roots.
+ *   treating `CONTAINER_DEPLOYMENT_ROOT_DIRECTORIES` as workspace roots
+ *   (so `quadlet/<svc>/<svc>.container` -> `quadlet/<svc>`).
  *
  * Limitation: the one-directory-deep rule cannot tell a real deployable unit
  * from a plain source folder that happens to hold a container file, so a
@@ -93,7 +149,8 @@ const CONTAINER_FILE_NAME =
  * case, but is a heuristic, not a guarantee.
  *
  * This adapter takes a bare `path` rather than the engine's `OwnerAdapterArgs`
- * object because Docker rules declare no anchor signals; callers wire it as
+ * object because the Docker and Podman/OCI rules declare no anchor signals;
+ * both detectors wire it as
  * `ownerAdapter: ({ path }) => resolveContainerRootOwner(path)`.
  */
 export function resolveContainerRootOwner(path: string): string {
@@ -103,10 +160,20 @@ export function resolveContainerRootOwner(path: string): string {
     return '.';
   }
 
-  if (parts.length === 2 && CONTAINER_FILE_NAME.test(parts[1])) {
-    return NON_UNIT_TOP_LEVEL_DIRECTORIES.has(parts[0].toLowerCase())
-      ? '.'
-      : parts[0];
+  if (parts.length === 2) {
+    if (CONTAINER_FILE_NAME.test(parts[1])) {
+      return NON_UNIT_TOP_LEVEL_DIRECTORIES.has(parts[0].toLowerCase())
+        ? '.'
+        : parts[0];
+    }
+
+    if (PODMAN_OCI_CONTAINER_FILE_NAME.test(parts[1])) {
+      return PODMAN_OCI_NON_UNIT_TOP_LEVEL_DIRECTORIES.has(
+        parts[0].toLowerCase(),
+      )
+        ? '.'
+        : parts[0];
+    }
   }
 
   return ownerPathForApplicationArea({

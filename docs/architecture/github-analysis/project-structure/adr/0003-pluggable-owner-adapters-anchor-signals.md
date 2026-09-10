@@ -81,6 +81,12 @@ This narrows this ADR's Decision paragraph and its 2026-09-04 update once more: 
 
 See [Containerization Owner Resolution via `resolveContainerRootOwner`](../changelog.md#containerization-owner-resolution-via-resolvecontainerrootowner) (2026-09-08).
 
+## Update 2026-09-10: Podman/OCI also carved out
+
+The Podman/OCI containerization detector now passes `resolveContainerRootOwner` as well (see [ADR 0004](0004-containerization-owner-resolution.md)'s 2026-09-10 update), so the 2026-09-08 update's "only Podman/OCI and the (now removed) shared-package detector were left on the generic resolver" no longer holds -- among the detectors this ADR governs, only TypeORM, Spring Boot, Rails, Vue, standalone Svelte, and plain React still resolve owners through the generic resolver only, each for the reasons in the 2026-09-04 update.
+
+See [Podman/OCI Containerization Owner Resolution via `resolveContainerRootOwner`](../changelog.md#podmanoci-containerization-owner-resolution-via-resolvecontainerrootowner) (2026-09-10).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`
