@@ -1,5 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
+import { resolveContainerRootOwner } from '../owner-adapters';
 
 /**
  * Defines the path-only Podman/OCI signal contract used for owner-scoped
@@ -39,8 +40,11 @@ type PodmanOciContainerizationSignal =
  * `.containerignore` signals remain support-only and never unlock emission
  * alone or together. Quadlet and generic OCI build signals can appear at
  * repo root or in many configuration folders, so matching uses file
- * basenames without a required directory; owners are resolved through the
- * shared `ownerPathForApplicationArea` default.
+ * basenames without a required directory. Owners are resolved through
+ * `resolveContainerRootOwner` rather than the generic default: a unit file
+ * one directory below the root is attributed to that directory unless it is
+ * an infra, tooling, or Quadlet-install folder, and `quadlet/` / `quadlets/`
+ * act as collection roots for their service subdirectories.
  */
 export function addPodmanOciContainerizationAreas({
   candidates,
@@ -153,5 +157,6 @@ export function addPodmanOciContainerizationAreas({
         },
       },
     },
+    ownerAdapter: ({ path }) => resolveContainerRootOwner(path),
   });
 }
