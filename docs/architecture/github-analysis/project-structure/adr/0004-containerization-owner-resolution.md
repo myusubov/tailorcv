@@ -58,6 +58,20 @@ For any path two or more directories deep, `resolveContainerRootOwner` delegates
 - Known unresolved shape: a versioned nested sub-service (cal.com's `apps/api/v2`, deployed separately from `apps/api`) still collapses to `apps/api`; captured as an `it.fails` case in `resolve-container-root-owner.test.ts`.
 - `resolveContainerRootOwner` has unit coverage (`resolve-container-root-owner.test.ts`, cases derived from the 36-repo scan). No analyzer-output fixture exercises the Docker detector's owner grouping end to end. Typecheck, lint, and tests were not run as part of this change.
 
+## Update 2026-09-10: Adapter extended to the Podman/OCI detector
+
+The Decision's final sentence -- "Podman/OCI is untouched and still uses the generic resolver only" -- is reversed. The Podman/OCI containerization detector now also passes `ownerAdapter: ({ path }) => resolveContainerRootOwner(path)` (no anchor schema), so both containerization detectors share the one adapter. `resolveContainerRootOwner` gained a Podman/OCI arm alongside the Docker one:
+
+- `PODMAN_OCI_CONTAINER_FILE_NAME` -- Quadlet unit extensions (`.container`, `.pod`, `.kube`, `.build`, `.image`, `.network`, `.volume`, `.artifact`), `Containerfile` and suffixed variants, `.containerignore` -- is the Podman/OCI counterpart to `CONTAINER_FILE_NAME` for the two-segment rule.
+- `PODMAN_OCI_NON_UNIT_TOP_LEVEL_DIRECTORIES` widens `NON_UNIT_TOP_LEVEL_DIRECTORIES` with `systemd`, `containers`, `.quadlet`, `quadlet`, `quadlets`, `kube`, `sysadmin` -- the folders that hold Quadlet/OCI files for deployment or host administration (`.../containers/systemd/` mirrors), not for a unit named after the folder.
+- `quadlet` and `quadlets` join `CONTAINER_DEPLOYMENT_ROOT_DIRECTORIES`, so they are collection roots for a service subdirectory (`quadlet/<svc>/<svc>.container` -> `quadlet/<svc>`) and, via the `NON_UNIT_TOP_LEVEL_DIRECTORIES` spread, non-unit holders for a file sitting directly inside -- the dual role `apps/` has.
+
+Deliberately **not** done: making `containers/` a collection root. `containers/<name>/Containerfile` is a real self-contained build-context shape, but `containers/` is more often the `containers/systemd/` Quadlet-search-path mirror (must resolve to `.`) or a loose holder, and the module's rules are name-only with no "root unless the child is `systemd`" carve-out. `containers/` stays purely on the denylist; `containers/ldap/Containerfile -> .` is an accepted loss, pinned as an `it.fails` case in `resolve-container-root-owner.podman-oci.test.ts`.
+
+The "a future contributor must not consolidate this adapter into the generic resolver" consequence now covers the Podman/OCI detector too.
+
+See [Podman/OCI Containerization Owner Resolution via `resolveContainerRootOwner`](../changelog.md#podmanoci-containerization-owner-resolution-via-resolvecontainerrootowner) (2026-09-10).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-container-root-owner.ts`
