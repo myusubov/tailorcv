@@ -62,6 +62,8 @@ The mechanism above is unchanged, but its scope has widened. `resolveUnitRootOwn
 
 All fourteen detectors share the one adapter because their anchor file sits at the unit root -- the shape `resolveUnitRootOwner` already handles. No new adapter file was added.
 
+(See the 2026-09-11 update below: a fifteenth detector, Jenkins, was added with a variant of this shape.)
+
 This **narrows the Decision section's final paragraph**: database detectors no longer use the generic resolver only. Containerization and shared-package detectors still do. Detectors deliberately left on the generic resolver, with reasons:
 
 - **TypeORM** -- `ormconfig.*` is deprecated and being removed; `data-source.ts` has no contract location (the CLI requires an explicit `-d` path) and its common `src/data-source.ts` placement sits below the unit root.
@@ -86,6 +88,16 @@ See [Containerization Owner Resolution via `resolveContainerRootOwner`](../chang
 The Podman/OCI containerization detector now passes `resolveContainerRootOwner` as well (see [ADR 0004](0004-containerization-owner-resolution.md)'s 2026-09-10 update), so the 2026-09-08 update's "only Podman/OCI and the (now removed) shared-package detector were left on the generic resolver" no longer holds -- among the detectors this ADR governs, only TypeORM, Spring Boot, Rails, Vue, standalone Svelte, and plain React still resolve owners through the generic resolver only, each for the reasons in the 2026-09-04 update.
 
 See [Podman/OCI Containerization Owner Resolution via `resolveContainerRootOwner`](../changelog.md#podmanoci-containerization-owner-resolution-via-resolvecontainerrootowner) (2026-09-10).
+
+## Update 2026-09-11: Jenkins added, with a variant anchor shape
+
+`resolveUnitRootOwner` is now also passed by the Jenkins CI/CD detector, with `isAnchorSignal: true` on its `jenkins-pipeline-file` schema -- bringing the shared-adapter count from fourteen to fifteen.
+
+Jenkins does not fit the "config file sits at the unit root" shape the other fourteen detectors share: a `Jenkinsfile` can live at any depth (a root single-pipeline repo, or one per service in a multibranch monorepo), so there is no single fixed root to anchor on. Instead, every matched `Jenkinsfile` is treated as its own anchor -- `resolveUnitRootOwner`'s anchor branch already resolves an anchor signal to the directory containing it, with no assumption that anchors are unique per repository. This makes Jenkins the only CI/CD provider (and, among all detectors on this adapter, the only one at all) that can emit more than one `CI/CD workflows` candidate for a single repository.
+
+This does not change the adapter's mechanism or its non-anchor resolution branch; it is a new way of *using* an existing branch, not new adapter logic. The other ten CI/CD providers (GitHub Actions, GitLab CI/CD, CircleCI, Azure Pipelines, Buildkite, Travis CI, Bitbucket Pipelines, Drone CI/Woodpecker CI, AppVeyor, TeamCity) resolve to the repository root through the generic resolver and pass no `ownerAdapter`, consistent with the "generic resolver is the default and fallback" Decision above.
+
+See [CI/CD Workflows Detected-Area Category](../changelog.md#cicd-workflows-detected-area-category) (2026-09-11).
 
 ## References
 

@@ -165,6 +165,23 @@ export type TestDetectedAreaTechnology =
   | 'Playwright';
 
 /**
+ * CI/CD provider labels inferred for detected pipeline-as-code areas.
+ */
+export type CiCdDetectedAreaTechnology =
+  | 'AppVeyor'
+  | 'Azure Pipelines'
+  | 'Bitbucket Pipelines'
+  | 'Buildkite'
+  | 'CircleCI'
+  | 'Drone CI'
+  | 'GitHub Actions'
+  | 'GitLab CI/CD'
+  | 'Jenkins'
+  | 'TeamCity'
+  | 'Travis CI'
+  | 'Woodpecker CI';
+
+/**
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
@@ -174,7 +191,8 @@ export type DetectedAreaTechnology =
   | RuntimeDetectedAreaTechnology
   | TemplateDetectedAreaTechnology
   | DatabaseDetectedAreaTechnology
-  | TestDetectedAreaTechnology;
+  | TestDetectedAreaTechnology
+  | CiCdDetectedAreaTechnology;
 
 /**
  * Primary and related technologies exposed for a detected repository area.
