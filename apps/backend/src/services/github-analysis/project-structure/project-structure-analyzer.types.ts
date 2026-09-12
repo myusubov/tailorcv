@@ -133,12 +133,14 @@ export type ContainerizationDetectedAreaTechnology =
 export type RuntimeDetectedAreaTechnology =
   | '.NET'
   | 'C#'
+  | 'Dart'
   | 'Java'
   | 'Kotlin'
   | 'Node.js'
   | 'PHP'
   | 'Python'
-  | 'Ruby';
+  | 'Ruby'
+  | 'Swift';
 
 /**
  * Template/view technology labels attached as related context.
@@ -182,6 +184,16 @@ export type CiCdDetectedAreaTechnology =
   | 'Woodpecker CI';
 
 /**
+ * Mobile framework/platform labels inferred for detected mobile app areas.
+ */
+export type MobileDetectedAreaTechnology =
+  | 'Android'
+  | 'Expo'
+  | 'Flutter'
+  | 'iOS'
+  | 'React Native';
+
+/**
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
@@ -192,7 +204,8 @@ export type DetectedAreaTechnology =
   | TemplateDetectedAreaTechnology
   | DatabaseDetectedAreaTechnology
   | TestDetectedAreaTechnology
-  | CiCdDetectedAreaTechnology;
+  | CiCdDetectedAreaTechnology
+  | MobileDetectedAreaTechnology;
 
 /**
  * Primary and related technologies exposed for a detected repository area.

@@ -99,6 +99,17 @@ This does not change the adapter's mechanism or its non-anchor resolution branch
 
 See [CI/CD Workflows Detected-Area Category](../changelog.md#cicd-workflows-detected-area-category) (2026-09-11).
 
+## Update 2026-09-12: Expo added, with a below-the-root anchor shape and per-call `extraRootDirectories`
+
+`resolveUnitRootOwner` is now also passed by the Expo mobile detector, with `isAnchorSignal: true` on three signals -- bringing the shared-adapter count from fifteen to sixteen. Two of Expo's three anchors (`expo-router-typed-env` / `expo-env.d.ts`, `expo-dynamic-config` / `app.config.(ts|js)`) sit at the unit root exactly like every other detector on this adapter. The third does not, which this ADR's Decision section did not previously anticipate.
+
+- **Below-the-root anchor shape.** `expo-router-root-layout` matches `app/_layout.(tsx|jsx|ts|js)`. Expo Router requires a directory literally named `app` to hold it, and since Expo SDK 55 the default template nests that directory one level deeper still, at `src/app` -- so the file is never itself at the project root the way `next.config.ts` or `Jenkinsfile` is. The anchor branch now special-cases this exact path shape: instead of "the directory containing the anchor file" (the Decision section's original rule, no longer universally true), it strips the matched `app/_layout.*` suffix and any `src` segment immediately enclosing it, so `app/_layout.tsx` -> `.`, `src/app/_layout.tsx` -> `.`, `apps/mobile/app/_layout.tsx` -> `apps/mobile`, and `apps/mobile/src/app/_layout.tsx` -> `apps/mobile`. The branch identifies this shape by testing `path` against the same regex the entry schema already uses, not by threading a signal-type identifier through the engine -- the path shape alone is unique to this one signal among Expo's own six and every other detector on this adapter, mirroring how `resolveContainerRootOwner` ([ADR 0004](0004-containerization-owner-resolution.md)) already distinguishes Docker from Podman/OCI shapes by regex rather than by signal name.
+- **Per-call `extraRootDirectories`.** `resolveUnitRootOwner` gained an optional `extraRootDirectories?: readonly string[]` parameter, forwarded to the non-anchor fallback's `ownerPathForApplicationArea` call. Expo passes `['example']`, so a library repo's demo app (`example/eas.json`, or a nested `example/basic/eas.json` -- the `create-expo-module` convention) resolves to `example`/`example/basic` rather than the repository root when no anchor nearby already claims it. The name is not added to the shared `MONOREPO_OWNER_ROOT_DIRECTORIES` constant, since `example` is not a general monorepo convention every caller of this shared resolver should inherit -- only Expo passes it.
+
+Both changes are additive: neither the new path-shape branch nor an unset `extraRootDirectories` changes the resolved owner for any of the fifteen existing callers.
+
+See [Mobile App Detected-Area Category](../changelog.md#mobile-app-detected-area-category-expo-implemented) (2026-09-12).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`
