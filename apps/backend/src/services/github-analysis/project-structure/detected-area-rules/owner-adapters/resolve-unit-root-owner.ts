@@ -2,7 +2,10 @@ import { ownerPathForApplicationArea } from '../../project-structure-path-utils'
 
 /**
  * Resolves the owner root for one unit-framework signal (Next.js, Nuxt.js, and
- * peers whose distinctive config file sits at the deployable unit root).
+ * peers whose distinctive config file sits at the deployable unit root, plus
+ * Expo Router's `app/_layout.*`, whose anchor file sits one or two
+ * directories inside that root instead -- see the anchor-signal behavior
+ * below).
  *
  * Inputs:
  * - `path`: normalized repository path of a matched signal entry.
@@ -10,15 +13,27 @@ import { ownerPathForApplicationArea } from '../../project-structure-path-utils'
  *   signal (e.g. `next.config.*`).
  * - `anchorOwners`: owner roots already resolved from anchor signals in the
  *   current detector run. Read-only here; the engine populates it in pass 1.
+ * - `extraRootDirectories`: additional first-segment directory names to treat
+ *   as workspace roots when the non-anchor fallback delegates to
+ *   `ownerPathForApplicationArea` (e.g. `example`, for a framework whose
+ *   library repos conventionally nest a demo app there). Passed per call
+ *   rather than hardcoded here, since a name meaningful to one detector
+ *   (Expo's `example/`) is not a general monorepo convention every caller of
+ *   this shared resolver should inherit.
  *
  * Behavior:
  * - A path with no directory segment resolves to `.`, checked ahead of the
  *   anchor and fallback branches regardless of the other inputs.
  * - Anchor signal: the owner is the directory containing the anchor file
- *   (`.` at the repository root).
+ *   (`.` at the repository root), except a path ending in
+ *   `app/_layout.(tsx|jsx|ts|js)` (Expo Router's root layout convention),
+ *   which strips that `app/_layout.*` suffix -- and any `src` segment
+ *   immediately enclosing it -- instead of taking the plain dirname, since
+ *   the file sits one or two directories inside its actual project root.
  * - Non-anchor signal: the owner is the longest entry in `anchorOwners` that
  *   encloses `path` (its nearest unit root). When no anchor encloses it,
- *   resolution falls back to `ownerPathForApplicationArea`.
+ *   resolution falls back to `ownerPathForApplicationArea`, forwarding
+ *   `extraRootDirectories` when given.
  *
  * Invariant: every anchor signal must be resolved before any non-anchor
  * signal so `anchorOwners` is complete when the non-anchor branch reads it.
@@ -29,10 +44,12 @@ export function resolveUnitRootOwner({
   path,
   isAnchorSignal,
   anchorOwners,
+  extraRootDirectories,
 }: {
   path: string;
   isAnchorSignal: boolean;
   anchorOwners: ReadonlySet<string>;
+  extraRootDirectories?: readonly string[];
 }): string {
   const parts = path.split('/');
 
@@ -41,6 +58,19 @@ export function resolveUnitRootOwner({
   }
 
   if (isAnchorSignal) {
+    if (/(^|\/)app\/_layout\.(tsx|jsx|ts|js)$/.test(path)) {
+      const srcIndex = parts.lastIndexOf('src');
+      let owner = '';
+      if (srcIndex !== -1) {
+        owner = parts.slice(0, srcIndex).join('/');
+      } else {
+        owner = parts.slice(0, -2).join('/');
+      }
+      if (owner.length === 0) {
+        owner = '.';
+      }
+      return owner;
+    }
     return parts.slice(0, -1).join('/');
   }
 
@@ -56,5 +86,5 @@ export function resolveUnitRootOwner({
     }
   }
 
-  return ownerPathForApplicationArea({ path });
+  return ownerPathForApplicationArea({ path, extraRootDirectories });
 }
