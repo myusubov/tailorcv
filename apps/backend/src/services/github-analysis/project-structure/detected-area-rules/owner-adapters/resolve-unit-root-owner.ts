@@ -31,8 +31,17 @@ import { ownerPathForApplicationArea } from '../../project-structure-path-utils'
  *   immediately enclosing it -- instead of taking the plain dirname, since
  *   the file sits one or two directories inside its actual project root.
  * - Non-anchor signal: the owner is the longest entry in `anchorOwners` that
- *   encloses `path` (its nearest unit root). When no anchor encloses it,
- *   resolution falls back to `ownerPathForApplicationArea`, forwarding
+ *   encloses `path` (its nearest unit root).
+ * - When no anchor owner encloses the path, a path containing an
+ *   `android`/`ios` path segment, or ending in a
+ *   `metro.config.(js|cjs|mjs|ts)` file, resolves to everything before that
+ *   segment/file -- both are React Native conventions whose containing
+ *   directory is the actual project root regardless of what that directory
+ *   is named, which a directory-name allowlist like
+ *   `ownerPathForApplicationArea`'s cannot express (e.g. a bare
+ *   `FabricExample/` example app nested under none of its recognized
+ *   workspace roots).
+ * - Anything else falls back to `ownerPathForApplicationArea`, forwarding
  *   `extraRootDirectories` when given.
  *
  * Invariant: every anchor signal must be resolved before any non-anchor
@@ -86,5 +95,44 @@ export function resolveUnitRootOwner({
     }
   }
 
+  if (/(^|\/)(android|ios)(\/|$)/.test(path)) {
+    const bottomIndex =
+      parts.lastIndexOf('android') !== -1
+        ? parts.lastIndexOf('android')
+        : parts.lastIndexOf('ios');
+
+    let owner = '';
+
+    if (bottomIndex === 0) {
+      owner = '.';
+    } else {
+      owner = parts.slice(0, bottomIndex).join('/');
+    }
+
+    if (owner.length === 0) {
+      owner = '.';
+    }
+    return owner;
+  }
+
+  if (/(^|\/)metro\.config\.(js|cjs|mjs|ts)$/.test(path)) {
+    const bottomIndex = parts.findLastIndex((val) =>
+      /^metro\.config\.(js|cjs|mjs|ts)$/.test(val),
+    );
+
+    let owner = '';
+
+    if (bottomIndex === 0) {
+      owner = '.';
+    } else {
+      owner = parts.slice(0, bottomIndex).join('/');
+    }
+
+    if (owner.length === 0) {
+      owner = '.';
+    }
+    return owner;
+  }
+  
   return ownerPathForApplicationArea({ path, extraRootDirectories });
 }

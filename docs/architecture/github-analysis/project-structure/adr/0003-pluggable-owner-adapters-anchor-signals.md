@@ -110,10 +110,39 @@ Both changes are additive: neither the new path-shape branch nor an unset `extra
 
 See [Mobile App Detected-Area Category](../changelog.md#mobile-app-detected-area-category-expo-implemented) (2026-09-12).
 
+## Update 2026-09-14: React Native added, no new mechanism
+
+`resolveUnitRootOwner` is now also passed by the React Native (bare CLI, no meta-framework) mobile detector, with `isAnchorSignal: true` on its single `react-native-cli-config` (`react-native.config.js`) signal -- bringing the shared-adapter count from sixteen to seventeen.
+
+Unlike Expo, React Native introduces no new adapter logic. Its one anchor sits directly at the unit root by the React Native CLI's own contract -- the plain "directory containing the anchor file" shape the Decision section already describes, with no below-the-root stripping needed. It also passes the same `extraRootDirectories: ['example']` the 2026-09-12 update added, for the identical library-demo-app convention observed in RN native-module libraries (react-native-webview and peers), reusing the parameter unchanged rather than widening it. This is a new *caller* of both existing branches, not new adapter logic, mirroring how the 2026-09-11 Jenkins update was a new way of using an existing branch.
+
+This is additive: React Native's addition changes the resolved owner for none of the sixteen existing callers.
+
+See [React Native (Bare CLI) Detected-Area Detector](../changelog.md#react-native-bare-cli-detected-area-detector) (2026-09-14).
+
+## Update 2026-09-16: general path-shape fallback for React Native's non-anchor signals, and a restored anchor-dirname regression
+
+The 2026-09-14 update's "no new adapter logic" claim held only for React Native's one anchor signal; it did not anticipate the non-anchor signals (`android-native-shell`, `ios-native-shell`, `metro-bundler-config`). Real evidence surfaced a gap the Decision section's mechanism could not close: `software-mansion/react-native-screens`' `FabricExample/` and `TVOSExample/`, and `react-native-picker/picker`'s `FabricExample/`, are complete, independently-native example apps with no `react-native.config.js` of their own and no enclosing `anchorOwners` entry, so their evidence fell through to `ownerPathForApplicationArea`'s directory-name allowlist -- which does not, and structurally cannot, recognize an arbitrary example-app directory name it has never been told about, and returned the repository root instead.
+
+`resolveUnitRootOwner` gained two new, signal-agnostic fallback branches, tried after the `anchorOwners` lookup finds no enclosing owner and before the generic `ownerPathForApplicationArea` call:
+
+- A path containing an `android` or `ios` path segment (`/(^|\/)(android|ios)(\/|$)/`) resolves to everything before that segment, since a committed native platform folder is always the immediate child of its owning app root regardless of what that root directory is named.
+- A path ending in `metro.config.(js|cjs|mjs|ts)` resolves to its own immediate parent directory, for the same reason: Metro requires its config at the actual project root, so wherever the file is found, its dirname is the owner -- at any nesting depth, not merely a fixed number of segments.
+
+Both branches are evaluated for every caller of this shared resolver, not gated to React Native's signals, since the underlying conventions (a native platform folder, a Metro config file) are not React-Native-exclusive path shapes -- any current or future detector whose evidence takes one of these two shapes benefits the same way. Anchor-verified ownership still wins when available: both branches sit strictly after the `anchorOwners` lookup, so a real anchor's more specific owner is never overridden by this path-shape heuristic.
+
+Separately, this pass also restored `return parts.slice(0, -1).join('/');` as the anchor branch's fallthrough for any anchor signal that is not the `app/_layout` special case -- the plain "directory containing the anchor file" rule the Decision section has always described. It had been dropped from the anchor branch during the same edit that introduced the two fallback branches above, which (before the restoration) caused every non-`app/_layout` anchor signal with an unrecognized parent directory name (e.g. `mobile/react-native.config.js`) to fall through to the same generic-resolver gap this update otherwise fixes for non-anchor signals. This is a regression fix, not a new decision -- the rule itself is unchanged from the original Decision section.
+
+Covered by 3 new cases in `resolve-unit-root-owner.react-native.test.ts` (`FabricExample`/`TVOSExample`/picker's `FabricExample`, each asserting `android-native-shell`, `ios-native-shell`, and `metro-bundler-config` evidence). Not yet re-verified against the full backend test suite as part of this pass -- see the changelog entry for outstanding verification.
+
+See [React Native Owner Resolution: Path-Shape Fallback for Unanchored Example Apps](../changelog.md#react-native-owner-resolution-path-shape-fallback-for-unanchored-example-apps) (2026-09-16).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.test.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.expo.test.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.react-native.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` (`ownerPathForApplicationArea`)
 - [Containerization and Database Owner Resolvers Removed](../changelog.md#containerization-and-database-owner-resolvers-removed) (2026-08-24)
