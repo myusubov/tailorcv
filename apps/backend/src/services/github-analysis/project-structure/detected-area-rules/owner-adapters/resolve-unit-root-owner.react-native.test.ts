@@ -277,9 +277,11 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       ).toBe('apps/fabric-example');
     });
 
-    it('falls back to the generic monorepo resolver for a library sub-package with no react-native.config.js of its own', () => {
+    it('resolves via the android/ios path-shape fallback for a library sub-package with no react-native.config.js of its own', () => {
       // packages/skia has no anchor -- only apps/example does, elsewhere in
-      // the same repository.
+      // the same repository. Matches the android/ios fallback branch before
+      // reaching the generic resolver, though both would agree here since
+      // "packages" is also a recognized monorepo root.
       const owner = resolveUnitRootOwner({
         path: 'packages/skia/android/build.gradle',
         isAnchorSignal: false,
@@ -289,7 +291,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       expect(owner).toBe('packages/skia');
     });
 
-    it('falls back to the generic monorepo resolver for each of dozens of independent icon-font packages', () => {
+    it('resolves via the android/ios path-shape fallback for each of dozens of independent icon-font packages', () => {
       const anchorOwners = new Set<string>(['apps/icon-explorer']);
 
       expect(
@@ -308,9 +310,12 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       ).toBe('packages/ionicons');
     });
 
-    it('falls back to the generic monorepo resolver for a config-less example app whose siblings do have anchors', () => {
+    it('resolves via the android/ios path-shape fallback for a config-less example app whose siblings do have anchors', () => {
       // apps/tvos-example carries a full native shell but, unlike its
       // apps/fabric-example sibling, no react-native.config.js of its own.
+      // Matches the android/ios fallback branch before reaching the generic
+      // resolver, though both would agree here since "apps" is also a
+      // recognized monorepo root.
       const owner = resolveUnitRootOwner({
         path: 'apps/tvos-example/android/build.gradle',
         isAnchorSignal: false,
@@ -325,7 +330,10 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       expect(owner).toBe('apps/tvos-example');
     });
 
-    it('falls back to the generic monorepo resolver for a metro-only example app with no config file and no native folders', () => {
+    it('resolves via the metro.config.* path-shape fallback for a metro-only example app with no config file and no native folders', () => {
+      // Matches the metro.config.* fallback branch before reaching the
+      // generic resolver, though both would agree here since "apps" is also
+      // a recognized monorepo root.
       const owner = resolveUnitRootOwner({
         path: 'apps/web-example/metro.config.js',
         isAnchorSignal: false,
