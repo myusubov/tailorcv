@@ -6,6 +6,36 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-09-16
+
+### React Native Owner Resolution: Path-Shape Fallback for Unanchored Example Apps
+
+- **Problem:** Widened research past the 2026-09-14 entry's six repositories surfaced a real-repo gap the 2026-09-14 owner wiring did not anticipate: `software-mansion/react-native-screens`' `FabricExample/` and `TVOSExample/`, and `react-native-picker/picker`'s `FabricExample/`, are complete, independently-native RN example apps with no `react-native.config.js` of their own, so no `anchorOwners` entry encloses their evidence. `android-native-shell`, `ios-native-shell`, and `metro-bundler-config` matches for these apps fell through to `ownerPathForApplicationArea`'s directory-name allowlist, which does not (and structurally cannot) recognize an arbitrary example-app directory name it was never told about, and returned the repository root -- silently swallowing a fully separate app into whatever other owner the repository's one recognized anchor happened to produce.
+- **Solution:**
+  1. Added two new fallback branches to the shared `resolveUnitRootOwner` (`detected-area-rules/owner-adapters/resolve-unit-root-owner.ts`), tried after the `anchorOwners` lookup finds no enclosing owner and before the generic `ownerPathForApplicationArea` call: a path containing an `android`/`ios` path segment resolves to everything before that segment; a path ending in `metro.config.(js|cjs|mjs|ts)` resolves to its own immediate parent directory. Both rely on the file-system conventions themselves (a native platform folder, Metro's own config-at-root contract) rather than a directory-name allowlist, so they generalize to any example-app directory name at any nesting depth.
+  2. Both branches are unconditional -- not gated to React Native's signals or to `isAnchorSignal` -- since neither convention is React-Native-exclusive; any current or future caller of this shared resolver whose evidence takes one of these two path shapes benefits identically. Anchor-verified ownership still wins when available: both branches sit strictly after the `anchorOwners` lookup, never before it.
+  3. Restored `return parts.slice(0, -1).join('/');` as the anchor branch's fallthrough for any anchor signal that is not the `app/_layout` special case. This line had been present in the accepted 2026-09-14 state and was dropped during the same edit that introduced the two branches above; without it, every non-`app/_layout` anchor signal whose parent directory name `ownerPathForApplicationArea` does not recognize (e.g. a custom-named app root like `mobile/react-native.config.js`, already documented as a real shape in the 2026-09-14 research) would have fallen through to the same swallowing gap this entry otherwise fixes for non-anchor signals. This is a regression fix restoring the Decision section's original anchor-dirname rule, not a new architectural decision.
+  4. Added 3 new cases to `resolve-unit-root-owner.react-native.test.ts` under the "an unrelated anchor elsewhere in the repo must not swallow a fully separate example app" block, each asserting `android-native-shell`, `ios-native-shell`, and `metro-bundler-config` evidence for `FabricExample`/`TVOSExample`/picker's `FabricExample` resolves to that app's own directory, not the repository root or a sibling anchor's owner.
+  5. Documented the new mechanism in a 2026-09-16 [ADR 0003](adr/0003-pluggable-owner-adapters-anchor-signals.md) update, and corrected the 2026-09-14 changelog entry's now-inaccurate "introducing no new resolver logic" and "resolveUnitRootOwner itself was not modified" claims in place, since that entry was still uncommitted (not yet accepted history) when this fix landed.
+- **Affected files:** `detected-area-rules/owner-adapters/resolve-unit-root-owner.ts`, `detected-area-rules/owner-adapters/resolve-unit-root-owner.react-native.test.ts`, `adr/0003-pluggable-owner-adapters-anchor-signals.md`, this changelog (including an in-place correction of the 2026-09-14 entry above).
+- **Outcome:** `android-native-shell`, `ios-native-shell`, and `metro-bundler-config` evidence for an unanchored example app now resolves to that app's own directory instead of the repository root or an unrelated sibling anchor's owner, for any directory name -- not limited to the three real repositories that motivated the fix. The restored anchor-dirname fallthrough closes the same swallowing gap for non-`app/_layout` anchor signals with an unrecognized parent directory name. Not yet re-verified: the owner-adapter suite has not been re-run since these changes (the 2026-09-14 entry's 185-test run predates them), the `.react-native.test.ts` file's non-`.only` cases have not been confirmed passing in this session, and no analyzer-output fixture exercises this path end to end -- consistent with the existing Risks entry on rebuilding per-detector fixtures. Typecheck, lint, and the broader backend test suite were not run as part of this change.
+
+## 2026-09-14
+
+### React Native (Bare CLI) Detected-Area Detector
+
+- **Problem:** `addReactNativeMobileAreas` had been left as a side-effect-free scaffold since the 2026-09-12 Mobile app category implementation (empty `signalScores`/`entrySchemas`), so no repository ever produced a `Mobile app` area from bare React Native CLI evidence, and an owner that individually installs Expo SDK modules without adopting Expo Router had no detector path to being flagged as React Native either.
+- **Solution:**
+  1. Researched the official `react-native-community/template` scaffold plus six real production repositories (Mattermost, Expensify, Zulip, Rainbow, Gutenberg Mobile, Ledger Live) and a ~13k-hit GitHub code search for `react-native.config.js`, published as an artifact ("React Native Flight Book") before implementation.
+  2. Implemented `addReactNativeMobileAreas` (`detected-area-rules/mobile/react-native-mobile-area-rules.ts`) on `applyDeclarativeAreaDetector`: one anchor (`react-native-cli-config` / `react-native.config.js`) and four supportive signals (`android-native-shell` / `android/{build.gradle,settings.gradle,gradlew}`, `ios-native-shell` / `ios/Podfile`, `react-native-application-bootstrap` / `android/app/src/main/{java,kotlin}/**/MainApplication.{java,kt}`, `metro-bundler-config` / `metro.config.js`), plus a sixth, zero-scored `expo-modules-coexistence` signal (`app.config.(ts|js)`, `eas.json`) used only by `dynamicRelatedTechMap`, never the gate.
+  3. Designed a 3-branch gate -- (A) config file plus at least one native corroborator, (B) both native platform shells with no config file needed, (C) the Android bootstrap class plus the iOS shell -- so repositories scaffolded after `react-native.config.js` dropped out of the official template still clear. Researched and rejected two weak tiebreakers (`.watchmanconfig`, `app.json`) after confirming `AREA_CONFIDENCE_MAX_SCORE` (6) is already saturated by every gate-passing branch's required signals alone, so neither could move confidence or the `MIN_AREA_SCORE` floor.
+  4. Added a `competingProofSchemas` veto against Expo's `expo-router-root-layout` (`app/_layout.*`) and `expo-router-typed-env` (`expo-env.d.ts`) file shapes, deliberately excluding the weaker `app.config.*`/`app.json`/`eas.json` shapes: a rainbow-me/rainbow case study (its `package.json` content, read for research only -- the detector itself stays path-only) showed a real, large, bare React Native wallet app legitimately carrying `app.config.ts` because it individually installs Expo SDK modules (`expo-image-picker`, `expo-web-browser`, etc.) via the `install-expo-modules` pattern, without Expo Router or the managed workflow. Added `dynamicRelatedTechMap: { 'expo-modules-coexistence': 'Expo' }` so that weaker coexistence evidence is surfaced in `related` instead of silently dropped or wrongly vetoing a real React Native repository.
+  5. Wired `ownerAdapter: (args) => resolveUnitRootOwner({ ...args, extraRootDirectories: ['example'] })` -- the seventeenth detector on this adapter. The anchor itself sits at the unit root with no below-the-root stripping, unlike Expo's `app/_layout.*`, and `extraRootDirectories: ['example']` is reused unchanged for the same library-demo-app convention observed in RN native-module libraries (react-native-webview and peers). Documented in a 2026-09-14 [ADR 0003](adr/0003-pluggable-owner-adapters-anchor-signals.md) update. (See the 2026-09-16 entry below: this detector's non-anchor signals turned out to need new resolver logic after all.)
+  6. Updated `mobile-area-rules.ts`'s dispatcher docstring: the `competingProofSchemas` veto, not Expo's dispatch-order precedence, is what actually prevents a double-primary Expo/React Native claim on the same owner.
+  7. Reconciled this README's key-files table, section 6.5 owner-resolution and Mobile app dispatch rules, Implementation Status, and Risks & Mitigations; updated `adr/README.md`.
+- **Affected files:** `detected-area-rules/mobile/react-native-mobile-area-rules.ts`, `detected-area-rules/mobile/mobile-area-rules.ts`, `adr/0003-pluggable-owner-adapters-anchor-signals.md`, `adr/README.md`, this README and changelog.
+- **Outcome:** `Mobile app` areas now emit for repositories committing recognizable bare React Native CLI evidence, with an Expo-Router/typed-env owner vetoed outright and weaker Expo-adjacent evidence (`app.config.*`/`eas.json`) surfaced as a related technology instead of silently dropped. Flutter, Android, and iOS remain undetected scaffolds. No analyzer-output fixture exercises the new gate, veto, or hedge -- consistent with every other implemented detector in this domain (Expo included), not a gap unique to React Native; see the existing Risks entry on rebuilding per-detector fixtures. `npx tsc --noEmit` was run against the backend and passed clean (exit 0), and the existing owner-adapter suite (`resolve-unit-root-owner.test.ts`, `resolve-unit-root-owner.expo.test.ts`, `resolve-container-root-owner.test.ts`, `resolve-container-root-owner.podman-oci.test.ts` -- 185 tests) was run and passed against `resolveUnitRootOwner` as it stood at this point, before the 2026-09-16 entry's fallback branches were added. Lint and the broader backend test suite were not run.
+
 ## 2026-09-12
 
 ### Mobile App Detected-Area Category (Expo Implemented)
@@ -343,59 +373,4 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 - **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
 - **Outcome:** Docker evidence now resolves to `apps`, `packages`, `services`, or `libs` when stored directly under those roots or inside their generic config folders, while named members such as `apps/frontend` retain member-level ownership regardless of deeper evidence paths.
 
-## 2026-07-14
-
-### Docker Containerization Signal Prep
-
-- **Decision:** Collect basename-only Docker signals through filename matching, keep devcontainer config path-scoped, and count Docker Bake as conservative Docker-specific build evidence.
-- **Problem:** The Docker detector scaffold started counting Docker path signals, but basename-only files were using full-path regexes, the matcher patterns did not align with the analyzer's lowercase normalized paths, Compose variants such as `compose.prod.yml` were missing, and Docker Bake was not counted.
-- **Solution:**
-  1. Updated Dockerfile matching to use filename evidence such as `dockerfile`, `api.dockerfile`, and environment-suffixed variants.
-  2. Updated `.dockerignore` matching to use filename evidence aligned with lowercase normalized Dockerfile names.
-  3. Updated Compose matching to use filename evidence for both `compose.*` and `docker-compose.*` YAML variants.
-  4. Added Docker Bake filename evidence for `docker-bake.hcl`, `docker-bake.json`, and their `.override` variants with score `3`.
-  5. Kept `.devcontainer/devcontainer.json` as path-scoped evidence because the directory is part of that signal.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
-- **Outcome:** Docker signal collection is broader and uses filename matching where directory context is unnecessary, while the detector gate still controls whether any `Containerization` area is emitted.
-
-### Docker Containerization Owner Resolution
-
-- **Decision:** Resolve Docker containerization evidence to the repo area being containerized rather than the Docker config folder by default.
-- **Problem:** Docker evidence can live at repo root, inside app/service/package owners, under generic config folders such as `docker/` or `deploy/`, or in simple local owners such as `backend/`; the detector needed stable owner paths before enabling Docker area emission.
-- **Solution:**
-  1. Added `ownerPathForDockerContainerizationArea` in `project-structure-path-utils.ts`.
-  2. Resolved monorepo evidence to `apps/*`, `services/*`, `packages/*`, or `libs/*`.
-  3. Collapsed root-level and generic config-folder evidence such as `docker/Dockerfile`, `deploy/docker/Dockerfile`, and `.devcontainer/devcontainer.json` to `.`.
-  4. Used parent-folder fallback for simple local owners such as `backend/Dockerfile`, `api/docker-compose.yml`, and `worker/docker-bake.override.hcl`.
-  5. Routed every Docker signal count through the Docker owner resolver and added focused path utility coverage.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
-- **Outcome:** Docker signal evidence now groups under the intended containerized repo area, while the detector gate still controls whether `Containerization` areas emit.
-
-### Containerization Technology Type Cleanup
-
-- **Decision:** Keep Docker in a dedicated containerization technology category while preserving the public `DetectedAreaTechnology` union shape.
-- **Problem:** The initial Docker technology type used inconsistent union formatting and the project-structure README still described the composed technology union without the new containerization category.
-- **Solution:**
-  1. Normalized `ContainerizationDetectedAreaTechnology` to the single literal alias `Docker`.
-  2. Updated the JSDoc to describe containerization-area technology labels.
-  3. Updated the project-structure README rule that lists the composed technology categories.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.types.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
-- **Outcome:** Docker remains available to detected-area candidates through a clearly named containerization technology category.
-
-## 2026-07-09
-
-### Containerization Detector Module Scaffold
-
-- **Decision:** Establish the containerization detected-area module structure before adding Docker path rules.
-- **Problem:** `Containerization` is a planned detected-area name, but the project-structure analyzer did not yet have an isolated rule group or Docker-specific detector boundary for incremental implementation.
-- **Solution:** Added `detected-area-rules/containerization/containerization-area-rules.ts`, added the scaffolded Docker module at `detected-area-rules/containerization/docker-containerization-area-rules.ts`, wired `addContainerizationAreas` into `project-structure-detected-area-rules.ts`, and documented the new module boundary in `docs/architecture/github-analysis/project-structure/README.md`.
-- **Outcome:** Containerization detection now has a stable dispatcher and Docker detector file ready for conservative path-only scoring rules without changing analyzer output behavior yet.
-
-## 2026-07-08
-
-### JavaScript/TypeScript Shared Package Area Detection
-
-- **Decision:** Detect JavaScript/TypeScript shared-package areas at the repo-level reusable package container instead of the individual package leaf.
-- **Problem:** Shared-package evidence such as `packages/ui/package.json`, `libs/types/index.ts`, or `modules/schemas/src/index.mts` describes reusable package containers, while app-internal paths such as `apps/web/src/shared/index.ts` should not emit a repo-level `Shared package` area.
-- **Solution:** Added `detected-area-rules/shared-package/js-ts-shared-package-area-rules.ts`, kept `detected-area-rules/shared-package/shared-package-area-rules.ts` as the group dispatcher, wired shared-package rules into `project-structure-detected-area-rules.ts`, added `ownerPathForSharedPackageArea` in `project-structure-path-utils.ts`, emitted `Shared package` with `Node.js` technology metadata, and covered `packages`, scoped packages, `libs`, `modules`, root `shared`, root `common`, repeated-signal, and weak-signal fixtures in public analyzer tests.
-- **Outcome:** JavaScript/TypeScript reusable package evidence now emits stable shared-package owners such as `packages`, `libs`, `modules`, `shared`, or `common`, while package-name-only, manifest-only, entrypoint-only, app-internal shared modules, and top-level `utils` remain non-emitting.
+Older implementation history for 2026-07-08 through 2026-07-14 is preserved in [changelog-archive.md](changelog-archive.md).

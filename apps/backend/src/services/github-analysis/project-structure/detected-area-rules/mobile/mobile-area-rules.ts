@@ -18,9 +18,13 @@ import { addReactNativeMobileAreas } from './react-native-mobile-area-rules';
  * Inputs: `context.candidates` (shared `(area name, owner path)` map, mutated in
  * place) and `context.index` (repository path/name/extension lookup).
  * Output: none.
- * Side effects: fans out to the provider detectors. Only Expo currently
- * inserts or updates `Mobile app` candidates; React Native, Flutter, Android,
- * and iOS remain scaffolds with no entry schemas defined yet.
+ * Side effects: fans out to the provider detectors. Expo and React Native
+ * currently insert or update `Mobile app` candidates; Flutter, Android, and
+ * iOS remain scaffolds with no entry schemas defined yet. React Native's own
+ * `competingProofSchemas` vetoes an owner carrying Expo Router or typed-env
+ * evidence regardless of dispatch order, so Expo running first is a
+ * performance/precedence convenience here, not what prevents a
+ * double-primary claim.
  */
 export function addMobileAreas({
   candidates,
@@ -31,4 +35,4 @@ export function addMobileAreas({
   addFlutterMobileAreas({ candidates, index });
   addAndroidMobileAreas({ candidates, index });
   addIosMobileAreas({ candidates, index });
-};
+}
