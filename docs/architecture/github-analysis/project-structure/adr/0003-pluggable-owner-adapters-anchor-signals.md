@@ -137,6 +137,20 @@ Covered by 3 new cases in `resolve-unit-root-owner.react-native.test.ts` (`Fabri
 
 See [React Native Owner Resolution: Path-Shape Fallback for Unanchored Example Apps](../changelog.md#react-native-owner-resolution-path-shape-fallback-for-unanchored-example-apps) (2026-09-16).
 
+## Update 2026-09-18: Flutter added, no new mechanism
+
+`resolveUnitRootOwner` is now also passed by the Flutter mobile detector, with `isAnchorSignal: true` on two signals (`flutter-metadata` / `.metadata`, `flutter-pubspec-manifest` / `pubspec.yaml`) -- bringing the shared-adapter count from seventeen to eighteen.
+
+Flutter introduces no new adapter logic at all, not even the "new caller of an existing branch" kind the 2026-09-11 Jenkins and 2026-09-14 React Native updates were. Both anchors sit directly at the unit root, the plain "directory containing the anchor file" shape the Decision section already describes. Its non-anchor `flutter-ios-platform-dir` and `flutter-android-splash` signals both happen to contain an `android`/`ios` path segment, so the 2026-09-16 fallback branch (added for React Native, evaluated for every caller) already resolves them correctly with no anchor nearby -- confirmed against fresh evidence during this pass (`flutter/packages`' federated `camera` plugin family, six independent siblings each with its own `example/` app). It also passes the same `extraRootDirectories: ['example']` the 2026-09-12 update added, for the identical library-demo-app convention observed in AppFlowy's internal packages.
+
+Flutter's remaining non-anchor signals (`flutter-macos-platform-dir`, `flutter-desktop-cmake`, `flutter-entrypoint`, `flutter-integration-test-dir`) have no equivalent path-shape fallback and depend on an anchor already having claimed the enclosing owner, or the generic `ownerPathForApplicationArea` resolver's existing one-segment-deep default -- the same limitation already accepted for React Native's own non-anchor supportive signals, not a new one Flutter introduces.
+
+This pass also surfaced, without fixing, a property of the `anchorOwners` non-anchor branch: its set-membership check (`path === owner || path.startsWith(owner + '/')`) can never match an owner of `'.'`, since no real repository path is ever the literal string `.` or starts with `./`. Adding `owner === '.'` to make it match was tried and rejected: it breaks an existing, real, confirmed case in `resolve-unit-root-owner.react-native.test.ts` (`software-mansion/react-native-screens`' `FabricExample/`, a separate anchor-less example app three directories from the repository's root anchor) by letting the root anchor win before the `android`/`ios` fallback -- which currently produces the correct answer there -- ever runs. Both defaults fail in opposite directions with no real repository evidence favoring either; see the changelog entry and the README's Risks & Mitigations for the residual risk this leaves open.
+
+This is additive: Flutter's addition changes the resolved owner for none of the seventeen existing callers.
+
+See [Flutter Mobile Detected-Area Detector](../changelog.md#flutter-mobile-detected-area-detector) (2026-09-18).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`
@@ -144,5 +158,6 @@ See [React Native Owner Resolution: Path-Shape Fallback for Unanchored Example A
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.expo.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.react-native.test.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.flutter.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` (`ownerPathForApplicationArea`)
 - [Containerization and Database Owner Resolvers Removed](../changelog.md#containerization-and-database-owner-resolvers-removed) (2026-08-24)
