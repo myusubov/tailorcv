@@ -45,7 +45,7 @@ export async function analyzeGithubRepositories({
         repo: repoName,
         treeRef: repo.default_branch ?? 'HEAD',
       });
-      const entries = normalizeTreeEntries({ entries: tree });
+      const entries = normalizeTreeEntries(tree);
       const analysis = analyzeProjectStructure({
         repository: {
           id: repo.id,

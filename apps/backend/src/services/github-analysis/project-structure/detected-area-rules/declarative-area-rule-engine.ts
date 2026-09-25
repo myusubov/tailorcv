@@ -1,7 +1,4 @@
-import {
-  DetectedAreaTechnology,
-  RepoTreeEntry,
-} from '../project-structure-analyzer.types';
+import { DetectedAreaTechnology } from '../project-structure-analyzer.types';
 import {
   addAreaScore,
   hasAreaCandidate,
@@ -10,10 +7,10 @@ import {
   DetectedAreaName,
   DetectedAreaRuleContext,
 } from '../project-structure-detected-areas.types';
+import type { EntryIndex } from '../project-structure-entry-index';
 import {
   countAreaRuleSignal,
   createAreaRuleCandidateMap,
-  hasCompetingAreaProof,
 } from './project-structure-area-rule-candidates';
 
 type IndexMethod =
@@ -42,15 +39,11 @@ interface GateBlocker<Signal extends string> {
   };
 }
 
-interface CompetingProofSchema {
-  indexMethod: IndexMethod;
-  regex: RegExp;
-}
-
-interface OwnerAdapterArgs {
+export interface OwnerAdapterArgs {
   path: string;
   isAnchorSignal: boolean;
   anchorOwners: ReadonlySet<string>;
+  index: EntryIndex;
 }
 
 interface ApplyDeclarativeAreaDetectorParams<
@@ -63,7 +56,6 @@ interface ApplyDeclarativeAreaDetectorParams<
   relatedTechs?: DetectedAreaTechnology[];
   dynamicRelatedTechMap?: Partial<Record<Signal, DetectedAreaTechnology>>;
   gateBlocker?: GateBlocker<Signal>;
-  competingProofSchemas?: CompetingProofSchema[];
   checkForExistingCandidate?: boolean;
   ownerAdapter?: (args: OwnerAdapterArgs) => string;
 }
@@ -137,16 +129,13 @@ export function evaluateCondition<Signal extends string>({
  * Runs a schema-declared detected-area detector: matches each `entrySchema`
  * against the repository index, scores signals once per owner via
  * `countAreaRuleSignal`, and adds a `detectedArea` candidate to `candidates`
- * for every owner that passes the optional `gateBlocker` shape check, has no
- * competing-framework proof at its path, and (when `checkForExistingCandidate`
- * is set) has no prior `detectedArea` claim for that owner.
+ * for every owner that passes the optional `gateBlocker` shape check and
+ * (when `checkForExistingCandidate` is set) has no prior `detectedArea` claim
+ * for that owner.
  * `gateBlocker.where.countedSignals` is evaluated per owner via
  * `evaluateCondition`, supporting arbitrarily nested AND/OR shape checks
  * (such as Next.js's or Vue's app-shape requirements); omitting it allows any
- * owner with at least one matched signal through. `competingProofSchemas`,
- * when given, is matched against the repository index once up front and
- * vetoes an owner whose path also carries that evidence (see
- * `hasCompetingAreaProof`), independent of the owner's own gate result.
+ * owner with at least one matched signal through.
  * `dynamicRelatedTechMap`, when given, unions in a related technology for
  * every signal counted for that owner (e.g. attributing `Java`/`Kotlin`
  * per owner from language-specific signal variants) in addition to any
@@ -156,13 +145,13 @@ export function evaluateCondition<Signal extends string>({
  * any file-evidence gate runs. This is the shared-map fallback guard used by
  * the last-resort detectors (Static frontend, Express) so weak generic path
  * shapes never accumulate score, evidence, or related technologies onto a
- * stronger detector's existing claim for the same owner. It is checked
- * independently of `competingProofSchemas`, which vetoes from raw repository
- * file evidence rather than emitted-candidate state.
+ * stronger detector's existing claim for the same owner.
  * When an `ownerAdapter` is given, signals are matched anchor-schemas-first:
  * each anchor signal's resolved owner is collected into `anchorOwners`, so that
  * set is complete before any non-anchor signal resolves against it (see
- * `resolveUnitRootOwner`).
+ * `resolveUnitRootOwner`). The adapter also receives the repository `index`
+ * (`OwnerAdapterArgs.index`), for resolvers that must look at other entries
+ * (see `resolveNearestMarkerOwner`).
  */
 export function applyDeclarativeAreaDetector<Signal extends string>({
   detectedArea,
@@ -173,15 +162,12 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
   candidates,
   index,
   gateBlocker,
-  competingProofSchemas,
   dynamicRelatedTechMap,
   checkForExistingCandidate,
   ownerAdapter,
 }: ApplyDeclarativeAreaDetectorParams<Signal>): void {
   const areaCandidateMap = createAreaRuleCandidateMap<Signal>();
   const anchorOwners = new Set<string>();
-
-  const competingProofEntries: RepoTreeEntry[] = [];
 
   // Anchor schemas first so `anchorOwners` is fully populated before any
   // non-anchor signal is resolved against it (see `resolveUnitRootOwner`).
@@ -214,6 +200,7 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
                 path,
                 isAnchorSignal: isAnchorSignal ?? false,
                 anchorOwners,
+                index,
               });
               if (isAnchorSignal) {
                 anchorOwners.add(owner);
@@ -222,13 +209,6 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
             }
           : undefined,
       });
-    }
-  }
-
-  if (competingProofSchemas) {
-    for (const { indexMethod, regex } of competingProofSchemas) {
-      const entries = index[indexMethod]({ pattern: regex });
-      competingProofEntries.push(...entries);
     }
   }
 
@@ -248,25 +228,11 @@ export function applyDeclarativeAreaDetector<Signal extends string>({
     return result;
   };
 
-  const hasCompetingProof = (ownerPath: string): boolean => {
-    if (competingProofEntries) {
-      return hasCompetingAreaProof({
-        evidenceEntries: competingProofEntries,
-        ownerPath,
-      });
-    }
-    return false;
-  };
-
   for (const [ownerPath, ownerCandidate] of areaCandidateMap) {
     if (
       checkForExistingCandidate &&
       hasAreaCandidate({ candidates, name: detectedArea, path: ownerPath })
     ) {
-      continue;
-    }
-
-    if (hasCompetingProof(ownerPath)) {
       continue;
     }
 

@@ -71,7 +71,7 @@ export function detectPrimaryStack({
   entries: RepoTreeEntry[];
   projectShape: string;
 }): string[] {
-  const index = buildEntryIndex({ entries });
+  const index = buildEntryIndex(entries);
   const candidates = createStackCandidates();
   const hasExpoStackEvidence =
     index.hasFileName({ name: 'expo-env.d.ts' }) ||

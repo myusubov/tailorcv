@@ -11,14 +11,22 @@ import type {
 const AREA_CONFIDENCE_MAX_SCORE = 6;
 export const MIN_AREA_SCORE = 3;
 
+/**
+ * Builds the shared candidate-map key `${name}::${normalizePath(path)}::${primaryTech}`.
+ * Including the primary technology keeps two detectors' claims on the same
+ * area name and owner path as separate entries (e.g. Next.js and React) until
+ * `reconcileCandidates` resolves them.
+ */
 function areaKey({
   name,
   path,
+  primaryTech,
 }: {
   name: DetectedAreaName;
   path: string;
+  primaryTech: DetectedAreaTechnology;
 }): string {
-  return `${name}::${normalizePath({ path })}`;
+  return `${name}::${normalizePath({ path })}::${primaryTech}`;
 }
 
 function confidenceFromScore({ score }: { score: number }): number {
@@ -26,8 +34,11 @@ function confidenceFromScore({ score }: { score: number }): number {
 }
 
 /**
- * Returns whether the shared candidate map already contains the normalized
- * area name and owner path.
+ * Returns whether the shared candidate map already holds a candidate for the
+ * area name at the normalized owner path, whatever its primary technology.
+ * Matches by key prefix (`${name}::${normalizePath(path)}::`) because callers
+ * do not know which technology claimed the owner; the trailing delimiter keeps
+ * `apps/web` from matching `apps/web-admin`. Read-only.
  */
 export function hasAreaCandidate({
   candidates,
@@ -38,11 +49,16 @@ export function hasAreaCandidate({
   name: DetectedAreaName;
   path: string;
 }): boolean {
-  return candidates.has(areaKey({ name, path }));
+  const keysArray = Array.from(candidates.keys());
+  const prefix = `${name}::${normalizePath({ path })}::`;
+  return keysArray.some((key) => key.startsWith(prefix));
 }
 
 /**
  * Adds score and concrete path evidence to a detected-area candidate.
+ * The candidate is identified by area name, owner path, and `primaryTechnology`,
+ * so a different primary technology on the same owner path creates a separate
+ * candidate instead of accumulating onto the existing one.
  * Empty evidence is ignored so emitted areas always remain evidence-backed.
  */
 export function addAreaScore({
@@ -64,7 +80,7 @@ export function addAreaScore({
 }): void {
   if (evidence.length === 0) return;
 
-  const key = areaKey({ name, path });
+  const key = areaKey({ name, path, primaryTech: primaryTechnology });
   const candidate =
     candidates.get(key) ??
     ({

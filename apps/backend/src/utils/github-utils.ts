@@ -23,7 +23,12 @@ export interface GitHubTreeApiResponse {
   truncated: boolean;
 }
 
-function mapTreeEntryType({
+/**
+ * Maps a raw Git tree entry type to the analyzer's entry type.
+ * `blob` is a file, `tree` a directory, `commit` a submodule; any other type
+ * returns `null` so callers can drop it.
+ */
+export function mapTreeEntryType({
   type,
 }: {
   type: GitHubTreeApiEntry['type'];
@@ -59,11 +64,9 @@ export function splitRepositoryFullName(repositoryFullName: string): {
  * Unknown Git tree entry types are ignored because the project structure analyzer cannot use them.
  * File extensions are lowercased so downstream extension lookups are case-insensitive.
  */
-export function normalizeTreeEntries({
-  entries,
-}: {
-  entries: GitHubTreeApiEntry[];
-}): RepoTreeEntry[] {
+export function normalizeTreeEntries(
+  entries: GitHubTreeApiEntry[],
+): RepoTreeEntry[] {
   return entries
     .map((entry) => {
       const parts = entry.path.split('/');

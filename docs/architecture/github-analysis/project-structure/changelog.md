@@ -6,6 +6,62 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-09-25
+
+### Candidate Guard and Native Marker Resolution Fixes
+
+- **Problem:** Two defects recorded on 2026-09-24 were still open. `hasAreaCandidate` built its lookup key without the primary technology, so the `checkForExistingCandidate` guard (Static frontend, Express.js) could not match the per-technology keys. `resolveNearestMarkerOwner` tested `^name$` marker patterns against the full path, so only a repository-root marker was found and a nested host's native shell was not redirected. Two smaller issues came out of review: the marker index was rescanned for every ancestor and marker, and the non-anchor branch chose the "longest" owner by string length, so `.` and a one-character owner tied on set order.
+- **Solution:**
+  1. `hasAreaCandidate` now matches the `${name}::${normalizePath(path)}::` key prefix across primary technologies (`project-structure-detected-area-candidates.ts`).
+  2. `resolveNearestMarkerOwner` looks markers up with `findFilesByNameMatching` (basename), gathers the marker directories once per anchor call into a set, and walks ancestors against it. Owners are ranked by segment count with `.` as 0 (`owner-adapters/resolve-nearest-marker-owner.ts`).
+  3. The Android module-root anchor regex now requires a segment boundary before `build.gradle(.kts)` (`android-mobile-area-rules.ts`).
+  4. Added `resolve-nearest-marker-owner.test.ts` (root, nested, nearest-wins, sibling, fallback, and deepest-owner cases, including `.` ranking below a real owner in either set order), `hasAreaCandidate` cases in `project-structure-detected-area-candidates.test.ts`, and one nested-marker Flutter/Android case in `project-structure-detected-area-rules.test.ts`; corrected two stale comments in that file and removed a stale inline comment in `project-structure-reconcile-candidates.ts`.
+- **Affected files:** `project-structure-detected-area-candidates.ts`, `detected-area-rules/owner-adapters/resolve-nearest-marker-owner.ts`, `detected-area-rules/mobile/android-mobile-area-rules.ts`, `detected-area-rules/owner-adapters/resolve-nearest-marker-owner.test.ts` (new), `project-structure-detected-area-candidates.test.ts`, `project-structure-detected-area-rules.test.ts`, `project-structure-reconcile-candidates.ts`, `adr/0003-pluggable-owner-adapters-anchor-signals.md`, `adr/0005-same-owner-candidate-reconciliation.md`, this README and changelog.
+- **Outcome:** The last-resort guard can match again and a nested Flutter, React Native, or Expo host redirects its bundled native shell, after which `reconcileCandidates` can drop it. Not verified: none of this was run, including the new tests (lint, typecheck, and the full backend suite too); the marker scan is not cached across anchors, and no test drives Static frontend or Express through the guard end to end.
+
+## 2026-09-24
+
+### Candidates Keyed per Primary Technology, `reconcileCandidates` Added, Competing-Proof Vetoes Removed
+
+- **Problem:** Detector conflicts on one owner were handled by per-detector `competingProofSchemas` vetoes: every broad or parent detector (React, Vue, Svelte, React Native) had to know other detectors' signals, the veto matched owners by exact equality, and the native Android and iOS detectors needed anchor-regex exclusions on top (2026-09-19). Candidates were also keyed `${name}::${path}`, so the first detector to claim an owner fixed its `primary` technology and later claims only accumulated onto it, which made the result depend on dispatch order.
+- **Solution:**
+  1. Added `primaryTech` to `areaKey`, so the candidate key is `${name}::${normalizePath(path)}::${primaryTech}` and same-owner claims with different primary technologies stay separate (`project-structure-detected-area-candidates.ts`).
+  2. Removed `competingProofSchemas`, `CompetingProofSchema`, and `hasCompetingAreaProof` from the engine and `project-structure-area-rule-candidates.ts`, and the veto declarations from the React, Vue, Svelte, and React Native detectors.
+  3. Added `reconcileCandidates` (`project-structure-reconcile-candidates.ts`), called right after `applyDetectedAreaRules` in `buildDetectedAreas`. A private `META_PARENT_PAIRS` table (area name, parent, list of metas) drives it: for each present meta it deletes every parent's key on the same area name and owner path. React sits under Next.js and React Router, Vue under Nuxt, Svelte under SvelteKit, React Native under Expo, Express.js under NestJS, and native Android and iOS each under Flutter, React Native, and Expo.
+  4. Added key-level unit tests (`project-structure-reconcile-candidates.test.ts`: the six pairs, lone parents and metas, different owner paths and area names, a mixed monorepo, idempotence, and native shells under each host) and same-owner and nested-host claim tests (`project-structure-detected-area-rules.test.ts`).
+  5. Incidental signature changes in the same worktree: `buildEntryIndex` and `normalizeTreeEntries` take their array directly, and `mapTreeEntryType` is exported.
+- **Affected files:** `project-structure-detected-area-candidates.ts`, `project-structure-reconcile-candidates.ts` (new), `project-structure-reconcile-candidates.test.ts` (new), `project-structure-detected-area-rules.test.ts` (new), `project-structure-detected-areas.ts`, `detected-area-rules/declarative-area-rule-engine.ts`, `detected-area-rules/project-structure-area-rule-candidates.ts`, the React, Vue, Svelte, and React Native detector files, `adr/0005-same-owner-candidate-reconciliation.md` (new), `adr/0003-pluggable-owner-adapters-anchor-signals.md`, `adr/README.md`, this README and changelog.
+- **Outcome:** Which claim survives on a shared owner no longer depends on dispatch order, and the meta/parent relationships live in one table. The reconcile unit tests passed when the author ran them; the same-owner and nested-host claim tests, lint, typecheck, and the full backend suite were not run. Known gap, deliberately deferred: `hasAreaCandidate` builds its lookup key without the primary technology, so the `checkForExistingCandidate` guard used by Static frontend and Express.js no longer matches.
+
+### Native Android and iOS Owner Resolution via `resolveNearestMarkerOwner`
+
+- **Problem:** The 2026-09-19 native detectors kept a bundled Flutter, React Native, or Capacitor host out with anchor-regex exclusions that recognize only a fixed wrapper depth and drop genuinely native repositories that keep their project under `android/` or `ios/` (confirmed on FirebaseExtended/analytics-webview). The exclusions were also the only defense, since the veto could not see an owner anchored inside the wrapper.
+- **Solution:**
+  1. Added `resolveNearestMarkerOwner` (`owner-adapters/resolve-nearest-marker-owner.ts`): an anchor signal walks up from its own directory to the nearest ancestor that directly holds a host marker file, found through the entry index, and resolves to it (`.` at the root); with no marker it resolves to its own directory. Non-anchor signals take the longest enclosing anchor owner, with `.` enclosing every path. Kept separate from `resolveUnitRootOwner`, whose React Native `android`/`ios` fallback does no marker check.
+  2. Made `OwnerAdapterArgs` carry the `EntryIndex` and passed it at the engine's call site.
+  3. Switched Android and iOS to the new adapter with `ANDROID_HOST_MARKERS`/`IOS_HOST_MARKERS` (`pubspec.yaml`, `.metadata`, `react-native.config.js`, `app.config.(ts|js)`, `metro.config.*`, `capacitor.config.*`, `ionic.config.json`; Cordova's `config.xml` deliberately omitted as too generic) and dropped the `android`/`ios`-wrap regex exclusions, keeping the `Pods/` and nested-workspace exclusions on iOS.
+  4. Removed `resolve-unit-root-owner.android.test.ts` and `resolve-unit-root-owner.ios.test.ts`, which exercised the removed exclusion design, and updated the two nested-host tests to expect the native candidate on the host's owner alongside Flutter's.
+- **Affected files:** `detected-area-rules/owner-adapters/resolve-nearest-marker-owner.ts` (new), `detected-area-rules/owner-adapters/index.ts`, `detected-area-rules/declarative-area-rule-engine.ts`, `detected-area-rules/mobile/android-mobile-area-rules.ts`, `detected-area-rules/mobile/ios-mobile-area-rules.ts`, `detected-area-rules/mobile/mobile-area-rules.ts`, `detected-area-rules/mobile/flutter-mobile-area-rules.ts`, `project-structure-detected-area-rules.test.ts`, `adr/0003-pluggable-owner-adapters-anchor-signals.md`, this README and changelog.
+- **Outcome:** A bundled native shell shares its host's owner, and the shell's candidate is then dropped by `reconcileCandidates` for Flutter, React Native, and Expo hosts; a native repository under `android/` with no host marker stays a native candidate. Known defects, recorded and not fixed: the marker patterns are matched against the full path, so only a marker at the repository root is found and a nested host is not redirected; the walk does not require an `android`/`ios` segment; Capacitor, Ionic, and Cordova shells are redirected but not dropped, and Cordova has no marker. `resolveNearestMarkerOwner` has no dedicated unit test, and the nested-host tests were not run in this pass.
+
+## 2026-09-19
+
+### Native Android and iOS Detected-Area Detectors
+
+> **Superseded in part 2026-09-24:** the anchor-regex exclusions, the `competingProofSchemas` veto, the `hasCompetingAreaProof` owner-adapter change, and the two `resolve-unit-root-owner.android/ios` test files described below were removed; native owner resolution now uses `resolveNearestMarkerOwner`. See the 2026-09-24 entries above. Kept as the record of what shipped that day.
+
+- **Problem:** `addAndroidMobileAreas` and `addIosMobileAreas` had been side-effect-free scaffolds since the 2026-09-12 Mobile app category, so no repository produced a native Android or iOS `Mobile app` area, and Flutter's, React Native's, and Capacitor's bundled native hosts had nothing to be distinguished from. The shared `hasCompetingAreaProof` also resolved competing evidence with the generic `ownerPathForApplicationArea` regardless of the detector's own `ownerAdapter`, so an adapter-resolved candidate owner and its competing evidence disagreed for projects nested under directories the generic resolver does not recognize.
+- **Solution:**
+  1. Surveyed real repositories via the GitHub tree API and documentation: eight for Android (google/grafika, googlearchive/android-topeka, android/nowinandroid, mozilla-mobile/firefox-android, firebase/quickstart-android, stripe/stripe-android, plus Expensify/App and flutter/flutter as bundled-host controls) and nine for iOS (signalapp/Signal-iOS, duckduckgo/iOS, kean/Nuke, wordpress-mobile/WordPress-iOS, prof18/shared-hn-android-ios-backend, stripe/stripe-ios, mozilla-mobile/firefox-ios, plus mhartington/capacitor-test and bitrise-io's Flutter sample as controls).
+  2. Implemented `addAndroidMobileAreas` (`detected-area-rules/mobile/android-mobile-area-rules.ts`): anchor `android-gradle-module-root` (module-root `build.gradle(.kts)`) plus seven supportive signals, single-branch gate `android-manifest` AND `android-gradle-module-root`. Anchored on the module's own `build.gradle` rather than `settings.gradle` because stripe-android and quickstart-android declare several independent app modules under one shared root settings file.
+  3. Implemented `addIosMobileAreas` (`detected-area-rules/mobile/ios-mobile-area-rules.ts`): anchors on the `*.xcodeproj` and `*.xcworkspace` bundle directories (matched as directories so the dirname is the containing folder), supportive signals for AppDelegate/SceneDelegate, Podfile, assets catalogs, shared schemes, entitlements, and `Info.plist`, gate `ios-xcodeproj` AND (`ios-appdelegate` OR `ios-scenedelegate`). `Package.swift` was researched and deliberately left out: SPM cannot produce a signable iOS app.
+  4. Both detectors exclude a competing framework's bundled host directly in their anchor regexes (a project root directly inside an `android`/`ios` segment; anything under `Pods/`; a workspace nested inside an `.xcodeproj`) and carry a `competingProofSchemas` veto on Flutter's `pubspec.yaml`, React Native's `react-native.config.js`, Capacitor's `capacitor.config.*`, and Cordova's `config.xml`. Kotlin Multiplatform is deliberately not vetoed: a KMM app's `app/` module (confirmed on touchlab/KaMPKit) is a real native app rather than a generated host shell, no KMM detector exists to yield to, and a directory proof like `shared/src/commonMain` resolves to `shared/src`, never equal to a sibling module's owner. The exclusion is the primary defense because the veto matches owners by exact equality and cannot see an owner anchored inside the competing project's root.
+  5. Changed `hasCompetingAreaProof` (`project-structure-area-rule-candidates.ts`) to accept an optional `ownerAdapter` and resolve each competing-proof file's owner through it as an anchor signal with no known anchors, falling back to the generic resolver otherwise; `applyDeclarativeAreaDetector` passes its own adapter through. An earlier draft hardcoded `resolveUnitRootOwner` inside the shared function and was rejected, since the Docker and Podman/OCI detectors use the differently-shaped `resolveContainerRootOwner`. Only React Native combines an adapter with a veto today, so it is the only existing detector whose behavior changes.
+  6. Wrote `resolve-unit-root-owner.android.test.ts` and `resolve-unit-root-owner.ios.test.ts` as real-repository ground truth for the shared resolver, without consulting existing detector code. They also document the root-owner (`.`) limitation as the dominant shape for single-target native apps, and what the resolver would compute for bundled-host paths if the exclusions did not exist.
+  7. Updated the `mobile-area-rules.ts` dispatcher docstring, reconciled this README's key-files table, Mobile app rules, Implementation Status, and Risks & Mitigations, and extended ADR 0003 and `adr/README.md`.
+- **Affected files:** `detected-area-rules/mobile/android-mobile-area-rules.ts`, `detected-area-rules/mobile/ios-mobile-area-rules.ts`, `detected-area-rules/mobile/mobile-area-rules.ts`, `detected-area-rules/declarative-area-rule-engine.ts`, `detected-area-rules/project-structure-area-rule-candidates.ts`, `detected-area-rules/owner-adapters/resolve-unit-root-owner.android.test.ts` (new), `detected-area-rules/owner-adapters/resolve-unit-root-owner.ios.test.ts` (new), `adr/0003-pluggable-owner-adapters-anchor-signals.md`, `adr/README.md`, this README and changelog.
+- **Outcome:** Native Android and iOS repositories now emit `Mobile app` areas, and Flutter, React Native, Capacitor, and Cordova bundled hosts are kept from double-firing as native apps. Verified only by `tsc --noEmit`; the two new test files, lint, and the full backend suite have not been run, and no analyzer-output fixture exercises the new gates or vetoes. Known residual risks, all recorded in the README's Risks & Mitigations: an `AndroidManifest.xml` cannot tell an app module from a library module, the veto assumes each proof file marks its framework's project root, macOS/tvOS Xcode projects share the iOS shape, and NativeScript, .NET MAUI's modern layout, and Unity's export have no veto.
+
 ## 2026-09-18
 
 ### Flutter Mobile Detected-Area Detector
@@ -341,53 +397,4 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 - **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
 - **Outcome:** The inert Podman/OCI detector now discovers its planned evidence as files across valid repository layouts without yet resolving owners, counting signals, or emitting containerization areas.
 
-## 2026-07-20
-
-### Podman/OCI Containerization Detector Scaffold
-
-- **Problem:** Containerization dispatch supported Docker only, so Podman/OCI research had no isolated detector boundary in which evidence, ownership, scoring, and gate behavior could be developed without prematurely changing analyzer output.
-- **Solution:**
-  1. Added the inert `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts` module with an example-only signal type, example score, always-false gate, and side-effect-free detector entry point.
-  2. Dispatched the scaffold after Docker from `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/containerization-area-rules.ts` while leaving matching, owner resolution, technology attribution, candidate scoring, and emission unimplemented.
-  3. Documented the new detector boundary and implementation status in `docs/architecture/github-analysis/project-structure/README.md`.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
-- **Outcome:** Podman/OCI detector work now has a dedicated, dispatched module that cannot alter analyzer results until real path signals, ownership rules, and emission criteria are implemented.
-
-## 2026-07-17
-
-### Docker Detector JSDoc Correction
-
-- **Problem:** The implemented Docker detector still described itself as a scaffold with future path evidence and scoring work, which contradicted its active matching, owner grouping, gate, and emission behavior.
-- **Solution:**
-  1. Replaced the stale scaffold text above `addDockerContainerizationAreas` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts` with JSDoc covering its purpose, input context, map mutation, decisive and support-only signal invariant, once-per-owner grouping, and path-only limitation.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/changelog.md`.
-- **Outcome:** The detector's source documentation now accurately describes its implemented contract and no longer suggests Docker emission remains unfinished.
-
-## 2026-07-16
-
-### Docker Containerization Emission Gate
-
-- **Decision:** Allow Dockerfile, Compose, or Bake evidence to independently unlock Docker `Containerization` output while keeping `.dockerignore` and devcontainer configuration support-only.
-- **Problem:** The Docker detector had collected and grouped five signal types but still lacked a final evidence gate; an unconditional gate would let `.dockerignore` plus devcontainer configuration emit an application containerization area without a Docker build or runtime definition, while requiring Dockerfile and Compose combinations would reject common valid single-anchor repositories.
-- **Solution:**
-  1. Implemented an anchor-based `hasDockerContainerizationAreaShape` gate in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts` using Dockerfile, Compose, and Bake signals as independent proof.
-  2. Added public analyzer coverage in `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` for single-anchor emission, support-only rejection, anchored confidence/evidence accumulation, and monorepo owner isolation.
-  3. Documented the implemented detector contract in `docs/architecture/github-analysis/project-structure/README.md` and recorded the durable gate boundary in `docs/architecture/github-analysis/project-structure/adr/0001-docker-containerization-gate.md`.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/adr/README.md`, `docs/architecture/github-analysis/project-structure/adr/0001-docker-containerization-gate.md`.
-- **Outcome:** Docker containerization areas now emit from decisive path-only Docker workflow files, gain confidence from co-owned support evidence, and reject weak development/support-only shapes.
-
-## 2026-07-15
-
-### Docker Monorepo Root Owner Resolution
-
-- **Decision:** Treat direct Docker evidence and generic Docker config folders under a monorepo owner root as belonging to that root instead of treating the evidence filename or config folder as a member name.
-- **Problem:** Paths such as `apps/Dockerfile` resolved to `apps/Dockerfile`, while `apps/docker/Dockerfile` and `apps/.devcontainer/devcontainer.json` resolved to configuration folders rather than the containerized `apps` owner.
-- **Solution:**
-  1. Updated `containerizationMonorepoOwnerPathFromParts` in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` to return the recognized monorepo root for two-segment Docker evidence paths.
-  2. Reused the Docker repository-config directory set to collapse second-segment configuration folders to the recognized monorepo root without duplicating Docker filename matchers.
-  3. Added focused direct-evidence and config-directory regression cases in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`.
-  4. Expanded the exported resolver and private monorepo helper JSDoc and added inline comments for their ownership branches, fallbacks, side-effect contract, and path-only ambiguity.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
-- **Outcome:** Docker evidence now resolves to `apps`, `packages`, `services`, or `libs` when stored directly under those roots or inside their generic config folders, while named members such as `apps/frontend` retain member-level ownership regardless of deeper evidence paths.
-
-Older implementation history for 2026-07-08 through 2026-07-14 is preserved in [changelog-archive.md](changelog-archive.md).
+Older implementation history for 2026-05-08 through 2026-07-20 is preserved in [changelog-archive.md](changelog-archive.md).

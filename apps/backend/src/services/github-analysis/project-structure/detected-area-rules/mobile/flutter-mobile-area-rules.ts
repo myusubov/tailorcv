@@ -122,16 +122,13 @@ type FlutterMobileSignal = keyof typeof FLUTTER_MOBILE_SIGNAL_SCORES;
  *   same kind of unobserved-but-reasoned branch React Native's own gate
  *   carries for its without-config case.
  *
- * No `competingProofSchemas` yet: Flutter shares no file-level signals with
- * Expo or React Native (different manifest, different native bootstrap), so
- * there is nothing in that direction to veto. It does collide with the
- * native Android/iOS detectors' own scaffolded shells (see Limitations) --
- * the agreed direction is for those detectors, once they have their own
- * signal research, to carry a `competingProofSchemas` veto keyed on
- * `flutter-metadata`/`flutter-ios-platform-dir`/`flutter-pubspec-manifest`,
- * the same shape React Native already uses against Expo. Not implemented
- * here since the Android/iOS detectors have no signals of their own yet to
- * attach it to.
+ * Flutter shares no file-level signals with Expo or React Native (different
+ * manifest, different native bootstrap), so there is no cross-detector
+ * overlap in that direction. It does collide with the native Android/iOS
+ * detectors' shells (see Limitations); those detectors resolve a bundled
+ * shell's owner to the Flutter root through `resolveNearestMarkerOwner`
+ * (`pubspec.yaml`/`.metadata` marker), and `reconcileCandidates` drops the
+ * native candidate.
  *
  * Limitations:
  * - Path-only, so `pubspec.yaml`'s `flutter:` key cannot be read to confirm
@@ -140,9 +137,9 @@ type FlutterMobileSignal = keyof typeof FLUTTER_MOBILE_SIGNAL_SCORES;
  *   `AndroidManifest.xml` is structurally identical to a fully native
  *   Android app's host project -- no path-only Android-side signal exists to
  *   tell them apart, mirrored by the deliberate absence of an Android-shell
- *   signal here (unlike React Native, which does score one). Deferred to the
- *   native Android/iOS detectors' own competing-proof design, per the gate
- *   note above.
+ *   signal here (unlike React Native, which does score one). Handled on the
+ *   native Android/iOS side by owner redirection and `reconcileCandidates`,
+ *   per the note above.
  * - Sample size (8 real Flutter repos + 2 controls) is smaller than Expo's
  *   ~90-repo or React Native's ~13k-hit code-search passes -- a first
  *   research pass, not a finished grounding.

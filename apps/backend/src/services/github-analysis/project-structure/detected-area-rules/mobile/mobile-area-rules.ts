@@ -15,22 +15,19 @@ import { addReactNativeMobileAreas } from './react-native-mobile-area-rules';
  * providers both claim the same owner, the first dispatched keeps the
  * `primary` technology label and later ones are carried in `related`.
  *
- * Inputs: `context.candidates` (shared `(area name, owner path)` map, mutated in
- * place) and `context.index` (repository path/name/extension lookup).
+ * Inputs: `context.candidates` (shared `${name}::${path}::${primaryTech}` map,
+ * mutated in place) and `context.index` (repository path/name/extension
+ * lookup).
  * Output: none.
- * Side effects: fans out to the provider detectors. Expo, React Native, and
- * Flutter currently insert or update `Mobile app` candidates; Android and iOS
- * remain scaffolds with no entry schemas defined yet -- once they have their
- * own signal research, the agreed direction is for each to carry a
- * `competingProofSchemas` veto against Flutter's and React Native's anchor
- * signals, the same shape React Native already uses against Expo, so a
- * Flutter or React Native repo's bundled native host directories don't also
- * double-fire as a native Android/iOS app. React Native's own
- * `competingProofSchemas` vetoes an owner carrying Expo Router or typed-env
- * evidence regardless of dispatch order, so Expo running first is a
- * performance/precedence convenience here, not what prevents a
- * double-primary claim. Flutter shares no file-level signals with Expo or
- * React Native, so it carries no veto in either direction.
+ * Side effects: fans out to the provider detectors. All five providers insert
+ * or update `Mobile app` candidates keyed per primary technology, so
+ * detectors that claim the same owner leave separate candidates instead of
+ * merging; dispatch order does not decide which survives, `reconcileCandidates`
+ * does (Expo over React Native; Flutter, React Native, or Expo over native
+ * Android/iOS). There is no cross-detector competing-proof veto and no path
+ * exclusion: Android and iOS resolve a bundled native shell's owner to its
+ * host's root through `resolveNearestMarkerOwner` -- see their module
+ * docstrings for the marker limits.
  */
 export function addMobileAreas({
   candidates,

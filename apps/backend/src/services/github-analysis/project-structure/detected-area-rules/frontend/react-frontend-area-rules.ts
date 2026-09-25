@@ -37,8 +37,10 @@ const REACT_FRONTEND_SIGNAL_SCORES = {
  * index) from `DetectedAreaRuleContext`.
  * Output: none; mutates `candidates` in place.
  * Side effects: adds one `Frontend app` / `React` candidate per owner path that
- * passes the app-shape gate and is not vetoed by Next.js or React Router
- * competing framework proof at the same owner path.
+ * passes the app-shape gate. There is no Next.js or React Router veto, so an
+ * owner those detectors also claim keeps its own React candidate beside
+ * theirs (candidates are keyed per primary technology); `reconcileCandidates`
+ * then drops the React one.
  *
  * Gate: an owner emits only when its counted signals form one of three React
  * app shapes -- a Vite React shell (`vite.config` + root `index.html` +
@@ -115,33 +117,6 @@ export function addReactFrontendAreas({
         signalType: 'react-route-component',
         regex: /(^|\/)src\/(pages|views)\/(?:.*\/)?.+\.(jsx|tsx)$/,
         indexMethod: 'findEntriesByPathMatching',
-      },
-    ],
-    competingProofSchemas: [
-      {
-        indexMethod: 'findFilesByNameMatching',
-        regex: /^next\.config\./,
-      },
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex:
-          /(^|\/)(src\/)?app\/(?:.*\/)?(page|layout|route)\.(js|jsx|ts|tsx|mdx)$/,
-      },
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex: /(^|\/)(src\/)?pages\/(_app|_document|_error)\.(js|jsx|ts|tsx)$/,
-      },
-      {
-        indexMethod: 'findFilesByNameMatching',
-        regex: /^react-router\.config\.(js|mjs|cjs|ts)$/,
-      },
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex: /(^|\/)app\/root\.(js|jsx|ts|tsx)$/,
-      },
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex: /(^|\/)app\/routes\.(js|ts)$/,
       },
     ],
     gateBlocker: {
