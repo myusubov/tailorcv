@@ -88,7 +88,7 @@ export function detectProjectShape({
 }: {
   entries: RepoTreeEntry[];
 }): string {
-  const index = buildEntryIndex({ entries });
+  const index = buildEntryIndex(entries);
   const candidates = createProjectShapeCandidates();
 
   /**

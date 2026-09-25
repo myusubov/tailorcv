@@ -80,9 +80,9 @@ type ReactNativeMobileSignal = keyof typeof REACT_NATIVE_MOBILE_SIGNAL_SCORES;
  * Side effects: adds or accumulates a `Mobile app` candidate with primary
  * technology `React Native` (related: `Node.js`, plus `Expo` when
  * `expo-modules-coexistence` evidence is also present) for every owner whose
- * counted signals clear the gate and carry no competing Expo proof, or rides
- * along in `related` for an owner an earlier-dispatched provider (Expo)
- * already claimed.
+ * counted signals clear the gate. An owner Expo also claims keeps its own
+ * `React Native` candidate beside Expo's, since candidates are keyed per
+ * primary technology; `reconcileCandidates` then drops the React Native one.
  *
  * Owner: `resolveUnitRootOwner`, anchored on `react-native-cli-config`, with
  * `extraRootDirectories: ['example']` so a library repo's demo app (e.g.
@@ -109,34 +109,23 @@ type ReactNativeMobileSignal = keyof typeof REACT_NATIVE_MOBILE_SIGNAL_SCORES;
  * - Branch C: `react-native-application-bootstrap` and `ios-native-shell`
  *   together, no config file required.
  *
- * Competing proof: an owner carrying Expo's own `expo-router-root-layout`
- * (`app/_layout.*`) or `expo-router-typed-env` (`expo-env.d.ts`) file shapes
- * is vetoed outright, independent of whether Expo's own gate clears there.
- * Both are zero-false-positive-in-sample, Expo Router/typed-routes-specific
- * shapes that no sampled bare-RN app carries by accident. Deliberately
- * excludes the weaker `app.config.*`/`app.json`/`eas.json` shapes from the
- * veto -- the rainbow-me/rainbow case study is direct evidence that a real
- * bare RN app can legitimately carry those without being Expo-managed;
- * vetoing on them would silence real React Native repositories, not just
- * Expo ones.
+ * No Expo veto: an owner carrying Expo Router (`app/_layout.*`) or typed-env
+ * (`expo-env.d.ts`) evidence that also clears this gate keeps its own
+ * `React Native` candidate beside Expo's (candidates are keyed per primary
+ * technology); `reconcileCandidates` then drops the React Native one in
+ * Expo's favor.
  *
  * Limitations:
  * - Path-only, so `package.json`'s `expo`/`react-native` dependencies cannot
  *   be read to disambiguate further.
- * - An Expo *bare workflow* app using neither Expo Router nor typed routes
- *   produces the identical native shell/bootstrap evidence this detector
- *   scores, and carries neither competing-proof trigger -- if that same
- *   owner is also too weakly evidenced for Expo's own gate to claim it
- *   first, it clears this gate as a plain `React Native` candidate with the
- *   Expo relationship lost. Not observed in any sampled repository;
- *   documented as a structurally-plausible, unobserved residual risk rather
- *   than solved by widening the veto (which the Rainbow case study rules
- *   out) or by an unresearched new signal.
+ * - An Expo-shaped owner that only this detector clears (Expo's own gate
+ *   fails there) surfaces as a plain `React Native` candidate with the Expo
+ *   relationship lost.
  * - `android-native-shell`/`ios-native-shell` overlap with Flutter,
  *   Capacitor, and Cordova's identical `android/`/`ios/` wrapper folders;
  *   `react-native-application-bootstrap` narrows out Flutter specifically
  *   (no default `MainApplication` class) but Branch B alone does not
- *   require it. Deferred to those detectors' own competing-proof design.
+ *   require it. Not resolved by this detector.
  * - Research-stage scores and gate shape -- not yet cross-checked for
  *   overlap against the Flutter, Android, or iOS signal sets.
  */
@@ -221,16 +210,6 @@ export function addReactNativeMobileAreas({
         },
       },
     },
-    competingProofSchemas: [
-      {
-        regex: /(^|\/)app\/_layout\.(tsx|jsx|ts|js)$/,
-        indexMethod: 'findEntriesByPathMatching',
-      },
-      {
-        regex: /^expo-env\.d\.ts$/,
-        indexMethod: 'findFilesByNameMatching',
-      },
-    ],
     dynamicRelatedTechMap: {
       'expo-modules-coexistence': 'Expo',
     },

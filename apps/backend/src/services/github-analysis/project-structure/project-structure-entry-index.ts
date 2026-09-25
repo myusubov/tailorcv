@@ -28,11 +28,7 @@ export interface EntryIndex {
  * Builds path and filename lookup helpers from normalized GitHub tree entries.
  * This has no side effects and does not read file contents.
  */
-export function buildEntryIndex({
-  entries,
-}: {
-  entries: RepoTreeEntry[];
-}): EntryIndex {
+export function buildEntryIndex(entries: RepoTreeEntry[]): EntryIndex {
   const paths = entries.map((entry) => normalizePath({ path: entry.path }));
   const pathSet = new Set(paths);
   const fileNames = new Set(entries.map((entry) => entry.name.toLowerCase()));

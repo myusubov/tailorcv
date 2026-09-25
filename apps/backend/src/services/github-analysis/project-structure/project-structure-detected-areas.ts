@@ -1,6 +1,7 @@
 import { buildEntryIndex } from './project-structure-entry-index';
 import { toDetectedProjectAreas } from './project-structure-detected-area-candidates';
 import { applyDetectedAreaRules } from './project-structure-detected-area-rules';
+import { reconcileCandidates } from './project-structure-reconcile-candidates';
 import type {
   DetectedProjectArea,
   ProjectStructureSummary,
@@ -71,6 +72,8 @@ function sortPriority({
 
 /**
  * Builds meaningful repository regions from path-level evidence only.
+ * Detector claims are collected first, then `reconcileCandidates` drops a
+ * parent framework's claim when its meta-framework claims the same owner path.
  * Later analyzers can use these areas as a cheap map for where resume-relevant evidence may live.
  */
 export function buildDetectedAreas({
@@ -80,12 +83,13 @@ export function buildDetectedAreas({
   entries: RepoTreeEntry[];
   summary: ProjectStructureSummary;
 }): DetectedProjectArea[] {
-  const index = buildEntryIndex({ entries });
+  const index = buildEntryIndex(entries);
   const candidates = new Map<string, AreaCandidate>();
 
   if (index.paths.length === 0) return [];
 
   applyDetectedAreaRules({ candidates, index });
+  reconcileCandidates(candidates);
 
   return toDetectedProjectAreas({ candidates: [...candidates.values()] }).sort(
     (a, b) => {

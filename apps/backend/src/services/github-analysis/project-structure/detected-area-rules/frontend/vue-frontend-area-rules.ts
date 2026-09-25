@@ -82,16 +82,5 @@ export function addVueFrontendAreas({
         },
       },
     },
-    competingProofSchemas: [
-      {
-        indexMethod: 'findFilesByNameMatching',
-        regex: /^nuxt\.config\.(js|mjs|cjs|ts)$/,
-      },
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex:
-          /^(app\.vue|app\/app\.vue|apps\/[^/]+\/(app\.vue|app\/app\.vue)|packages\/[^/]+\/(app\.vue|app\/app\.vue))$/,
-      },
-    ],
   });
 }

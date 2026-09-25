@@ -15,8 +15,8 @@ type SvelteFrontendSignal = keyof typeof SVELTE_FRONTEND_SIGNAL_SCORES;
 
 /**
  * Adds standalone Svelte `Frontend app` candidates from owner-scoped path
- * evidence. SvelteKit and earlier framework claims take precedence, while
- * configuration and nested component files remain support-only signals.
+ * evidence. Configuration and nested component files remain support-only
+ * signals.
  */
 export function addSvelteFrontendAreas({
   candidates,
@@ -73,15 +73,5 @@ export function addSvelteFrontendAreas({
         },
       },
     },
-    competingProofSchemas: [
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex: /(^|\/)src\/routes\/(?:.*\/)?\+page\.svelte$/,
-      },
-      {
-        indexMethod: 'findEntriesByPathMatching',
-        regex: /(^|\/)src\/routes\/(?:.*\/)?\+layout\.svelte$/,
-      },
-    ],
   });
 }
