@@ -4,6 +4,55 @@
 
 ---
 
+## 2026-07-20
+
+### Podman/OCI Containerization Detector Scaffold
+
+- **Problem:** Containerization dispatch supported Docker only, so Podman/OCI research had no isolated detector boundary in which evidence, ownership, scoring, and gate behavior could be developed without prematurely changing analyzer output.
+- **Solution:**
+  1. Added the inert `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts` module with an example-only signal type, example score, always-false gate, and side-effect-free detector entry point.
+  2. Dispatched the scaffold after Docker from `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/containerization-area-rules.ts` while leaving matching, owner resolution, technology attribution, candidate scoring, and emission unimplemented.
+  3. Documented the new detector boundary and implementation status in `docs/architecture/github-analysis/project-structure/README.md`.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** Podman/OCI detector work now has a dedicated, dispatched module that cannot alter analyzer results until real path signals, ownership rules, and emission criteria are implemented.
+
+## 2026-07-17
+
+### Docker Detector JSDoc Correction
+
+- **Problem:** The implemented Docker detector still described itself as a scaffold with future path evidence and scoring work, which contradicted its active matching, owner grouping, gate, and emission behavior.
+- **Solution:**
+  1. Replaced the stale scaffold text above `addDockerContainerizationAreas` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts` with JSDoc covering its purpose, input context, map mutation, decisive and support-only signal invariant, once-per-owner grouping, and path-only limitation.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/changelog.md`.
+- **Outcome:** The detector's source documentation now accurately describes its implemented contract and no longer suggests Docker emission remains unfinished.
+
+## 2026-07-16
+
+### Docker Containerization Emission Gate
+
+- **Decision:** Allow Dockerfile, Compose, or Bake evidence to independently unlock Docker `Containerization` output while keeping `.dockerignore` and devcontainer configuration support-only.
+- **Problem:** The Docker detector had collected and grouped five signal types but still lacked a final evidence gate; an unconditional gate would let `.dockerignore` plus devcontainer configuration emit an application containerization area without a Docker build or runtime definition, while requiring Dockerfile and Compose combinations would reject common valid single-anchor repositories.
+- **Solution:**
+  1. Implemented an anchor-based `hasDockerContainerizationAreaShape` gate in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts` using Dockerfile, Compose, and Bake signals as independent proof.
+  2. Added public analyzer coverage in `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` for single-anchor emission, support-only rejection, anchored confidence/evidence accumulation, and monorepo owner isolation.
+  3. Documented the implemented detector contract in `docs/architecture/github-analysis/project-structure/README.md` and recorded the durable gate boundary in `docs/architecture/github-analysis/project-structure/adr/0001-docker-containerization-gate.md`.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/docker-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/adr/README.md`, `docs/architecture/github-analysis/project-structure/adr/0001-docker-containerization-gate.md`.
+- **Outcome:** Docker containerization areas now emit from decisive path-only Docker workflow files, gain confidence from co-owned support evidence, and reject weak development/support-only shapes.
+
+## 2026-07-15
+
+### Docker Monorepo Root Owner Resolution
+
+- **Decision:** Treat direct Docker evidence and generic Docker config folders under a monorepo owner root as belonging to that root instead of treating the evidence filename or config folder as a member name.
+- **Problem:** Paths such as `apps/Dockerfile` resolved to `apps/Dockerfile`, while `apps/docker/Dockerfile` and `apps/.devcontainer/devcontainer.json` resolved to configuration folders rather than the containerized `apps` owner.
+- **Solution:**
+  1. Updated `containerizationMonorepoOwnerPathFromParts` in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` to return the recognized monorepo root for two-segment Docker evidence paths.
+  2. Reused the Docker repository-config directory set to collapse second-segment configuration folders to the recognized monorepo root without duplicating Docker filename matchers.
+  3. Added focused direct-evidence and config-directory regression cases in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`.
+  4. Expanded the exported resolver and private monorepo helper JSDoc and added inline comments for their ownership branches, fallbacks, side-effect contract, and path-only ambiguity.
+- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`.
+- **Outcome:** Docker evidence now resolves to `apps`, `packages`, `services`, or `libs` when stored directly under those roots or inside their generic config folders, while named members such as `apps/frontend` retain member-level ownership regardless of deeper evidence paths.
+
 ## 2026-07-14
 
 ### Docker Containerization Signal Prep

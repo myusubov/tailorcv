@@ -151,6 +151,40 @@ This is additive: Flutter's addition changes the resolved owner for none of the 
 
 See [Flutter Mobile Detected-Area Detector](../changelog.md#flutter-mobile-detected-area-detector) (2026-09-18).
 
+## Update 2026-09-19: native Android and iOS added; competing-proof owners resolved through the adapter
+
+> **Superseded 2026-09-24:** native Android and iOS moved off `resolveUnitRootOwner` onto `resolveNearestMarkerOwner`, and the `competingProofSchemas` veto (with `hasCompetingAreaProof` and the anchor exclusions described below) was removed. See the 2026-09-24 update below and [ADR 0005](0005-same-owner-candidate-reconciliation.md). Kept as the record of what shipped on 2026-09-19.
+
+`resolveUnitRootOwner` is now also passed by the native Android and native iOS mobile detectors -- bringing the shared-adapter count from eighteen to twenty. Neither adds adapter logic or passes `extraRootDirectories`. Android anchors on any module-root `build.gradle(.kts)`; iOS anchors on the `*.xcodeproj` and `*.xcworkspace` bundle directories, matched as directories so the plain "directory containing the anchor" rule yields the folder that holds the bundle rather than the bundle itself. This is a new *caller* of the existing anchor-dirname branch, not a new branch.
+
+One engine-level contract did change. Previously the `competingProofSchemas` veto resolved each proof file's owner with the generic `ownerPathForApplicationArea` even when the detector's candidates were owned through an `ownerAdapter`, so the two disagreed for any project nested under a directory the generic resolver does not recognize. `hasCompetingAreaProof` now takes the detector's own `ownerAdapter` and resolves the proof file's owner through it with `isAnchorSignal: true` and an empty `anchorOwners`, falling back to the generic resolver when the detector has no adapter. Decisions behind this shape:
+
+- **The caller's adapter, not a hardcoded resolver.** An early draft called `resolveUnitRootOwner` directly inside the shared function. That is wrong for the Docker and Podman/OCI detectors, which use the differently-shaped `resolveContainerRootOwner` (see [ADR 0004](0004-containerization-owner-resolution.md)); its `({ path }) => ...` wrapper ignores the anchor arguments, so passing synthetic values through it is harmless.
+- **Always as an anchor.** A competing-proof file is chosen because it marks its framework's project root (`pubspec.yaml`, `react-native.config.js`, `capacitor.config.*`), so the plain dirname branch is the right one and never reads `anchorOwners`, which would otherwise hold a different detector's anchors.
+- **Accepted, unchecked assumptions.** That the caller's adapter resolves the competing framework's owner correctly, and that every proof file is a project-root marker. Detectors know nothing about each other's signals or owner rules, so a framework-versus-meta-framework veto will eventually need a finer-grained mechanism; not built now.
+- **The veto matches by exact equality**, so it cannot catch an owner anchored deeper inside the competing project's root. The native detectors therefore also exclude `android`/`ios`-wrapped project roots in their own anchor regexes.
+
+Only React Native currently combines an adapter with a veto (Expo Router proof), so it is the only existing detector whose resolved evidence owners change; the frontend detectors with vetoes pass no adapter. This is additive for the eighteen existing callers of `resolveUnitRootOwner` themselves.
+
+See [Native Android and iOS Detected-Area Detectors](../changelog.md#native-android-and-ios-detected-area-detectors) (2026-09-19).
+
+## Update 2026-09-24: `resolveNearestMarkerOwner` for native Android and iOS; adapters receive the entry index
+
+Native Android and iOS no longer use `resolveUnitRootOwner`, so it is passed by eighteen detectors again. They pass a new adapter, `resolveNearestMarkerOwner`, which is the second anchor-based owner resolver:
+
+- **Anchor signals walk up to a host marker.** From the anchor's own directory (a module-root `build.gradle(.kts)`, or a `*.xcodeproj`/`*.xcworkspace` bundle) it checks each ancestor up to the repository root for a marker file sitting directly inside it (Flutter's `pubspec.yaml`/`.metadata`, React Native's `react-native.config.js`, Expo's `app.config.(ts|js)`, Metro's config, Capacitor's and Ionic's config files) and resolves to the first ancestor that has one. With no marker it resolves to the anchor's own directory. A bundled `android/`/`ios/` shell therefore lands on the same owner as its host instead of a wrapper directory, with no path exclusion.
+- **Non-anchor signals absorb the anchor's owner** as in `resolveUnitRootOwner`, but `.` counts as enclosing every path. `resolveUnitRootOwner`'s check never matches a root owner; that gap is left untouched for its other callers.
+- **The engine passes the entry index to every adapter.** `OwnerAdapterArgs` gained `index`, because a marker lookup must see entries other than the signal's own. Existing adapters ignore it.
+- **Cordova's `config.xml` is deliberately not a marker:** too generic a filename to trust.
+
+Why not extend `resolveUnitRootOwner`: its `android`/`ios` stripping fallback exists for React Native's unanchored example apps and performs no marker check, so reusing it would have changed behavior for every caller.
+
+Known defects as of this update, recorded rather than fixed: the marker patterns are matched against the full path, so only a marker at the repository root is found (a nested host is not recognized), and the walk does not require an `android`/`ios` segment, so any native anchor below a marker-holding directory is absorbed. The first defect was fixed on 2026-09-25: markers are now matched against each file's basename, so a nested host is recognized, and the non-anchor branch ranks enclosing owners by segment count (`.` as 0) instead of string length, so ties no longer depend on set order. The second remains.
+
+The `competingProofSchemas` veto, `hasCompetingAreaProof`, and the 2026-09-19 anchor exclusions were removed in the same change; the decision that replaced them is [ADR 0005](0005-same-owner-candidate-reconciliation.md).
+
+See [Native Android and iOS Owner Resolution via `resolveNearestMarkerOwner`](../changelog.md#native-android-and-ios-owner-resolution-via-resolvenearestmarkerowner) (2026-09-24).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`
@@ -159,5 +193,6 @@ See [Flutter Mobile Detected-Area Detector](../changelog.md#flutter-mobile-detec
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.expo.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.react-native.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.flutter.test.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-nearest-marker-owner.ts`
 - `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` (`ownerPathForApplicationArea`)
 - [Containerization and Database Owner Resolvers Removed](../changelog.md#containerization-and-database-owner-resolvers-removed) (2026-08-24)

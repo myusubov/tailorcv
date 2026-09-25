@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-07-16
 - **Domain:** `docs/architecture/github-analysis/project-structure/`
-- **Related changelog entry:** [Docker Containerization Emission Gate](../changelog.md#docker-containerization-emission-gate)
+- **Related changelog entry:** [Docker Containerization Emission Gate](../changelog-archive.md#docker-containerization-emission-gate)
 
 ---
 
