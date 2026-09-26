@@ -132,10 +132,13 @@ export type ContainerizationDetectedAreaTechnology =
  */
 export type RuntimeDetectedAreaTechnology =
   | '.NET'
+  | 'AWS'
+  | 'Azure'
   | 'C#'
   | 'Dart'
   | 'Java'
   | 'Kotlin'
+  | 'Kubernetes'
   | 'Node.js'
   | 'PHP'
   | 'Python'
@@ -194,6 +197,21 @@ export type MobileDetectedAreaTechnology =
   | 'React Native';
 
 /**
+ * Infrastructure-as-code tool labels inferred for detected infrastructure-as-code areas.
+ * v1 scope only. Currently only `Terraform` (primary) and `OpenTofu` (related)
+ * are emitted; `Ansible`, `AWS CDK`, `Bicep`, `Helm` and `Pulumi` belong to
+ * placeholder detectors that produce no candidates yet.
+ */
+export type InfrastructureAsCodeDetectedAreaTechnology =
+  | 'Ansible'
+  | 'AWS CDK'
+  | 'Bicep'
+  | 'Helm'
+  | 'OpenTofu'
+  | 'Pulumi'
+  | 'Terraform';
+
+/**
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
@@ -205,7 +223,8 @@ export type DetectedAreaTechnology =
   | DatabaseDetectedAreaTechnology
   | TestDetectedAreaTechnology
   | CiCdDetectedAreaTechnology
-  | MobileDetectedAreaTechnology;
+  | MobileDetectedAreaTechnology
+  | InfrastructureAsCodeDetectedAreaTechnology;
 
 /**
  * Primary and related technologies exposed for a detected repository area.

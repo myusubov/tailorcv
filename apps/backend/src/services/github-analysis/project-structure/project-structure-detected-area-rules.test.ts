@@ -1623,3 +1623,335 @@ describe('nested-host claims (Flutter vs native Android/iOS shell)', () => {
     expect(keys).not.toContain('Mobile app::apps/field/android/plugin::Android');
   });
 });
+
+describe('Terraform infrastructure as code detector', () => {
+  it('produces no area when Terraform only exists under demo and test folders', () => {
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'examples/complete/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'examples/complete',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'examples/simple/terraform.tfvars',
+        name: 'terraform.tfvars',
+        type: 'file',
+        depth: 2,
+        parentPath: 'examples/simple',
+        extension: 'tfvars',
+        sizeBytes: 200,
+      },
+      {
+        path: 'examples/terragrunt/terragrunt.hcl',
+        name: 'terragrunt.hcl',
+        type: 'file',
+        depth: 2,
+        parentPath: 'examples/terragrunt',
+        extension: 'hcl',
+        sizeBytes: 200,
+      },
+      {
+        path: 'test/fixtures/basic/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 3,
+        parentPath: 'test/fixtures/basic',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'internal/testdata/dryrun/components/terraform/service/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 6,
+        parentPath: 'internal/testdata/dryrun/components/terraform/service',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'spec/unit/infra/root/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 4,
+        parentPath: 'spec/unit/infra/root',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    expect([...candidates.keys()]).toEqual([]);
+  });
+
+  it('keeps a module repo as one area at the root and ignores its examples', () => {
+    // The example is listed first: were it not dropped, it would be the first
+    // path counted for the root owner and show up as its evidence.
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'examples/complete/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'examples/complete',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 0,
+        parentPath: null,
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'variables.tf',
+        name: 'variables.tf',
+        type: 'file',
+        depth: 0,
+        parentPath: null,
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'outputs.tf',
+        name: 'outputs.tf',
+        type: 'file',
+        depth: 0,
+        parentPath: null,
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'modules/flow-log/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'modules/flow-log',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'wrappers/vpc-endpoints/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'wrappers/vpc-endpoints',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    const evidence = candidates.get(
+      'Infrastructure as code::.::Terraform',
+    )?.evidence;
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::.::Terraform',
+    ]);
+    expect([...(evidence ?? [])]).toEqual(['main.tf']);
+  });
+
+  it('does not add a separate area for a test fixture next to real Terraform', () => {
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'terraform/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 1,
+        parentPath: 'terraform',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'test/fixtures/basic/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 3,
+        parentPath: 'test/fixtures/basic',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::terraform::Terraform',
+    ]);
+  });
+
+  it('resolves a Terraform home folder as the owner of its environments and modules', () => {
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'terraform/prod/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'terraform/prod',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'terraform/stage/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'terraform/stage',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'terraform/modules/vpc/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 3,
+        parentPath: 'terraform/modules/vpc',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'terraform/prod/terraform.tfvars',
+        name: 'terraform.tfvars',
+        type: 'file',
+        depth: 2,
+        parentPath: 'terraform/prod',
+        extension: 'tfvars',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::terraform::Terraform',
+    ]);
+  });
+
+  it('resolves a Terragrunt-only home folder to that folder', () => {
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'terraform/root.hcl',
+        name: 'root.hcl',
+        type: 'file',
+        depth: 1,
+        parentPath: 'terraform',
+        extension: 'hcl',
+        sizeBytes: 200,
+      },
+      {
+        path: 'terraform/live/prod/vpc/terragrunt.hcl',
+        name: 'terragrunt.hcl',
+        type: 'file',
+        depth: 4,
+        parentPath: 'terraform/live/prod/vpc',
+        extension: 'hcl',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::terraform::Terraform',
+    ]);
+  });
+
+  it('keeps a workspace unit as the owner of its own Terraform', () => {
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'apps/web/infra/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 3,
+        parentPath: 'apps/web/infra',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'apps/web/infra/modules/db/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 5,
+        parentPath: 'apps/web/infra/modules/db',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::apps/web::Terraform',
+    ]);
+  });
+
+  it('lets a root Terraform file own every nested Terraform folder', () => {
+    const entries: RepoTreeEntry[] = [
+      {
+        path: 'main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 0,
+        parentPath: null,
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'infra/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 1,
+        parentPath: 'infra',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'apps/web/infra/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 3,
+        parentPath: 'apps/web/infra',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+      {
+        path: 'modules/vpc/main.tf',
+        name: 'main.tf',
+        type: 'file',
+        depth: 2,
+        parentPath: 'modules/vpc',
+        extension: 'tf',
+        sizeBytes: 200,
+      },
+    ];
+    const index = buildEntryIndex(entries);
+    const candidates = new Map<string, AreaCandidate>();
+
+    applyDetectedAreaRules({ candidates, index });
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::.::Terraform',
+    ]);
+  });
+});
