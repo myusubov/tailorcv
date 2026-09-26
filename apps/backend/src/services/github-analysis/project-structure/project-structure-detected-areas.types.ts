@@ -16,7 +16,7 @@ export type DetectedAreaName =
   | 'Containerization'
   | 'CLI tooling'
   | 'Mobile app'
-  | 'Infrastructure/config';
+  | 'Infrastructure as code';
 
 interface InferredAreaTechnologyCandidate {
   primary: DetectedAreaTechnology;
