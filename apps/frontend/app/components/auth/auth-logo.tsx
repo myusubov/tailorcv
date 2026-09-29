@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { LOGOS } from '@/lib/config/constants';
 
 type AuthLogoVariant = 'primary' | 'inverse' | 'monochrome';
-type AuthLogoSize = 32 | 40;
+type AuthLogoSize = 24 | 32 | 40 | 48 | 56 | 64;
 
 interface AuthLogoProps {
   variant?: AuthLogoVariant;
@@ -18,6 +18,15 @@ const AUTH_LOGO_SOURCE_BY_VARIANT: Record<AuthLogoVariant, string> = {
   monochrome: LOGOS.TAILORCV_MONOCHROME,
 };
 
+const AUTH_LOGO_TEXT_SIZE_CLASS_BY_SIZE: Record<AuthLogoSize, string> = {
+  24: 'text-lg',
+  32: 'text-xl',
+  40: 'text-2xl',
+  48: 'text-3xl',
+  56: 'text-4xl',
+  64: 'text-5xl',
+};
+
 /**
  * Renders the shared TailorCV mark and wordmark as an accessible home link.
  *
@@ -29,7 +38,7 @@ export function AuthLogo({
   size = 40,
   className = '',
 }: AuthLogoProps) {
-  const textSizeClass = size === 32 ? 'text-xl' : 'text-2xl';
+  const textSizeClass = AUTH_LOGO_TEXT_SIZE_CLASS_BY_SIZE[size];
 
   return (
     <Link
@@ -44,7 +53,7 @@ export function AuthLogo({
         height={size}
         unoptimized
       />
-      TailorCV
+      <span className="sr-only lg:not-sr-only">TailorCV</span>
     </Link>
   );
 }

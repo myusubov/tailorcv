@@ -6,6 +6,17 @@ Archived entries: [changelog-archive.md](changelog-archive.md)
 
 ---
 
+## 2026-09-29
+
+### Wider Auth Logo Sizing And 64px Mobile Brand Link
+
+- **Decision:** Expand `AuthLogo`'s supported sizes from 32/40px to 24/32/40/48/56/64px and standardize the login/register centered mobile brand link on the 64px size.
+- **Problem:** `AuthLogo` only supported the two desktop-derived sizes, which did not cover a larger mobile brand-link treatment; login and register also rendered their mobile logo at two different implicit sizes (default 40px vs. an ad hoc 64px).
+- **Solution:**
+  1. **`apps/frontend/app/components/auth/auth-logo.tsx`**: Widened `AuthLogoSize` to `24 | 32 | 40 | 48 | 56 | 64` and replaced the inline ternary with a `AUTH_LOGO_TEXT_SIZE_CLASS_BY_SIZE` lookup mapping each size to its wordmark text class.
+  2. **`apps/frontend/app/(auth)/register/page.tsx`** and **`apps/frontend/app/components/auth/login/login-form-view.tsx`**: Both centered mobile brand links now explicitly request `size={64}`.
+- **Outcome:** `AuthLogo` supports a broader, still-typed size range, and login/register mobile brand links render at a consistent 64px.
+
 ## 2026-08-18
 
 ### Registration Verification Toast And OTP Surface
