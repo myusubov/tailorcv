@@ -235,10 +235,11 @@ with contrast-specific variants:
 - `tailorcv-mark-inverse.svg` on the dark desktop marketing panels
 - `tailorcv-mark-monochrome.svg` when a neutral one-color treatment is required
 
-`AuthLogo` owns the variant-to-asset mapping, the 32px and 40px auth display
-sizes, and the accessible home-link contract. Its default is the primary mark;
-authentication marketing panels request the inverse variant explicitly for the
-white-on-accent treatment.
+`AuthLogo` owns the variant-to-asset mapping, the 24/32/40/48/56/64px auth
+display sizes, and the accessible home-link contract. Its default is the
+primary mark and 40px size; authentication marketing panels request the
+inverse variant explicitly for the white-on-accent treatment. Login and
+registration request the 64px size for their centered mobile brand link.
 
 The adjacent `TailorCV` text supplies the accessible link name, so decorative
 mark images use empty alternative text and do not repeat the brand name.

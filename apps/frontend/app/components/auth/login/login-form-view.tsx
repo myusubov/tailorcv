@@ -53,7 +53,7 @@ export function LoginFormView({
       <div className="auth-form-content">
         {/* Mobile Logo - Centered */}
         <div className="auth-form-mobile-logo">
-          <AuthLogo className="text-foreground" />
+          <AuthLogo className="text-foreground" size={64} />
         </div>
 
         <div className="auth-form-mobile-intro lg:hidden">
