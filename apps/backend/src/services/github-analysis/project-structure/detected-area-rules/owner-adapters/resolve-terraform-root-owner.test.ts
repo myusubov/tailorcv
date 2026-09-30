@@ -235,6 +235,28 @@ describe('resolveTerraformRootOwner', () => {
     });
   });
 
+  describe('a workspace container is matched case-insensitively and the owner keeps its casing', () => {
+    // Same outcomes as the lowercase groups above; only the capitalization of
+    // the first segment differs.
+    it.each([
+      // Unit beats a home folder and an environment folder below it.
+      ['Apps/web/infra/main.tf', 'Apps/web'],
+      ['Services/api/infra/environments/prod/main.tf', 'Services/api'],
+      ['PACKAGES/backend/envs/dev/main.tf', 'PACKAGES/backend'],
+      // Scoped packages are owned by the scoped package.
+      ['Packages/@acme/infra/terraform/main.tf', 'Packages/@acme/infra'],
+      // A file directly inside the container names no unit.
+      ['Apps/main.tf', '.'],
+      // `modules` is a reusable-library folder, so it beats a home folder.
+      ['Modules/vpc/main.tf', '.'],
+      ['Modules/infra/main.tf', '.'],
+    ])('%s -> %s', (path, owner) => {
+      expect(
+        resolveTerraformRootOwner({ path, rootHasTerraform: false }),
+      ).toBe(owner);
+    });
+  });
+
   describe('already true: Terragrunt live layouts with no home folder resolve to the repo root', () => {
     // gruntwork-io/terragrunt-infrastructure-live-example: the whole repo is
     // one Terragrunt project, so no folder below the root owns anything.

@@ -7,3 +7,4 @@ export { resolveUnitRootOwner } from './resolve-unit-root-owner';
 export { resolveContainerRootOwner } from './resolve-container-root-owner';
 export { resolveNearestMarkerOwner } from './resolve-nearest-marker-owner';
 export { resolveTerraformRootOwner } from './resolve-terraform-root-owner';
+export { resolveHelmChartOwner } from './resolve-helm-chart-owner';

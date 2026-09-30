@@ -1955,3 +1955,199 @@ describe('Terraform infrastructure as code detector', () => {
     ]);
   });
 });
+
+describe('Helm infrastructure as code detector', () => {
+  /**
+   * Builds a file tree entry from a repo-relative path. Only the path matters
+   * to the Helm schemas; the other fields are derived to satisfy the type.
+   */
+  const file = (path: string): RepoTreeEntry => {
+    const parts = path.split('/');
+    const name = parts[parts.length - 1];
+    return {
+      path,
+      name,
+      type: 'file',
+      depth: parts.length - 1,
+      parentPath: parts.length > 1 ? parts.slice(0, -1).join('/') : null,
+      extension: name.includes('.') ? (name.split('.').pop() ?? null) : null,
+      sizeBytes: 200,
+    };
+  };
+
+  const detect = (paths: string[]): Map<string, AreaCandidate> => {
+    const candidates = new Map<string, AreaCandidate>();
+    applyDetectedAreaRules({
+      candidates,
+      index: buildEntryIndex(paths.map(file)),
+    });
+    return candidates;
+  };
+
+  // Every case uses a root chart, so the owner is "." whatever owner adapter
+  // is wired later; owner resolution has its own spec.
+  it('emits Helm with related Kubernetes for a complete chart', () => {
+    const candidates = detect([
+      'Chart.yaml',
+      'values.yaml',
+      '.helmignore',
+      'templates/deployment.yaml',
+      'templates/_helpers.tpl',
+    ]);
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::.::Helm',
+    ]);
+    expect(candidates.get('Infrastructure as code::.::Helm')).toMatchObject({
+      inferredTechnologies: {
+        primary: 'Helm',
+        related: new Set(['Kubernetes']),
+      },
+    });
+  });
+
+  it('scores each signal type once per owner', () => {
+    const candidates = detect([
+      'Chart.yaml',
+      'values.yaml',
+      '.helmignore',
+      'Chart.lock',
+      'templates/a.yaml',
+      'templates/b.yaml',
+      'templates/c.yaml',
+    ]);
+
+    // manifest 3 + templates 2 + values 1 + ignore 1 + lock 1, not 3 x 2.
+    expect(candidates.get('Infrastructure as code::.::Helm')?.score).toBe(8);
+  });
+
+  it.each([
+    ['values.yaml'],
+    ['templates/deployment.yaml'],
+    ['templates/_helpers.tpl'],
+    ['.helmignore'],
+    ['Chart.lock'],
+  ])('lets the manifest plus %s alone open the gate', (companion) => {
+    const candidates = detect(['Chart.yaml', companion]);
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::.::Helm',
+    ]);
+  });
+
+  it('does not emit for a Chart.yaml with no companion', () => {
+    expect([...detect(['Chart.yaml']).keys()]).toEqual([]);
+  });
+
+  it('does not emit for companion files without a manifest', () => {
+    // values.yaml and templates/ are common outside Helm (Ansible roles,
+    // cookiecutter templates, helmfile value folders).
+    const candidates = detect([
+      'values.yaml',
+      '.helmignore',
+      'Chart.lock',
+      'templates/deployment.yaml',
+    ]);
+
+    expect([...candidates.keys()]).toEqual([]);
+  });
+
+  it('does not treat a GitHub Actions workflow named chart.yaml as a manifest', () => {
+    // kubernetes/ingress-nginx and pluralsh/bootstrap ship this file.
+    const candidates = detect([
+      '.github/workflows/chart.yaml',
+      '.github/workflows/ci.yaml',
+      'values.yaml',
+    ]);
+
+    expect([...candidates.keys()]).toEqual([]);
+  });
+
+  it('produces no area when charts only exist under demo and test folders', () => {
+    // helm/helm and helmfile/helmfile shape: every chart is a test fixture.
+    const candidates = detect([
+      'pkg/chart/testdata/albatross/Chart.yaml',
+      'pkg/chart/testdata/albatross/values.yaml',
+      'pkg/chart/testdata/albatross/templates/svc.yaml',
+      'examples/charts/paths-example/Chart.yaml',
+      'examples/charts/paths-example/values.yaml',
+      'test/e2e/testdata/charts/raw/Chart.yaml',
+      'test/e2e/testdata/charts/raw/templates/raw.yaml',
+      'tests/fixtures/chart/Chart.yaml',
+      'tests/fixtures/chart/.helmignore',
+      'spec/chart/Chart.yaml',
+      'spec/chart/values.yaml',
+    ]);
+
+    expect([...candidates.keys()]).toEqual([]);
+  });
+
+  it('ignores demo and test files next to a real chart', () => {
+    // The example is listed first: were it not dropped, its files would be the
+    // first paths counted for the owner and show up as evidence.
+    const candidates = detect([
+      'examples/basic/Chart.yaml',
+      'examples/basic/values.yaml',
+      'Chart.yaml',
+      'values.yaml',
+      'templates/deployment.yaml',
+      'tests/chart/Chart.lock',
+    ]);
+
+    const evidence = candidates.get('Infrastructure as code::.::Helm')
+      ?.evidence;
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::.::Helm',
+    ]);
+    expect([...(evidence ?? [])].sort()).toEqual([
+      'Chart.yaml',
+      'templates/deployment.yaml',
+      'values.yaml',
+    ]);
+  });
+
+  it('does not let a test fixture companion open the gate for a lone manifest', () => {
+    // argoproj/argo-cd: `testdata2` is not on the demo/test list, so its
+    // manifest is counted, and only a companion under a demo folder exists.
+    const candidates = detect([
+      'reposerver/repository/testdata2/out-of-bounds-chart/Chart.yaml',
+      'examples/values.yaml',
+    ]);
+
+    expect([...candidates.keys()]).toEqual([]);
+  });
+
+  it('keeps a root chart and its subcharts as one area', () => {
+    // Under the generic owner every path here is ".", the same owner a root
+    // chart gets from any adapter.
+    const candidates = detect([
+      'Chart.yaml',
+      'values.yaml',
+      'templates/deployment.yaml',
+      'charts/redis/Chart.yaml',
+      'charts/redis/values.yaml',
+      'charts/redis/templates/deployment.yaml',
+    ]);
+
+    expect([...candidates.keys()]).toEqual([
+      'Infrastructure as code::.::Helm',
+    ]);
+  });
+
+  it('keeps Terraform and Helm as separate candidates on the same owner', () => {
+    // Candidates are keyed per primary technology and no META_PARENT_PAIRS row
+    // covers infrastructure as code, so neither claim replaces the other.
+    const candidates = detect([
+      'main.tf',
+      'variables.tf',
+      'Chart.yaml',
+      'values.yaml',
+    ]);
+
+    expect([...candidates.keys()].sort()).toEqual([
+      'Infrastructure as code::.::Helm',
+      'Infrastructure as code::.::Terraform',
+    ]);
+  });
+});

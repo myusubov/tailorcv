@@ -198,9 +198,10 @@ export type MobileDetectedAreaTechnology =
 
 /**
  * Infrastructure-as-code tool labels inferred for detected infrastructure-as-code areas.
- * v1 scope only. Currently only `Terraform` (primary) and `OpenTofu` (related)
- * are emitted; `Ansible`, `AWS CDK`, `Bicep`, `Helm` and `Pulumi` belong to
- * placeholder detectors that produce no candidates yet.
+ * v1 scope only. Currently `Terraform` (primary) with `OpenTofu` (related), and
+ * `Helm` (primary) with `Kubernetes` (related) are emitted; `Ansible`, `AWS CDK`,
+ * `Bicep` and `Pulumi` belong to placeholder detectors that produce no
+ * candidates yet.
  */
 export type InfrastructureAsCodeDetectedAreaTechnology =
   | 'Ansible'

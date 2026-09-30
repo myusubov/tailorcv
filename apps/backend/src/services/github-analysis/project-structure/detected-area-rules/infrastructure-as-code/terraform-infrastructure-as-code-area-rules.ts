@@ -1,36 +1,7 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
 import { resolveTerraformRootOwner } from '../owner-adapters/resolve-terraform-root-owner';
-
-/**
- * Regex alternation of directory names whose Terraform files are demos or
- * test fixtures, never the repository's own infrastructure: `examples`,
- * `example`, `tests`, `test`, `testdata`, `fixtures`, `spec`. In the
- * 1,802-repo Terraform survey, 177 repos (9.8%) had Terraform only under these
- * names (provider plugins, editors and CLI tools such as
- * hashicorp/vscode-terraform), and in module repos the same files add nothing
- * beyond the root module's own evidence.
- */
-const DEMO_AND_TEST_FOLDERS = '(?:examples?|tests?|testdata|fixtures|spec)';
-
-/**
- * Builds a full-path regex that matches `pattern` only when no directory
- * segment of the path is a demo or test folder.
- *
- * Inputs: `pattern`, a regex source fragment describing the whole path
- * (without anchors), for example `.*\.tf(?:\.json)?`.
- * Output: a regex anchored at both ends, with a negative lookahead that
- * rejects any path containing a whole directory segment from
- * `DEMO_AND_TEST_FOLDERS`.
- * Side effects: none.
- * Invariants: a folder name only counts as a whole segment followed by `/`, so
- * `mytests/main.tf` and a root file named `test.tf` are not excluded. Callers
- * pass it to `findEntriesByPathMatching`, whose input paths are already
- * lowercased by `normalizePath`, so no case flag is needed.
- */
-function excludingDemoAndTestFolders(pattern: string): RegExp {
-  return new RegExp(`^(?!(?:.*/)?${DEMO_AND_TEST_FOLDERS}/)${pattern}$`);
-}
+import { excludingDemoAndTestFolders } from './demo-and-test-folders';
 
 /**
  * Path-only Terraform/OpenTofu signal contract, grounded in a GitHub-tree
@@ -99,7 +70,8 @@ type TerraformInfrastructureAsCodeSignal =
  * `dynamicRelatedTechMap`.
  *
  * Exclusion: every schema matches on the full path and rejects any path with a
- * whole demo/test directory segment (`DEMO_AND_TEST_FOLDERS`), at any depth.
+ * whole demo/test directory segment (`DEMO_AND_TEST_FOLDERS`, shared through
+ * `demo-and-test-folders.ts`), at any depth.
  * Such files contribute no signal, score or evidence, so a repo whose only
  * Terraform lives under `examples/` or `tests/` produces no candidate. The
  * file-name signals (Terragrunt, lock, tfvars, state) use path matching
