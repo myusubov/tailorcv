@@ -14,8 +14,8 @@ import { addTerraformInfrastructureAsCodeAreas } from './terraform-infrastructur
  * `Infrastructure as code` candidates. `'Infrastructure as code'` was
  * renamed from the `'Infrastructure/config'` placeholder (previously
  * undetected, like `'CI/CD workflows'` and `'Mobile app'` before their own
- * implementations). Terraform/OpenTofu/Terragrunt is implemented; the
- * remaining five v1 providers (Helm, AWS CDK, Pulumi, Bicep, Ansible) are
+ * implementations). Terraform/OpenTofu/Terragrunt and Helm are implemented;
+ * the remaining four v1 providers (AWS CDK, Pulumi, Bicep, Ansible) are
  * still unimplemented placeholders -- see each module's own docstring -- so
  * they contribute zero candidates until implemented one at a time.
  *
@@ -24,9 +24,9 @@ import { addTerraformInfrastructureAsCodeAreas } from './terraform-infrastructur
  * lookup).
  * Output: none.
  * Side effects: fans out to the six provider detectors below. Dispatch order
- * is not yet meaningful, since only one currently emits candidates; it will
- * matter once providers with overlapping evidence (for example Terraform
- * modules embedding Helm charts) are all implemented.
+ * does not decide which claim survives: candidates are keyed per primary
+ * technology, so providers with overlapping evidence (for example Terraform
+ * and Helm under one `deploy/` folder) each keep their own candidate.
  */
 export function addInfrastructureAsCodeAreas({
   candidates,

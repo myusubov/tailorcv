@@ -43,7 +43,9 @@ export const MONOREPO_OWNER_ROOT_DIRECTORIES: readonly string[] = [
  * - Paths under a recognized monorepo workspace root
  *   (`MONOREPO_OWNER_ROOT_DIRECTORIES` or `extraRootDirectories`) resolve to
  *   `<root>/<name>`, or to `<root>/@scope/<name>` when the segment after the
- *   root is an npm scope.
+ *   root is an npm scope. The first segment is compared case-insensitively
+ *   (`Apps/web/...` matches `apps`), and the returned owner keeps the path's
+ *   original casing.
  * - Other paths containing a `src` segment resolve to the path up to (not
  *   including) that segment.
  * - Everything else resolves to the repository root, `.`.
@@ -61,10 +63,11 @@ export function ownerPathForApplicationArea({
 }): string {
   const parts = path.split('/');
 
+  const root = parts[0].toLowerCase();
   if (
     parts[1] &&
-    (MONOREPO_OWNER_ROOT_DIRECTORIES.includes(parts[0]) ||
-      extraRootDirectories.includes(parts[0]))
+    (MONOREPO_OWNER_ROOT_DIRECTORIES.includes(root) ||
+      extraRootDirectories.includes(root))
   ) {
     if (parts[1].startsWith('@') && parts[2]) {
       return `${parts[0]}/${parts[1]}/${parts[2]}`;
