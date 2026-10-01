@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { resolveHelmChartOwner } from './resolve-helm-chart-owner';
+import { resolveManifestDirectoryOwner } from './resolve-manifest-directory-owner';
 
 /**
  * Owner-resolution spec for Helm evidence paths: each case describes what a
- * real chart layout resolves to under `resolveHelmChartOwner`.
+ * real chart layout resolves to under `resolveManifestDirectoryOwner`. The
+ * adapter is shared with the Pulumi detector, whose layouts are in
+ * `resolve-manifest-directory-owner.pulumi.test.ts`.
  *
  * Cases come from real chart layouts seen in a tree survey of about 130 GitHub
  * repositories. Real repos named in the comments: hashicorp/vault-helm,
@@ -13,10 +15,10 @@ import { resolveHelmChartOwner } from './resolve-helm-chart-owner';
  *
  * Each `describe` names the repository layout the rows belong to. Several
  * outcomes depend on charts elsewhere in the tree, so every case passes
- * `chartDirectories`, the directory of every counted `Chart.yaml` in that
+ * `manifestDirectories`, the directory of every counted `Chart.yaml` in that
  * repository (`.` for a root chart). A row is `[evidence path, chart
  * directories, expected owner]`, or `[evidence path, expected owner]` when the
- * whole group shares one `chartDirectories` constant. Demo and test folders
+ * whole group shares one `manifestDirectories` constant. Demo and test folders
  * are already excluded by the detector's entry schemas, so no case uses them.
  *
  * Decisions baked into the expectations, change them here if you decide
@@ -36,9 +38,9 @@ import { resolveHelmChartOwner } from './resolve-helm-chart-owner';
  * - Folder-name matching is case-insensitive on lookup and preserves the
  *   original casing in the returned owner.
  */
-describe('resolveHelmChartOwner', () => {
+describe('resolveManifestDirectoryOwner (Helm charts)', () => {
   describe('layout: Chart.yaml at the repo root (hashicorp/vault-helm) -> "."', () => {
-    const chartDirectories = ['.'];
+    const manifestDirectories = ['.'];
     it.each([
       ['Chart.yaml', '.'],
       ['values.yaml', '.'],
@@ -49,20 +51,24 @@ describe('resolveHelmChartOwner', () => {
       ['templates/tests/server-test.yaml', '.'],
       ['crds/vaultsecret.yaml', '.'],
     ])('%s -> %s', (path, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
   describe('layout: root chart plus charts/redis and deploy/extra -> "."', () => {
     // Every other chart in the repo sits below the root chart's directory.
-    const chartDirectories = ['.', 'charts/redis', 'deploy/extra'];
+    const manifestDirectories = ['.', 'charts/redis', 'deploy/extra'];
     it.each([
       ['charts/redis/Chart.yaml', '.'],
       ['charts/redis/values.yaml', '.'],
       ['charts/redis/templates/deployment.yaml', '.'],
       ['deploy/extra/Chart.yaml', '.'],
     ])('%s -> %s', (path, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
@@ -99,8 +105,10 @@ describe('resolveHelmChartOwner', () => {
       // langfuse/langfuse-k8s.
       ['charts/langfuse/Chart.yaml', ['charts/langfuse'], 'charts/langfuse'],
       ['charts/langfuse/Chart.lock', ['charts/langfuse'], 'charts/langfuse'],
-    ])('%s -> %s', (path, chartDirectories, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+    ])('%s -> %s', (path, manifestDirectories, owner) => {
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
@@ -143,13 +151,15 @@ describe('resolveHelmChartOwner', () => {
         '.',
       ],
       ['kibana/templates/deployment.yaml', ['elasticsearch', 'kibana'], '.'],
-    ])('%s -> %s', (path, chartDirectories, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+    ])('%s -> %s', (path, manifestDirectories, owner) => {
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
   describe('layout: helm/charts, stable/ and incubator/ each hold many charts', () => {
-    const chartDirectories = [
+    const manifestDirectories = [
       'stable/mysql',
       'stable/redis',
       'incubator/kafka',
@@ -161,19 +171,23 @@ describe('resolveHelmChartOwner', () => {
       ['incubator/kafka/Chart.yaml', 'incubator'],
       ['incubator/cassandra/templates/statefulset.yaml', 'incubator'],
     ])('%s -> %s', (path, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
   describe('layout: charts/api and charts/web plus a lone deploy/worker', () => {
-    const chartDirectories = ['charts/api', 'charts/web', 'deploy/worker'];
+    const manifestDirectories = ['charts/api', 'charts/web', 'deploy/worker'];
     it.each([
       ['charts/api/Chart.yaml', 'charts'],
       ['charts/web/values.yaml', 'charts'],
       ['deploy/worker/Chart.yaml', 'deploy/worker'],
       ['deploy/worker/templates/job.yaml', 'deploy/worker'],
     ])('%s -> %s', (path, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
@@ -231,14 +245,16 @@ describe('resolveHelmChartOwner', () => {
         ],
         'charts/app',
       ],
-    ])('%s -> %s', (path, chartDirectories, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+    ])('%s -> %s', (path, manifestDirectories, owner) => {
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
   describe('layout: companion files resolve to their nearest enclosing chart', () => {
     // Siblings charts/api and charts/web.
-    const chartDirectories = ['charts/api', 'charts/web'];
+    const manifestDirectories = ['charts/api', 'charts/web'];
     it.each([
       ['charts/api/values.yaml', 'charts'],
       ['charts/api/.helmignore', 'charts'],
@@ -249,7 +265,9 @@ describe('resolveHelmChartOwner', () => {
       ['charts/api/ci/values.yaml', 'charts'],
       ['charts/api/crds/certificate.yaml', 'charts'],
     ])('%s -> %s', (path, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
@@ -264,9 +282,9 @@ describe('resolveHelmChartOwner', () => {
       'templates/NOTES.txt',
     ])('charts/api/%s -> charts/api', (file) => {
       expect(
-        resolveHelmChartOwner({
+        resolveManifestDirectoryOwner({
           path: `charts/api/${file}`,
-          chartDirectories: ['charts/api'],
+          manifestDirectories: ['charts/api'],
         }),
       ).toBe('charts/api');
     });
@@ -313,8 +331,10 @@ describe('resolveHelmChartOwner', () => {
         ['apps/web/chart', 'apps/web/chart/charts/redis'],
         'apps/web',
       ],
-    ])('%s -> %s', (path, chartDirectories, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+    ])('%s -> %s', (path, manifestDirectories, owner) => {
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
@@ -323,13 +343,15 @@ describe('resolveHelmChartOwner', () => {
     // cookiecutter templates, helmfile value folders) in a repo that also has
     // a real chart at charts/api. Their own directory keeps them from ever
     // sharing an owner with a manifest.
-    const chartDirectories = ['charts/api'];
+    const manifestDirectories = ['charts/api'];
     it.each([
       ['config/values.yaml', 'config'],
       ['hack/minikube/values.yaml', 'hack/minikube'],
       ['roles/nginx/templates/nginx.conf.j2', 'roles/nginx/templates'],
     ])('%s -> %s', (path, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 
@@ -349,8 +371,10 @@ describe('resolveHelmChartOwner', () => {
         ['Apps/Web/Chart', 'Apps/Api/Chart'],
         'Apps/Web',
       ],
-    ])('%s -> %s', (path, chartDirectories, owner) => {
-      expect(resolveHelmChartOwner({ path, chartDirectories })).toBe(owner);
+    ])('%s -> %s', (path, manifestDirectories, owner) => {
+      expect(
+        resolveManifestDirectoryOwner({ path, manifestDirectories }),
+      ).toBe(owner);
     });
   });
 

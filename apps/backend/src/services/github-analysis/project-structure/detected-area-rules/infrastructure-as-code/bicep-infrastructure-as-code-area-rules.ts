@@ -1,6 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
-import { resolveBicepRootOwner } from '../owner-adapters/resolve-bicep-root-owner';
+import { resolveBicepRootOwner } from '../owner-adapters';
 import { excludingDemoAndTestFolders } from './demo-and-test-folders';
 
 /**
