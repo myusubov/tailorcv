@@ -6,6 +6,19 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-10-01
+
+### Bicep Detector and Bicep Root Owner Resolver
+
+- **Problem:** The Bicep provider module under `detected-area-rules/infrastructure-as-code/` was an empty placeholder, so a repository whose infrastructure is Azure Bicep emitted no `Infrastructure as code` area. The generic owner resolver turns `modules/vm.bicep` into an owner that is a file name, so Bicep needed a folder-name resolver like Terraform's.
+- **Solution:**
+  1. Implemented the Bicep detector on `applyDeclarativeAreaDetector`: `*.bicep` scores 3 (the anchor, so one file clears the gate), `*.bicepparam` 2, and `main.bicep`, `bicepconfig.json`, and `main.parameters.json` 1 each; the gate is `bicep-source-file` alone, so support signals only add confidence. The `*.bicep` regex needs at least one character before the extension because the entry index also matches directories and Azure/ResourceModules contains a directory named `.bicep`. `azure.yaml` is deliberately unscored (17 of 70 negative-control repositories have one and no `.bicep`). Every schema reuses `excludingDemoAndTestFolders`; primary technology `Bicep`, related technology `Azure`. Signal contract grounded in a survey of 226 repositories (`bicep-infrastructure-as-code-area-rules.ts`).
+  2. Added `resolveBicepRootOwner({ path, rootHasBicep })` (`owner-adapters/resolve-bicep-root-owner.ts`), wired as the detector's plain `ownerAdapter`. It applies the same rule order as `resolveTerraformRootOwner` (single segment, root flag, workspace container, home folder, environment folder, `modules`/`wrappers`, generic fallback) with its own single home-folder set (`bicep`, `terraform`, `bicep-devcenter`, `infra`, `infrastructure`, `iac`, `deploy`, `deployment`). It is a separate module rather than a shared function, so the Terraform resolver is unchanged. The detector computes `rootHasBicep` once per repository (a `.bicep` file directly at the repo root). It is not exported from the adapters barrel.
+  3. Added `resolve-bicep-root-owner.test.ts`: grouped `it.each` cases from real repositories whose expected owners were decided from each repository's layout rather than from the resolver's output, three known gaps pinned with `it.fails.each`, and one `it.todo` for independent template collections. No Bicep cases were added to `project-structure-detected-area-rules.test.ts`.
+  4. Updated the infrastructure-as-code dispatcher docblock to list Bicep as implemented.
+- **Affected files:** `detected-area-rules/infrastructure-as-code/bicep-infrastructure-as-code-area-rules.ts`, `detected-area-rules/infrastructure-as-code/infrastructure-as-code-area-rules.ts` (docblock and call order), `detected-area-rules/owner-adapters/resolve-bicep-root-owner.ts` (new), `detected-area-rules/owner-adapters/resolve-bicep-root-owner.test.ts` (new)
+- **Outcome:** A repository with any non-demo, non-test `.bicep` file now emits an `Infrastructure as code` area with primary technology `Bicep` and related technology `Azure`, owned per the rules above; it coexists with a Terraform or Helm candidate on the same owner. Known limitations, recorded in the README's Risks table: unlisted folder names resolve to `.`, a registry module folder named `deployment` becomes a stray owner, and about 5 of 156 surveyed Bicep tool and fixture repositories still emit a false-positive area. Tests were not run.
+
 ## 2026-09-30
 
 ### Helm Detector, Helm Chart Owner Resolver, and Shared Demo and Test Exclusion
@@ -376,56 +389,3 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
   4. Added `addVitestTestAreas`, `addCypressTestAreas`, `addMochaTestAreas`, and `addPlaywrightTestAreas` as side-effect-free stub functions wired into dispatch but with no matching, scoring, or emission logic implemented yet.
 - **Affected files:** `project-structure-analyzer.types.ts`, `project-structure-detected-area-rules.ts`, `detected-area-rules/test/test-area-rules.ts`, `detected-area-rules/test/jest-test-area-rules.ts`, `detected-area-rules/test/vitest-test-area-rules.ts`, `detected-area-rules/test/cypress-test-area-rules.ts`, `detected-area-rules/test/mocha-test-area-rules.ts`, `detected-area-rules/test/playwright-test-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
 - **Outcome:** `Test suite` areas now emit for Jest-shaped repositories from conservative path-only evidence. Vitest, Cypress, Mocha, and Playwright detection remains unimplemented and their stub functions always contribute zero candidates.
-
-## 2026-08-22
-
-### Podman/OCI Owner Resolution
-
-- **Decision:** Resolve Podman/OCI owner paths by reusing Docker's monorepo-root/member contract and then scanning the full evidence path -- not only the top-level segment -- for the first recognized Podman/OCI config directory, because real Quadlet layouts nest deeper than Docker's (`etc/containers/systemd/`, `subsystems/video/etc/containers/systemd/*.container`).
-- **Problem:** Podman/OCI evidence had no dedicated owner-path resolver; every `countAreaRuleSignal` call in the detector relied on default owner attribution, so root-level `quadlet/`/`containers/`/`deploy/` folders, monorepo members and roots, and deeply nested system-path mirrors had no verified owner, and the `.kube` signal was left out of the initial wiring pass entirely.
-- **Solution:**
-  1. Added `PODMAN_CONTAINERIZATION_REPO_CONFIG_DIRECTORIES` (`quadlet`, `containers`, `systemd`, `deploy`, `etc`) and extended the shared `containerizationMonorepoOwnerPathFromParts` helper in `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` to also collapse a monorepo member segment to its root when that segment matches this set, mirroring the existing Docker config-directory check.
-  2. Implemented `ownerPathForPodmanOciContainerizationArea` in the same file: reuse the shared monorepo check, then `findIndex` the full path for the first Podman/OCI config directory at any depth and slice the owner up to that index (falling back to `.` when the match is the first segment), then fall back to `.` for single-segment root evidence and to the local parent directory otherwise.
-  3. Wired `resolveOwnerPath: ownerPathForPodmanOciContainerizationArea` into all ten `countAreaRuleSignal` calls in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, including the previously-unwired `.kube` loop.
-  4. Added 23 unit cases to `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts` and 5 analyzer-level fixtures to `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts` covering monorepo-member, monorepo-root, root-level config-directory, deep-nested config-directory, and owner-isolation shapes.
-  5. Updated the containerization rules in `docs/architecture/github-analysis/project-structure/README.md`, corrected the stale "owner resolution... unfinished" consequence in `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`, and updated the stale scaffold-era JSDoc above `addPodmanOciContainerizationAreas` in `podman-oci-containerization-area-rules.ts`. In doing so, resolved a documentation conflict: the ADR and rules-file docstring called fixture/example/test path exclusion "required follow-up work" for Podman specifically, while README rule 226 states the analyzer's general policy that no detector excludes evidence by generic `docs`/`test`/`tests`/`fixtures` path names, relying on signal-combination precision instead. Aligned the Podman-specific text with the general policy rather than treating it as an open TODO.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.test.ts`, `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
-- **Outcome:** Podman/OCI containerization areas now resolve to accurate owner paths across root-level, monorepo, and deeply nested real-world Quadlet/Containerfile layouts instead of relying on unverified default owner attribution, and every Podman/OCI signal type -- including `.kube` -- now uses the same resolver.
-
-## 2026-07-22
-
-### Podman/OCI Conservative Combination Gate
-
-- **Decision:** Require corroborating owner-scoped Podman/OCI path signals instead of allowing any basename-only Quadlet extension to emit independently.
-- **Problem:** Quadlet extensions such as `.container`, `.pod`, `.kube`, and especially `.build` can collide with unrelated file formats when the path-only analyzer cannot inspect their sections, so treating score-4 files as independent proof would create false-positive Podman containerization areas.
-- **Solution:**
-  1. Reduced core Quadlet scores from `4` to `3`, `.image` from `3` to `2`, and network, volume, artifact, and `Containerfile` support scores from `2` to `1` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`.
-  2. Implemented runtime-plus-companion and build-plus-compatible-companion combinations in `hasPodmanOciContainerizationAreaShape`, while keeping individual signals, support-resource-only groups, `.containerignore`-assisted singles, generic OCI-only evidence, and `.build` plus only network evidence non-emitting.
-  3. Added public analyzer regression coverage for seven accepted combinations and eight rejected weak shapes in `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`.
-  4. Documented the gate contract in `docs/architecture/github-analysis/project-structure/README.md` and recorded the durable precision-over-recall decision in `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `apps/backend/src/services/github-analysis/project-structure/project-structure-analyzer.test.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`, `docs/architecture/github-analysis/project-structure/adr/README.md`, `docs/architecture/github-analysis/project-structure/adr/0002-podman-oci-containerization-gate.md`.
-- **Outcome:** Podman/OCI areas can now emit from coherent path-only deployment or build shapes without allowing a single ambiguous extension or accumulated weak support evidence to claim Podman usage.
-
-### Podman/OCI Owner Signal Counting
-
-- **Problem:** Podman/OCI evidence collections were incorrectly routed through final candidate emission inside each file loop, so individual evidence files were not assigned their signal type and score in the owner-scoped candidate map.
-- **Solution:**
-  1. Routed all ten Podman/OCI evidence collections through `countAreaRuleSignal` in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, pairing every entry with its exact signal literal and configured score.
-  2. Preserved once-per-owner signal deduplication through the shared candidate map and kept the existing final gated emission block separate from evidence collection.
-  3. Updated `docs/architecture/github-analysis/project-structure/README.md` to describe the implemented provisional owner-scoped counting stage and the still-unfinished Podman-specific ownership and gate behavior.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
-- **Outcome:** Every planned Podman/OCI file signal now contributes its configured score and evidence once to its provisional owner without bypassing the detector's final emission gate.
-
-## 2026-07-21
-
-### Podman/OCI Basename Signal Matching
-
-- **Problem:** The Podman/OCI detector's planned signal variables still used placeholder full-path entry queries, which neither represented the researched Quadlet/OCI filenames nor guaranteed that returned entries were files.
-- **Solution:**
-  1. Replaced every placeholder query in `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts` with file-only basename matching for `.container`, `.pod`, `.kube`, `.build`, `.image`, `.network`, `.volume`, `.artifact`, `Containerfile` variants, and `.containerignore`.
-  2. Kept directory placement optional during collection so root-level and nested real-world Quadlet layouts remain discoverable, while leaving path exclusions and ownership resolution for their dedicated implementation stage.
-  3. Updated `docs/architecture/github-analysis/project-structure/README.md` and the detector JSDoc to describe the implemented collection boundary and still-disabled output behavior.
-- **Affected files:** `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/containerization/podman-oci-containerization-area-rules.ts`, `docs/architecture/github-analysis/project-structure/README.md`, `docs/architecture/github-analysis/project-structure/changelog.md`.
-- **Outcome:** The inert Podman/OCI detector now discovers its planned evidence as files across valid repository layouts without yet resolving owners, counting signals, or emitting containerization areas.
-
-Older implementation history for 2026-05-08 through 2026-07-20 is preserved in [changelog-archive.md](changelog-archive.md).
