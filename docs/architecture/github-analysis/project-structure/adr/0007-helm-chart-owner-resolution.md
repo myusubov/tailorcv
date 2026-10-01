@@ -1,6 +1,6 @@
 # ADR 0007: Helm Chart Owner Resolution
 
-- **Status:** Accepted
+- **Status:** Accepted. Decision 1 is amended by [ADR 0008](0008-shared-manifest-directory-owner-adapter.md) (2026-10-01): the adapter was renamed `resolveManifestDirectoryOwner` and is shared with the Pulumi detector. Decisions 2 to 4 stand, and the file names in this record predate the rename.
 - **Date:** 2026-09-30
 - **Domain:** `docs/architecture/github-analysis/project-structure/`
 - **Related changelog entry:** [Helm Detector, Helm Chart Owner Resolver, and Shared Demo and Test Exclusion](../changelog.md#helm-detector-helm-chart-owner-resolver-and-shared-demo-and-test-exclusion)
