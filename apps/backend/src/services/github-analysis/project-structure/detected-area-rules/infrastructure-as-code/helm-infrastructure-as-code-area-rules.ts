@@ -1,6 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
-import { resolveHelmChartOwner } from '../owner-adapters';
+import { resolveManifestDirectoryOwner } from '../owner-adapters';
 import { excludingDemoAndTestFolders } from './demo-and-test-folders';
 
 /**
@@ -81,12 +81,13 @@ const HELM_CHART_MANIFEST_REGEX = excludingDemoAndTestFolders(
  * CRD-only subchart. The companions alone never emit either, since
  * `values.yaml` and `templates/` are common outside Helm.
  *
- * Owner: `resolveHelmChartOwner` (`owner-adapters/`), wired as a plain
- * per-entry `ownerAdapter`. The directory of every counted `Chart.yaml` is
- * computed once per call and passed in, so a chart's companions resolve to the
- * same owner as its manifest, which the gate depends on. Subcharts fold into
- * their enclosing chart, sibling top-level charts collapse into their shared
- * parent directory, and a workspace unit owns every chart below it.
+ * Owner: `resolveManifestDirectoryOwner` (`owner-adapters/`, shared with the
+ * Pulumi detector), wired as a plain per-entry `ownerAdapter`. The directory
+ * of every counted `Chart.yaml` is computed once per call and passed in, so a
+ * chart's companions resolve to the same owner as its manifest, which the gate
+ * depends on. Subcharts fold into their enclosing chart, sibling top-level
+ * charts collapse into their shared parent directory, and a workspace unit
+ * owns every chart below it.
  *
  * Limitations:
  * - Path-only: chart contents (`type: library`, dependencies, the Kubernetes
@@ -157,6 +158,9 @@ export function addHelmInfrastructureAsCodeAreas({
       },
     },
     ownerAdapter: ({ path }) =>
-      resolveHelmChartOwner({ path, chartDirectories }),
+      resolveManifestDirectoryOwner({
+        path,
+        manifestDirectories: chartDirectories,
+      }),
   });
 }
