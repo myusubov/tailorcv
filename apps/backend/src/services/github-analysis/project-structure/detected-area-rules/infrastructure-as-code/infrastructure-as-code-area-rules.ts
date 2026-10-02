@@ -14,10 +14,8 @@ import { addTerraformInfrastructureAsCodeAreas } from './terraform-infrastructur
  * `Infrastructure as code` candidates. `'Infrastructure as code'` was
  * renamed from the `'Infrastructure/config'` placeholder (previously
  * undetected, like `'CI/CD workflows'` and `'Mobile app'` before their own
- * implementations). Terraform/OpenTofu/Terragrunt, Helm, Bicep, Pulumi and
- * Ansible are implemented; the remaining v1 provider (AWS CDK) is still an
- * unimplemented placeholder -- see its module's own docstring -- so it
- * contributes zero candidates until implemented.
+ * implementations). Terraform/OpenTofu/Terragrunt, Helm, Bicep, Pulumi,
+ * Ansible and AWS CDK are implemented, so all six v1 providers now emit.
  *
  * Inputs: `context.candidates` (shared `${name}::${path}::${primaryTech}`
  * map, mutated in place) and `context.index` (repository path/name/extension

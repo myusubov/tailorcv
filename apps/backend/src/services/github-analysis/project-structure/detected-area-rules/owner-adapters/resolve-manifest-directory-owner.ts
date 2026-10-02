@@ -13,8 +13,9 @@ function parentOf(dir: string): string {
 
 /**
  * Maps an evidence path to its area owner root for tools whose unit is a
- * folder marked by one manifest file: Helm's `Chart.yaml` and Pulumi's
- * `Pulumi.yaml`.
+ * folder marked by one manifest file: Helm's `Chart.yaml`, Pulumi's
+ * `Pulumi.yaml` and AWS CDK's `cdk.json` (Ansible passes a derived list; see
+ * the detector).
  *
  * Inputs: one object:
  * - `path`, the repo-relative, forward-slash path of the matched file (for
@@ -43,8 +44,9 @@ function parentOf(dir: string): string {
  *    its own directory.
  *
  * Invariants: companions (Helm's `values.yaml`, `templates/`, `.helmignore`,
- * `Chart.lock`; Pulumi's `Pulumi.<stack>.yaml`) resolve to the same owner as
- * their unit's manifest, or the detector's gate can never pass.
+ * `Chart.lock`; Pulumi's `Pulumi.<stack>.yaml`; CDK's `cdk.context.json` and
+ * `cdk.out/manifest.json`) resolve to the same owner as their unit's manifest,
+ * or the detector's gate can never pass.
  * Limitations: enclosing and sibling checks are case-sensitive, which is
  * consistent because the entry index lowercases every path; only the
  * workspace-container lookup is explicitly case-insensitive. Sibling folding is
@@ -52,7 +54,7 @@ function parentOf(dir: string): string {
  * fold together.
  *
  * Takes its own input object rather than the engine's `OwnerAdapterArgs`
- * because neither detector declares anchor signals; each wires it as
+ * because none of its detectors declares an anchor signal; each wires it as
  * `ownerAdapter: ({ path }) => resolveManifestDirectoryOwner({ path,
  * manifestDirectories })`.
  */
