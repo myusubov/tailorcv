@@ -2258,3 +2258,137 @@ describe('Ansible infrastructure as code detector', () => {
     expect(detectAnsible(paths)).toEqual([]);
   });
 });
+
+describe('AWS CDK infrastructure as code detector', () => {
+  /**
+   * Builds a file tree entry from a repo-relative path. Only the path matters
+   * to the AWS CDK schemas; the other fields are derived to satisfy the type.
+   */
+  const file = (path: string): RepoTreeEntry => {
+    const parts = path.split('/');
+    const name = parts[parts.length - 1];
+    return {
+      path,
+      name,
+      type: 'file',
+      depth: parts.length - 1,
+      parentPath: parts.length > 1 ? parts.slice(0, -1).join('/') : null,
+      extension: name.includes('.') ? (name.split('.').pop() ?? null) : null,
+      sizeBytes: 200,
+    };
+  };
+
+  /**
+   * Runs every detector over the paths and returns only the AWS CDK
+   * candidates, so other detectors cannot affect a case.
+   */
+  const detectAwsCdkCandidates = (paths: string[]): AreaCandidate[] => {
+    const candidates = new Map<string, AreaCandidate>();
+    applyDetectedAreaRules({
+      candidates,
+      index: buildEntryIndex(paths.map(file)),
+    });
+    return [...candidates.entries()]
+      .filter(([key]) => key.endsWith('::AWS CDK'))
+      .map(([, candidate]) => candidate);
+  };
+
+  /**
+   * Returns the owner paths of the AWS CDK candidates, as stored on each
+   * candidate (original casing).
+   */
+  const detectAwsCdk = (paths: string[]): string[] =>
+    detectAwsCdkCandidates(paths).map((candidate) => candidate.path);
+
+  // The resolver's own rules are in
+  // `resolve-manifest-directory-owner.aws-cdk.test.ts`; these cases cover the
+  // detector end to end: the directory of every counted `cdk.json` is the
+  // owner, and a project's support files must land on the same owner.
+  it.each([
+    ['a root cdk.json is the repo root', ['cdk.json'], ['.']],
+    [
+      'config, context cache and synth output share their project folder',
+      ['cdk/cdk.json', 'cdk/cdk.context.json', 'cdk/cdk.out/manifest.json'],
+      ['cdk'],
+    ],
+    [
+      'a root project owns the projects below it',
+      ['cdk.json', 'tools/deploy/cdk.json'],
+      ['.'],
+    ],
+    [
+      'sibling projects collapse into their shared parent',
+      ['authorization-service/cdk.json', 'import-service/cdk.json'],
+      ['.'],
+    ],
+    [
+      'a nested project folds into the one that holds it',
+      ['app/cdk.json', 'app/constructs/auth/cdk.json'],
+      ['app'],
+    ],
+    [
+      'projects under different parents stay separate',
+      ['projects/data-lake/cdk/cdk.json', 'projects/rag/cdk/cdk.json'],
+      ['projects/data-lake/cdk', 'projects/rag/cdk'],
+    ],
+    [
+      'a workspace unit owns its project',
+      ['apps/web/cdk.json', 'apps/web/cdk.context.json'],
+      ['apps/web'],
+    ],
+    [
+      'the original case of the folder is kept',
+      ['Infra/cdk.json'],
+      ['Infra'],
+    ],
+  ])('%s', (_name, paths, expectedOwners) => {
+    expect(detectAwsCdk(paths)).toEqual(expectedOwners);
+  });
+
+  it('scores the three signals together and relates the area to AWS', () => {
+    const [candidate] = detectAwsCdkCandidates([
+      'cdk/cdk.json',
+      'cdk/cdk.context.json',
+      'cdk/cdk.out/manifest.json',
+    ]);
+
+    expect(candidate.score).toBe(6);
+    expect([...candidate.evidence].sort()).toEqual([
+      'cdk/cdk.context.json',
+      'cdk/cdk.json',
+      'cdk/cdk.out/manifest.json',
+    ]);
+    expect([...candidate.inferredTechnologies.related]).toEqual(['AWS']);
+  });
+
+  it.each([
+    [
+      'support signals alone never open the gate',
+      ['cdk.context.json', 'cdk.out/manifest.json'],
+    ],
+    [
+      'the init template file is not a project config',
+      ['cdk.template.json'],
+    ],
+    ['the per-user config is not a project config', ['.cdk.json']],
+    [
+      'cdk.json files that only exist under demo and test folders emit nothing',
+      ['examples/cdk.json', 'tests/app/cdk.json'],
+    ],
+  ])('does not emit: %s', (_name, paths) => {
+    expect(detectAwsCdk(paths)).toEqual([]);
+  });
+
+  it('drops a support file that sits outside its project folder', () => {
+    // `cdk.context.json` at the root owns `.`, which has no `cdk.json`, so the
+    // gate stops it; the project still emits from its own folder with only the
+    // anchor's score.
+    const candidates = detectAwsCdkCandidates([
+      'backend/cdk.json',
+      'cdk.context.json',
+    ]);
+
+    expect(candidates.map((candidate) => candidate.path)).toEqual(['backend']);
+    expect(candidates[0].score).toBe(3);
+  });
+});
