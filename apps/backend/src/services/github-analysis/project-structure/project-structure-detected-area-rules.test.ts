@@ -2151,3 +2151,110 @@ describe('Helm infrastructure as code detector', () => {
     ]);
   });
 });
+
+describe('Ansible infrastructure as code detector', () => {
+  /**
+   * Builds a file tree entry from a repo-relative path. Only the path matters
+   * to the Ansible schemas; the other fields are derived to satisfy the type.
+   */
+  const file = (path: string): RepoTreeEntry => {
+    const parts = path.split('/');
+    const name = parts[parts.length - 1];
+    return {
+      path,
+      name,
+      type: 'file',
+      depth: parts.length - 1,
+      parentPath: parts.length > 1 ? parts.slice(0, -1).join('/') : null,
+      extension: name.includes('.') ? (name.split('.').pop() ?? null) : null,
+      sizeBytes: 200,
+    };
+  };
+
+  /**
+   * Runs every detector over the paths and returns only the Ansible candidate
+   * keys (`area::owner::Ansible`), so other detectors cannot affect a case.
+   */
+  const detectAnsible = (paths: string[]): string[] => {
+    const candidates = new Map<string, AreaCandidate>();
+    applyDetectedAreaRules({
+      candidates,
+      index: buildEntryIndex(paths.map(file)),
+    });
+    return [...candidates.keys()].filter((key) => key.endsWith('::Ansible'));
+  };
+
+  // These cases cover `deriveManifestDirectories` end to end: the derived
+  // project directory is the owner. The resolver's own rules are in
+  // `resolve-manifest-directory-owner.ansible.test.ts`.
+  it.each([
+    [
+      'a standalone role is the repo root',
+      ['tasks/main.yml', 'defaults/main.yml'],
+      'Infrastructure as code::.::Ansible',
+    ],
+    [
+      'a root galaxy.yml marks a collection at the repo root',
+      ['galaxy.yml'],
+      'Infrastructure as code::.::Ansible',
+    ],
+    [
+      'group_vars under a root inventory folder belong to the repo root',
+      ['inventory/group_vars/all.yml', 'site.yml'],
+      'Infrastructure as code::.::Ansible',
+    ],
+    [
+      'config, inventory environment and roles share the ansible folder',
+      [
+        'ansible/ansible.cfg',
+        'ansible/inventory/prod/group_vars/all.yml',
+        'ansible/roles/web/tasks/main.yml',
+      ],
+      'Infrastructure as code::ansible::Ansible',
+    ],
+    [
+      'vendored roles fold into the project that holds them',
+      [
+        'infra/ansible/ansible.cfg',
+        'infra/ansible/roles/common/tasks/main.yml',
+        'infra/ansible/roles/geerlingguy.docker/tasks/main.yml',
+      ],
+      'Infrastructure as code::infra/ansible::Ansible',
+    ],
+    [
+      'the original case of the folder is kept',
+      ['Ansible/Roles/web/Tasks/main.yml'],
+      'Infrastructure as code::Ansible::Ansible',
+    ],
+    [
+      'a folder that merely contains "roles" is not a roles folder',
+      ['my-roles/web/tasks/main.yml'],
+      'Infrastructure as code::my-roles/web::Ansible',
+    ],
+  ])('%s', (_name, paths, expectedKey) => {
+    expect(detectAnsible(paths)).toEqual([expectedKey]);
+  });
+
+  it.each([
+    [
+      'support signals alone never open the gate',
+      ['.ansible-lint', 'molecule/default/molecule.yml', 'playbooks/site.yml'],
+    ],
+    [
+      'a system-wide ansible.cfg under etc is not a project',
+      ['etc/ansible/ansible.cfg'],
+    ],
+    [
+      'the galaxy install metadata in a .info folder is not a collection root',
+      [
+        'collections/ansible_collections/community.crypto-3.2.1.info/GALAXY.yml',
+      ],
+    ],
+    [
+      'Ansible files that only exist under demo and test folders emit nothing',
+      ['examples/ansible.cfg', 'tests/roles/web/tasks/main.yml'],
+    ],
+  ])('does not emit: %s', (_name, paths) => {
+    expect(detectAnsible(paths)).toEqual([]);
+  });
+});
