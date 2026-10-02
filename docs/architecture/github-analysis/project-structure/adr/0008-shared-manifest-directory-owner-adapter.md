@@ -5,6 +5,7 @@
 - **Domain:** `docs/architecture/github-analysis/project-structure/`
 - **Amends:** [ADR 0007](0007-helm-chart-owner-resolution.md) decision 1 (the adapter's name, location and sole user); decisions 2 to 4 stand.
 - **Related changelog entry:** [Pulumi Detector and Shared Manifest-Directory Owner Adapter](../changelog.md#pulumi-detector-and-shared-manifest-directory-owner-adapter)
+- **Amendment (2026-10-02):** The Ansible detector is a third user of the adapter. It has no single manifest file, so it passes a list derived from four anchors (see [Ansible Detector](../changelog.md#ansible-detector)); the adapter and decisions 1 to 4 are unchanged.
 
 ---
 
@@ -43,7 +44,7 @@ Future contributors should not give Pulumi `resolveUnitRootOwner`, which turns e
 
 ## Consequences
 
-- A change to the adapter affects Helm and Pulumi at once, so both spec files must pass after it.
+- A change to the adapter affects Helm, Pulumi and Ansible at once, so all three spec files (`resolve-manifest-directory-owner.<tool>.test.ts`) must pass after it.
 - Sibling folding applies to Pulumi: independent stacks in one folder (`deploy-lambda` and `infrastructure` at the repo root) become one area at `.`, recorded as an `it.todo`. A workspace container as the first segment hides the real project folder, recorded as an `it.fails.each` case.
 - Enclosing and sibling checks are case-sensitive; only the workspace-container lookup ignores case.
 - `Pulumi.yml` is not matched, which costs about 0.5% of projects, because lowercased paths cannot tell it from scanner rules and CI workflows.
