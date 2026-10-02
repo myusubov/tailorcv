@@ -6,6 +6,7 @@
 - **Amends:** [ADR 0007](0007-helm-chart-owner-resolution.md) decision 1 (the adapter's name, location and sole user); decisions 2 to 4 stand.
 - **Related changelog entry:** [Pulumi Detector and Shared Manifest-Directory Owner Adapter](../changelog.md#pulumi-detector-and-shared-manifest-directory-owner-adapter)
 - **Amendment (2026-10-02):** The Ansible detector is a third user of the adapter. It has no single manifest file, so it passes a list derived from four anchors (see [Ansible Detector](../changelog.md#ansible-detector)); the adapter and decisions 1 to 4 are unchanged.
+- **Amendment (2026-10-02, AWS CDK):** The AWS CDK detector is a fourth user of the adapter. `cdk.json` is a per-folder manifest like `Pulumi.yaml`: the CDK CLI reads it from the working directory only, and `cdk.context.json` and `cdk.out/` sit beside it. It passes the directory of every counted `cdk.json` unchanged and gates on `cdk.json` alone. On 579 single-project repositories the adapter found the project folder in 575, against 354 for the default resolver, 418 for the Terraform and Bicep folder lists and 579 for the unit-root resolver, which produced 5,550 areas against 2,892. The four misses are the workspace-container limitation already recorded for Pulumi. The adapter and decisions 1 to 4 are unchanged; see [AWS CDK Detector](../changelog.md#aws-cdk-detector).
 
 ---
 
