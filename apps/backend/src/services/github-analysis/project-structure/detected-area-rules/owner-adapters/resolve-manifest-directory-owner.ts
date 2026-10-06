@@ -1,15 +1,8 @@
 import {
   MONOREPO_OWNER_ROOT_DIRECTORIES,
   ownerPathForApplicationArea,
+  parentOf,
 } from '../../project-structure-path-utils';
-
-/**
- * Returns the parent directory of `dir`: everything before its last `/`, or an
- * empty string for a single-segment directory such as `elasticsearch`.
- */
-function parentOf(dir: string): string {
-  return dir.split('/').slice(0, -1).join('/');
-}
 
 /**
  * Maps an evidence path to its area owner root for tools whose unit is a

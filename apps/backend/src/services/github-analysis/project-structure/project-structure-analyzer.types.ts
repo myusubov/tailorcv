@@ -214,6 +214,13 @@ export type InfrastructureAsCodeDetectedAreaTechnology =
   | 'Terraform';
 
 /**
+ * Documentation-framework labels inferred for detected documentation areas.
+ * Currently only `Sphinx` (primary, `Python` related) is emitted; the other
+ * frameworks are added as their detectors land.
+ */
+export type DocumentationDetectedAreaTechnology = 'Sphinx';
+
+/**
  * Technology labels inferred for a detected repository area from path evidence.
  */
 export type DetectedAreaTechnology =
@@ -226,7 +233,8 @@ export type DetectedAreaTechnology =
   | TestDetectedAreaTechnology
   | CiCdDetectedAreaTechnology
   | MobileDetectedAreaTechnology
-  | InfrastructureAsCodeDetectedAreaTechnology;
+  | InfrastructureAsCodeDetectedAreaTechnology
+  | DocumentationDetectedAreaTechnology;
 
 /**
  * Primary and related technologies exposed for a detected repository area.
