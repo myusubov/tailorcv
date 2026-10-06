@@ -7,6 +7,15 @@ export function normalizePath({ path }: { path: string }): string {
 }
 
 /**
+ * Returns the parent directory of `dir`: everything before its last `/`, or an
+ * empty string for a single-segment directory such as `elasticsearch`.
+ * Shared by the owner adapters that compare or fold directories.
+ */
+export function parentOf(dir: string): string {
+  return dir.split('/').slice(0, -1).join('/');
+}
+
+/**
  * Monorepo workspace-root directory names whose immediate child is treated as a
  * distinct owning unit, resolving `<root>/<name>/...` evidence to `<root>/<name>`.
  *

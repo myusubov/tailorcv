@@ -2,6 +2,7 @@ import { addBackendAreas } from './detected-area-rules/backend/backend-area-rule
 import { addCiCdAreas } from './detected-area-rules/ci-cd/ci-cd-area-rules';
 import { addContainerizationAreas } from './detected-area-rules/containerization/containerization-area-rules';
 import { addDatabaseAreas } from './detected-area-rules/database/database-area-rules';
+import { addDocumentationAreas } from './detected-area-rules/documentation/documentation-area-rules';
 import { addFrontendAreas } from './detected-area-rules/frontend/frontend-area-rules';
 import { addInfrastructureAsCodeAreas } from './detected-area-rules/infrastructure-as-code/infrastructure-as-code-area-rules';
 import { addMobileAreas } from './detected-area-rules/mobile/mobile-area-rules';
@@ -22,4 +23,5 @@ export function applyDetectedAreaRules({
   addCiCdAreas({ candidates, index });
   addMobileAreas({ candidates, index });
   addInfrastructureAsCodeAreas({ candidates, index });
+  addDocumentationAreas({ candidates, index });
 }
