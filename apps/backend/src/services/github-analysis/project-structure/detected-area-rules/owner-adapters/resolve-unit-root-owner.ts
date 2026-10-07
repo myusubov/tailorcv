@@ -31,18 +31,16 @@ import { ownerPathForApplicationArea } from '../../project-structure-path-utils'
  *   immediately enclosing it -- instead of taking the plain dirname, since
  *   the file sits one or two directories inside its actual project root.
  * - Non-anchor signal: the owner is the longest entry in `anchorOwners` that
- *   encloses `path` (its nearest unit root).
- * - When no anchor owner encloses the path, a path containing an
- *   `android`/`ios` path segment, or ending in a
- *   `metro.config.(js|cjs|mjs|ts)` file, resolves to everything before that
- *   segment/file -- both are React Native conventions whose containing
- *   directory is the actual project root regardless of what that directory
- *   is named, which a directory-name allowlist like
- *   `ownerPathForApplicationArea`'s cannot express (e.g. a bare
- *   `FabricExample/` example app nested under none of its recognized
- *   workspace roots).
- * - Anything else falls back to `ownerPathForApplicationArea`, forwarding
- *   `extraRootDirectories` when given.
+ *   encloses `path` (its nearest unit root). The repository root (`.`) never
+ *   takes part in that comparison.
+ * - When no deeper anchor owner encloses the path but `.` is an anchor owner,
+ *   the root claims it, ahead of the workspace-folder and `src` guesses of
+ *   `ownerPathForApplicationArea`. A path under `apps/<name>` or a `src` folder
+ *   with no anchor of its own therefore belongs to the root anchor.
+ * - With no enclosing owner and no root anchor, it falls back to
+ *   `ownerPathForApplicationArea`, forwarding `extraRootDirectories` when
+ *   given. The React Native / Flutter `android`/`ios` and `metro.config.*`
+ *   path shapes live in `resolveNativePlatformUnitRootOwner`, not here.
  *
  * Invariant: every anchor signal must be resolved before any non-anchor
  * signal so `anchorOwners` is complete when the non-anchor branch reads it.
@@ -83,56 +81,18 @@ export function resolveUnitRootOwner({
     return parts.slice(0, -1).join('/');
   }
 
-  if (anchorOwners.size > 0) {
-    const filteredOwners = Array.from(anchorOwners).filter(
-      (owner) => path === owner || path.startsWith(owner + '/'),
+  const filteredOwners = Array.from(anchorOwners).filter(
+    (owner) => path === owner || path.startsWith(owner + '/'),
+  );
+  if (filteredOwners.length > 0) {
+    const longestOwner = filteredOwners.reduce((longest, current) =>
+      current.length > longest.length ? current : longest,
     );
-    if (filteredOwners.length > 0) {
-      const longestOwner = filteredOwners.reduce((longest, current) =>
-        current.length > longest.length ? current : longest,
-      );
-      return longestOwner;
-    }
+    return longestOwner;
+  }
+  if (anchorOwners.has('.')) {
+    return '.';
   }
 
-  if (/(^|\/)(android|ios)(\/|$)/.test(path)) {
-    const bottomIndex =
-      parts.lastIndexOf('android') !== -1
-        ? parts.lastIndexOf('android')
-        : parts.lastIndexOf('ios');
-
-    let owner = '';
-
-    if (bottomIndex === 0) {
-      owner = '.';
-    } else {
-      owner = parts.slice(0, bottomIndex).join('/');
-    }
-
-    if (owner.length === 0) {
-      owner = '.';
-    }
-    return owner;
-  }
-
-  if (/(^|\/)metro\.config\.(js|cjs|mjs|ts)$/.test(path)) {
-    const bottomIndex = parts.findLastIndex((val) =>
-      /^metro\.config\.(js|cjs|mjs|ts)$/.test(val),
-    );
-
-    let owner = '';
-
-    if (bottomIndex === 0) {
-      owner = '.';
-    } else {
-      owner = parts.slice(0, bottomIndex).join('/');
-    }
-
-    if (owner.length === 0) {
-      owner = '.';
-    }
-    return owner;
-  }
-  
   return ownerPathForApplicationArea({ path, extraRootDirectories });
 }

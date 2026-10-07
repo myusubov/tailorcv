@@ -23,7 +23,7 @@ const TEST_WORD_FOLDER = String.raw`(?:[^/]*[_-])?tests?(?:[_-][^/]*)?`;
  *   `node_modules`, `site-packages` (1 file observed, u-boot
  *   `lib/mbedtls/external/mbedtls/docs`; the rest follows the
  *   infrastructure-as-code precedent).
- * Used by the documentation-framework detectors (currently Sphinx and MkDocs).
+ * Used by the documentation-framework detectors (currently Sphinx, MkDocs and Docusaurus).
  */
 const NON_DOCUMENTATION_FOLDERS = `(?:${TEST_WORD_FOLDER}|demos?|examples?|testdata|fixtures|spec|vendor|third_party|3rdparty|external|extern|node_modules|site-packages)`;
 
@@ -90,6 +90,31 @@ const MKDOCS_EXTRA_NON_DOCUMENTATION_FOLDERS = [
 ].join('|');
 
 /**
+ * Builds a full-path regex that rejects the shared folders plus one detector's
+ * own extra folder names, then matches `pattern`. Shared by the MkDocs and
+ * Docusaurus builders so both stack their lookaheads in the same order.
+ *
+ * Inputs: `extraFolders`, a regex alternation of directory names to reject on
+ * top of `NON_DOCUMENTATION_FOLDERS`, and `pattern`, a regex source fragment
+ * describing the whole path (without anchors). `pattern` may start with its own
+ * lookaheads, which run last.
+ * Output: a regex anchored at both ends. A name only counts as a whole
+ * directory segment followed by `/`.
+ * Side effects: none.
+ */
+function excludingWithExtraFolders({
+  extraFolders,
+  pattern,
+}: {
+  extraFolders: string;
+  pattern: string;
+}): RegExp {
+  return excludingNonDocumentationFolders(
+    String.raw`(?!(?:.*/)?(?:${extraFolders})/)${pattern}`,
+  );
+}
+
+/**
  * Builds a full-path regex for the MkDocs detector: everything
  * `excludingNonDocumentationFolders` rejects, plus the MkDocs-only folder
  * names above and any path that contains a `{{` template placeholder.
@@ -111,7 +136,68 @@ const MKDOCS_EXTRA_NON_DOCUMENTATION_FOLDERS = [
 export function excludingMkDocsNonDocumentationFolders(
   pattern: string,
 ): RegExp {
-  return excludingNonDocumentationFolders(
-    String.raw`(?!(?:.*/)?(?:${MKDOCS_EXTRA_NON_DOCUMENTATION_FOLDERS})/)(?!.*\{\{)${pattern}`,
-  );
+  return excludingWithExtraFolders({
+    extraFolders: MKDOCS_EXTRA_NON_DOCUMENTATION_FOLDERS,
+    pattern: String.raw`(?!.*\{\{)${pattern}`,
+  });
+}
+
+/**
+ * Regex alternation of extra directory names that only the Docusaurus detector
+ * rejects, on top of `NON_DOCUMENTATION_FOLDERS`. From the survey of 2,413
+ * repositories (2,689 bare-anchor repo and folder pairs, 468 of them not real
+ * sites):
+ * - `__fixtures__`, `__mocks__`: test sites such as the 19 fixture sites inside
+ *   facebook/docusaurus (`__tests__` is already covered by the shared test
+ *   word, but the shared `fixtures` only matches the bare name);
+ * - `templates?`, `create-docusaurus`: the init templates
+ *   (`packages/create-docusaurus/templates/classic`);
+ * - `samples?`, `playground`, `sandbox`, `starters?`, `e2e`: demo-like sites
+ *   inside plugin and theme repositories (`demos?` is already shared);
+ * - `.docusaurus` and any folder that starts with it: the generated cache,
+ *   which holds a copy of the config (`.docusaurus/docusaurus.config.mjs`) and
+ *   would otherwise emit a bogus `.docusaurus` owner (159 repositories).
+ * `wiki` is deliberately not listed: the one hit (`apps/wiki`) is a real site.
+ * Kept out of `NON_DOCUMENTATION_FOLDERS` so widening the Docusaurus list never
+ * changes the Sphinx detector, and out of the MkDocs list so the two surveys
+ * stay independent; none of these names was checked against those surveys.
+ */
+const DOCUSAURUS_EXTRA_NON_DOCUMENTATION_FOLDERS = [
+  '__fixtures__',
+  '__mocks__',
+  String.raw`templates?`,
+  'create-docusaurus',
+  String.raw`samples?`,
+  'playground',
+  'sandbox',
+  String.raw`starters?`,
+  'e2e',
+  String.raw`\.docusaurus[^/]*`,
+].join('|');
+
+/**
+ * Builds a full-path regex for the Docusaurus detector: everything
+ * `excludingNonDocumentationFolders` rejects, plus the Docusaurus-only folder
+ * names above.
+ *
+ * Inputs: `pattern`, a regex source fragment describing the whole path
+ * (without anchors), for example `.*docusaurus\.config\.[cm]?[jt]s`.
+ * Output: a regex anchored at both ends. The shared folder lookahead runs
+ * first, then the Docusaurus folder lookahead, then `pattern`.
+ * Side effects: none.
+ * Invariants: a name only counts as a whole directory segment followed by `/`,
+ * so `website/docusaurus.config.ts` and `my-templates-site/docusaurus.config.ts`
+ * are kept, while `templates/classic/docusaurus.config.js`,
+ * `src/__fixtures__/site/docusaurus.config.js` and
+ * `.docusaurus/docusaurus.config.mjs` are rejected. The `.docusaurus` prefix
+ * rule also rejects `.docusaurus-cache/`. Input paths are lowercased by
+ * `normalizePath`, so no case flag is needed.
+ */
+export function excludingDocusaurusNonDocumentationFolders(
+  pattern: string,
+): RegExp {
+  return excludingWithExtraFolders({
+    extraFolders: DOCUSAURUS_EXTRA_NON_DOCUMENTATION_FOLDERS,
+    pattern,
+  });
 }

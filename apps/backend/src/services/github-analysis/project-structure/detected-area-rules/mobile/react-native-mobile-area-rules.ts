@@ -1,6 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
-import { resolveUnitRootOwner } from '../owner-adapters';
+import { resolveNativePlatformUnitRootOwner } from '../owner-adapters';
 
 /**
  * Path-only React Native (bare CLI, no meta-framework) signal contract for
@@ -84,7 +84,9 @@ type ReactNativeMobileSignal = keyof typeof REACT_NATIVE_MOBILE_SIGNAL_SCORES;
  * `React Native` candidate beside Expo's, since candidates are keyed per
  * primary technology; `reconcileCandidates` then drops the React Native one.
  *
- * Owner: `resolveUnitRootOwner`, anchored on `react-native-cli-config`, with
+ * Owner: `resolveNativePlatformUnitRootOwner` (resolves an un-enclosed
+ * `android/`, `ios/` or `metro.config.*` path to the folder above it),
+ * anchored on `react-native-cli-config`, with
  * `extraRootDirectories: ['example']` so a library repo's demo app (e.g.
  * react-native-webview's `example/`, the same `create-expo-module`-style
  * convention Expo needed) resolves to `example` rather than the repository
@@ -214,6 +216,9 @@ export function addReactNativeMobileAreas({
       'expo-modules-coexistence': 'Expo',
     },
     ownerAdapter: (args) =>
-      resolveUnitRootOwner({ ...args, extraRootDirectories: ['example'] }),
+      resolveNativePlatformUnitRootOwner({
+        ...args,
+        extraRootDirectories: ['example'],
+      }),
   });
 }

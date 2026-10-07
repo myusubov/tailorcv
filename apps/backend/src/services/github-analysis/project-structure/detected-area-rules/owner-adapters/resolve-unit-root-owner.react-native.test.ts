@@ -1,10 +1,11 @@
-import { resolveUnitRootOwner } from './resolve-unit-root-owner';
+import { resolveNativePlatformUnitRootOwner } from './resolve-native-platform-unit-root-owner';
 import { describe, it, expect } from 'vitest';
 
 /**
  * Owner-resolution spec for bare React Native (no meta-framework) signals,
- * asserted against the shared `resolveUnitRootOwner` -- the same resolver
- * Expo, Next.js, and Jenkins already use.
+ * asserted against `resolveNativePlatformUnitRootOwner` -- the copy of the
+ * shared `resolveUnitRootOwner` that adds the `android`/`ios` and
+ * `metro.config.*` path shapes, which Expo and Flutter also use.
  *
  * Every path below is lifted from a real, currently public repository,
  * checked against its actual file listing rather than assumed from the path
@@ -72,7 +73,7 @@ import { describe, it, expect } from 'vitest';
 describe('resolveUnitRootOwner - React Native signals', () => {
   describe('react-native-cli-config: dirname resolves every real shape (anchor signal)', () => {
     it('resolves a root-level react-native.config.js to "."', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'react-native.config.js',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -82,7 +83,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves a single-segment monorepo react-native.config.js to its app directory', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/ledger-live-mobile/react-native.config.js',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -98,7 +99,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     ])(
       'resolves a custom-named app root %s to %s, with no fixed directory-name vocabulary',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -109,7 +110,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     );
 
     it('resolves a deep-nested app root to its full path, regardless of segment count', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/expense/mobile/react-native.config.js',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -119,7 +120,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves a library vendored three segments deep inside another app to its own nested directory', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/expo-go/modules/react-native-webview/react-native.config.js',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -129,12 +130,12 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves two sibling apps under the same monorepo parent to two independent owners', () => {
-      const adminOwner = resolveUnitRootOwner({
+      const adminOwner = resolveNativePlatformUnitRootOwner({
         path: 'apps/mobile-admin/react-native.config.js',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
       });
-      const customerOwner = resolveUnitRootOwner({
+      const customerOwner = resolveNativePlatformUnitRootOwner({
         path: 'apps/mobile-customer/react-native.config.js',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -154,7 +155,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     ])(
       'resolves an example/demo app anchor %s to %s, whatever it is named or how deeply it is nested',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -170,7 +171,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     ])(
       'resolves a library package that anchors its own build scaffold (not an app) %s to %s',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -186,14 +187,14 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['apps/ledger-live-mobile']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/ledger-live-mobile/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('apps/ledger-live-mobile');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/ledger-live-mobile/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
@@ -205,21 +206,21 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['apps/example']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/example/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('apps/example');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/example/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('apps/example');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/example/metro.config.js',
           isAnchorSignal: false,
           anchorOwners,
@@ -231,14 +232,14 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['apps/icon-explorer']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/icon-explorer/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('apps/icon-explorer');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/icon-explorer/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
@@ -255,21 +256,21 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       ]);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/fabric-example/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('apps/fabric-example');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/fabric-example/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('apps/fabric-example');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'apps/fabric-example/metro.config.js',
           isAnchorSignal: false,
           anchorOwners,
@@ -282,7 +283,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       // the same repository. Matches the android/ios fallback branch before
       // reaching the generic resolver, though both would agree here since
       // "packages" is also a recognized monorepo root.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/skia/android/build.gradle',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['apps/example']),
@@ -295,14 +296,14 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['apps/icon-explorer']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'packages/fontawesome/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('packages/fontawesome');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'packages/ionicons/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
@@ -316,7 +317,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       // Matches the android/ios fallback branch before reaching the generic
       // resolver, though both would agree here since "apps" is also a
       // recognized monorepo root.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/tvos-example/android/build.gradle',
         isAnchorSignal: false,
         anchorOwners: new Set<string>([
@@ -334,7 +335,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       // Matches the metro.config.* fallback branch before reaching the
       // generic resolver, though both would agree here since "apps" is also
       // a recognized monorepo root.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/web-example/metro.config.js',
         isAnchorSignal: false,
         anchorOwners: new Set<string>([
@@ -357,21 +358,21 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['.']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'FabricExample/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('FabricExample');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'FabricExample/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('FabricExample');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'FabricExample/metro.config.js',
           isAnchorSignal: false,
           anchorOwners,
@@ -383,21 +384,21 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['.']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'TVOSExample/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('TVOSExample');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'TVOSExample/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('TVOSExample');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'TVOSExample/metro.config.js',
           isAnchorSignal: false,
           anchorOwners,
@@ -412,21 +413,21 @@ describe('resolveUnitRootOwner - React Native signals', () => {
       const anchorOwners = new Set<string>(['.', 'example']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'FabricExample/android/build.gradle',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('FabricExample');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'FabricExample/ios/Podfile',
           isAnchorSignal: false,
           anchorOwners,
         }),
       ).toBe('FabricExample');
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'FabricExample/metro.config.js',
           isAnchorSignal: false,
           anchorOwners,
@@ -437,7 +438,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
 
   describe('react-native-application-bootstrap: Android\'s fixed internal plumbing never shifts the owner away from the app root', () => {
     it('resolves a root-level MainApplication to "."', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'android/app/src/main/java/com/helloworld/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -447,7 +448,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves a real root-level MainApplication (rainbow-me/rainbow) to "."', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'android/app/src/main/java/me/rainbow/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -457,7 +458,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves a single-segment monorepo MainApplication to its app directory, not to "apps/ledger-live-mobile/android"', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/ledger-live-mobile/android/app/src/main/java/com/ledger/live/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['apps/ledger-live-mobile']),
@@ -467,7 +468,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves an anchored example app\'s MainApplication to its own directory, not a truncated Gradle-path prefix', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/fabric-example/android/app/src/main/java/com/fabricexample/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>([
@@ -482,7 +483,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves a config-less example app\'s MainApplication to its own directory, not to any sibling\'s anchor', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'apps/tvos-example/android/app/src/main/java/com/tvosexample/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>([
@@ -497,7 +498,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves FabricExample\'s MainApplication to "FabricExample", not to the library root or a truncated Gradle-path prefix', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'FabricExample/android/app/src/main/java/com/fabricexample/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -507,7 +508,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves TVOSExample\'s MainApplication to "TVOSExample", not to the library root', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'TVOSExample/android/app/src/main/java/com/tvosexample/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -517,7 +518,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves react-native-picker/picker\'s FabricExample MainApplication to "FabricExample"', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'FabricExample/android/app/src/main/java/com/fabricexample/MainApplication.kt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.', 'example']),
@@ -529,7 +530,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
 
   describe('expo-modules-coexistence: same directory-ownership rule as every other file-based signal', () => {
     it('resolves a real root-level app.config.ts (rainbow-me/rainbow, a genuine bare RN app) to "."', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'app.config.ts',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -539,7 +540,7 @@ describe('resolveUnitRootOwner - React Native signals', () => {
     });
 
     it('resolves a real library-root app.config.js (react-native-picker/picker) to "."', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'app.config.js',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.', 'example']),

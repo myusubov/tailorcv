@@ -215,10 +215,14 @@ export type InfrastructureAsCodeDetectedAreaTechnology =
 
 /**
  * Documentation-framework labels inferred for detected documentation areas.
- * Currently `Sphinx` and `MkDocs` (each primary, `Python` related) are emitted;
- * the other frameworks are added as their detectors land.
+ * Currently `Sphinx` and `MkDocs` (each primary, `Python` related) and
+ * `Docusaurus` (primary, `React` related) are emitted; the other frameworks
+ * are added as their detectors land.
  */
-export type DocumentationDetectedAreaTechnology = 'Sphinx' | 'MkDocs';
+export type DocumentationDetectedAreaTechnology =
+  | 'Sphinx'
+  | 'MkDocs'
+  | 'Docusaurus';
 
 /**
  * Technology labels inferred for a detected repository area from path evidence.
