@@ -6,6 +6,21 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-10-07
+
+### MkDocs Detector
+
+- **Problem:** The MkDocs module in `detected-area-rules/documentation/` was an empty scaffold, so a repository documented with MkDocs emitted no `Documentation` area. `mkdocs.yml` is an exclusive filename, but in the research sample (1,227 repositories) 13.7% had it only in workflows, project templates, demos, test fixtures or vendored trees, and the shared documentation blocklist does not cover template, sample, `.github` or `{{` placeholder paths.
+- **Solution:**
+  1. Implemented `addMkDocsDocumentationAreas` on `applyDeclarativeAreaDetector` with five signals: `mkdocs.yml|yaml` scores 3 (the anchor, and the whole gate), `overrides/*.html` 2, and `docs/stylesheets|javascripts/`, `docs/index.md` and `.pages` 1 each. The gate is `has` the config alone, because requiring a companion would drop 15.7% of real repositories. The candidate has primary technology `MkDocs` and related technology `Python`; `'MkDocs'` was added to `DocumentationDetectedAreaTechnology`.
+  2. Added `excludingMkDocsNonDocumentationFolders` to `documentation/non-documentation-folders.ts`: the shared list first, then MkDocs-only folder names and any `{{` placeholder. Every MkDocs schema uses it, so a fixture's support file cannot feed the real project's score or evidence. The shared list and the Sphinx detector are unchanged.
+  3. Reused `resolveManifestDirectoryOwner` unchanged as the `ownerAdapter`, with `manifestDirectories` computed once from the shared config regex (the Helm pattern).
+  4. Added `resolve-manifest-directory-owner.mkdocs.test.ts` (owner spec from real layouts: mkdocs-material, traefik, fmt, fastapi, google-apis-rs, backstage).
+  5. Updated the dispatcher docblock to name MkDocs as implemented.
+  6. Deleted `project-structure-detected-area-rules.test.ts` (2,394 lines: the same-owner claim, nested-host and Terraform, Helm, Ansible and AWS CDK detector cases) at the author's decision, because the file had grown large; a MkDocs detector block that had been added to it was removed with it. Nothing replaces that coverage, so the detector-level behavior of the other detectors and of MkDocs has no analyzer-level test.
+- **Affected files:** `detected-area-rules/documentation/mkdocs-documentation-area-rules.ts`, `detected-area-rules/documentation/non-documentation-folders.ts`, `detected-area-rules/documentation/documentation-area-rules.ts` (docblock), `detected-area-rules/owner-adapters/resolve-manifest-directory-owner.mkdocs.test.ts` (new), `project-structure-detected-area-rules.test.ts` (deleted), `project-structure-analyzer.types.ts`, this README and changelog.
+- **Outcome:** A repository with a non-excluded `mkdocs.yml` or `mkdocs.yaml` now emits a `Documentation` area with primary technology `MkDocs`, owned by the config folder (`.` for a root config, the shared parent for sibling configs, the workspace unit under `apps/` or `packages/`). In the research sample 1,059 of 1,227 repositories keep an anchor after the exclusions; that sample is search-biased, was tuned and checked on the same repositories with no held-out set, and the figures come from the research, not from running the TypeScript. The new owner spec uses hand-computed expectations and was not run, and typecheck and lint were not run. Known limitations are in the README's Risks & Mitigations: about 73% of detections resolve to the root, a config far from its pages resolves to the config folder, Zensical and other forks are labelled `MkDocs`, and there is no analyzer-level test for MkDocs or the exclusion regexes. Docusaurus has research but is not implemented.
+
 ## 2026-10-06
 
 ### Documentation Detected Area: Dispatcher, Sphinx Detector, and Sphinx Owner Adapter
