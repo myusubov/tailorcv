@@ -1,6 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
-import { resolveUnitRootOwner } from '../owner-adapters';
+import { resolveNativePlatformUnitRootOwner } from '../owner-adapters';
 
 /**
  * Path-only Flutter signal contract for owner-scoped scoring, grounded in a
@@ -87,7 +87,8 @@ type FlutterMobileSignal = keyof typeof FLUTTER_MOBILE_SIGNAL_SCORES;
  * technology `Flutter` (related: `Dart`) for every owner whose counted
  * signals clear the gate.
  *
- * Owner: `resolveUnitRootOwner`, unmodified, with
+ * Owner: `resolveNativePlatformUnitRootOwner` (which carries the
+ * `android`/`ios` path-shape fallback below), with
  * `extraRootDirectories: ['example']` for the same library-demo-app
  * convention Expo and React Native already needed (confirmed in AppFlowy's
  * internal packages, e.g. `packages/appflowy_ui/example/pubspec.yaml`).
@@ -96,8 +97,8 @@ type FlutterMobileSignal = keyof typeof FLUTTER_MOBILE_SIGNAL_SCORES;
  * applies unchanged -- no new anchor shape was needed. The non-anchor
  * `flutter-ios-platform-dir` and `flutter-android-splash` signals both
  * contain an `android`/`ios` path segment, so they already resolve correctly
- * through the adapter's existing React-Native-authored fallback (everything
- * before that segment) even when no anchor is present nearby. The remaining
+ * through the adapter's React-Native-authored `android`/`ios` fallback
+ * (everything before that segment) even when no anchor is present nearby. The remaining
  * non-anchor signals (`flutter-macos-platform-dir`, `flutter-desktop-cmake`,
  * `flutter-entrypoint`, `flutter-integration-test-dir`) have no equivalent
  * fallback and depend on an anchor already having claimed the enclosing
@@ -244,6 +245,9 @@ export function addFlutterMobileAreas({
       },
     },
     ownerAdapter: (args) =>
-      resolveUnitRootOwner({ ...args, extraRootDirectories: ['example'] }),
+      resolveNativePlatformUnitRootOwner({
+        ...args,
+        extraRootDirectories: ['example'],
+      }),
   });
 }

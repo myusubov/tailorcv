@@ -4,6 +4,7 @@
  * area-rule engine import adapters from here by name.
  */
 export { resolveUnitRootOwner } from './resolve-unit-root-owner';
+export { resolveNativePlatformUnitRootOwner } from './resolve-native-platform-unit-root-owner';
 export { resolveContainerRootOwner } from './resolve-container-root-owner';
 export { resolveNearestMarkerOwner } from './resolve-nearest-marker-owner';
 export { resolveTerraformRootOwner } from './resolve-terraform-root-owner';

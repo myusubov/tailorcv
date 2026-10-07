@@ -1,10 +1,11 @@
-import { resolveUnitRootOwner } from './resolve-unit-root-owner';
+import { resolveNativePlatformUnitRootOwner } from './resolve-native-platform-unit-root-owner';
 import { describe, it, expect } from 'vitest';
 
 /**
- * Owner-resolution spec for Flutter signals, asserted against the shared
- * `resolveUnitRootOwner` -- the same resolver Expo, React Native, Next.js,
- * and Jenkins already use.
+ * Owner-resolution spec for Flutter signals, asserted against
+ * `resolveNativePlatformUnitRootOwner` -- the copy of the shared
+ * `resolveUnitRootOwner` that adds the `android`/`ios` and `metro.config.*`
+ * path shapes, which Expo and React Native also use.
  *
  * Every path below is lifted from a real, currently public repository,
  * checked against its actual file listing rather than assumed from the path
@@ -91,7 +92,7 @@ import { describe, it, expect } from 'vitest';
 describe('resolveUnitRootOwner - Flutter signals', () => {
   describe('flutter-metadata / flutter-pubspec-manifest: dirname resolves every real shape (anchor signals)', () => {
     it('resolves a root-level .metadata to "." -- the only anchor stack_wallet commits, since its pubspec.yaml is gitignored', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: '.metadata',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -101,7 +102,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves a root-level pubspec.yaml to "."', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'pubspec.yaml',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -111,7 +112,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves a single-segment monorepo app (immich) to its app directory', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'mobile/.metadata',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -121,7 +122,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves a co-located internal library (immich) to its own directory, independent of the app above it', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'mobile/packages/ui/pubspec.yaml',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -137,7 +138,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     ])(
       'resolves three sibling apps under the same monorepo parent (ente) %s to %s, each independent',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -169,7 +170,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     ])(
       'resolves a federated plugin family with six independent siblings (flutter/packages camera) %s to %s',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -180,7 +181,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     );
 
     it('resolves .metadata surviving on one federated sibling (camera_android_camerax) independent of its absence on neighboring siblings', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/camera/camera_android_camerax/.metadata',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -190,7 +191,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves a plain-Dart platform-interface sibling to its own directory, same as its Flutter-shaped neighbors', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/camera/camera_platform_interface/pubspec.yaml',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -212,7 +213,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     ])(
       'resolves each federated sibling\'s own example/ demo app %s to %s, not to the plugin root',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -234,7 +235,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     ])(
       'resolves two independently-versioned example apps nested under one plugin %s to %s',
       (path, expectedOwner) => {
-        const owner = resolveUnitRootOwner({
+        const owner = resolveNativePlatformUnitRootOwner({
           path,
           isAnchorSignal: true,
           anchorOwners: new Set<string>(),
@@ -245,7 +246,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     );
 
     it('resolves a demo app under a naming convention other than "example", three segments deep (material_ui/test_apps/a11y_assessments)', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/material_ui/test_apps/a11y_assessments/.metadata',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -255,7 +256,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves a CI-tooling fixture app, unrelated to any shipped product, to its own nested directory', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: '.ci/legacy_project/all_packages/.metadata',
         isAnchorSignal: true,
         anchorOwners: new Set<string>(),
@@ -274,7 +275,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       // merge them regardless of what anchorOwners already contains --
       // passed populated here to make that explicit, not because it affects
       // the result.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/camera/camera_android_camerax/.agents/skills/check-readiness/pubspec.yaml',
         isAnchorSignal: true,
         anchorOwners: new Set<string>([
@@ -294,7 +295,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       const anchorOwners = new Set<string>(['mobile']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'mobile/ios/flutter/debug.xcconfig',
           isAnchorSignal: false,
           anchorOwners,
@@ -307,7 +308,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       // directory; if the example's own pubspec.yaml anchor had not been
       // matched yet in this pass, the shared android|ios fallback (already
       // added for React Native) still resolves it correctly.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/camera/camera_web/example/ios/flutter/release.xcconfig',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(),
@@ -317,7 +318,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves an Android splash-drawable signal via the same android|ios fallback, real path (immich)', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'mobile/android/app/src/main/res/drawable/launch_background.xml',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(),
@@ -327,7 +328,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('resolves a night-variant splash-drawable path for a deeply nested federated sibling, with no anchor present', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path:
           'packages/camera/camera_android_camerax/example/android/app/src/main/res/drawable-night-v21/launch_background.xml',
         isAnchorSignal: false,
@@ -343,7 +344,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       const anchorOwners = new Set<string>(['packages/camera/camera_windows']);
 
       expect(
-        resolveUnitRootOwner({
+        resolveNativePlatformUnitRootOwner({
           path: 'packages/camera/camera_windows/macos/flutter/flutter-debug.xcconfig',
           isAnchorSignal: false,
           anchorOwners,
@@ -363,7 +364,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       // monorepo root segment. A root-anchored app whose top-level directory
       // happened to collide with one of those segment names would not get
       // this same coincidental correctness.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'linux/flutter/cmakelists.txt',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -379,7 +380,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       // inert -- this non-anchor signal falls straight through to the
       // android|ios fallback instead (matches at the "android" segment,
       // bottomIndex 0), which happens to also resolve to ".".
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'android/app/src/main/res/drawable/launch_background.xml',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(['.']),
@@ -389,7 +390,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('ties an entrypoint signal to its own already-resolved sibling-app owner (ente/apps/auth)', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'mobile/apps/auth/lib/main.dart',
         isAnchorSignal: false,
         anchorOwners: new Set<string>([
@@ -403,7 +404,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
     });
 
     it('ties an integration_test/ directory signal to its own already-resolved owner, not a sibling app', () => {
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'mobile/apps/photos/integration_test',
         isAnchorSignal: false,
         anchorOwners: new Set<string>([
@@ -428,7 +429,7 @@ describe('resolveUnitRootOwner - Flutter signals', () => {
       // React Native's own suite documents its fallback shapes, as a
       // property of the shared resolver rather than something this
       // detector's own signal choices can work around.
-      const owner = resolveUnitRootOwner({
+      const owner = resolveNativePlatformUnitRootOwner({
         path: 'packages/camera/camera_windows/macos/flutter/flutter-debug.xcconfig',
         isAnchorSignal: false,
         anchorOwners: new Set<string>(),

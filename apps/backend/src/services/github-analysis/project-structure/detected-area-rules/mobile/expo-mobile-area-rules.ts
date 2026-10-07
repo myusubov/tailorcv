@@ -1,6 +1,6 @@
 import type { DetectedAreaRuleContext } from '../../project-structure-detected-areas.types';
 import { applyDeclarativeAreaDetector } from '../declarative-area-rule-engine';
-import { resolveUnitRootOwner } from '../owner-adapters';
+import { resolveNativePlatformUnitRootOwner } from '../owner-adapters';
 
 /**
  * Path-only Expo signal contract for owner-scoped scoring.
@@ -52,10 +52,17 @@ type ExpoMobileSignal = keyof typeof EXPO_MOBILE_SIGNAL_SCORES;
  * signals clear the gate, or contributes score/evidence and rides along in
  * `related` for an owner an earlier-dispatched provider already claimed.
  *
- * Owner: `resolveUnitRootOwner`, with `extraRootDirectories: ['example']` so
- * a library repo's demo app (e.g. `example/eas.json` in an npm package whose
- * root is not itself an Expo app) resolves to `example` rather than the
- * repository root when no anchor nearby already claims it. Reconciling
+ * Owner: `resolveNativePlatformUnitRootOwner` (an un-enclosed
+ * `metro.config.js` resolves to its own folder), with
+ * `extraRootDirectories: ['example']` so
+ * a library repo's demo app (e.g. a nested `example/basic/eas.json` in an npm
+ * package whose root is not itself an Expo app) resolves to `example/basic`
+ * rather than the repository root when no anchor nearby already claims it. A
+ * file directly under `example/` with no anchor (`example/eas.json`) resolves
+ * to its own path, because `ownerPathForApplicationArea` returns
+ * `<root>/<second segment>` whether or not that segment is a directory; with
+ * an anchor in `example/` the file is enclosed and resolves to `example`.
+ * Reconciling
  * multiple Expo signals across different owner paths in a monorepo (e.g.
  * `app.config.ts` under `apps/mobile/` versus a root `eas.json`) is deferred
  * to a separate owner-resolution research pass.
@@ -160,6 +167,9 @@ export function addExpoMobileAreas({
       },
     },
     ownerAdapter: (args) =>
-      resolveUnitRootOwner({ ...args, extraRootDirectories: ['example'] }),
+      resolveNativePlatformUnitRootOwner({
+        ...args,
+        extraRootDirectories: ['example'],
+      }),
   });
 }
