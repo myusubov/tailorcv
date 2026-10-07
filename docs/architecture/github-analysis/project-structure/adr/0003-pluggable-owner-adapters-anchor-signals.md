@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-03
 - **Domain:** `docs/architecture/github-analysis/project-structure/`
-- **Related changelog entry:** [Per-Framework Owner Adapters via Anchor Signals and a Two-Pass Engine](../changelog.md#per-framework-owner-adapters-via-anchor-signals-and-a-two-pass-engine)
+- **Related changelog entry:** [Per-Framework Owner Adapters via Anchor Signals and a Two-Pass Engine](../changelog-archive.md#per-framework-owner-adapters-via-anchor-signals-and-a-two-pass-engine)
 
 ---
 

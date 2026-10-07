@@ -16,17 +16,17 @@ import { addVuePressDocumentationAreas } from './vuepress-documentation-area-rul
  * Applies documentation detected-area rules to the shared candidate map.
  *
  * Framework-specific rules live in sibling modules and emit `Documentation`
- * candidates for documentation-site generators. Only the Sphinx, MkDocs and
- * Docusaurus detectors are implemented; every other framework module is an
- * empty scaffold that adds no candidates until it lands.
+ * candidates for documentation-site generators. Only the Sphinx, MkDocs,
+ * Docusaurus and mdBook detectors are implemented; every other framework
+ * module is an empty scaffold that adds no candidates until it lands.
  *
  * Inputs: `context.candidates` (shared `${name}::${path}::${primaryTech}` map,
  * mutated in place) and `context.index` (repository path/name/extension
  * lookup).
  * Output: none.
  * Side effects: fans out to the twelve framework detectors below. Today only
- * Sphinx, MkDocs and Docusaurus insert or update `Documentation` candidates;
- * the rest are no-ops.
+ * Sphinx, MkDocs, Docusaurus and mdBook insert or update `Documentation`
+ * candidates; the rest are no-ops.
  * Limitations: the dispatch order is by expected popularity, not precedence;
  * it carries no meaning until a detector claims the same owner as another.
  */

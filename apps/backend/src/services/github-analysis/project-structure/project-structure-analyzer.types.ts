@@ -143,6 +143,7 @@ export type RuntimeDetectedAreaTechnology =
   | 'PHP'
   | 'Python'
   | 'Ruby'
+  | 'Rust'
   | 'Swift';
 
 /**
@@ -215,14 +216,16 @@ export type InfrastructureAsCodeDetectedAreaTechnology =
 
 /**
  * Documentation-framework labels inferred for detected documentation areas.
- * Currently `Sphinx` and `MkDocs` (each primary, `Python` related) and
- * `Docusaurus` (primary, `React` related) are emitted; the other frameworks
- * are added as their detectors land.
+ * Currently `Sphinx` and `MkDocs` (each primary, `Python` related),
+ * `Docusaurus` (primary, `React` related) and `mdBook` (primary, `Rust`
+ * related) are emitted; the other frameworks are added as their detectors
+ * land.
  */
 export type DocumentationDetectedAreaTechnology =
   | 'Sphinx'
   | 'MkDocs'
-  | 'Docusaurus';
+  | 'Docusaurus'
+  | 'mdBook';
 
 /**
  * Technology labels inferred for a detected repository area from path evidence.
