@@ -185,6 +185,17 @@ The `competingProofSchemas` veto, `hasCompetingAreaProof`, and the 2026-09-19 an
 
 See [Native Android and iOS Owner Resolution via `resolveNearestMarkerOwner`](../changelog.md#native-android-and-ios-owner-resolution-via-resolvenearestmarkerowner) (2026-09-24).
 
+## Update 2026-10-07: path-shape fallbacks moved to `resolveNativePlatformUnitRootOwner`; a root anchor claims what no deeper anchor does
+
+Two earlier decisions in this ADR are reversed.
+
+- **The `android`/`ios` and `metro.config.*` fallback branches (2026-09-16) no longer live in `resolveUnitRootOwner`.** That update evaluated them for every caller, on the argument that the shapes are not React-Native-exclusive. In practice only Expo, React Native and Flutter evidence follows them, and every other caller inherited a cut it never asked for (`docs/ios/setup.md` resolved to `docs`). They now live in `resolve-native-platform-unit-root-owner.ts`, a separate adapter passed by those three detectors. It is the resolver as it stood before this update plus the two branches, so none of those detectors' `anchorOwners`, `extraRootDirectories` or `app/_layout` behavior changed.
+- **A root (`.`) anchor now claims whatever no deeper anchor encloses in `resolveUnitRootOwner`.** The 2026-09-18 update recorded, without fixing, that its set-membership check can never match an owner of `.`, and rejected adding `owner === '.'` because the root anchor then won before the `android`/`ios` fallback ran, which broke the `FabricExample/` case. With that fallback moved out, the rejection no longer applies to the shared resolver. The root is kept out of the longest-owner comparison (it is not a prefix of the path, and by string length it ties with any one-character folder such as `a`) and is returned only when no non-root owner encloses the path, ahead of `ownerPathForApplicationArea`'s workspace-folder and `src` guesses. The native adapter keeps the old behavior (`.` never encloses a path), so `FabricExample/` is still resolved by its path-shape branch.
+
+Docusaurus is the first caller to rely on the root claim (a root site owns `docs/src/intro.md`). For the other fifteen callers it is a behavior change in the direction of the nearest-enclosing-config rule Bazel packages and pnpm workspaces use: a unit with no config of its own, in a repository that has a root anchor, belongs to the root. It was not audited per detector; see the README's Risks & Mitigations.
+
+See [Docusaurus Detector](../changelog.md#docusaurus-detector) and [Native-Platform Owner Adapter and Root-Anchor Claim](../changelog.md#native-platform-owner-adapter-and-root-anchor-claim) (2026-10-07).
+
 ## References
 
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/declarative-area-rule-engine.ts`
@@ -193,6 +204,9 @@ See [Native Android and iOS Owner Resolution via `resolveNearestMarkerOwner`](..
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.expo.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.react-native.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.flutter.test.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-unit-root-owner.docusaurus.test.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-native-platform-unit-root-owner.ts`
+- `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-native-platform-unit-root-owner.test.ts`
 - `apps/backend/src/services/github-analysis/project-structure/detected-area-rules/owner-adapters/resolve-nearest-marker-owner.ts`
 - `apps/backend/src/services/github-analysis/project-structure/project-structure-path-utils.ts` (`ownerPathForApplicationArea`)
 - [Containerization and Database Owner Resolvers Removed](../changelog.md#containerization-and-database-owner-resolvers-removed) (2026-08-24)
