@@ -23,7 +23,8 @@ const TEST_WORD_FOLDER = String.raw`(?:[^/]*[_-])?tests?(?:[_-][^/]*)?`;
  *   `node_modules`, `site-packages` (1 file observed, u-boot
  *   `lib/mbedtls/external/mbedtls/docs`; the rest follows the
  *   infrastructure-as-code precedent).
- * Used by the documentation-framework detectors (currently Sphinx, MkDocs and Docusaurus).
+ * Used by the documentation-framework detectors (currently Sphinx, MkDocs,
+ * Docusaurus and mdBook).
  */
 const NON_DOCUMENTATION_FOLDERS = `(?:${TEST_WORD_FOLDER}|demos?|examples?|testdata|fixtures|spec|vendor|third_party|3rdparty|external|extern|node_modules|site-packages)`;
 
@@ -91,8 +92,9 @@ const MKDOCS_EXTRA_NON_DOCUMENTATION_FOLDERS = [
 
 /**
  * Builds a full-path regex that rejects the shared folders plus one detector's
- * own extra folder names, then matches `pattern`. Shared by the MkDocs and
- * Docusaurus builders so both stack their lookaheads in the same order.
+ * own extra folder names, then matches `pattern`. Shared by the MkDocs,
+ * Docusaurus and mdBook builders so all stack their lookaheads in the same
+ * order.
  *
  * Inputs: `extraFolders`, a regex alternation of directory names to reject on
  * top of `NON_DOCUMENTATION_FOLDERS`, and `pattern`, a regex source fragment
@@ -199,5 +201,59 @@ export function excludingDocusaurusNonDocumentationFolders(
   return excludingWithExtraFolders({
     extraFolders: DOCUSAURUS_EXTRA_NON_DOCUMENTATION_FOLDERS,
     pattern,
+  });
+}
+
+/**
+ * Regex alternation of extra directory names that only the mdBook detector
+ * rejects, on top of `NON_DOCUMENTATION_FOLDERS`. From a survey of 4,949
+ * repositories (5,598 `book.toml` files; the shared list alone already drops
+ * about 520 of them, such as the 75 fixture books under `rust-lang/mdBook`'s
+ * `tests/` and `examples/`):
+ * - `templates?`: generated-project templates
+ *   (`battery-packs/ci-battery-pack/templates/mdbook`), 6 folders;
+ * - `managed_components`: ESP-IDF's vendored component folder, which ships
+ *   `espressif__led_strip/docs/book.toml` into many firmware repositories,
+ *   24 folders;
+ * - a name that starts with `demo`, `sample` or `example` followed by `-` or
+ *   `_` (`example-book`, `sample-book`, `demo-book`, `example_books`,
+ *   `sample_project`), 22 folders and every one a demo or generated copy.
+ * Deliberately absent: the MkDocs rule for names that END in `-demo`,
+ * `-sample` or `-example`. In this survey it would have rejected 18 folders,
+ * 10 of them `rust-by-example` (a flagship mdBook) and another a real book
+ * called `python-testing-demo`. `wiki` is also absent because the five hits
+ * are real books. Kept out of the shared list so widening it never changes the
+ * Sphinx, MkDocs or Docusaurus detectors.
+ */
+const MDBOOK_EXTRA_NON_DOCUMENTATION_FOLDERS = [
+  String.raw`templates?`,
+  'managed_components',
+  String.raw`(?:demo|sample|example)s?[-_][^/]*`,
+].join('|');
+
+/**
+ * Builds a full-path regex for the mdBook detector: everything
+ * `excludingNonDocumentationFolders` rejects, plus the mdBook-only folder
+ * names above and any path that contains a `{{` template placeholder.
+ *
+ * Inputs: `pattern`, a regex source fragment describing the whole path
+ * (without anchors), for example `.*book\.toml`.
+ * Output: a regex anchored at both ends. The shared folder lookahead runs
+ * first, then the mdBook folder lookahead, then the `{{` lookahead, then
+ * `pattern`.
+ * Side effects: none.
+ * Invariants: a name only counts as a whole directory segment followed by `/`,
+ * so `docs/book.toml`, `src/doc/rust-by-example/book.toml`,
+ * `books/python-testing-demo/book.toml` and `my-templates-docs/book.toml` are
+ * kept, while `templates/mdbook/book.toml`, `example-book/book.toml`,
+ * `x/managed_components/y/book.toml` and `{{ name }}/book.toml` are rejected.
+ * Input paths are lowercased by `normalizePath`, so no case flag is needed.
+ */
+export function excludingMdBookNonDocumentationFolders(
+  pattern: string,
+): RegExp {
+  return excludingWithExtraFolders({
+    extraFolders: MDBOOK_EXTRA_NON_DOCUMENTATION_FOLDERS,
+    pattern: String.raw`(?!.*\{\{)${pattern}`,
   });
 }
