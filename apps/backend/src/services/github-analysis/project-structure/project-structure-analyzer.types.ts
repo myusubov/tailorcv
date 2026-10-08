@@ -217,15 +217,25 @@ export type InfrastructureAsCodeDetectedAreaTechnology =
 /**
  * Documentation-framework labels inferred for detected documentation areas.
  * Currently `Sphinx` and `MkDocs` (each primary, `Python` related),
- * `Docusaurus` (primary, `React` related) and `mdBook` (primary, `Rust`
- * related) are emitted; the other frameworks are added as their detectors
- * land.
+ * `Docusaurus` (primary, `React` related), `mdBook` (primary, `Rust`
+ * related), `Starlight` (primary, `Astro` related), `DocFX` (primary, `.NET`
+ * related), `Antora` (primary, `Node.js` related), `Fumadocs`, `Dumi` and
+ * `Rspress` (each primary, `React` related), and `VitePress` and `VuePress`
+ * (each primary, `Vue` related) are emitted.
  */
 export type DocumentationDetectedAreaTechnology =
   | 'Sphinx'
   | 'MkDocs'
   | 'Docusaurus'
-  | 'mdBook';
+  | 'mdBook'
+  | 'Starlight'
+  | 'DocFX'
+  | 'Antora'
+  | 'Fumadocs'
+  | 'VitePress'
+  | 'VuePress'
+  | 'Dumi'
+  | 'Rspress';
 
 /**
  * Technology labels inferred for a detected repository area from path evidence.
