@@ -23,8 +23,9 @@ const TEST_WORD_FOLDER = String.raw`(?:[^/]*[_-])?tests?(?:[_-][^/]*)?`;
  *   `node_modules`, `site-packages` (1 file observed, u-boot
  *   `lib/mbedtls/external/mbedtls/docs`; the rest follows the
  *   infrastructure-as-code precedent).
- * Used by the documentation-framework detectors (currently Sphinx, MkDocs,
- * Docusaurus and mdBook).
+ * Used by the documentation-framework detectors (Sphinx, MkDocs, Docusaurus,
+ * mdBook, Starlight, DocFX, Antora, Fumadocs, VitePress, VuePress, Dumi and
+ * Rspress).
  */
 const NON_DOCUMENTATION_FOLDERS = `(?:${TEST_WORD_FOLDER}|demos?|examples?|testdata|fixtures|spec|vendor|third_party|3rdparty|external|extern|node_modules|site-packages)`;
 
@@ -93,8 +94,8 @@ const MKDOCS_EXTRA_NON_DOCUMENTATION_FOLDERS = [
 /**
  * Builds a full-path regex that rejects the shared folders plus one detector's
  * own extra folder names, then matches `pattern`. Shared by the MkDocs,
- * Docusaurus and mdBook builders so all stack their lookaheads in the same
- * order.
+ * Docusaurus, mdBook, VitePress and VuePress builders so all stack their
+ * lookaheads in the same order.
  *
  * Inputs: `extraFolders`, a regex alternation of directory names to reject on
  * top of `NON_DOCUMENTATION_FOLDERS`, and `pattern`, a regex source fragment
@@ -255,5 +256,112 @@ export function excludingMdBookNonDocumentationFolders(
   return excludingWithExtraFolders({
     extraFolders: MDBOOK_EXTRA_NON_DOCUMENTATION_FOLDERS,
     pattern: String.raw`(?!.*\{\{)${pattern}`,
+  });
+}
+
+/**
+ * Regex alternative for a generated-project template folder (`template`,
+ * `templates`). Shared by the VitePress and VuePress extra lists below, whose
+ * surveys both found it to be scaffolding rather than a site; the earlier
+ * MkDocs, Docusaurus and mdBook lists still spell it inline.
+ */
+const TEMPLATE_FOLDERS = String.raw`templates?`;
+
+/**
+ * Regex alternation of extra directory names that only the VitePress detector
+ * rejects, on top of `NON_DOCUMENTATION_FOLDERS`. From the survey of 568
+ * repositories (378 `.vitepress` folders, 17 of them already dropped by the
+ * shared list: 5 committed `node_modules/vitepress/template` copies, 8 under
+ * `example(s)`, 2 `demo` and 2 test folders):
+ * - `templates?`, `template-*`: the init scaffolds (`vuejs/vitepress`
+ *   `template/`, `create/template`, `template-ts/docs`,
+ *   `template-vue-ts/docs`), 4 folders and every one a generated-project copy;
+ * - `playground`, `.playground`: plugin and theme demo sites, 3 folders. The
+ *   evidence is thin, and together with the templates 3 repositories lose
+ *   their only site.
+ * Deliberately absent: `e2e` (one fixture in a repository that keeps its real
+ * `docs`), and the MkDocs, Docusaurus and mdBook names `.github`, `wiki`,
+ * `includes`, `vendors`, `samples?`, `sandbox`, `{{` and the demo-style
+ * prefixes and suffixes, which had zero hits among the surveyed folders. Kept
+ * out of the shared list so widening it never changes the other
+ * documentation-framework detectors.
+ */
+const VITEPRESS_EXTRA_NON_DOCUMENTATION_FOLDERS = [
+  TEMPLATE_FOLDERS,
+  String.raw`template-[^/]*`,
+  String.raw`\.?playground`,
+].join('|');
+
+/**
+ * Builds a full-path regex for the VitePress detector: everything
+ * `excludingNonDocumentationFolders` rejects, plus the VitePress-only folder
+ * names above.
+ *
+ * Inputs: `pattern`, a regex source fragment describing the whole path
+ * (without anchors), for example `(?:.*\/)?\.vitepress`.
+ * Output: a regex anchored at both ends. The shared folder lookahead runs
+ * first, then the VitePress folder lookahead, then `pattern`.
+ * Side effects: none.
+ * Invariants: a name only counts as a whole directory segment followed by `/`,
+ * so `docs/.vitepress` and `my-templates-site/.vitepress` are kept, while
+ * `template/.vitepress`, `template-ts/docs/.vitepress` and
+ * `.playground/.vitepress` are rejected. The `.vitepress` directory entry
+ * itself is the last segment and has no trailing `/`, so it is never rejected
+ * as its own parent. Input paths are lowercased by `normalizePath`, so no case
+ * flag is needed.
+ */
+export function excludingVitePressNonDocumentationFolders(
+  pattern: string,
+): RegExp {
+  return excludingWithExtraFolders({
+    extraFolders: VITEPRESS_EXTRA_NON_DOCUMENTATION_FOLDERS,
+    pattern,
+  });
+}
+
+/**
+ * Regex alternation of extra directory names that only the VuePress detector
+ * rejects, on top of `NON_DOCUMENTATION_FOLDERS`. From the survey of 585
+ * repositories (505 `.vuepress` folders, 93 of them already dropped by the
+ * shared list, nearly all real theme and plugin test and demo sites):
+ * - `templates?`: generated-project scaffolds (`create-vuepress` templates,
+ *   plume `cli/templates`, theme-hope `packages/create/template`), 6 folders,
+ *   none a real site, each of which scores 5 to 8 and would emit.
+ * Deliberately absent: `.history` (one editor-history copy whose dated configs
+ * score 2, under the emission floor), the MkDocs names (`.github`,
+ * `cookiecutter`, `skeleton`, `samples?`, `playground`, `sandbox`, demo-style
+ * prefixes and suffixes, `{{`), which had zero hits, `wiki`, `vendors` and
+ * `includes`, whose one hit is a real site, and the Docusaurus and mdBook
+ * names (`e2e` hit two folders inside VuePress's own repositories and is too
+ * specific to keep). Kept out of the shared list so widening it never changes
+ * the other documentation-framework detectors.
+ */
+const VUEPRESS_EXTRA_NON_DOCUMENTATION_FOLDERS = TEMPLATE_FOLDERS;
+
+/**
+ * Builds a full-path regex for the VuePress detector: everything
+ * `excludingNonDocumentationFolders` rejects, plus the VuePress-only folder
+ * names above.
+ *
+ * Inputs: `pattern`, a regex source fragment describing the whole path
+ * (without anchors), for example `(?:.*\/)?\.vuepress`.
+ * Output: a regex anchored at both ends. The shared folder lookahead runs
+ * first, then the VuePress folder lookahead, then `pattern`.
+ * Side effects: none.
+ * Invariants: a name only counts as a whole directory segment followed by `/`,
+ * so `docs/.vuepress` and `my-templates-site/.vuepress` are kept, while
+ * `cli/templates/.vuepress/config.ts` and `packages/create/template/docs` paths
+ * are rejected. The `.vuepress` directory entry itself is the last segment and
+ * has no trailing `/`, so it is never rejected as its own parent; a
+ * `.vuepress/templates/` folder inside a site is rejected, which only drops the
+ * v1 HTML-template files. Input paths are lowercased by `normalizePath`, so no
+ * case flag is needed.
+ */
+export function excludingVuePressNonDocumentationFolders(
+  pattern: string,
+): RegExp {
+  return excludingWithExtraFolders({
+    extraFolders: VUEPRESS_EXTRA_NON_DOCUMENTATION_FOLDERS,
+    pattern,
   });
 }
