@@ -6,6 +6,7 @@ import { addDocumentationAreas } from './detected-area-rules/documentation/docum
 import { addFrontendAreas } from './detected-area-rules/frontend/frontend-area-rules';
 import { addInfrastructureAsCodeAreas } from './detected-area-rules/infrastructure-as-code/infrastructure-as-code-area-rules';
 import { addMobileAreas } from './detected-area-rules/mobile/mobile-area-rules';
+import { addTestAreas } from './detected-area-rules/test/test-area-rules';
 import type { DetectedAreaRuleContext } from './project-structure-detected-areas.types';
 
 /**
@@ -24,4 +25,5 @@ export function applyDetectedAreaRules({
   addMobileAreas({ candidates, index });
   addInfrastructureAsCodeAreas({ candidates, index });
   addDocumentationAreas({ candidates, index });
+  addTestAreas({ candidates, index });
 }
