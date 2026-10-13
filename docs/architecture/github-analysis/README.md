@@ -121,7 +121,7 @@ docs/architecture/
 - [x] GitHub connection middleware protects repo/analyze routes
 - [x] Detected areas builder
 - [ ] Architecture signals builder
-- [ ] Maturity signals builder
+- [x] Maturity signals builder
 - [ ] Candidate files builder
 - [ ] Resume signal hints builder
 - [ ] Feedback builder

@@ -1,3 +1,5 @@
+import type { DetectedAreaName } from './project-structure-detected-areas.types';
+
 /**
  * Repository tree entry kinds supported by the project structure analyzer.
  */
@@ -12,16 +14,6 @@ export type AnalysisPriority = 'low' | 'medium' | 'high';
  * Strength of a possible resume signal inferred from repository structure.
  */
 export type SignalStrength = 'weak' | 'moderate' | 'strong';
-
-/**
- * Maturity level for a structure-derived engineering practice area.
- */
-export type MaturityLevel =
-  | 'unknown'
-  | 'weak'
-  | 'basic'
-  | 'moderate'
-  | 'strong';
 
 /**
  * Normalized repository metadata required by the project structure analyzer.
@@ -265,7 +257,7 @@ export interface InferredAreaTechnologies {
  * Detected project area such as frontend app, backend API, shared package, docs, or tooling.
  */
 export interface DetectedProjectArea {
-  name: string;
+  name: DetectedAreaName;
   path: string;
   confidence: number;
   evidence: string[];
@@ -283,13 +275,51 @@ export interface ArchitectureSignal {
 }
 
 /**
- * Structure-derived maturity signal for quality areas such as tests, database, docs, or deployment.
+ * One structure-derived practice check: whether the repository shows the practice, and why.
+ * `evidence` is `Tech @ path` for checks backed by detected areas and the file path for checks backed by files, sorted.
  */
-export interface MaturitySignal {
-  area: string;
-  level: MaturityLevel;
-  confidence: number;
+interface MaturityCheck {
+  present: boolean;
   evidence: string[];
+}
+
+/**
+ * Test and source file counts under one application area path.
+ * `areaName` is the area's primary technology; `ratio` is test files divided by source files, rounded to 2 decimals, or `null` when there are no source files.
+ */
+interface TestingAreaCoverage {
+  areaName: string;
+  path: string;
+  testFileCount: number;
+  sourceFileCount: number;
+  ratio: number | null;
+}
+
+/**
+ * Testing check plus file counts.
+ * `present` and `evidence` come from detected Test suite areas, so test files alone do not set `present`. `repoTotals` counts the whole repo; `byArea` has one row per application area, or a single row when a root code area exists.
+ */
+interface TestingMaturityCheck extends MaturityCheck {
+  repoTotals: {
+    testFileCount: number;
+    sourceFileCount: number;
+    ratio: number | null;
+  };
+  byArea: TestingAreaCoverage[];
+}
+
+/**
+ * Structure-derived engineering-practice checks for one repository, used as deterministic maturity evidence.
+ * Presence only: a check shows a practice is configured, not that it is done well. `coverage.met` counts present checks out of `coverage.total`.
+ */
+export interface MaturitySignals {
+  testing: TestingMaturityCheck;
+  automation: MaturityCheck;
+  deployability: MaturityCheck;
+  documentation: MaturityCheck;
+  codeStyle: MaturityCheck;
+  dependencyPinning: MaturityCheck;
+  coverage: { met: number; total: number };
 }
 
 /**
@@ -355,7 +385,7 @@ export interface ProjectStructureAnalysisResult {
   summary: ProjectStructureSummary;
   detectedAreas: DetectedProjectArea[];
   architectureSignals: ArchitectureSignal[];
-  maturitySignals: MaturitySignal[];
+  maturitySignals: MaturitySignals;
   candidateFilesToInspect: CandidateFileToInspect[];
   resumeSignalHints: ResumeSignalHint[];
   feedback: ProjectStructureFeedback;
