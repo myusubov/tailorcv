@@ -120,7 +120,7 @@ docs/architecture/
 - [x] Temporary endpoint logs selected repository summaries
 - [x] GitHub connection middleware protects repo/analyze routes
 - [x] Detected areas builder
-- [ ] Architecture signals builder
+- [x] Architecture signals builder
 - [x] Maturity signals builder
 - [ ] Candidate files builder
 - [ ] Resume signal hints builder
