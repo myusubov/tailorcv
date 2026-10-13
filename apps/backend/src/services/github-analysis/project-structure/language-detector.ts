@@ -59,6 +59,15 @@ const EXTENSION_LANGUAGE_MAP: Record<string, DetectedLanguage> = {
 };
 
 /**
+ * Lists every lowercase, dot-stripped extension the language map recognizes.
+ * Derived from the map, so analyzers that need "is this a source file" stay in
+ * step when a language is added.
+ */
+export const LANGUAGE_FILE_EXTENSIONS: readonly string[] = Object.keys(
+  EXTENSION_LANGUAGE_MAP,
+);
+
+/**
  * Detects which programming languages appear in a repository tree using file
  * extensions only.
  *

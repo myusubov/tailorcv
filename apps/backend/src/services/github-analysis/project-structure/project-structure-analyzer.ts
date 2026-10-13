@@ -1,10 +1,10 @@
 import { buildDetectedAreas } from './project-structure-detected-areas';
+import { buildMaturitySignals } from './project-structure-maturity-signals';
 import { buildProjectStructureSummary } from './project-structure-summary';
 import type {
   AnalyzeProjectStructureInput,
   ArchitectureSignal,
   CandidateFileToInspect,
-  MaturitySignal,
   ProjectStructureAnalysisResult,
   ProjectStructureFeedback,
   RepoTreeEntry,
@@ -19,8 +19,7 @@ export type {
   DetectedAreaTechnology,
   DetectedProjectArea,
   InferredAreaTechnologies,
-  MaturityLevel,
-  MaturitySignal,
+  MaturitySignals,
   ProjectStructureAnalysisResult,
   ProjectStructureFeedback,
   ProjectStructureGap,
@@ -41,15 +40,6 @@ function buildArchitectureSignals({
 }: {
   entries: RepoTreeEntry[];
 }): ArchitectureSignal[] {
-  void entries;
-  return [];
-}
-
-function buildMaturitySignals({
-  entries,
-}: {
-  entries: RepoTreeEntry[];
-}): MaturitySignal[] {
   void entries;
   return [];
 }
@@ -95,8 +85,11 @@ export function analyzeProjectStructure(
   const { repository, entries, isTruncated } = input;
   const summary = buildProjectStructureSummary({ entries, isTruncated });
   const detectedAreas = buildDetectedAreas({ entries, summary });
+  const maturitySignals = buildMaturitySignals({
+    entries,
+    detectedAreas,
+  });
   const architectureSignals = buildArchitectureSignals({ entries });
-  const maturitySignals = buildMaturitySignals({ entries });
   const candidateFilesToInspect = buildCandidateFilesToInspect({ entries });
   const resumeSignalHints = buildResumeSignalHints({ entries });
   const feedback = buildFeedback({ entries });
