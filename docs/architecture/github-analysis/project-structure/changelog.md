@@ -6,6 +6,20 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ---
 
+## 2026-10-13
+
+### Maturity Signals Builder
+
+- **Problem:** `maturitySignals` was a stub returning `[]`, and its `MaturitySignal` contract (`area`, `level`, `confidence`, `evidence`) could not be filled honestly: path evidence shows a practice is configured, not how well, so a leveled score would read as fact to the later AI step. The detected areas already carry most of the evidence (test runner, CI, containers, docs), but nothing turned them into a fixed, comparable set of checks.
+- **Solution:**
+  1. Replaced `MaturitySignal` and `MaturityLevel` with the `MaturitySignals` object in `project-structure-analyzer.types.ts`: six checks (`testing`, `automation`, `deployability`, `documentation`, `codeStyle`, `dependencyPinning`), each `{ present, evidence }`, plus `coverage: { met, total }`; `testing` also carries `repoTotals` and `byArea`. `DetectedProjectArea.name` is now typed `DetectedAreaName` instead of `string`.
+  2. Added `project-structure-maturity-signals.ts` (`buildMaturitySignals({ entries, detectedAreas })`, called from `analyzeProjectStructure` after `buildDetectedAreas`). The first four checks regroup detected areas by name, with `Containerization` and `Infrastructure as code` both feeding `deployability`; evidence is `Tech @ path`, sorted. `codeStyle` and `dependencyPinning` match linter/formatter config names and lockfile names at any depth with `findFilesByNameMatching`.
+  3. Test and source counts come from one combined test-file regex (JS/TS `.test.`, `.spec.` and `__tests__`, Cypress `.cy.`, Python, Go, Ruby and Dart file names, and any source file under a `test/`, `tests/` or `spec/` folder, which covers Java/Kotlin `src/test/`, PHPUnit and Rust `tests/`) and its negative lookahead plus the shared extension list for source files. `language-detector.ts` now exports `LANGUAGE_FILE_EXTENSIONS` (the map's keys) so the source definition cannot drift from language detection. `findTestFileCount` and `findSourceFileCount` take an optional path and count only entries under it.
+  4. `byArea` skips Database schema (a bare root `prisma/` resolves to `.` and would collapse every application area), Test suite, Documentation, CI/CD workflows, Containerization and Infrastructure as code areas, returns a single row when a root (`.`) code area exists, and otherwise keeps the first area per path; `areaName` is the primary technology. `ratio` is tests divided by source files, rounded to 2 decimals, `null` with no source files.
+  5. The builder does not take `summary`: ratios are always computed and the truncation flag stays in `summary.isTreeTruncated` for the consumer. Added `project-structure-maturity-signals.test.ts` (55 raw-format specs with expectations written from the agreed output shape). No ADR: nothing consumes the contract yet and the choices are routine.
+- **Affected files:** `project-structure-maturity-signals.ts`, `project-structure-maturity-signals.test.ts`, `project-structure-analyzer.ts` (including the `MaturitySignals` re-export), `project-structure-analyzer.types.ts`, `language-detector.ts`.
+- **Outcome:** `analyzeProjectStructure` now returns a `maturitySignals` object with six presence checks, a `coverage` count and test and source counts for the repository and for each application area. Known limits: inline tests (Rust `#[cfg(test)]`), C# and Swift are not counted, and helper and fixture files under `test/`, `tests/` and `spec/` count as tests; a parent area's counts include its nested areas and a root code area leaves one `byArea` row; ratios on a truncated tree cover only the files seen. Not verified: no test, typecheck or lint was run, so the 55 specs and the regexes are unchecked.
+
 ## 2026-10-09
 
 ### Five Test Suite Detectors: Jest, Vitest, Playwright, Cypress and Mocha
