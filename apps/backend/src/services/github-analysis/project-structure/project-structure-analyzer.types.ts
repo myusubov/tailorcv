@@ -265,13 +265,19 @@ export interface DetectedProjectArea {
 }
 
 /**
+ * Architecture signal names emitted by the project-structure analyzer.
+ */
+export type ArchitectureSignalName =
+  | 'Layered backend'
+  | 'Client/server separation';
+
+/**
  * Structure-derived architecture signal that may support later resume evidence.
+ * `evidence` is `Tech @ path` for signals backed by detected areas and the repository path for signals backed by folders.
  */
 export interface ArchitectureSignal {
-  signal: string;
-  confidence: number;
+  signal: ArchitectureSignalName;
   evidence: string[];
-  whyItMatters: string;
 }
 
 /**
