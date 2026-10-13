@@ -16,7 +16,8 @@ import type {
 /**
  * Runs the temporary GitHub project-structure analysis flow for selected repositories.
  * It fetches each repository's tree, analyzes project structure, and returns each
- * repository's summary and detected areas for manual testing.
+ * repository's summary, detected areas, maturity signals and architecture signals
+ * for manual testing.
  */
 export async function analyzeGithubRepositories({
   clerkUserId,
@@ -55,9 +56,10 @@ export async function analyzeGithubRepositories({
         isTruncated: truncated,
       });
 
-      const { summary, detectedAreas } = analysis;
+      const { summary, detectedAreas, maturitySignals, architectureSignals } =
+        analysis;
 
-      return { summary, detectedAreas };
+      return { summary, detectedAreas, maturitySignals, architectureSignals };
     }),
   );
 

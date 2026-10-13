@@ -1,9 +1,9 @@
+import { buildArchitectureSignals } from './project-structure-architecture-signals';
 import { buildDetectedAreas } from './project-structure-detected-areas';
 import { buildMaturitySignals } from './project-structure-maturity-signals';
 import { buildProjectStructureSummary } from './project-structure-summary';
 import type {
   AnalyzeProjectStructureInput,
-  ArchitectureSignal,
   CandidateFileToInspect,
   ProjectStructureAnalysisResult,
   ProjectStructureFeedback,
@@ -15,6 +15,7 @@ export type {
   AnalysisPriority,
   AnalyzeProjectStructureInput,
   ArchitectureSignal,
+  ArchitectureSignalName,
   CandidateFileToInspect,
   DetectedAreaTechnology,
   DetectedProjectArea,
@@ -34,15 +35,6 @@ export type {
   RootManifestEcosystem,
   SignalStrength,
 } from './project-structure-analyzer.types';
-
-function buildArchitectureSignals({
-  entries,
-}: {
-  entries: RepoTreeEntry[];
-}): ArchitectureSignal[] {
-  void entries;
-  return [];
-}
 
 function buildCandidateFilesToInspect({
   entries,
@@ -89,7 +81,10 @@ export function analyzeProjectStructure(
     entries,
     detectedAreas,
   });
-  const architectureSignals = buildArchitectureSignals({ entries });
+  const architectureSignals = buildArchitectureSignals({
+    entries,
+    detectedAreas,
+  });
   const candidateFilesToInspect = buildCandidateFilesToInspect({ entries });
   const resumeSignalHints = buildResumeSignalHints({ entries });
   const feedback = buildFeedback({ entries });

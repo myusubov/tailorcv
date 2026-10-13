@@ -8,6 +8,17 @@ Older implementation history is preserved in [changelog-archive.md](changelog-ar
 
 ## 2026-10-13
 
+### Architecture Signals Builder
+
+- **Problem:** `architectureSignals` was a stub returning `[]`, and its `ArchitectureSignal` contract (`signal` string, `confidence`, `evidence`, `whyItMatters`) could not be filled honestly from paths: a confidence number would be false precision, and `whyItMatters` is the same sentence for every repository with that signal.
+- **Solution:**
+  1. Replaced the contract in `project-structure-analyzer.types.ts` with `{ signal: ArchitectureSignalName; evidence: string[] }` and added the `ArchitectureSignalName` union (`'Layered backend'`, `'Client/server separation'`), re-exported from `project-structure-analyzer.ts`. A signal with no evidence is left out, so the list can be empty. A third candidate, a shared package in a monorepo, was dropped: the `Shared package` detector was removed on 2026-09-08 for the same low signal, and a `packages/` folder only shows that the folder exists.
+  2. Added `project-structure-architecture-signals.ts` (`buildArchitectureSignals({ entries, detectedAreas })`, called from `analyzeProjectStructure` after `buildMaturitySignals`; the old stub in the analyzer file was removed). `Layered backend`: layer-named folders are found with `findDirectoriesByPathMatching` through `excludingDemoAndTestFolders`, kept when inside a `Backend API` area path (an area at `.` places no limit), grouped by parent folder, and a parent qualifies with at least two distinct layer names; evidence is the qualifying folder paths, sorted.
+  3. `Client/server separation`: `Frontend app` and `Mobile app` areas are clients and `Backend API` areas are servers. An area is kept when at least one area on the other side has a different owner path, and the signal is emitted when any area is kept; evidence is `Tech @ path`, sorted.
+  4. `analyzeGithubRepositories` (`github-analysis.service.ts`) now also returns `maturitySignals` and `architectureSignals` per repository for manual testing. Added `project-structure-architecture-signals.test.ts` with expectations written from the agreed rules. No ADR: nothing consumes the contract yet and the choices are routine.
+- **Affected files:** `project-structure-architecture-signals.ts`, `project-structure-architecture-signals.test.ts`, `project-structure-analyzer.ts`, `project-structure-analyzer.types.ts`, `github-analysis.service.ts`.
+- **Outcome:** `analyzeProjectStructure` returns `architectureSignals` with up to two signals. Known limits: `Layered backend` is name-based and misses singular layer names, layers split across parents and feature-first layouts, a backend area at `.` counts layer folders anywhere in the repository, and a documentation site that also draws a `Frontend app` candidate (Starlight always draws an Astro one) counts as a client, which is accepted for now. Not verified: no test, typecheck or lint was run, so the spec and both signals are unchecked.
+
 ### Maturity Signals Builder
 
 - **Problem:** `maturitySignals` was a stub returning `[]`, and its `MaturitySignal` contract (`area`, `level`, `confidence`, `evidence`) could not be filled honestly: path evidence shows a practice is configured, not how well, so a leveled score would read as fact to the later AI step. The detected areas already carry most of the evidence (test runner, CI, containers, docs), but nothing turned them into a fixed, comparable set of checks.
