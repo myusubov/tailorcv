@@ -1,5 +1,6 @@
 import { ErrorCode, type GitHubRepo } from 'shared';
 
+import { mapGitHubRepoToMetadata } from '../mappers/github.mapper';
 import { AppError } from '../utils/AppError';
 import { fetchRepositoryTree } from './github-analysis/github-tree-fetcher';
 import {
@@ -16,8 +17,8 @@ import type {
 /**
  * Runs the temporary GitHub project-structure analysis flow for selected repositories.
  * It fetches each repository's tree, analyzes project structure, and returns each
- * repository's summary, detected areas, maturity signals and architecture signals
- * for manual testing.
+ * repository's GitHub metadata, summary, detected areas, maturity signals and
+ * architecture signals for manual testing.
  */
 export async function analyzeGithubRepositories({
   clerkUserId,
@@ -59,7 +60,13 @@ export async function analyzeGithubRepositories({
       const { summary, detectedAreas, maturitySignals, architectureSignals } =
         analysis;
 
-      return { summary, detectedAreas, maturitySignals, architectureSignals };
+      return {
+        repository: mapGitHubRepoToMetadata(repo),
+        summary,
+        detectedAreas,
+        maturitySignals,
+        architectureSignals,
+      };
     }),
   );
 

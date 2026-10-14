@@ -19,7 +19,7 @@ GitHub repo IDs selected by user
   └─ POST /api/v1/auth/github/analyze
       ├─ require Clerk authentication
       ├─ require saved GitHub connection
-      └─ invokes analyzeGithubRepositories and returns per-repository summaries, detected areas, maturity signals and architecture signals
+      └─ invokes analyzeGithubRepositories and returns per-repository GitHub metadata, summaries, detected areas, maturity signals and architecture signals
 
 GitHub App installation
   └─ callback verifies user access to installation
@@ -36,12 +36,12 @@ GitHub App installation
 | `apps/backend/src/routes/github.router.ts`                         | Registers GitHub OAuth, repo listing, connection, and temporary analysis routes.                                                                         | GitHub endpoint changes                      |
 | `apps/backend/src/schemas/github.schema.ts`                        | Zod request body schema and inferred type for temporary GitHub analysis.                                                                                 | GitHub request validation changes            |
 | `apps/backend/src/controllers/github.controller.ts`                | Reads validated selected repo IDs and calls GitHub analysis service.                                                                                     | GitHub request/response changes              |
-| `apps/backend/src/mappers/github.mapper.ts`                        | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists.                                                               | GitHub response DTO changes                  |
+| `apps/backend/src/mappers/github.mapper.ts`                        | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists, and a repository listing item into the analysis response's `GithubRepositoryMetadata`. | GitHub response DTO changes                  |
 | `apps/backend/src/middleware/github-auth.ts`                       | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.                                                    | GitHub-protected route changes               |
 | `packages/shared/src/types/github.ts`                              | Defines full backend GitHub connection and client-safe public connection response types.                                                                 | GitHub API contract changes                  |
 | `apps/backend/prisma/schema.prisma`                                | Persists the installation ID plus the cached, expiring installation token for each Clerk user.                                                           | GitHub connection persistence changes        |
 | `apps/backend/src/services/github.service.ts`                      | Initiates the installation flow, verifies callbacks, manages installation tokens, and fetches repositories.                                              | GitHub connection or token lifecycle changes |
-| `apps/backend/src/services/github-analysis.service.ts`             | Runs the temporary analyze orchestration: fetches selected repos and trees, normalizes entries, and returns per-repository summaries, detected areas, maturity signals and architecture signals. | GitHub analysis orchestration changes        |
+| `apps/backend/src/services/github-analysis.service.ts`             | Runs the temporary analyze orchestration: fetches selected repos and trees, normalizes entries, and returns per-repository GitHub metadata, summaries, detected areas, maturity signals and architecture signals. | GitHub analysis orchestration changes        |
 | `apps/backend/src/services/github-analysis/github-tree-fetcher.ts` | Fetches recursive GitHub tree metadata for a selected repository.                                                                                        | GitHub tree API changes                      |
 | `apps/backend/src/utils/github-utils.ts`                           | Shared pure GitHub helpers: raw tree types, full-name parsing, and tree entry normalization.                                                             | Tree normalization or repo parsing changes   |
 
@@ -58,7 +58,7 @@ flowchart TD
   Clerk --> GitHubAuth[requireGithubConnection]
   GitHubAuth --> Controller[analyzeGithubRepos]
   Controller --> Service[analyzeGithubRepositories]
-  Service --> Response[Return per-repository summaries, detected areas, maturity signals and architecture signals]
+  Service --> Response[Return per-repository GitHub metadata, summaries, detected areas, maturity signals and architecture signals]
 ```
 
 ---
@@ -140,6 +140,7 @@ The backend validates GitHub App configuration through `apps/backend/src/config/
 - [x] GitHub connection middleware boundary
 - [x] GitHub App installation connection and installation-token refresh
 - [x] Client-safe GitHub response mapper
+- [x] Analyze response carries per-repository GitHub metadata (name, description, URL, topics, fork flag, language) from the repo listing, not the tree
 - [x] Recursive GitHub tree fetcher
 - [x] Tree entry normalization
 - [ ] Multi-analyzer orchestration beyond project structure
