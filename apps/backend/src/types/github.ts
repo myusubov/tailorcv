@@ -31,6 +31,17 @@ export interface AnalyzeGithubRepositoriesInput {
   repoIds: number[];
 }
 
+export interface GithubRepositoryMetadata {
+  id: number;
+  name: string;
+  fullName: string;
+  description: string | null;
+  htmlUrl: string;
+  topics: string[];
+  isFork: boolean;
+  language: string | null;
+}
+
 export interface AnalyzeGithubRepositoriesOutput {
   summaries: Array<{
     repositoryId: number;
