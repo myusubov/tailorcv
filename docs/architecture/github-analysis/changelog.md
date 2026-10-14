@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-10-14
+
+### Evidence-to-AI Side-Check: Candidate Files Confirmed High Value
+
+- **Decision:** Treat Candidate Files to Inspect (raw file content handed to the AI call) as the highest-value Sprint 3 item. The analyzer output stays as the verified-facts layer and the file picker, not the only AI input.
+- **Problem:** The MVP plan assumed GitHub evidence plus AI could produce a good resume, but nothing had checked what the path-only analyzer output could carry on its own. Structure facts cannot say what a project does.
+- **Solution:**
+  1. Manually ran the analyzer on the TailorCV repository (567 files) and pasted the per-repo JSON into Claude (web app) with one real job description, a Full-Stack TypeScript/Next.js posting. No script, schema or UI was built.
+  2. Pass A gave the model the JSON only; pass B added a hand-written `<repo_notes>` block approximating what a README would supply. Both prompts told the model to treat signals as heuristics (`present: false` means "not detected"), to invent no metrics (placeholders instead), to map each bullet to its evidence fields, and to ask questions about gaps.
+  3. `analyzeGithubRepositories` (`github-analysis.service.ts`) now also returns a `repository` object per repo (`id`, `name`, `fullName`, `description`, `htmlUrl`, `topics`, `isFork`, `language`) from the repo listing it already fetched, so the AI can see the project name. It is built by the new `mapGitHubRepoToMetadata` in `mappers/github.mapper.ts` and typed as `GithubRepositoryMetadata` in `types/github.ts`. The path-only analyzer is unchanged.
+- **Affected files:** `apps/backend/src/services/github-analysis.service.ts`, `apps/backend/src/mappers/github.mapper.ts`, `apps/backend/src/types/github.ts`, `docs/architecture/github-analysis/pipeline/README.md`, `docs/architecture/github-analysis/changelog.md`.
+- **Outcome:** Pass A stayed grounded (placeholders, no invented skills, sharp questions) but its bullets were inferred from file names and it could not state the project's purpose. Pass B was clearly better and drew nearly all its substance from the notes; the analyzer JSON still supplied the checkable facts (78 test files against 394 source files, CI, Docker, layered backend). Both passes left out job-description requirements the evidence did not support (multi-tenancy, webhooks, FinTech, Vercel, Sentry). Sprint 3 consequences: research first how to choose which files to read, then build Candidate Files from the findings (what to pick is not decided yet), label claims as stated by file content versus verified by structure, cap bullet length (the pass B bullets ran three lines or more), and keep the "not detected" wording and the evidence table in the synthesis prompt. Known limits: one repository and one job description; the notes were written from `CLAUDE.md`, not the repository README; the mismatched-job-description run was not done; Claude web account context leaked into one pass B question, so verify the final prompt through the API. No tests, typecheck or lint were run for the service change.
+
 ## 2026-08-26
 
 ### Temporary Analyze Endpoint Resumed
