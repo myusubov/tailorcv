@@ -1,22 +1,9 @@
+import type { DetectedAreaName, DetectedAreaTechnology } from 'shared';
 import type { EntryIndex } from './project-structure-entry-index';
-import type { DetectedAreaTechnology } from './project-structure-analyzer.types';
 
-/**
- * Fixed v1 labels emitted by the project-structure detected-area analyzer.
- * These labels are intentionally conservative and path-derived.
- */
-export type DetectedAreaName =
-  | 'Frontend app'
-  | 'Backend API'
-  | 'Shared package'
-  | 'Database schema'
-  | 'Test suite'
-  | 'Documentation'
-  | 'CI/CD workflows'
-  | 'Containerization'
-  | 'CLI tooling'
-  | 'Mobile app'
-  | 'Infrastructure as code';
+// Shared with the frontend through the analyze response, so it lives in
+// `shared`. Re-exported so rule modules keep importing it from this file.
+export type { DetectedAreaName } from 'shared';
 
 interface InferredAreaTechnologyCandidate {
   primary: DetectedAreaTechnology;

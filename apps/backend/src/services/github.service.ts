@@ -1,6 +1,8 @@
 import { logger, prisma } from '../lib';
 import { env } from '../config/env';
+import { createOctokit } from '../lib/octokit';
 import { AppError } from '../utils/AppError';
+import type { GitHubTreeApiResponse } from '../utils/github-utils';
 import {
   ErrorCode,
   GitHubTokenResponse,
@@ -10,12 +12,12 @@ import {
   GitHubRepo,
   GitHubConnection,
   CreateInstallationAccessTokenResponse,
-  FetchGithubReposResponse,
 } from 'shared';
 import {
   FetchGithubCommitsInput,
   FetchGithubPullRequestsInput,
   FetchRepoFileInput,
+  FetchRepositoryTreeInput,
   GitHubCommit,
   GitHubPullRequest,
   DetectRepoTechStackInput,
@@ -24,6 +26,7 @@ import {
 import { randomBytes } from 'node:crypto';
 import { redisClient } from '../lib/redis';
 import jwt from 'jsonwebtoken';
+import { RequestError } from '@octokit/request-error';
 
 /**
  * Generates the GitHub OAuth authorization URL
@@ -165,14 +168,23 @@ export async function verifyGithubUserCanAccessInstallation({
   }
 }
 
-/** Signs a fresh App-level JWT for authenticating a single installation-token request. */
+// GitHub rejects an App JWT whose `exp` is more than 10 minutes ahead of
+// *its* clock. Stay well under that cap so local clock drift can't push the
+// token over it. The JWT is used immediately, so a shorter life costs nothing.
+const JWT_IAT_BACKDATE_SECONDS = 60; // GitHub's recommended drift guard for iat
+const JWT_LIFETIME_SECONDS = 540;
+
+/**
+ * Signs a fresh App-level JWT for GitHub App requests, such as an installation
+ * lookup or token request.
+ */
 function signGithubAppJwt(): string {
   const now = Math.floor(Date.now() / 1000);
   return jwt.sign(
     {
       iss: env.GITHUB_APP_ID,
-      iat: now - 60,
-      exp: now + 600,
+      iat: now - JWT_IAT_BACKDATE_SECONDS,
+      exp: now + JWT_LIFETIME_SECONDS,
     },
     env.GITHUB_APP_PRIVATE_KEY,
     {
@@ -183,43 +195,18 @@ function signGithubAppJwt(): string {
 
 /**
  * Creates a short-lived installation token for the selected GitHub App installation.
- * Retries once with a freshly-signed JWT on 401, since a rejection here is caused by
- * clock skew at the moment of signing rather than invalid credentials.
+ * GitHub failures are thrown as Octokit errors and translated by the error middleware.
  */
 export async function createInstallationAccessToken(
   installationId: string,
 ): Promise<CreateInstallationAccessTokenResponse> {
-  const url = `https://api.github.com/app/installations/${installationId}/access_tokens`;
-
-  let response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${signGithubAppJwt()}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2026-03-10',
-    },
+  // The client sends a JWT-shaped token as a bearer token, so the app JWT
+  // authenticates this call.
+  const { data } = await createOctokit(
+    signGithubAppJwt(),
+  ).rest.apps.createInstallationAccessToken({
+    installation_id: Number(installationId),
   });
-
-  if (response.status === 401) {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${signGithubAppJwt()}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2026-03-10',
-      },
-    });
-  }
-
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to create installation access token: ${response.statusText}`,
-      ErrorCode.GITHUB_TOKEN_EXCHANGE_FAILED,
-      502,
-    );
-  }
-
-  const data = (await response.json()) as CreateInstallationAccessTokenResponse;
 
   if (typeof data.token !== 'string' || data.token.length === 0) {
     throw new AppError(
@@ -232,6 +219,11 @@ export async function createInstallationAccessToken(
   return data;
 }
 
+/**
+ * Returns the connection with an installation token valid for more than five minutes,
+ * refreshing and persisting a new token when needed.
+ * Throws `GITHUB_APP_SUSPENDED` when a refresh finds the installation suspended.
+ */
 export async function getValidInstallationToken(
   githubConnection: GitHubConnection,
 ): Promise<GitHubConnection> {
@@ -254,6 +246,20 @@ export async function getValidInstallationToken(
     tokenExpiresAt.getTime() - now.getTime() <= refreshBufferMs;
 
   if (shouldRefresh) {
+    const { data: installation } = await createOctokit(
+      signGithubAppJwt(),
+    ).rest.apps.getInstallation({
+      installation_id: Number(githubConnection.installationId),
+    });
+
+    if (installation.suspended_at) {
+      throw new AppError(
+        'The GitHub app installation is suspended',
+        ErrorCode.GITHUB_APP_SUSPENDED,
+        403,
+      );
+    }
+
     const { expires_at, token } = await createInstallationAccessToken(
       githubConnection.installationId,
     );
@@ -320,28 +326,39 @@ export async function saveGitHubConnection(input: SaveGitHubConnectionInput) {
   });
 }
 
-export async function fetchGithubRepos(
-  accessToken: string,
-): Promise<FetchGithubReposResponse> {
-  const response = await fetch(
-    'https://api.github.com/installation/repositories?per_page=100&page=1',
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2026-03-10',
-      },
-    },
-  );
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub repos: ${response.statusText}`,
-      ErrorCode.GITHUB_REPOS_FETCH_FAILED,
-      502,
-    );
-  }
+/**
+ * Returns the first 100 repositories the installation can access.
+ * Pagination is deferred, so repositories beyond the first page are not listed.
+ */
+export async function fetchGithubRepos(accessToken: string) {
+  const octokit = createOctokit(accessToken);
 
-  return response.json() as Promise<FetchGithubReposResponse>;
+  const { data } = await octokit.rest.apps.listReposAccessibleToInstallation({
+    per_page: 100,
+  });
+
+  return data.repositories;
+}
+
+/**
+ * Fetches a repository's recursive Git tree from GitHub.
+ * This returns paths and metadata only; it does not fetch file contents.
+ */
+export async function fetchRepositoryTree({
+  accessToken,
+  owner,
+  repo,
+  treeRef,
+}: FetchRepositoryTreeInput): Promise<GitHubTreeApiResponse> {
+  const octokit = createOctokit(accessToken);
+  return (
+    await octokit.rest.git.getTree({
+      owner,
+      repo,
+      tree_sha: treeRef,
+      recursive: '1',
+    })
+  ).data as GitHubTreeApiResponse;
 }
 
 export async function getGithubConnection(
@@ -411,43 +428,31 @@ export async function fetchRepoPullRequests(
 }
 
 /**
- * Fetches a specific file from a GitHub repository
- * Useful for detecting tech stack (package.json, requirements.txt, etc.)
- * @param input - Access token, owner, repo name, and file path
- * @returns File content as string, or null if not found
+ * Returns the raw text of a repository file.
+ * Returns null for a 404 and when GitHub answers with something other than file text,
+ * such as a directory. Any other GitHub failure is rethrown as Octokit's `RequestError`.
  */
 export async function fetchRepoFile(
   input: FetchRepoFileInput,
 ): Promise<string | null> {
-  const { accessToken, owner, repo, path } = input;
+  const octokit = createOctokit(input.accessToken);
 
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
+  try {
+    const response = await octokit.rest.repos.getContent({
+      owner: input.owner,
+      repo: input.repo,
+      path: input.path,
+      mediaType: {
+        format: 'raw',
       },
-    },
-  );
-  // File not found is expected for some tech stack files
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new AppError(
-      `Failed to fetch GitHub file: ${response.statusText}`,
-      ErrorCode.GITHUB_FILE_FETCH_FAILED,
-      502,
-    );
+    });
+    return typeof response.data === 'string' ? response.data : null;
+  } catch (error) {
+    if (error instanceof RequestError && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-
-  const data = (await response.json()) as { content: string; encoding: string };
-
-  // GitHub returns base64-encoded content
-  if (data.encoding === 'base64') {
-    return Buffer.from(data.content, 'base64').toString('utf-8');
-  }
-
-  return data.content;
 }
 
 /**

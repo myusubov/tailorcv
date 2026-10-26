@@ -5,13 +5,13 @@ import { errorResponse } from '../utils/response';
 import { ErrorCode } from 'shared';
 import { env } from '../config/env';
 import { Prisma } from '../../prisma/generated/client/client.js';
-import {
-  BrokenCircuitError,
-  TaskCancelledError,
-  BulkheadRejectedError,
-} from 'cockatiel';
-import { handleResilienceError } from '../lib/resilience';
+import { mapOctokitErrorToAppError } from '../lib/octokit-error';
+import { RequestError } from '@octokit/request-error';
 
+/**
+ * Responds to errors with the standard error envelope.
+ * An Octokit `RequestError` is translated to an `AppError` first, by what the failure means.
+ */
 export const errorHandler = (
   err: any,
   _req: Request,
@@ -24,24 +24,10 @@ export const errorHandler = (
     console.error(err.stack);
   }
 
-  // Handle Resilience Errors (cockatiel) automatically if they have context
-  const isResilienceError =
-    err instanceof BrokenCircuitError ||
-    err instanceof TaskCancelledError ||
-    err instanceof BulkheadRejectedError ||
-    [
-      'BrokenCircuitError',
-      'TaskCancelledError',
-      'BulkheadRejectedError',
-      'BulkheadRejectedException',
-    ].includes(err.name);
-
   let errorToHandle = err;
-  if (isResilienceError && !(err instanceof AppError)) {
-    errorToHandle = handleResilienceError(
-      err,
-      err.context || 'External Service',
-    );
+
+  if (err instanceof RequestError) {
+    errorToHandle = mapOctokitErrorToAppError(err);
   }
 
   // Handle AppError (operational errors)
