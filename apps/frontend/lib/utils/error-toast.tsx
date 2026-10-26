@@ -17,6 +17,12 @@ export const FRIENDLY_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.INTERNAL_ERROR]: 'Something went wrong. Please try again.',
   [ErrorCode.GITHUB_REPOS_FETCH_FAILED]:
     'Failed to fetch repositories. Please try again.',
+  [ErrorCode.GITHUB_CONNECTION_REQUIRED]:
+    'Your GitHub connection needs to be renewed. Please reconnect GitHub.',
+  [ErrorCode.GITHUB_API_ERROR]:
+    'GitHub is having problems right now. Please try again shortly.',
+  [ErrorCode.GITHUB_APP_SUSPENDED]:
+    'The TailorCV GitHub app is suspended on your account. Ask the account owner to unsuspend it in their GitHub settings.',
 };
 
 export const retrieveErrorMessage = (

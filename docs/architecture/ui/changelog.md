@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-10-23
+
+### Offline Banner and Full-Height Error State
+
+- **Problem:** The app gave no sign that React Query had paused requests while the browser was offline, and `ErrorState` rendered at content height, so a page-level error did not fill the screen. GitHub error codes had no friendly messages.
+- **Solution:**
+  1. **Offline banner — `apps/frontend/app/components/ui/offline-banner.tsx`, `apps/frontend/app/layout.tsx`**: `OfflineBanner` reads React Query's `onlineManager` with `useSyncExternalStore`, assumes online on the server to avoid a hydration mismatch, and renders a fixed top `role="status"` bar; it is mounted beside the HeroUI Toast provider.
+  2. **Error state — `apps/frontend/app/components/ui/error-state.tsx`**: Added `h-svh` so the view fills the small viewport height. The only caller is the GitHub onboarding step.
+  3. **Messages — `apps/frontend/lib/utils/error-toast.tsx`**: Added friendly copy for `GITHUB_CONNECTION_REQUIRED`, `GITHUB_API_ERROR` and `GITHUB_APP_SUSPENDED` to `FRIENDLY_ERROR_MESSAGES`; `RATE_LIMIT_EXCEEDED` has no entry, so its server message is shown.
+- **Outcome:** An offline browser shows a banner that matches the paused loading states, and page-level errors fill the screen. No component test, browser check, lint or typecheck result is recorded for this change.
+
 ## 2026-08-20
 
 ### Shared Error Toast Migrated to HeroUI Toast

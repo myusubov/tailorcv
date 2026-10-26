@@ -94,6 +94,10 @@ export async function handleGithubCallback(
   }
 }
 
+/**
+ * Lists every repository the saved GitHub installation can access.
+ * Responds with the repositories and their `total_count`.
+ */
 export async function getGithubRepos(
   req: Request,
   res: Response<any, GitHubConnectionLocals>,
@@ -104,7 +108,11 @@ export async function getGithubRepos(
     const repos = await fetchGithubRepos(
       githubConnection.installationAccessToken,
     );
-    return successResponse(res, repos, 200);
+    return successResponse(
+      res,
+      { total_count: repos.length, repositories: repos },
+      200,
+    );
   } catch (error) {
     next(error);
   }
@@ -130,6 +138,11 @@ export async function fetchGithubConnection(
   }
 }
 
+/**
+ * Analyzes the selected repositories with the saved installation token.
+ * Repositories whose tree could not be read come back in `failedRepoIds`; other
+ * GitHub failures reach the error middleware.
+ */
 export async function analyzeGithubRepos(
   req: Request<unknown, unknown, AnalyzeGithubReposRequestBody>,
   res: Response<unknown, GitHubConnectionLocals>,
@@ -143,7 +156,7 @@ export async function analyzeGithubRepos(
       accessToken: githubConnection.installationAccessToken,
       repoIds,
     });
-    return successResponse(res, { result }, 200);
+    return successResponse(res, result, 200);
   } catch (error) {
     next(error);
   }

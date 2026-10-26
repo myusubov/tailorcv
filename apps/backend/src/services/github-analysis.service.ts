@@ -1,52 +1,93 @@
-import { ErrorCode, type GitHubRepo } from 'shared';
+import { RequestError } from '@octokit/request-error';
+import { ErrorCode, type AnalyzedGithubRepository } from 'shared';
 
 import { mapGitHubRepoToMetadata } from '../mappers/github.mapper';
 import { AppError } from '../utils/AppError';
-import { fetchRepositoryTree } from './github-analysis/github-tree-fetcher';
 import {
   normalizeTreeEntries,
   splitRepositoryFullName,
+  type GitHubTreeApiResponse,
 } from '../utils/github-utils';
 import { analyzeProjectStructure } from './github-analysis/project-structure/project-structure-analyzer';
-import { fetchGithubRepos } from './github.service';
+import {
+  fetchGithubRepos,
+  fetchRepoFile,
+  fetchRepositoryTree,
+} from './github.service';
+import { logger } from '../lib/logger';
 import type {
   AnalyzeGithubRepositoriesInput,
   AnalyzeGithubRepositoriesOutput,
+  CandidateFileContent,
+  FetchRepoFileInput,
 } from '../types/github';
 
+// Result of analyzing one repository: the analysis, or just its ID when the
+// repository's tree could not be fetched.
+type RepositoryOutcome =
+  | { ok: true; analysis: AnalyzedGithubRepository }
+  | { ok: false; repoId: number };
+
 /**
- * Runs the temporary GitHub project-structure analysis flow for selected repositories.
- * It fetches each repository's tree, analyzes project structure, and returns each
- * repository's GitHub metadata, summary, detected areas, maturity signals and
- * architecture signals for manual testing.
+ * Analyzes the selected repositories and returns each one's metadata, structure
+ * signals and candidate file contents. A repository missing from the installation
+ * or whose tree GitHub rejects (404, 409, 422) goes to `failedRepoIds`; a 404 on a
+ * candidate file gives null content. Any other GitHub failure rejects the whole call.
  */
 export async function analyzeGithubRepositories({
   clerkUserId,
   accessToken,
   repoIds,
-}: AnalyzeGithubRepositoriesInput) {
-  const { repositories: repos } = await fetchGithubRepos(accessToken);
+}: AnalyzeGithubRepositoriesInput): Promise<AnalyzeGithubRepositoriesOutput> {
+  const repos = await fetchGithubRepos(accessToken);
 
   const selectedRepos = repos.filter((repo) => repoIds.includes(repo.id));
 
-  if (selectedRepos.length !== repoIds.length) {
+  // Some missing repos are reported in `failedRepoIds`, but with none left
+  // there is nothing to analyze, so the request fails instead.
+  if (selectedRepos.length === 0) {
     throw new AppError(
-      'One or more selected repositories were not found',
+      'None of the selected repositories could be found. Please reselect your repositories and try again.',
       ErrorCode.BAD_REQUEST,
       400,
     );
   }
 
-  const summaries = await Promise.all(
-    selectedRepos.map(async (repo) => {
+  const outcomes = await Promise.all(
+    selectedRepos.map(async (repo): Promise<RepositoryOutcome> => {
       const repoFullName = repo.full_name;
       const { owner, repo: repoName } = splitRepositoryFullName(repoFullName);
-      const { tree, truncated } = await fetchRepositoryTree({
-        accessToken,
-        owner,
-        repo: repoName,
-        treeRef: repo.default_branch ?? 'HEAD',
-      });
+
+      // Only the tree call is guarded, so a bug in the analysis below still
+      // throws instead of being reported as a failed repository.
+      let treeResponse: GitHubTreeApiResponse;
+      try {
+        treeResponse = await fetchRepositoryTree({
+          accessToken,
+          owner,
+          repo: repoName,
+          treeRef: repo.default_branch ?? 'HEAD',
+        });
+      } catch (err) {
+        // 404 (access removed, default branch gone), 409 (empty repository) and
+        // 422 are specific to this repository. Anything else affects every
+        // repository or is not understood, so it is rethrown.
+        if (err instanceof RequestError) {
+          switch (err.status) {
+            case 404:
+            case 409:
+            case 422:
+              logger.warn(
+                { err, owner, repo: repoName },
+                'Skipping repository whose tree could not be fetched',
+              );
+              return { ok: false, repoId: repo.id };
+          }
+        }
+        throw err;
+      }
+
+      const { tree, truncated } = treeResponse;
       const entries = normalizeTreeEntries(tree);
       const analysis = analyzeProjectStructure({
         repository: {
@@ -57,18 +98,55 @@ export async function analyzeGithubRepositories({
         isTruncated: truncated,
       });
 
-      const { summary, detectedAreas, maturitySignals, architectureSignals } =
-        analysis;
-
-      return {
-        repository: mapGitHubRepoToMetadata(repo),
+      const {
         summary,
         detectedAreas,
         maturitySignals,
         architectureSignals,
+        candidateFilesToInspect,
+      } = analysis;
+
+      const candidateFileContents = await Promise.all(
+        candidateFilesToInspect.map(
+          async (path): Promise<CandidateFileContent> => {
+            const fetchInput: FetchRepoFileInput = {
+              accessToken,
+              owner,
+              repo: repoName,
+              path,
+            };
+              const content = await fetchRepoFile(fetchInput);
+              return { path, content };
+          },
+        ),
+      );
+
+      return {
+        ok: true,
+        analysis: {
+          repository: mapGitHubRepoToMetadata(repo),
+          summary,
+          detectedAreas,
+          maturitySignals,
+          architectureSignals,
+          candidateFilesToInspect,
+          candidateFileContents,
+        },
       };
     }),
   );
 
-  return summaries;
+  const summaries = outcomes.flatMap((outcome) =>
+    outcome.ok ? [outcome.analysis] : [],
+  );
+
+  const missingRepoIds = repoIds.filter(
+    (id) => !repos.some((repo) => repo.id === id),
+  );
+  const failedRepoIds = [
+    ...missingRepoIds,
+    ...outcomes.flatMap((outcome) => (outcome.ok ? [] : [outcome.repoId])),
+  ];
+
+  return { summaries, failedRepoIds };
 }

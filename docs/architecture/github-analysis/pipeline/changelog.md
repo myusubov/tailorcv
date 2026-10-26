@@ -6,6 +6,32 @@
 
 Historical pipeline entries currently live in the parent GitHub Analysis changelog: [../changelog.md](../changelog.md).
 
+## 2026-10-23
+
+### Candidate File Contents in the Analyze Response
+
+- **Decision:** Read the files the analyzer picks and return their text beside the structure analysis, so later steps do not have to re-fetch them. The failure rule is recorded in [ADR 0002](adr/0002-scope-github-failures-by-blast-radius.md).
+- **Problem:** `candidateFilesToInspect` was always empty and the analyze response carried paths only, so nothing could say what a project does.
+- **Solution:**
+  1. **Per-path read — `apps/backend/src/services/github-analysis.service.ts`**: After `analyzeProjectStructure`, each path in `candidateFilesToInspect` is read with `fetchRepoFile`, all paths of a repository in parallel, and returned as `candidateFileContents` (`{ path, content }`).
+  2. **Text request and missing files — `apps/backend/src/services/github.service.ts`**: `fetchRepoFile` asks for GitHub's raw media type, so no base64 decoding is needed. It returns `null` for a 404 and when the response is not text (for example a directory), and rethrows every other error. The analysis service has no per-file catch, so those errors reach the global error handler and reject the call.
+  3. **Contract — `packages/shared/src/types/github-analysis.ts`**: Adds `CandidateFileContent` and `candidateFilesToInspect` / `candidateFileContents` to `AnalyzedGithubRepository`.
+- **Affected files:** `apps/backend/src/services/github-analysis.service.ts`, `apps/backend/src/services/github.service.ts`, `packages/shared/src/types/github-analysis.ts`, `apps/backend/src/types/github.ts`.
+- **Outcome:** The analyze response includes file text for the picked files. `CandidateFileContent.error` exists but no path sets it. A read-only unauthenticated request to a public repository confirmed that a nested path is accepted in Octokit's `%2F`-encoded form, that raw text comes back as a string, that a directory path returns an array, and that a missing file throws 404. The backend typecheck reported no errors once during development and was not re-run after the final refactors; no test or lint was run. Candidate paths per repository are capped at 10 (tier two) and 5 (tier three) beyond the uncapped tier one.
+
+### Octokit Client and GitHub Failure Handling
+
+- **Decision:** Move installation, repository, tree and file requests to one Octokit client and map its errors to `ErrorCode`s in the global error handler; degrade a repository or file only for statuses that concern that unit ([ADR 0002](adr/0002-scope-github-failures-by-blast-radius.md)).
+- **Problem:** GitHub requests used raw `fetch` with per-call 502 `AppError`s. A revoked or suspended installation, a rate limit, a GitHub outage and a missing resource were not told apart, and one failing tree rejected the analysis for every selected repository.
+- **Solution:**
+  1. **Client — `apps/backend/src/lib/octokit.ts`**: `createOctokit(token)` builds the client from the individual `@octokit` packages (the `octokit` umbrella pulls in `@octokit/app`, which has no CommonJS entry and fails to load under `tsx`), adds pagination, retry (no retry for 400, 401, 403, 404, 409, 410, 422, 429, 451) and throttling that fails fast on a rate limit, and pins `x-github-api-version` to `2026-03-10`.
+  2. **Error mapping — `apps/backend/src/lib/octokit-error.ts`, `apps/backend/src/middleware/error.ts`**: `mapOctokitErrorToAppError` produces `RATE_LIMIT_EXCEEDED`, `GITHUB_CONNECTION_REQUIRED`, `GITHUB_API_ERROR` or `INTERNAL_ERROR` (table in the pipeline README, 6.3); `errorHandler` applies it to every `RequestError`. The same edit removed the cockatiel resilience branch from `errorHandler`; `handleResilienceError` is still called directly by `ai-chat.controller.ts`, and the reason for the removal is not recorded.
+  3. **Service calls — `apps/backend/src/services/github.service.ts`**: Installation token creation (no longer retried on 401; JWT lifetime shortened from 10 to 9 minutes), the suspended-installation check in `getValidInstallationToken` (`GITHUB_APP_SUSPENDED`), `fetchGithubRepos` (still limited to the first 100 repositories, with pagination deferred, and now returning the array), `fetchRepositoryTree` (moved here from the deleted `github-analysis/github-tree-fetcher.ts`) and `fetchRepoFile` use the client.
+  4. **Partial results — `apps/backend/src/services/github-analysis.service.ts`**: A selected repository missing from the installation list, or whose tree answers 404, 409 or 422, goes to `failedRepoIds` while the others return; the call fails with 400 only when none of the selected repositories is found.
+  5. **Response shapes — `apps/backend/src/controllers/github.controller.ts`, `packages/shared/src/types/`**: `getGithubRepos` responds `{ total_count, repositories }`, analyze responds with `AnalyzeGithubReposResponse` directly instead of `{ result }`, and `ErrorCode` gains `GITHUB_API_ERROR` and `GITHUB_APP_SUSPENDED`. The analyze contract moved from backend and frontend copies to `packages/shared/src/types/github-analysis.ts`.
+- **Affected files:** `apps/backend/src/lib/octokit.ts`, `apps/backend/src/lib/octokit-error.ts`, `apps/backend/src/middleware/error.ts`, `apps/backend/src/services/github.service.ts`, `apps/backend/src/services/github-analysis.service.ts`, `apps/backend/src/controllers/github.controller.ts`, `apps/backend/src/types/github.ts`, `apps/backend/src/mappers/github.mapper.ts`, `packages/shared/src/types/errors.ts`, `packages/shared/src/types/github-analysis.ts`, `packages/shared/src/index.ts`.
+- **Outcome:** Each GitHub failure meaning has one code and status, and repository-specific failures no longer fail the whole analysis. Known limits: `exchangeCodeForToken`, `verifyGithubUserCanAccessInstallation`, `getGitHubUser`, commits, pull requests and README requests still use raw `fetch`; the 422 tree status is handled without a recorded reason; `octokit-error.test.ts` and `error.test.ts` were written but not run, and no lint was run (see the previous entry for the typecheck).
+
 ## 2026-08-21
 
 ### OAuth State TTL Extended

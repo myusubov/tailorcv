@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-10-23
+
+### Octokit Packages for Backend GitHub Access
+
+- **Decision:** Declare the Octokit client packages in the backend workspace that imports them, as individual packages and not the `octokit` umbrella.
+- **Problem:** Backend GitHub requests used raw `fetch`; moving them to Octokit (see the GitHub analysis pipeline changelog) needs a client, pagination, retry, throttling and the `RequestError` type.
+- **Solution:**
+  1. **Backend ownership — `apps/backend/package.json`**: Adds `@octokit/core` `^7.0.8`, `@octokit/plugin-paginate-rest` `^14.0.0`, `@octokit/plugin-rest-endpoint-methods` `^17.0.0`, `@octokit/plugin-retry` `^8.1.1`, `@octokit/plugin-throttling` `^11.0.5` and `@octokit/request-error` `^7.1.2`.
+  2. **Reproducible resolution — `package-lock.json`**: Records the added packages and their transitive dependencies.
+  3. **Compiler resolution — `apps/backend/tsconfig.json`**: `module` and `moduleResolution` changed from `CommonJS` / `node` to `NodeNext` in the same worktree. The reason and the runtime effect are not recorded here; `@octokit/core` 7 declares `"type": "module"` and an `exports` map while the backend workspace is `"type": "commonjs"`.
+- **Outcome:** Backend source imports Octokit packages that the backend workspace declares. A backend typecheck reported no errors once during development and was not re-run after the final refactors; no install audit, `npm ls` or runtime check of the `NodeNext` setting is recorded.
+
 ## 2026-08-14
 
 ### Clerk Next.js 7.7.5 Frontend Upgrade

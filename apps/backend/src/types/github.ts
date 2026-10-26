@@ -1,3 +1,9 @@
+import type { AnalyzeGithubReposResponse } from 'shared';
+
+// Part of the analyze response the frontend also reads, so they live in
+// `shared`. Re-exported so backend modules keep importing them from here.
+export type { CandidateFileContent, GithubRepositoryMetadata } from 'shared';
+
 export interface FetchGithubCommitsInput {
   accessToken: string;
   owner: string;
@@ -19,6 +25,13 @@ export interface FetchRepoFileInput {
   path: string;
 }
 
+export interface FetchRepositoryTreeInput {
+  accessToken: string;
+  owner: string;
+  repo: string;
+  treeRef: string;
+}
+
 export interface DetectRepoTechStackInput {
   accessToken: string;
   owner: string;
@@ -31,29 +44,7 @@ export interface AnalyzeGithubRepositoriesInput {
   repoIds: number[];
 }
 
-export interface GithubRepositoryMetadata {
-  id: number;
-  name: string;
-  fullName: string;
-  description: string | null;
-  htmlUrl: string;
-  topics: string[];
-  isFork: boolean;
-  language: string | null;
-}
-
-export interface AnalyzeGithubRepositoriesOutput {
-  summaries: Array<{
-    repositoryId: number;
-    repositoryFullName: string;
-    projectShape: string;
-    inferredStack: string[];
-    totalFiles: number;
-    topLevelFolders: string[];
-    maxDepth: number;
-    isTreeTruncated: boolean;
-  }>;
-}
+export type AnalyzeGithubRepositoriesOutput = AnalyzeGithubReposResponse;
 
 // GitHub API Commit Response
 export interface GitHubCommit {

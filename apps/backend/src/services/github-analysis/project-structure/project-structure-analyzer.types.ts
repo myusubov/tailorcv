@@ -1,4 +1,35 @@
-import type { DetectedAreaName } from './project-structure-detected-areas.types';
+import type {
+  ArchitectureSignal,
+  DetectedProjectArea,
+  MaturitySignals,
+  ProjectStructureSummary,
+} from 'shared';
+
+// These types are shared with the frontend through the analyze response, so
+// they live in `shared`. Re-exported here so analyzer modules keep importing
+// them from this file.
+export type {
+  ArchitectureSignal,
+  ArchitectureSignalName,
+  BackendDetectedAreaTechnology,
+  CiCdDetectedAreaTechnology,
+  ContainerizationDetectedAreaTechnology,
+  DatabaseDetectedAreaTechnology,
+  DetectedAreaTechnology,
+  DetectedProjectArea,
+  DocumentationDetectedAreaTechnology,
+  FrontendDetectedAreaTechnology,
+  InferredAreaTechnologies,
+  InfrastructureAsCodeDetectedAreaTechnology,
+  MaturitySignals,
+  MobileDetectedAreaTechnology,
+  ProjectStructureSummary,
+  RootManifest,
+  RootManifestEcosystem,
+  RuntimeDetectedAreaTechnology,
+  TemplateDetectedAreaTechnology,
+  TestDetectedAreaTechnology,
+} from 'shared';
 
 /**
  * Repository tree entry kinds supported by the project structure analyzer.
@@ -49,293 +80,9 @@ export interface AnalyzeProjectStructureInput {
 }
 
 /**
- * Dependency-ecosystem labels attached to a detected root manifest file.
- * Intentionally limited to widely used ecosystems; more are added on demand.
- */
-export type RootManifestEcosystem =
-  | 'Node.js'
-  | 'Python'
-  | 'Go'
-  | 'Rust'
-  | 'Java/Kotlin'
-  | 'Ruby'
-  | 'PHP';
-
-/**
- * A dependency manifest present at the repository root, recorded by presence
- * and ecosystem only; the file contents are not read.
- */
-export interface RootManifest {
-  file: string;
-  ecosystem: RootManifestEcosystem;
-}
-
-/**
- * High-level repository shape summary derived from normalized tree entries.
- */
-export interface ProjectStructureSummary {
-  projectShape: string;
-  inferredStack: string[];
-  totalFiles: number;
-  topLevelFolders: string[];
-  maxDepth: number;
-  isTreeTruncated: boolean;
-  detectedLanguages: string[];
-  rootManifests: RootManifest[];
-}
-
-/**
- * Frontend technology labels inferred for detected user-interface areas.
- */
-export type FrontendDetectedAreaTechnology =
-  | 'Angular'
-  | 'Astro'
-  | 'Next.js'
-  | 'Nuxt'
-  | 'React'
-  | 'React Router'
-  | 'Svelte'
-  | 'SvelteKit'
-  | 'Static Web'
-  | 'Vue';
-
-/**
- * Backend framework labels inferred for detected API/server areas.
- */
-export type BackendDetectedAreaTechnology =
-  | 'ASP.NET Core'
-  | 'Django'
-  | 'Express.js'
-  | 'Laravel'
-  | 'NestJS'
-  | 'Ruby on Rails'
-  | 'Spring Boot';
-
-/**
- * Containerization tool labels inferred for detected containerization areas.
- */
-export type ContainerizationDetectedAreaTechnology =
-  | 'Docker'
-  | 'Podman/OCI'
-  | 'Quadlet';
-
-/**
- * Runtime, language, and platform context attached to detected areas.
- */
-export type RuntimeDetectedAreaTechnology =
-  | '.NET'
-  | 'AWS'
-  | 'Azure'
-  | 'C#'
-  | 'Dart'
-  | 'Java'
-  | 'Kotlin'
-  | 'Kubernetes'
-  | 'Node.js'
-  | 'PHP'
-  | 'Python'
-  | 'Ruby'
-  | 'Rust'
-  | 'Swift';
-
-/**
- * Template/view technology labels attached as related context.
- */
-export type TemplateDetectedAreaTechnology = 'Blade' | 'ERB';
-
-/**
- * Database tooling labels inferred for detected schema or migration areas.
- */
-export type DatabaseDetectedAreaTechnology =
-  | 'Alembic'
-  | 'Drizzle'
-  | 'Knex'
-  | 'Prisma'
-  | 'Sequelize'
-  | 'SQLAlchemy'
-  | 'TypeORM';
-
-export type TestDetectedAreaTechnology =
-  | 'Jest'
-  | 'Vitest'
-  | 'Mocha'
-  | 'Cypress'
-  | 'Playwright';
-
-/**
- * CI/CD provider labels inferred for detected pipeline-as-code areas.
- */
-export type CiCdDetectedAreaTechnology =
-  | 'AppVeyor'
-  | 'Azure Pipelines'
-  | 'Bitbucket Pipelines'
-  | 'Buildkite'
-  | 'CircleCI'
-  | 'Drone CI'
-  | 'GitHub Actions'
-  | 'GitLab CI/CD'
-  | 'Jenkins'
-  | 'TeamCity'
-  | 'Travis CI'
-  | 'Woodpecker CI';
-
-/**
- * Mobile framework/platform labels inferred for detected mobile app areas.
- */
-export type MobileDetectedAreaTechnology =
-  | 'Android'
-  | 'Expo'
-  | 'Flutter'
-  | 'iOS'
-  | 'React Native';
-
-/**
- * Infrastructure-as-code tool labels inferred for detected infrastructure-as-code areas.
- * v1 scope only. Currently `Terraform` (primary) with `OpenTofu` (related),
- * `Helm` (primary) with `Kubernetes` (related), `Bicep` (primary) with
- * `Azure` (related), `AWS CDK` (primary) with `AWS` (related), `Pulumi`
- * (primary, no related technology), and `Ansible` (primary, no related
- * technology) are emitted.
- */
-export type InfrastructureAsCodeDetectedAreaTechnology =
-  | 'Ansible'
-  | 'AWS CDK'
-  | 'Bicep'
-  | 'Helm'
-  | 'OpenTofu'
-  | 'Pulumi'
-  | 'Terraform';
-
-/**
- * Documentation-framework labels inferred for detected documentation areas.
- * Currently `Sphinx` and `MkDocs` (each primary, `Python` related),
- * `Docusaurus` (primary, `React` related), `mdBook` (primary, `Rust`
- * related), `Starlight` (primary, `Astro` related), `DocFX` (primary, `.NET`
- * related), `Antora` (primary, `Node.js` related), `Fumadocs`, `Dumi` and
- * `Rspress` (each primary, `React` related), and `VitePress` and `VuePress`
- * (each primary, `Vue` related) are emitted.
- */
-export type DocumentationDetectedAreaTechnology =
-  | 'Sphinx'
-  | 'MkDocs'
-  | 'Docusaurus'
-  | 'mdBook'
-  | 'Starlight'
-  | 'DocFX'
-  | 'Antora'
-  | 'Fumadocs'
-  | 'VitePress'
-  | 'VuePress'
-  | 'Dumi'
-  | 'Rspress';
-
-/**
- * Technology labels inferred for a detected repository area from path evidence.
- */
-export type DetectedAreaTechnology =
-  | FrontendDetectedAreaTechnology
-  | BackendDetectedAreaTechnology
-  | ContainerizationDetectedAreaTechnology
-  | RuntimeDetectedAreaTechnology
-  | TemplateDetectedAreaTechnology
-  | DatabaseDetectedAreaTechnology
-  | TestDetectedAreaTechnology
-  | CiCdDetectedAreaTechnology
-  | MobileDetectedAreaTechnology
-  | InfrastructureAsCodeDetectedAreaTechnology
-  | DocumentationDetectedAreaTechnology;
-
-/**
- * Primary and related technologies exposed for a detected repository area.
- */
-export interface InferredAreaTechnologies {
-  primary: DetectedAreaTechnology;
-  related: DetectedAreaTechnology[];
-}
-
-/**
- * Detected project area such as frontend app, backend API, shared package, docs, or tooling.
- */
-export interface DetectedProjectArea {
-  name: DetectedAreaName;
-  path: string;
-  confidence: number;
-  evidence: string[];
-  inferredTechnologies: InferredAreaTechnologies;
-}
-
-/**
- * Architecture signal names emitted by the project-structure analyzer.
- */
-export type ArchitectureSignalName =
-  | 'Layered backend'
-  | 'Client/server separation';
-
-/**
- * Structure-derived architecture signal that may support later resume evidence.
- * `evidence` is `Tech @ path` for signals backed by detected areas and the repository path for signals backed by folders.
- */
-export interface ArchitectureSignal {
-  signal: ArchitectureSignalName;
-  evidence: string[];
-}
-
-/**
- * One structure-derived practice check: whether the repository shows the practice, and why.
- * `evidence` is `Tech @ path` for checks backed by detected areas and the file path for checks backed by files, sorted.
- */
-interface MaturityCheck {
-  present: boolean;
-  evidence: string[];
-}
-
-/**
- * Test and source file counts under one application area path.
- * `areaName` is the area's primary technology; `ratio` is test files divided by source files, rounded to 2 decimals, or `null` when there are no source files.
- */
-interface TestingAreaCoverage {
-  areaName: string;
-  path: string;
-  testFileCount: number;
-  sourceFileCount: number;
-  ratio: number | null;
-}
-
-/**
- * Testing check plus file counts.
- * `present` and `evidence` come from detected Test suite areas, so test files alone do not set `present`. `repoTotals` counts the whole repo; `byArea` has one row per application area, or a single row when a root code area exists.
- */
-interface TestingMaturityCheck extends MaturityCheck {
-  repoTotals: {
-    testFileCount: number;
-    sourceFileCount: number;
-    ratio: number | null;
-  };
-  byArea: TestingAreaCoverage[];
-}
-
-/**
- * Structure-derived engineering-practice checks for one repository, used as deterministic maturity evidence.
- * Presence only: a check shows a practice is configured, not that it is done well. `coverage.met` counts present checks out of `coverage.total`.
- */
-export interface MaturitySignals {
-  testing: TestingMaturityCheck;
-  automation: MaturityCheck;
-  deployability: MaturityCheck;
-  documentation: MaturityCheck;
-  codeStyle: MaturityCheck;
-  dependencyPinning: MaturityCheck;
-  coverage: { met: number; total: number };
-}
-
-/**
  * File path that later analyzers should inspect because structure suggests it is high value.
  */
-export interface CandidateFileToInspect {
-  path: string;
-  priority: number;
-  reason: string;
-}
+export type CandidateFileToInspect = string;
 
 /**
  * Early resume-oriented hint inferred from structure before deeper source-code analysis.

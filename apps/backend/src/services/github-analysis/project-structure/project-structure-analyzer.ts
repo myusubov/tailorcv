@@ -1,10 +1,10 @@
 import { buildArchitectureSignals } from './project-structure-architecture-signals';
+import { buildCandidateFilesToInspect } from './project-structure-candidate-files';
 import { buildDetectedAreas } from './project-structure-detected-areas';
 import { buildMaturitySignals } from './project-structure-maturity-signals';
 import { buildProjectStructureSummary } from './project-structure-summary';
 import type {
   AnalyzeProjectStructureInput,
-  CandidateFileToInspect,
   ProjectStructureAnalysisResult,
   ProjectStructureFeedback,
   RepoTreeEntry,
@@ -35,15 +35,6 @@ export type {
   RootManifestEcosystem,
   SignalStrength,
 } from './project-structure-analyzer.types';
-
-function buildCandidateFilesToInspect({
-  entries,
-}: {
-  entries: RepoTreeEntry[];
-}): CandidateFileToInspect[] {
-  void entries;
-  return [];
-}
 
 function buildResumeSignalHints({
   entries,
@@ -85,7 +76,10 @@ export function analyzeProjectStructure(
     entries,
     detectedAreas,
   });
-  const candidateFilesToInspect = buildCandidateFilesToInspect({ entries });
+  const candidateFilesToInspect = buildCandidateFilesToInspect({
+    entries,
+    detectedAreas,
+  });
   const resumeSignalHints = buildResumeSignalHints({ entries });
   const feedback = buildFeedback({ entries });
 

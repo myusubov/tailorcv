@@ -31,7 +31,17 @@ export function mapGitHubConnectionToResponse({
  * `topics` is optional in the GitHub payload, so it defaults to an empty list.
  */
 export function mapGitHubRepoToMetadata(
-  repo: GitHubRepo,
+  repo: Pick<
+    GitHubRepo,
+    | 'id'
+    | 'name'
+    | 'full_name'
+    | 'description'
+    | 'html_url'
+    | 'topics'
+    | 'fork'
+    | 'language'
+  >,
 ): GithubRepositoryMetadata {
   return {
     id: repo.id,

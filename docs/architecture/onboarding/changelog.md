@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-10-23
+
+### GitHub Step Error and Partial-Failure States
+
+- **Problem:** `GitHubStep` showed one generic error view for repository loading and a default toast for analysis errors, so a revoked or uninstalled app, a suspended app, a rate limit and a partly failed analysis looked the same, and the analyze result was not read at all.
+- **Solution:**
+  1. **Repository-loading errors — `apps/frontend/app/components/onboarding/github/github-step.tsx`**: `GITHUB_APP_SUSPENDED` shows a full-page `ErrorState` with a back action only (the account owner must unsuspend the app); `GITHUB_CONNECTION_REQUIRED` shows "Reconnect your GitHub account" whose action restarts the installation flow; any other error keeps "Failed to fetch repositories" with a refetch action. The one-use `github-error-view.tsx` was deleted and its `ErrorState` is used directly.
+  2. **Analysis errors — same file**: `useActionMutation` for analyze runs with `showErrorToast: false`. `GITHUB_CONNECTION_REQUIRED` renders the same reconnect page; every other error shows the shared error toast, kept for 10 seconds for `RATE_LIMIT_EXCEEDED`.
+  3. **Partial failure — same file**: When the analyze response lists `failedRepoIds`, a 10-second warning toast names those repositories by full name.
+  4. **Messages — `apps/frontend/lib/utils/error-toast.tsx`**: Friendly messages for `GITHUB_CONNECTION_REQUIRED`, `GITHUB_API_ERROR` and `GITHUB_APP_SUSPENDED`; the rate-limit message comes from the server.
+  5. **Types — `apps/frontend/lib/types/github.ts`**: `AnalyzeGithubReposOutput` is now `AnalyzeGithubReposResponse` from `shared`.
+- **Outcome:** A required reconnect, a suspended app, a rate limit and a partly failed analysis each get a distinct response. The UI still shows nothing from the analysis itself beyond the warning toast. No component test covers these states, and no test, lint or typecheck result is recorded for this frontend change.
+
 ## 2026-09-01
 
 ### GitHub Repo Card Selection Indicator and Checkbox Semantics
