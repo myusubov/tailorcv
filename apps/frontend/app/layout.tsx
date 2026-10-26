@@ -10,6 +10,7 @@ import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toast } from '@heroui/react';
 import { ClientOnlyComponents } from './components/client-only-components';
+import { OfflineBanner } from './components/ui/offline-banner';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -43,6 +44,7 @@ export default function RootLayout({
               <QueryProvider>
                 <AIChatProvider>
                   <Toast.Provider placement="bottom end" />
+                  <OfflineBanner />
                   <Suspense
                     fallback={
                       <div className="flex min-h-screen items-center justify-center">

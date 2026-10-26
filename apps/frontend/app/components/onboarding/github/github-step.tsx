@@ -11,32 +11,25 @@ import {
   initiateGithubAuthAction,
 } from '@/lib/actions/github.actions';
 import { useActionMutation } from '@/lib/hooks/use-action-mutation';
+import { showErrorToast } from '@/lib/utils/error-toast';
 import { GlobalLoading } from '@/app/components/ui/global-loading';
 import { GitHubConnectView } from './github-connect-view';
 import { GitHubRepoSelectionView } from './github-repo-selection-view';
 import { useQueryStates, parseAsString } from 'nuqs';
-import GithubErrorView from './github-error-view';
+import { ErrorState } from '@/app/components/ui/error-state';
+import { ErrorCode } from 'shared';
 
 interface GitHubStepProps {
   onBack: () => void;
 }
 
 /**
- * Coordinates GitHub connection, repository loading, and repository analysis.
- *
- * The component accepts the parent flow's back handler and returns the view for
- * the current GitHub onboarding state. It performs query, OAuth redirect, toast,
- * and analysis-mutation side effects; only the initial connection check blocks
- * the full viewport, while repository loading remains progressive.
+ * Coordinates GitHub connection, repository loading, and analysis for onboarding.
+ * Connecting redirects the browser to GitHub. Only the initial connection check
+ * blocks the full viewport. Loading errors and a required reconnect show an error
+ * page; other analysis errors show a toast.
  */
 export function GitHubStep({ onBack }: GitHubStepProps) {
-  const analyzeMutation = useActionMutation(analyzeGithubReposAction, {
-    showErrorToast: true,
-    // onSuccess: (data) => {
-    //   console.log("data", data);
-    // },
-  });
-
   const connectMutation = useActionMutation(initiateGithubAuthAction, {
     showErrorToast: true,
     onSuccess: ({ authUrl }) => {
@@ -73,6 +66,43 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     retry: 1, // Retry once automatically before showing error
   });
 
+  const {
+    error: analyzeError,
+    mutate: analyzeMutation,
+    isPending: isAnalyzePending,
+  } = useActionMutation(analyzeGithubReposAction, {
+    showErrorToast: false,
+    onSuccess: ({ failedRepoIds, summaries }) => {
+      if (failedRepoIds.length > 0 && summaries.length > 0) {
+        const failedRepoNames = githubRepos?.repositories
+          .filter((repo) => failedRepoIds.includes(repo.id))
+          .map((repo) => repo.full_name)
+          .join(', ');
+        toast.warning(
+          `Analysis completed, but the following repositories failed: ${failedRepoNames}`,
+          {
+            timeout: 10000,
+          },
+        );
+      } else if (failedRepoIds.length > 0 && summaries.length === 0) {
+        toast.danger(
+          'None of the selected repositories could be analyzed. Please reselect your repositories and try again.',
+          {
+            timeout: 10000,
+          },
+        );
+      }
+    },
+    onError: (error) => {
+      if (error.code !== ErrorCode.GITHUB_CONNECTION_REQUIRED) {
+        showErrorToast(error, {
+          duration:
+            error.code === ErrorCode.RATE_LIMIT_EXCEEDED ? 10000 : undefined,
+        });
+      }
+    },
+  });
+
   const hasHandledOauthStatus = useRef(false);
   useEffect(() => {
     if (oauthParams.status && !hasHandledOauthStatus.current) {
@@ -94,8 +124,21 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    analyzeMutation.mutate({ repoIds: selectedRepoIds });
+    analyzeMutation({ repoIds: selectedRepoIds });
   };
+
+  const renderReconnectErrorState = (error: {
+    code: string;
+    message: string;
+  }) => (
+    <ErrorState
+      error={error}
+      title="Reconnect your GitHub account"
+      onRetry={handleConnect}
+      retryLabel="Reconnect GitHub"
+      onBack={onBack}
+    />
+  );
 
   // Show loading state while checking connection status
   if (isLoadingConnection) {
@@ -111,13 +154,33 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   // Note: connectionError with 404/502 means no connection found
   if (githubConnection && !connectionError) {
     if (reposError) {
+      // Only the account owner can unsuspend the app, so no retry or reconnect.
+      if (reposError.code === ErrorCode.GITHUB_APP_SUSPENDED) {
+        return (
+          <ErrorState
+            error={reposError}
+            title="GitHub app is suspended"
+            onBack={onBack}
+          />
+        );
+      }
+
+      if (reposError.code === ErrorCode.GITHUB_CONNECTION_REQUIRED) {
+        return renderReconnectErrorState(reposError);
+      }
+
       return (
-        <GithubErrorView
+        <ErrorState
           error={reposError}
+          title="Failed to fetch repositories"
           onRetry={() => refetchRepos()}
-          goBack={onBack}
+          onBack={onBack}
         />
       );
+    }
+
+    if (analyzeError?.code === ErrorCode.GITHUB_CONNECTION_REQUIRED) {
+      return renderReconnectErrorState(analyzeError);
     }
 
     return (
@@ -125,7 +188,7 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
         repos={githubRepos ?? { total_count: 0, repositories: [] }}
         onBack={onBack}
         onAnalyze={handleAnalyze}
-        isLoading={analyzeMutation.isPending}
+        isLoading={isAnalyzePending}
         isReposLoading={isLoadingRepos}
       />
     );

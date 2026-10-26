@@ -30,7 +30,7 @@ export const ErrorState = ({
 
   return (
     <div
-      className={`animate-in fade-in zoom-in flex flex-col items-center justify-center px-4 py-12 text-center duration-300 ${className}`}
+      className={`animate-in h-svh fade-in zoom-in flex flex-col items-center justify-center px-4 py-12 text-center duration-300 ${className}`}
     >
       <div className="bg-destructive/10 mb-6 rounded-full p-4">
         <AlertCircle className="text-destructive size-12" />

@@ -1,4 +1,5 @@
 import type {
+  AnalyzeGithubReposResponse,
   FetchGithubReposResponse,
   GitHubConnectionResponse,
 } from 'shared';
@@ -27,15 +28,4 @@ export type AnalyzeGithubReposInput = {
   repoIds: number[];
 };
 
-export interface AnalyzeGithubReposOutput {
-  summaries: Array<{
-    repositoryId: number;
-    repositoryFullName: string;
-    projectShape: string;
-    inferredStack: string[];
-    totalFiles: number;
-    topLevelFolders: string[];
-    maxDepth: number;
-    isTreeTruncated: boolean;
-  }>;
-}
+export type AnalyzeGithubReposOutput = AnalyzeGithubReposResponse;
