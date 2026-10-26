@@ -37,8 +37,9 @@
 ```text
 GitHub repo IDs selected by user
   -> protected temporary analyze endpoint
-  -> empty temporary response
-  -> future repo-tree retrieval and Project Structure Analyzer
+  -> per-repository tree retrieval and Project Structure Analyzer
+  -> candidate file contents (404 gives null content)
+  -> failedRepoIds for repositories that could not be analyzed
   -> future analyzers
   -> future evidence aggregator + AI resume synthesis
 ```
@@ -101,7 +102,7 @@ docs/architecture/
 
 | Domain            | Relationship                                                                                                                               | Key Interface                    |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| Onboarding        | GitHub repo selection loads installation repositories and calls the temporary analyze endpoint, which currently returns an empty response. | `FetchGithubReposResponse`       |
+| Onboarding        | GitHub repo selection loads installation repositories and calls the temporary analyze endpoint, which returns per-repository analyses and `failedRepoIds`. | `FetchGithubReposResponse`, `AnalyzeGithubReposResponse` |
 | GitHub service    | Protected GitHub routes refresh a saved installation token before accessing installation repositories.                                     | `GitHubConnection`               |
 | Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps.                                     | `ProjectStructureAnalysisResult` |
 
@@ -122,7 +123,7 @@ docs/architecture/
 - [x] Detected areas builder
 - [x] Architecture signals builder
 - [x] Maturity signals builder
-- [ ] Candidate files builder
+- [x] Candidate files builder (2026-10-23; unverified, see [project-structure/README.md](project-structure/README.md))
 - [ ] Resume signal hints builder
 - [ ] Feedback builder
 

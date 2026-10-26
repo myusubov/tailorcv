@@ -49,7 +49,7 @@
 ### Backend Analysis
 
 - [github-analysis/README.md](github-analysis/README.md) - Hub for GitHub repository analyzer pipeline documentation
-- [github-analysis/pipeline/README.md](github-analysis/pipeline/README.md) - GitHub endpoint, connection, tree fetching, and orchestration boundaries
+- [github-analysis/pipeline/README.md](github-analysis/pipeline/README.md) - GitHub endpoint, connection, Octokit client, failure handling, tree and file fetching, and orchestration boundaries
 - [github-analysis/project-structure/README.md](github-analysis/project-structure/README.md) - Implemented project structure analyzer, scoring rules, and output contracts
 - [github-analysis/changelog.md](github-analysis/changelog.md) - GitHub analysis implementation history and decision log
 
@@ -103,7 +103,7 @@
 | ---------------------------- | ---------- |
 | **Top-level domain folders** | 6          |
 | **Last structure migration** | 2026-07-31 |
-| **Domains needing split**    | None       |
+| **Domains needing split**    | `github-analysis/project-structure` (README 537 lines, over the 500-line threshold) |
 
 <!--
   MAINTENANCE RULES FOR AI:

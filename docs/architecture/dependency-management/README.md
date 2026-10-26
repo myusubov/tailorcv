@@ -20,6 +20,7 @@
 - **Overrides must be verified**: A root override is kept only when `npm ls` confirms the installed tree actually resolves to the intended version.
 - **HeroUI stays exact and synchronized**: `@heroui/react` and `@heroui/styles` use the same exact version so component and CSS contracts cannot move independently or through a routine install.
 - **Framework packages stay synchronized**: Upgrade `next` and `eslint-config-next` together so runtime and framework lint rules describe the same release contract.
+- **Octokit stays as individual packages**: The backend declares `@octokit/core`, the rest-endpoint-methods, paginate-rest, retry and throttling plugins, and `@octokit/request-error` instead of the `octokit` umbrella, which per the comment in `apps/backend/src/lib/octokit.ts` pulls in `@octokit/app` (no CommonJS entry) and fails to load under `tsx`.
 - **Clerk workspaces migrate independently**: Frontend `@clerk/nextjs` updates do not imply a backend Clerk package migration; review each workspace and its auth consumers within its own scope.
 
 ---
@@ -116,6 +117,7 @@ tailorcv/
 | Auth brand UI    | Aceternity copy-paste prerequisites are frontend-owned; the current static grid does not import them directly | `clsx`, `motion`, `tailwind-merge`                  |
 | Auth recovery UI | Email masking is owned by the frontend workspace that renders recovery guidance                               | `maskdata` in `apps/frontend/package.json`          |
 | Backend Data     | Prisma packages must stay aligned in the backend workspace                                                    | `prisma`, `@prisma/client`, `@prisma/adapter-pg`    |
+| GitHub analysis  | The Octokit client and error type are imported only by backend source, so the backend workspace declares them  | `@octokit/core`, `@octokit/plugin-*`, `@octokit/request-error` |
 | Frontend UI      | Next.js, React, HeroUI, and Tailwind packages belong to the frontend workspace                                | `next`, `react`, `@heroui/react`, `@heroui/styles`  |
 
 ---
@@ -132,6 +134,7 @@ tailorcv/
 - [x] HeroUI React and Styles pinned together at `3.2.3`
 - [x] Next.js runtime and ESLint configuration aligned at `16.3.0`
 - [x] Clerk Next.js frontend SDK aligned at `7.7.5` independently of the backend Clerk migration
+- [x] Octokit packages declared in the backend workspace (2026-10-23): `@octokit/core` `^7.0.8`, `plugin-paginate-rest` `^14.0.0`, `plugin-rest-endpoint-methods` `^17.0.0`, `plugin-retry` `^8.1.1`, `plugin-throttling` `^11.0.5`, `request-error` `^7.1.2`
 
 ### Phase 2: Deferred Major/Upstream Items
 

@@ -38,7 +38,10 @@ apps/frontend/app/globals.css TailorCV tokens
 | ------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | `apps/frontend/package.json`    | Pins the supported HeroUI and Tailwind versions.                                                      | Any component-library upgrade.            |
 | `apps/frontend/app/globals.css` | Imports HeroUI's explicit CSS export and owns TailorCV theme tokens and intentional global overrides. | Theme or cross-component styling changes. |
-| `apps/frontend/app/layout.tsx`  | Mounts global UI providers, including HeroUI Toast.                                                   | Provider or global feedback changes.      |
+| `apps/frontend/app/layout.tsx`  | Mounts global UI providers, including HeroUI Toast and the offline banner.                            | Provider or global feedback changes.      |
+| `apps/frontend/app/components/ui/offline-banner.tsx` | Fixed top banner (`role="status"`) shown while React Query's `onlineManager` reports offline, so it agrees with paused queries. | Offline feedback changes. |
+| `apps/frontend/app/components/ui/error-state.tsx` | Full-page error view with optional retry and back actions; fills the viewport height (`h-svh`). Only the GitHub onboarding step uses it today. | Page-level error UI changes. |
+| `apps/frontend/lib/utils/error-toast.tsx` | `showErrorToast` and the `FRIENDLY_ERROR_MESSAGES` map shared by error toasts and `ErrorState`. | Error copy or toast behavior changes. |
 
 ---
 
@@ -104,6 +107,7 @@ apps/frontend/
 - [x] Immediate Tooltip closing preserved through `--tooltip-close-delay`
 - [x] Auth entrance sequences use route-scoped native CSS with reduced-motion fallbacks
 - [x] Reset-code `InputOTP` slots and new-password inputs remain visible on Card surfaces in light and dark themes
+- [x] Offline banner mounted in the root layout and a full-height `ErrorState` (2026-10-23; unverified, see the changelog)
 - [ ] Complete authorized type, test, build, dependency-tree, and browser verification
 
 ---
