@@ -23,7 +23,7 @@ FROM deps AS build
 COPY . .
 # Placeholder DB URLs so prisma generate works at build time
 ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db" \
-    SHADOW_DATABASE_URL="postgresql://user:pass@localhost:5432/shadow"
+    DATABASE_URL_UNPOOLED="postgresql://user:pass@localhost:5432/db"
 RUN rm -rf apps/backend/dist packages/shared/dist \
   && rm -f apps/backend/tsconfig.tsbuildinfo packages/shared/tsconfig.tsbuildinfo \
   && npm run build --workspace=shared \

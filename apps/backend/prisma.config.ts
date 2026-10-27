@@ -13,8 +13,8 @@ export default defineConfig({
 
   // Database connection configuration
   datasource: {
-    url: env('DATABASE_URL'),
-    shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+    // Migrate needs Neon's direct connection; the app itself uses the pooled DATABASE_URL.
+    url: env('DATABASE_URL_UNPOOLED'),
   },
 
   // Configuration for database views (if needed)

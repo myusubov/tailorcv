@@ -14,7 +14,6 @@ const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.url(),
-  SHADOW_DATABASE_URL: z.url(),
   // Redis
   REDIS_URL: z.url(),
 
