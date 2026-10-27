@@ -26,16 +26,16 @@ export function setupStreamTermination(
   req: any,
   options: {
     clerkUserId: string;
-    conversationId: string;
+    resourceId: string;
     onTerminate: () => void;
   },
 ) {
-  const { clerkUserId, conversationId, onTerminate } = options;
+  const { clerkUserId, resourceId, onTerminate } = options;
 
   req.on('close', () => {
     logger.info(
-      { clerkUserId, conversationId },
-      'Client disconnected from AI chat stream',
+      { clerkUserId, resourceId },
+      'Client disconnected from AI stream',
     );
     onTerminate();
   });

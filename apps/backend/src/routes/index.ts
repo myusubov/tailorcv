@@ -5,12 +5,6 @@ import { webhooksRouter } from './webhooks.router';
 import { resumesRouter } from './resumes.router';
 import { onboardingRouter } from './onboarding.router';
 import { githubRouter } from './github.router';
-import { aiChatRouter } from './ai-chat.router';
-import {
-  aiChatRateLimiter,
-  githubAuthRateLimiter,
-  githubApiRateLimiter,
-} from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -21,6 +15,5 @@ router.use('/auth/github', githubRouter);
 router.use('/webhooks', webhooksRouter);
 router.use('/resumes', resumesRouter);
 router.use('/onboarding', onboardingRouter);
-router.use('/ai/chat', aiChatRouter);
 
 export const v1Router = router;

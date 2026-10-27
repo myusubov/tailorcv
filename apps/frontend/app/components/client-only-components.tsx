@@ -5,11 +5,6 @@ import dynamic from 'next/dynamic';
 
 import { config } from '@/lib/config';
 
-const AIChatBox = dynamic(
-  () => import('./resumes/review/ai-chat-box').then((mod) => mod.AIChatBox),
-  { ssr: false },
-);
-
 const DevLogoutButton = dynamic(
   () => import('./dev-logout-button').then((mod) => mod.DevLogoutButton),
   { ssr: false },
@@ -25,7 +20,6 @@ export function ClientOnlyComponents() {
 
   return (
     <>
-      {/* {isLoaded && isSignedIn && <AIChatBox />} */}
       {config.isDev && isLoaded && isSignedIn ? <DevLogoutButton /> : null}
       <ThemeToggle />
     </>
