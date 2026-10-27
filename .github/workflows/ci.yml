@@ -12,8 +12,7 @@ concurrency:
 
 env:
   DATABASE_URL: 'postgresql://postgres:password@localhost:5432/tailorcv'
-  DIRECT_URL: 'postgresql://postgres:password@localhost:5432/tailorcv'
-  SHADOW_DATABASE_URL: 'postgresql://postgres:password@localhost:5432/tailorcv_shadow'
+  DATABASE_URL_UNPOOLED: 'postgresql://postgres:password@localhost:5432/tailorcv'
   REDIS_URL: 'redis://localhost:6380'
   CLERK_SECRET_KEY: 'sk_test_1234567890abcdefghijklmnopqrstuvwxyz1234567890'
   CLERK_PUBLISHABLE_KEY: 'pk_test_1234567890abcdefghijklmnopqrstuvwxyz1234567890'

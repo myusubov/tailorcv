@@ -6,6 +6,18 @@
 
 Historical pipeline entries currently live in the parent GitHub Analysis changelog: [../changelog.md](../changelog.md).
 
+## 2026-10-27
+
+### Rate Limiting Not Applied to GitHub Routes
+
+- **Decision:** No backend route applies a rate limiter. The owner removed rate limiting on purpose; the reason was not recorded.
+- **Problem:** The AI chat routes were the only routes that applied a limiter. `githubAuthRateLimiter`, `githubApiRateLimiter` and `globalRateLimiter` were already defined but not applied (the global one is commented out in `apps/backend/src/server.ts`).
+- **Solution:**
+  1. **Chat limiters removed — `apps/backend/src/middleware/rateLimiter.ts`**: `aiChatRateLimiter` and `aiConversationCrudRateLimiter` were deleted with the chat router.
+  2. **Guidance updated — `CLAUDE.md`**: The backend route pattern no longer tells contributors to apply a limiter, and says none is applied on purpose.
+  3. **Risk recorded — pipeline README, Risks & Mitigations**: The analyze endpoint and the other GitHub routes are listed as unthrottled.
+- **Outcome:** The unused GitHub and global limiters stay in place for a later decision. No ADR was written because the rationale and alternatives are not recorded. Not verified: no request-level check of the unthrottled routes was run.
+
 ## 2026-10-23
 
 ### Candidate File Contents in the Analyze Response

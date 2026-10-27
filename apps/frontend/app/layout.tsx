@@ -5,7 +5,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from './providers/theme-provider';
 import { QueryProvider } from './providers/query-provider';
-import { AIChatProvider } from './providers/ai-chat-provider';
 import { Toaster } from 'sonner';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toast } from '@heroui/react';
@@ -42,21 +41,19 @@ export default function RootLayout({
           <NuqsAdapter>
             <ThemeProvider>
               <QueryProvider>
-                <AIChatProvider>
-                  <Toast.Provider placement="bottom end" />
-                  <OfflineBanner />
-                  <Suspense
-                    fallback={
-                      <div className="flex min-h-screen items-center justify-center">
-                        Loading...
-                      </div>
-                    }
-                  >
-                    {children}
-                  </Suspense>
-                  <ClientOnlyComponents />
-                  <Toaster richColors closeButton position="bottom-right" />
-                </AIChatProvider>
+                <Toast.Provider placement="bottom end" />
+                <OfflineBanner />
+                <Suspense
+                  fallback={
+                    <div className="flex min-h-screen items-center justify-center">
+                      Loading...
+                    </div>
+                  }
+                >
+                  {children}
+                </Suspense>
+                <ClientOnlyComponents />
+                <Toaster richColors closeButton position="bottom-right" />
               </QueryProvider>
             </ThemeProvider>
           </NuqsAdapter>

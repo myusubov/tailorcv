@@ -169,9 +169,6 @@
 
   /* Fonts */
   --font-mono: var(--font-geist-mono);
-
-  /* AI Chat */
-  --spacing-ai-header: 3.5rem;
 }
 
 /* Shared form column for auth routes that pair mobile forms with a desktop marketing panel. */

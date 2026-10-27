@@ -19,6 +19,7 @@
 | GitHub project structure analyzer changes        | [github-analysis/project-structure/README.md](github-analysis/project-structure/README.md) | `apps/backend/src/services/github-analysis/project-structure/`                                                         |
 | Dependency placement or audit remediation        | [dependency-management/README.md](dependency-management/README.md)                         | `package.json`, `apps/*/package.json`, `packages/*/package.json`, `package-lock.json`                                  |
 | Local frontend development access or LAN origins | [development-environment/README.md](development-environment/README.md)                     | `apps/frontend/next.config.ts`, host firewall and WSL networking configuration                                         |
+| Prisma CLI or migration connectivity             | [development-environment/README.md](development-environment/README.md)                     | `apps/backend/prisma.config.ts`, `Dockerfile`, `.github/workflows/ci.yml`                                              |
 
 ---
 

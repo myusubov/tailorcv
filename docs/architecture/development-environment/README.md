@@ -48,6 +48,7 @@ LAN browser
 | `Dockerfile`                                   | Selects the backend production/build Node image                                  | Changing backend container runtime                         |
 | `apps/backend/package.json`                    | Builds a self-contained backend runtime, including the generated Prisma client   | Changing backend production build or start behavior        |
 | `apps/backend/scripts/copy-prisma-runtime.mjs` | Copies Prisma runtime files into the compiled backend artifact                   | Changing the backend output structure                      |
+| `apps/backend/prisma.config.ts`                | Points the Prisma CLI at `DATABASE_URL_UNPOOLED` and sets no shadow database URL | Changing or diagnosing migration connectivity              |
 | `apps/frontend/Dockerfile`                     | Selects the frontend production/build Node image                                 | Changing frontend container runtime                        |
 | `apps/frontend/next.config.ts`                 | Owns the Next.js development-origin allowlist and frontend runtime configuration | Changing the host address used to open the development app |
 | `apps/frontend/package.json`                   | Owns the Next.js development-server and compiler release                         | Changing or diagnosing framework development behavior      |
@@ -98,6 +99,10 @@ Windows host (outside repository)
 - Change the repository Node major as one coordinated migration rather than allowing environments to drift independently.
 - Keep `apps/backend/dist` self-contained: the backend build generates Prisma before compilation and copies the Prisma runtime into the relative path consumed by compiled imports.
 - Keep local production-like builds and Docker builds on the same backend build command rather than repairing container output separately.
+- Keep the Prisma CLI on `DATABASE_URL_UNPOOLED`, Neon's direct connection, while the running app uses the pooled `DATABASE_URL`. A migrate run through the pooler left a session-level advisory lock that made later runs fail with P1002.
+- Define `DATABASE_URL_UNPOOLED` in `apps/backend/.env`. No `.env.example` exists, and every Prisma CLI command, including the `prisma generate` step of `npm run build -w backend`, reads it through `prisma.config.ts`. Prisma's `env()` fails on a missing variable.
+- Do not set `shadowDatabaseUrl`. Prisma creates and removes its own shadow database on Neon, and a shadow URL equal to the application database can wipe it.
+- The backend `Dockerfile` and `.github/workflows/ci.yml` define a placeholder `DATABASE_URL_UNPOOLED` for `prisma generate`. Whether the build fails without it has not been tested.
 - Keep Turbopack's development filesystem cache disabled because this workspace has repeatedly restored stale CSS and HMR chunks. Normal in-memory Fast Refresh remains enabled.
 
 ---
@@ -119,6 +124,7 @@ Windows host (outside repository)
 - [x] Current Windows LAN address is represented in `allowedDevOrigins`
 - [x] Backend production builds include the generated Prisma runtime in `apps/backend/dist`
 - [x] Next.js 16.3 development tooling is current, with cross-session Turbopack filesystem persistence disabled after recurring stale CSS and HMR restores
+- [x] Prisma CLI reads `DATABASE_URL_UNPOOLED` and sets no shadow database URL (2026-10-27; the Docker build and a CI run were not executed)
 - [ ] Confirm or update that address whenever the host joins a different network
 - [ ] Treat LAN reachability as verified only after probing the exact endpoint from the intended client
 
@@ -133,6 +139,7 @@ Windows host (outside repository)
 | A broad development origin weakens local safeguards                   | Keep the allowlist restricted to exact required origins                                                    |
 | Local, CI, Docker, and deployment use different Node majors           | Keep all repository runtime declarations synchronized and confirm the deployment build log                 |
 | Turbopack restores stale compiler output between development sessions | Disable `turbopackFileSystemCacheForDev`; accept slower warm starts while retaining in-memory Fast Refresh |
+| A Prisma CLI run through the pooled URL leaves an advisory lock held   | Use `DATABASE_URL_UNPOOLED`. If P1002 appears, find the idle session that holds Prisma's advisory lock in `pg_locks` and terminate only that session |
 
 ---
 
