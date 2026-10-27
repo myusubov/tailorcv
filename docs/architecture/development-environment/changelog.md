@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-10-27
+
+### Prisma CLI on the Direct Neon Connection
+
+- **Decision:** The Prisma CLI connects through `DATABASE_URL_UNPOOLED` and sets no shadow database URL. The running app keeps the pooled `DATABASE_URL`.
+- **Problem:** `prisma.config.ts` pointed the CLI at the pooled URL and set `shadowDatabaseUrl` to a URL for the same `neondb` database as `DATABASE_URL`. A `migrate dev` run on a database with no recorded migration history reported drift and offered a reset, and a later reset timed out with P1002 because a pooled session still held Prisma's advisory lock.
+- **Solution:**
+  1. **CLI connection — `apps/backend/prisma.config.ts`**: `datasource.url` reads `DATABASE_URL_UNPOOLED` (Neon's direct host, the pooled host without `-pooler`); `shadowDatabaseUrl` is removed so Prisma manages a temporary shadow database.
+  2. **Env validation — `apps/backend/src/config/env.ts`**: Drops the required `SHADOW_DATABASE_URL`, which nothing reads.
+  3. **Build and CI placeholders — `Dockerfile`, `.github/workflows/ci.yml`**: The placeholder `SHADOW_DATABASE_URL` is replaced by a placeholder `DATABASE_URL_UNPOOLED`, and the unused `DIRECT_URL` is removed from CI.
+  4. **History baseline — `apps/backend/prisma/migrations/`**: The development database had no `_prisma_migrations` table, so the three existing migrations were recorded with `prisma migrate resolve --applied`. The database held no data worth keeping and was then reset with `prisma migrate reset --force`.
+  5. **Schema migration — `20261027080341_drop_chat_and_user_billing`**: Drops `chat_conversations`, `chat_messages`, the `Plan` enum, and the `plan`, `creditsUsed`, `creditsLimit` and `stripeCustomerId` columns of `users`, after the AI chat source was removed. No architecture domain documents that chat code or the Prisma schema.
+  6. **Production secrets — Fly app `tailorcv` (external state)**: `GITHUB_APP_CALLBACK_URL` was added and the stale `SHADOW_DATABASE_URL` removed; release v56 deployed.
+- **Outcome:** `prisma migrate status` reports the local database up to date with four migrations. Not verified: the Docker build and a CI run, whether the Docker and CI placeholders are required, and whether the production database is the same Neon database as the one migrated here. Why `migrate dev` first reported drift against a database whose tables matched the migrations was not determined.
+
 ## 2026-08-13
 
 ### Disable Unreliable Cross-Session Turbopack Development Cache

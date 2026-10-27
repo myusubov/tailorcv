@@ -196,6 +196,7 @@ The backend validates GitHub App configuration through `apps/backend/src/config/
 | One rate-limited or failing request fails every selected repository | By design: those failures are shared, so the call rejects with `RATE_LIMIT_EXCEEDED` or `GITHUB_API_ERROR`. An analyze call fires one file request per candidate path (a capped list per repository, three repositories at most), all at once. |
 | The 2026-10-23 Octokit migration and candidate file reads are unverified | No test or lint was run, so `octokit-error.test.ts` and `error.test.ts` are unchecked, and the backend typecheck was not re-run after the final refactors. One unauthenticated read-only request to the public contents endpoint confirmed that Octokit's `%2F`-encoded nested paths return file text and that a missing file throws 404. |
 | `apps/backend/tsconfig.json` moved to `NodeNext` in the same worktree | The reason and runtime effect are not recorded or verified here; see the dependency-management changelog. |
+| GitHub routes, including `POST /api/v1/auth/github/analyze`, are not rate limited | Deliberate as of 2026-10-27 (the reason is not recorded). `githubAuthRateLimiter` and `githubApiRateLimiter` exist in `middleware/rateLimiter.ts` but are not applied. Clerk auth still gates every GitHub route, and the Octokit client fails fast with `RATE_LIMIT_EXCEEDED` when GitHub throttles. |
 
 ---
 

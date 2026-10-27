@@ -89,7 +89,7 @@ npm run test:e2e:frontend:real-auth
 npm run format
 
 # Prisma
-npm run prisma:generate        # generate client
+npm run prisma:generate        # generate client (all Prisma commands need DATABASE_URL_UNPOOLED in apps/backend/.env)
 npm run prisma:migrate         # run migrations
 npm run prisma:studio          # visual DB browser
 ```
@@ -106,13 +106,13 @@ npm run prisma:studio          # visual DB browser
 ### Pattern: Defining a Backend Route
 
 **When:** Adding any new API endpoint
-**Canonical example:** `apps/backend/src/routes/ai-chat.router.ts`
+**Canonical example:** `apps/backend/src/routes/github.router.ts`
 
 ```typescript
 // 1. Router file: {entity}.router.ts
 export const entityRouter = Router();
-entityRouter.get('/', rateLimiter, requireClerkAuth, listEntitiesController);
-entityRouter.post('/', rateLimiter, requireClerkAuth, createEntityController);
+entityRouter.get('/', requireClerkAuth, listEntitiesController);
+entityRouter.post('/', requireClerkAuth, createEntityController);
 
 // 2. Mount in routes/index.ts
 router.use('/entity', entityRouter);
@@ -121,7 +121,7 @@ router.use('/entity', entityRouter);
 **Key rules:**
 
 - Always apply `requireClerkAuth` middleware (except health/webhooks)
-- Apply rate limiter middleware per route group
+- No route applies a rate limiter. This is deliberate as of 2026-10-27: the AI chat limiters were removed with the chat routes, and `globalRateLimiter`, `githubAuthRateLimiter` and `githubApiRateLimiter` in `apps/backend/src/middleware/rateLimiter.ts` stay defined but unused. Do not add one without the owner's decision.
 - Use `idempotency()` middleware for POST endpoints that trigger async/streaming work
 - Controller functions follow naming: `{verb}{Entity}Controller`
 
@@ -130,7 +130,7 @@ router.use('/entity', entityRouter);
 ### Pattern: Backend Controller + Service
 
 **When:** Implementing business logic for an endpoint
-**Canonical example:** `apps/backend/src/controllers/chat-conversations.controller.ts` + `apps/backend/src/services/chat-conversations.service.ts`
+**Canonical example:** `apps/backend/src/controllers/resumes.controller.ts` + `apps/backend/src/services/resumes.service.ts`
 
 ```typescript
 // Controller: extract locals, call service, return response
@@ -170,7 +170,7 @@ export async function listEntities(input: ListEntitiesInput) {
 ### Pattern: Frontend Data Fetching (React Query)
 
 **When:** Adding a GET request to display data from the backend
-**Canonical example:** `apps/frontend/lib/http/ai-chat-client.ts`
+**Canonical example:** `apps/frontend/lib/http/resumes-client.ts`
 
 ```typescript
 // 1. Define query hook in lib/http/{entity}-client.ts
@@ -202,7 +202,7 @@ export const useEntityDetailsQuery = defineQuery<{ id: string }, EntityDetails>(
 ### Pattern: Frontend Mutations (Server Actions)
 
 **When:** Any create, update, or delete operation
-**Canonical example:** `apps/frontend/lib/actions/ai-chat.actions.ts`
+**Canonical example:** `apps/frontend/lib/actions/resumes.actions.ts`
 
 ```typescript
 // 1. Define action in lib/actions/{entity}.actions.ts
@@ -258,18 +258,18 @@ const { mutate } = useActionMutation(createEntityAction, {
 
 ### Pattern: SSE Streaming
 
-**When:** Real-time server-sent events (AI chat, job progress)
-**Canonical example:** `apps/frontend/app/api/ai/chat/route.ts` (proxy) + `apps/backend/src/controllers/ai-chat.controller.ts` (SSE emitter)
+**When:** Real-time server-sent events (job progress)
+**Canonical example:** None yet. The chat route and controller were removed on 2026-10-27; the helpers in `apps/backend/src/utils/ai-stream-sse.ts` remain for the planned job-progress endpoint.
 
 ```typescript
 // Backend: use SSE utilities
 initSseResponse(res);
 writeSseEvent(res, { type: 'text', content: chunk });
 writeSseEvent(res, { type: 'done' });
-setupStreamTermination(res, cleanup);
+setupStreamTermination(req, { clerkUserId, resourceId, onTerminate });
 
 // Frontend proxy: pipe backend stream through Next.js API route
-const response = await streamChat(body);
+const response = await backendStream(/* path, body */);
 return new Response(response.body, {
   headers: { 'Content-Type': 'text/event-stream' },
 });
@@ -279,9 +279,7 @@ return new Response(response.body, {
 
 **Key rules:**
 
-- Write streamed data directly into React Query cache (cache-direct pattern) -- no `useState` for message history
-- SSE event types: `text`, `proposal`, `done`, `error`, `thinking`
-- Client generates `assistantMessageId` UUID -- backend respects client-provided IDs
+- Write streamed data directly into React Query cache (cache-direct pattern) -- no `useState` for streamed data
 
 ---
 
@@ -292,7 +290,7 @@ return new Response(response.body, {
 ```typescript
 // Backend: throw AppError with ErrorCode enum
 throw new AppError({
-  message: 'Conversation not found',
+  message: 'Resume not found',
   errorCode: ErrorCode.NOT_FOUND,
   statusCode: 404,
 });
@@ -411,23 +409,23 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 
 | Thing                    | Convention                              | Example                         |
 | ------------------------ | --------------------------------------- | ------------------------------- |
-| Backend controllers      | `{verb}{Entity}Controller`              | `listConversationsController`   |
-| Backend services         | `{verb}{Entity}`                        | `createConversation`            |
-| Backend routes           | `{entity}Router`                        | `aiChatRouter`                  |
-| Backend route files      | `{entity}.router.ts`                    | `ai-chat.router.ts`             |
-| Backend controller files | `{entity}.controller.ts`                | `ai-chat.controller.ts`         |
-| Backend service files    | `{entity}.service.ts`                   | `chat-conversations.service.ts` |
-| Backend type files       | `{entity}.ts` in `src/types/`           | `ai-chat.ts`                    |
-| Frontend query hooks     | `use{Entity}Query`                      | `useConversationsQuery`         |
-| Frontend cache hooks     | `use{Entity}Cache`                      | `useConversationsCache`         |
-| Frontend actions         | `{verb}{Entity}Action`                  | `createConversationAction`      |
-| Frontend action files    | `{entity}.actions.ts`                   | `ai-chat.actions.ts`            |
-| Frontend type files      | `{entity}.ts` in `lib/types/`           | `ai-chat.ts`                    |
-| Components               | PascalCase, feature-grouped             | `ChatSidebar`, `OnboardingForm` |
+| Backend controllers      | `{verb}{Entity}Controller`              | `listBaseResumesController`     |
+| Backend services         | `{verb}{Entity}`                        | `createBaseResume`              |
+| Backend routes           | `{entity}Router`                        | `resumesRouter`                 |
+| Backend route files      | `{entity}.router.ts`                    | `resumes.router.ts`             |
+| Backend controller files | `{entity}.controller.ts`                | `resumes.controller.ts`         |
+| Backend service files    | `{entity}.service.ts`                   | `resumes.service.ts`            |
+| Backend type files       | `{entity}.ts` in `src/types/`           | `resumes.ts`                    |
+| Frontend query hooks     | `use{Entity}Query`                      | `useBaseResumeQuery`            |
+| Frontend cache hooks     | `use{Entity}Cache`                      | none yet                        |
+| Frontend actions         | `{verb}{Entity}Action`                  | `updateResumeAction`            |
+| Frontend action files    | `{entity}.actions.ts`                   | `resumes.actions.ts`            |
+| Frontend type files      | `{entity}.ts` in `lib/types/`           | `resumes.ts`                    |
+| Components               | PascalCase, feature-grouped             | `OnboardingForm`                |
 | Hooks                    | `use-{name}.ts` (kebab-case file)       | `use-action-mutation.ts`        |
 | Feature flow hooks       | `use-{feature}-flow.ts`                 | `use-login-flow.ts`             |
 | Frontend colocated tests | `{name}.test.ts(x)` beside feature code | `use-login-flow.test.tsx`       |
-| API routes               | kebab-case paths                        | `/api/ai/chat/conversations`    |
+| API routes               | kebab-case paths                        | `/api/github/repos`             |
 
 ## Project-Specific Rules
 
