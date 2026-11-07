@@ -30,6 +30,7 @@ export type BackendRequestOptions = Omit<RequestInit, 'body'> & {
   auth?: BackendAuthMode;
   revalidate?: number | false;
   tags?: string[];
+  timeoutMs?: number;
 };
 
 function buildBackendUrl(
@@ -68,6 +69,7 @@ async function backendFetch(
     headers,
     tags,
     revalidate,
+    timeoutMs,
     ...init
   } = options;
 
@@ -101,12 +103,17 @@ async function backendFetch(
     ...init,
     headers: requestHeaders,
     body: requestBody,
+    signal:
+      init.signal ??
+      (timeoutMs !== undefined ? AbortSignal.timeout(timeoutMs) : undefined),
     next: tags || revalidate !== undefined ? { tags, revalidate } : undefined,
   });
 }
 
 /**
  * Standard JSON-based backend request handler.
+ * Never throws: a failed fetch, including a `timeoutMs` abort, resolves as a
+ * `NETWORK_ERROR` result.
  */
 export async function backendRequest<T>(
   path: string,

@@ -36,8 +36,8 @@
 
 ```text
 GitHub repo IDs selected by user
-  -> protected temporary analyze endpoint
-  -> per-repository tree retrieval and Project Structure Analyzer
+  -> protected analyze route (today: creates a resume and returns its id)
+  -> analysis service, no route calls it yet: per-repository tree retrieval and Project Structure Analyzer
   -> candidate file contents (404 gives null content)
   -> failedRepoIds for repositories that could not be analyzed
   -> future analyzers
@@ -102,7 +102,7 @@ docs/architecture/
 
 | Domain            | Relationship                                                                                                                               | Key Interface                    |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| Onboarding        | GitHub repo selection loads installation repositories and calls the temporary analyze endpoint, which returns per-repository analyses and `failedRepoIds`. | `FetchGithubReposResponse`, `AnalyzeGithubReposResponse` |
+| Onboarding        | GitHub repo selection loads installation repositories and calls the analyze route, which creates a resume and returns its id; no analysis runs on it yet. | `FetchGithubReposResponse`, `CreateResumeResponse` |
 | GitHub service    | Protected GitHub routes refresh a saved installation token before accessing installation repositories.                                     | `GitHubConnection`               |
 | Resume generation | Future evidence aggregator and AI synthesis should consume analyzer outputs instead of raw repo dumps.                                     | `ProjectStructureAnalysisResult` |
 
@@ -118,7 +118,7 @@ docs/architecture/
 - [x] Project shape detector implemented
 - [x] Structure-inferred stack detector implemented
 - [x] Focused tests added for current detection behavior
-- [x] Temporary endpoint logs selected repository summaries
+- [x] Temporary endpoint logs selected repository summaries (no route calls the analysis service since 2026-11-06)
 - [x] GitHub connection middleware protects repo/analyze routes
 - [x] Detected areas builder
 - [x] Architecture signals builder

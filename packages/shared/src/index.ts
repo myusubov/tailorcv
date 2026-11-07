@@ -4,6 +4,7 @@ export * from './types/errors';
 export * from './types/api';
 export * from './types/github';
 export * from './types/github-analysis';
+export * from './types/resume';
 
 // Export schemas
 export * from './schemas/resume';

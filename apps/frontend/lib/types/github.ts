@@ -1,5 +1,5 @@
 import type {
-  AnalyzeGithubReposResponse,
+  CreateResumeResponse,
   FetchGithubReposResponse,
   GitHubConnectionResponse,
 } from 'shared';
@@ -26,6 +26,7 @@ export interface InitiateGithubAuthOutput {
 
 export type AnalyzeGithubReposInput = {
   repoIds: number[];
+  idempotencyKey: string;
 };
 
-export type AnalyzeGithubReposOutput = AnalyzeGithubReposResponse;
+export type AnalyzeGithubReposOutput = CreateResumeResponse;

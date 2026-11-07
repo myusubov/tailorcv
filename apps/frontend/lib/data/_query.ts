@@ -5,6 +5,9 @@ import { backendRequest } from '@/lib/api';
 
 export type CacheKeyPart = string | number | null | undefined;
 
+// Applies to reads only: actions set their own limit and streams must stay open.
+const DEFAULT_GET_TIMEOUT_MS = 10_000;
+
 export function makeCacheTags(prefix: string, ...parts: CacheKeyPart[]) {
   const tags = [prefix];
   for (const part of parts) {
@@ -57,6 +60,7 @@ export function defineGet<TParams, TResponse>(
     );
 
     const mergedOptions: BackendRequestOptions = {
+      timeoutMs: DEFAULT_GET_TIMEOUT_MS,
       ...config.defaults,
       ...options,
       tags: Array.from(new Set([...tags, ...(options?.tags ?? [])])),

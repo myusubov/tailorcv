@@ -1,6 +1,6 @@
 # Onboarding: Resume Data Capture
 
-> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. Generation submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt. The method-selection UI currently offers GitHub import only; upload and manual entry remain implemented and reachable via their `?method=` query values but are not presented as selectable cards.
+> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. The upload and manual-entry submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt; GitHub Analyze creates a resume and redirects to it. The method-selection UI currently offers GitHub import only; upload and manual entry remain implemented and reachable via their `?method=` query values but are not presented as selectable cards.
 
 ---
 
@@ -12,7 +12,7 @@
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **Guided completion**     | Manual entry is a sequential flow so required fields are validated before users advance.                                   |
 | **Low-clutter feedback**  | Progress UI should show where the user is without repeating equivalent percentage, count, and stepper signals.             |
-| **Scratch-ready submits** | Generate/analyze actions keep their UI entry points but do not call backend generation until the new pipeline is designed. |
+| **Scratch-ready submits** | Upload and manual-entry actions keep their UI entry points but do not call backend generation until the new pipeline is designed. |
 
 ### 1.2 Key Decisions
 
@@ -45,7 +45,10 @@ app/onboarding/page.tsx
 | `apps/frontend/app/onboarding/page.tsx`                                          | Chooses onboarding method and renders the selected onboarding path.                                                               | Any onboarding route-level change.                          |
 | `apps/frontend/app/onboarding/types.ts`                                          | Defines onboarding method and manual-entry step config.                                                                           | Adding, removing, or renaming manual steps.                 |
 | `apps/frontend/app/components/onboarding/manual-entry-form.tsx`                  | Coordinates manual-entry form state, validation, step transitions, and placeholder generation submit.                             | Manual-entry flow changes.                                  |
-| `apps/frontend/app/components/onboarding/github/github-step.tsx`                 | Handles GitHub connection, installation-repository loading, and analysis submit; shows error pages for repository-loading errors, a suspended app and a required reconnect, and toasts for other analysis errors and `failedRepoIds`.                                        | GitHub onboarding path changes.                             |
+| `apps/frontend/app/components/onboarding/github/github-step.tsx`                 | Handles GitHub connection, installation-repository loading, and resume creation on Analyze (navigates to the new resume; keeps one idempotency key per selection of repositories); shows error pages for repository-loading errors, a suspended app and a required reconnect, and toasts for other creation errors. An expired session is redirected to sign-in by the query provider, not here.                                        | GitHub onboarding path changes.                             |
+| `apps/frontend/app/onboarding/layout.tsx`                                        | Server gate for every onboarding route: calls `requireNotOnboardedUser` inside a `Suspense` boundary.                              | Onboarding access or redirect changes.                      |
+| `apps/frontend/lib/auth/guards.ts`                                               | `requireNotOnboardedUser` reads the onboarding status and redirects completed users to `/resumes`; see the [auth README](../auth/README.md). | Onboarding gate changes.                                    |
+| `apps/backend/src/services/resume.service.ts`                                    | `createResume` copies the user's profile data into a new resume and returns the existing one for a repeated idempotency key; see [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) and [ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md). | Resume creation changes.                                    |
 | `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx`  | Coordinates GitHub repo search query param, installation-repository count, selection limit, clear selection, and analyze handoff. | GitHub repo picker behavior changes.                        |
 | `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`               | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components.                                       | GitHub repo picker presentation changes.                    |
 | `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx`   | Shared skeleton grid used while GitHub repositories are loading.                                                                  | GitHub repo loading-state UI changes.                       |
@@ -79,6 +82,22 @@ flowchart TD
   Finish --> ValidateAll[Validate full onboarding schema]
   ValidateAll --> Placeholder[Show generation placeholder toast]
 ```
+
+### 4.2 GitHub Analyze Flow
+
+```mermaid
+flowchart TD
+  Gate[onboarding/layout.tsx gate] --> Pick[User selects up to 3 repositories]
+  Pick --> Analyze[Analyze button]
+  Analyze --> Action[analyzeGithubReposAction]
+  Action --> Create[POST /api/v1/auth/github/analyze creates a resume]
+  Create -->|id| Redirect[router.push /resumes/id]
+  Create -->|error| Handle[Error page, toast, or sign-in redirect]
+```
+
+The request carries an `idempotencyKey` that the component keeps while the same repositories are selected, so a retry after a timeout returns the resume the first call created ([ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md)).
+
+The resume page, repository analysis after creation and setting `onboardingCompletedAt` are not implemented yet.
 
 ---
 
@@ -136,7 +155,9 @@ if (ok) goToNextStep();
 | Domain            | Relationship                                                                                                                            | Key Interface                                                  |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Auth              | New users land on onboarding after registration.                                                                                        | `config.auth.afterSignUpUrl`                                   |
-| GitHub analysis   | GitHub loads repositories from the connected installation; Analyze calls the temporary endpoint, which returns per-repository analyses and `failedRepoIds`. | `FetchGithubReposResponse`, `AnalyzeGithubReposResponse`, `POST /api/v1/auth/github/analyze` |
+| GitHub analysis   | GitHub loads repositories from the connected installation; Analyze calls the analyze route, which creates a resume and returns its id. No repository analysis runs after creation yet. | `FetchGithubReposResponse`, `CreateResumeResponse`, `POST /api/v1/auth/github/analyze` |
+| Resumes           | Analyze creates a `Resume` that owns copies of the user's profile rows; `/resumes/{id}` has no page yet.                                | `createResume`, [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) |
+| Onboarding status | The onboarding layout reads `onboardingCompletedAt` from `GET /api/v1/onboarding/status`; nothing in the code sets it yet, so every user is treated as not onboarded. | `getOnboardingStatus`, `requireNotOnboardedUser` |
 | Resume generation | Upload and manual submit handlers are placeholders until the next generation pipeline is implemented.                                   | Placeholder toasts in upload and manual paths                  |
 | Shared schemas    | Manual entry validates against the shared onboarding form schema.                                                                       | `onboardingSchema`, `OnboardingFormInput`                      |
 | UI system         | HeroUI supplies form, date, modal, chip, and Checkbox primitives used by onboarding.                                                    | `@heroui/react`, `docs/architecture/ui/README.md`              |
@@ -159,8 +180,12 @@ if (ok) goToNextStep();
 - [x] GitHub onboarding path
 - [x] Upload analysis submit temporarily reset to placeholder
 - [x] GitHub installation repository picker
-- [x] GitHub analysis submit wired to the temporary analyze endpoint; GitHub error pages, error toasts and a `failedRepoIds` warning toast (2026-10-23, no component test)
-- [ ] Resume GitHub project-structure analysis after the temporary endpoint is restored
+- [x] GitHub analysis submit wired to the temporary analyze endpoint; GitHub error pages, error toasts and a `failedRepoIds` warning toast (2026-10-23, no component test; the `failedRepoIds` toast was removed on 2026-11-06)
+- [x] GitHub Analyze creates a resume, copies the profile into it and redirects to `/resumes/{id}`; create-call errors map to the reconnect page, toasts or a sign-in redirect (2026-11-06, no component test, no lint or typecheck run)
+- [x] Analyze retries with the same idempotency key return one resume (2026-11-07, checked by hand for the timeout retry; the concurrent-insert branch, no test, no lint or typecheck run)
+- [x] Onboarding layout gate based on `onboardingCompletedAt` (2026-11-06)
+- [ ] Set `onboardingCompletedAt` when a resume finishes generating
+- [ ] Run GitHub project-structure analysis after the resume is created
 
 ---
 
@@ -172,6 +197,8 @@ if (ok) goToNextStep();
 | Mobile progress UI becomes cramped.                 | Hide the full stepper on small screens and show a compact current-step summary.              |
 | Required data is skipped before generation.         | Trigger step-level validation before advancing and full schema validation before submitting. |
 | Placeholder submits look like completed generation. | Use explicit not-implemented toasts until the new generation pipeline exists.                |
+| Analyze is clicked twice, or retried after a timeout, and creates two resumes. | The request carries an idempotency key stored on the resume under a per-user unique constraint ([ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md)). A replay with the same key and different repositories returns the first resume, so the component changes the key when the selection changes. |
+| The onboarding status cannot be read.               | The layout gate throws (a 401 redirects to sign-in), so `app/error.tsx` renders instead of letting the user through. |
 
 ---
 

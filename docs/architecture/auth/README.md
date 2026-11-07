@@ -20,7 +20,9 @@
 - **`redirectCallbackUrl` vs `redirectUrl`**: `redirectCallbackUrl` = intermediate callback page (`/sso-callback`). `redirectUrl` = final destination after session is created. These are easy to swap — don't.
 - **`signUp.finalize()` not `setActive()`**: Post-completion navigation uses `finalize()`. `setActive()` is only for the `existingSession` edge case.
 - **`hasRun` ref**: Prevents double-execution in React StrictMode on the SSO callback hook.
-- **`auth_reason` login redirects**: When OAuth cannot finish sign-in because Clerk requires the primary factor, a second factor, or a password reset, redirect to `/login` with a reason code so the login page can explain the next step inline.
+- **`auth_reason` login redirects**: When OAuth cannot finish sign-in because Clerk requires the primary factor, a second factor, or a password reset, redirect to `/login` with a reason code so the login page can explain the next step inline. The `session_expired` reason is used by the global 401 handler.
+- **Route access lives in server layouts, not `proxy.ts`**: `proxy.ts` has no route matchers. Layouts call the guards in `lib/auth/guards.ts`: `(auth)/layout.tsx` runs `redirectIfSignedIn` and `onboarding/layout.tsx` runs `requireNotOnboardedUser`.
+- **One place handles an expired session**: `QueryProvider` gives the `QueryCache` and `MutationCache` an `onError` that sends any `UNAUTHORIZED` error to `/login?auth_reason=session_expired` with a full page load, once per load. Individual calls do not handle it.
 - **No account profile names**: TailorCV auth flows do not collect or submit account first/last name. If Clerk reports `missing_requirements` for names, treat it as dashboard configuration drift.
 - **Factor-specific social entry**: Login uses `signIn.sso()` and registration uses `signUp.sso()` directly; `/sso-callback` owns transfers between the two resources. `signUp.reset()` is reserved for an explicit registration restart, such as changing the email during verification.
 
@@ -54,6 +56,8 @@ Auth smoke / real auth testing  -> testing/README.md
 | `docs/architecture/auth/flows/README.md`   | Main doc for login, register, forgot-password, and shared auth-controller patterns | Any non-SSO auth UI or flow change          |
 | `docs/architecture/auth/sso/README.md`     | Main doc for OAuth start/callback/continuation behavior                            | Any Google/Apple auth or SSO routing change |
 | `docs/architecture/auth/testing/README.md` | Main doc for auth browser automation, Gmail polling, and test env setup            | Any auth test or E2E change                 |
+| `apps/frontend/lib/auth/guards.ts`         | Server guards: `requireUser`, `requireNotOnboardedUser`, `requireOnboardedUser`, `redirectIfSignedIn` | Route access or redirect changes            |
+| `apps/frontend/app/providers/query-provider.tsx` | Global `UNAUTHORIZED` handler that redirects to sign-in with the `session_expired` notice | Expired-session behavior changes            |
 
 ---
 
@@ -107,7 +111,8 @@ docs/architecture/
 
 | Domain                  | Relationship                                                       | Key Interface                                               |
 | ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
-| Middleware (`proxy.ts`) | Auth determines public/protected route access                      | `isPublicRoute`, `isAuthRoute`, `isProtectedRoute` matchers |
+| Middleware (`proxy.ts`) | Only sends a signed-in user on `/` to `/resumes`; it protects no route | `ROUTES.RESUMES`                                            |
+| Server layouts          | Decide who may see the auth pages and onboarding                   | `redirectIfSignedIn`, `requireNotOnboardedUser`             |
 | Onboarding              | After sign-up, user is sent to onboarding                          | `config.auth.afterSignUpUrl`                                |
 | Dashboard               | After sign-in, user is sent to dashboard                           | `config.auth.afterSignInUrl`                                |
 | Frontend E2E            | Playwright exercises auth pages and route guards in a real browser | `apps/frontend/playwright.config.ts`, `apps/frontend/e2e/`  |
@@ -128,9 +133,12 @@ docs/architecture/
 - [x] SSO callback (v7 custom hook — `useSSOCallback`)
 - [x] Retired SSO continue route redirects to `/register`
 - [x] `decorateUrl` in all `finalize()` and `setActive()` calls
-- [x] Public/protected route middleware (`proxy.ts`)
+- [x] Route access moved from `proxy.ts` matchers to server layout guards (2026-11-06)
+- [x] Global expired-session redirect with a login notice (2026-11-06; the redirect and the notice were not exercised together, and a signed-in user is bounced away from `/login`)
 
 ### Phase 2: Hardening (Pending)
+
+- [ ] Guard the other routes: `requireOnboardedUser` has no caller, and `app/test/page.tsx` and any future `/resumes` page have no guard since the matchers were removed
 
 - [ ] Terms of Service acceptance enforced for SSO sign-up (currently bypassed — handle via Clerk dashboard "Legal acceptance" or onboarding)
 - [ ] Phone number collection if required by instance settings

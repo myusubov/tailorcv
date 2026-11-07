@@ -38,7 +38,7 @@ when editing files.
 | UI            | HeroUI v3.2.3 + Tailwind CSS 4                                                                                         | -                           |
 | Icons         | Iconify (`@iconify/react`)                                                                                             | -                           |
 | AI            | OpenAI (Responses API) + Anthropic                                                                                     | -                           |
-| Queue         | BullMQ + Redis                                                                                                         | -                           |
+| Queue         | Not decided (candidate: BullMQ + Redis)                                                                                | -                           |
 | Validation    | Zod 4                                                                                                                  | -                           |
 | Data Fetching | TanStack React Query v5                                                                                                | -                           |
 | Forms         | react-hook-form + Zod                                                                                                  | -                           |
@@ -122,7 +122,7 @@ router.use('/entity', entityRouter);
 
 - Always apply `requireClerkAuth` middleware (except health/webhooks)
 - No route applies a rate limiter. This is deliberate as of 2026-10-27: the AI chat limiters were removed with the chat routes, and `globalRateLimiter`, `githubAuthRateLimiter` and `githubApiRateLimiter` in `apps/backend/src/middleware/rateLimiter.ts` stay defined but unused. Do not add one without the owner's decision.
-- Use `idempotency()` middleware for POST endpoints that trigger async/streaming work
+- Use `idempotency()` middleware for POST endpoints that trigger async/streaming work. Resume creation is the exception: it stores the client's idempotency key on the row (onboarding ADR 0002)
 - Controller functions follow naming: `{verb}{Entity}Controller`
 
 ---
@@ -130,7 +130,7 @@ router.use('/entity', entityRouter);
 ### Pattern: Backend Controller + Service
 
 **When:** Implementing business logic for an endpoint
-**Canonical example:** `apps/backend/src/controllers/resumes.controller.ts` + `apps/backend/src/services/resumes.service.ts`
+**Canonical example:** `apps/backend/src/controllers/github.controller.ts` (`analyzeGithubRepos`) + `apps/backend/src/services/resume.service.ts`
 
 ```typescript
 // Controller: extract locals, call service, return response
@@ -170,7 +170,7 @@ export async function listEntities(input: ListEntitiesInput) {
 ### Pattern: Frontend Data Fetching (React Query)
 
 **When:** Adding a GET request to display data from the backend
-**Canonical example:** `apps/frontend/lib/http/resumes-client.ts`
+**Canonical example:** `apps/frontend/lib/http/github-client.ts`
 
 ```typescript
 // 1. Define query hook in lib/http/{entity}-client.ts
@@ -202,7 +202,7 @@ export const useEntityDetailsQuery = defineQuery<{ id: string }, EntityDetails>(
 ### Pattern: Frontend Mutations (Server Actions)
 
 **When:** Any create, update, or delete operation
-**Canonical example:** `apps/frontend/lib/actions/resumes.actions.ts`
+**Canonical example:** `apps/frontend/lib/actions/github.actions.ts`
 
 ```typescript
 // 1. Define action in lib/actions/{entity}.actions.ts
@@ -304,6 +304,7 @@ showErrorToast(error);
 - Backend has a global error handler middleware that catches `AppError`, `ZodError`, Prisma errors, and cockatiel resilience errors
 - All API responses follow: `{ success: boolean, data?, error?: { message, code, details }, meta: { timestamp, requestId } }`
 - `ErrorCode` enum lives in `packages/shared` -- use it everywhere
+- An `UNAUTHORIZED` error from any query or action is handled once in `QueryProvider` (redirect to sign-in); do not handle it per call
 
 ---
 
@@ -416,10 +417,10 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 | Backend controller files | `{entity}.controller.ts`                | `resumes.controller.ts`         |
 | Backend service files    | `{entity}.service.ts`                   | `resumes.service.ts`            |
 | Backend type files       | `{entity}.ts` in `src/types/`           | `resumes.ts`                    |
-| Frontend query hooks     | `use{Entity}Query`                      | `useBaseResumeQuery`            |
+| Frontend query hooks     | `use{Entity}Query`                      | `useGithubReposQuery`           |
 | Frontend cache hooks     | `use{Entity}Cache`                      | none yet                        |
-| Frontend actions         | `{verb}{Entity}Action`                  | `updateResumeAction`            |
-| Frontend action files    | `{entity}.actions.ts`                   | `resumes.actions.ts`            |
+| Frontend actions         | `{verb}{Entity}Action`                  | `analyzeGithubReposAction`      |
+| Frontend action files    | `{entity}.actions.ts`                   | `github.actions.ts`             |
 | Frontend type files      | `{entity}.ts` in `lib/types/`           | `resumes.ts`                    |
 | Components               | PascalCase, feature-grouped             | `OnboardingForm`                |
 | Hooks                    | `use-{name}.ts` (kebab-case file)       | `use-action-mutation.ts`        |
@@ -430,6 +431,7 @@ export function useFeatureFlow(): UseFeatureFlowResult {
 ## Project-Specific Rules
 
 - Never import from `@tanstack/react-query` directly for data fetching -- use `defineQuery` / `defineAction` / `useActionMutation`
+- Route paths used in redirects and navigation come from `ROUTES` in `apps/frontend/lib/config/constants.ts`, not string literals
 - Never use `useState` for streamed data -- write directly to React Query cache (cache-direct pattern)
 - Always use `@iconify/react` for icons -- no other icon libraries
 - Import HeroUI's global stylesheet through `@heroui/styles/css` immediately after Tailwind so Turbopack resolves the explicit CSS export rather than retaining a stale package-root style entry across upgrades.

@@ -42,7 +42,7 @@ User clicks "Continue with Google/Apple"
 | `apps/frontend/app/sso-callback/page.tsx`                            | SSO callback page — delegates to `useSSOCallback`                                  | SSO flow changes                 |
 | `apps/frontend/app/(auth)/sso-continue/page.tsx`                     | Retired continuation route that redirects to registration                          | Defensive route behavior changes |
 | `apps/frontend/lib/auth/login-auth-reason.ts`                        | Fallback reason codes and `/login` notice mapping for incomplete OAuth sign-in     | OAuth fallback UX changes        |
-| `apps/frontend/proxy.ts`                                             | Clerk middleware — public/auth/protected route matchers                            | Route protection changes         |
+| `apps/frontend/proxy.ts`                                             | Clerk middleware — no route matchers; only redirects a signed-in user on `/`       | Root redirect changes            |
 
 ---
 
@@ -141,7 +141,7 @@ router.push(buildLoginUrl({ reason: 'primary_required' }));
 | Login                   | OAuth callback can send users back to `/login` with context                       | `buildLoginUrl()`                             |
 | Onboarding              | OAuth sign-up finalization lands here                                             | `config.auth.afterSignUpUrl`                  |
 | Dashboard               | OAuth sign-in finalization lands here                                             | `config.auth.afterSignInUrl`                  |
-| Middleware (`proxy.ts`) | `/sso-continue` remains public only so the retired route can redirect defensively | public route config + `redirect('/register')` |
+| Middleware (`proxy.ts`) | No public-route list exists since 2026-11-06; the retired `/sso-continue` page still redirects to `/register` itself | `redirect('/register')`                       |
 
 ---
 

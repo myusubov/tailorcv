@@ -3,7 +3,8 @@ export const LOGIN_AUTH_REASON_QUERY_PARAM = 'auth_reason';
 export type LoginAuthReason =
   | 'primary_required'
   | 'second_factor_required'
-  | 'reset_password_required';
+  | 'reset_password_required'
+  | 'session_expired';
 
 export interface LoginAuthNotice {
   title: string;
@@ -30,10 +31,14 @@ const loginAuthReasonNotices: Record<LoginAuthReason, LoginAuthNotice> = {
     actionHref: '/forgot-password',
     actionLabel: 'Reset password',
   },
+  session_expired: {
+    title: 'Your session expired',
+    description: 'Sign in again to continue where you left off.',
+  },
 };
 
 /**
- * Builds the canonical login URL for auth recovery redirects coming from SSO callback handling.
+ * Builds the canonical login URL for auth recovery redirects, such as SSO callback handling or an expired session.
  * When a reason is provided it is encoded as the `auth_reason` query param so the login page can
  * show a contextual inline notice before cleaning the param from the URL.
  */

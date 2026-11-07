@@ -10,10 +10,10 @@ export const getOnboardingStatusController = async (
 ) => {
   try {
     const { clerkUserId } = res.locals;
-    const { hasBaseResume, latestBaseResumeId } = await getOnboardingStatus({
+    const { onboardingCompletedAt } = await getOnboardingStatus({
       clerkUserId,
     });
-    return successResponse(res, { hasBaseResume, latestBaseResumeId }, 200);
+    return successResponse(res, { onboardingCompletedAt }, 200);
   } catch (err) {
     next(err);
   }
