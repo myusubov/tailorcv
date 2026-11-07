@@ -3,6 +3,5 @@ export type GetOnboardingStatusInput = {
 };
 
 export type OnboardingStatus = {
-  hasBaseResume: boolean;
-  latestBaseResumeId: string | null;
+  onboardingCompletedAt: Date | null;
 };

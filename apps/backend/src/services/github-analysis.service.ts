@@ -43,8 +43,6 @@ export async function analyzeGithubRepositories({
 
   const selectedRepos = repos.filter((repo) => repoIds.includes(repo.id));
 
-  // Some missing repos are reported in `failedRepoIds`, but with none left
-  // there is nothing to analyze, so the request fails instead.
   if (selectedRepos.length === 0) {
     throw new AppError(
       'None of the selected repositories could be found. Please reselect your repositories and try again.',

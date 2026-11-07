@@ -18,18 +18,29 @@ import { GitHubRepoSelectionView } from './github-repo-selection-view';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { ErrorState } from '@/app/components/ui/error-state';
 import { ErrorCode } from 'shared';
+import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/lib/config';
 
 interface GitHubStepProps {
   onBack: () => void;
 }
 
 /**
- * Coordinates GitHub connection, repository loading, and analysis for onboarding.
- * Connecting redirects the browser to GitHub. Only the initial connection check
- * blocks the full viewport. Loading errors and a required reconnect show an error
- * page; other analysis errors show a toast.
+ * Coordinates GitHub connection, repository loading, and resume creation for onboarding.
+ * Only the initial connection check blocks the viewport; a created resume navigates to
+ * its page. Loading errors and a required reconnect show an error page; other creation
+ * errors show a toast, except an expired session, which the query provider redirects.
  */
 export function GitHubStep({ onBack }: GitHubStepProps) {
+  const router = useRouter();
+
+  // A retry of the same selection must reuse the key so the backend can
+  // recognise it; a different selection is a new attempt with a new key.
+  const lastAttemptRef = useRef<{ key: string; repoIds: number[] }>({
+    key: crypto.randomUUID(),
+    repoIds: [],
+  });
+
   const connectMutation = useActionMutation(initiateGithubAuthAction, {
     showErrorToast: true,
     onSuccess: ({ authUrl }) => {
@@ -63,7 +74,8 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     refetch: refetchRepos,
   } = useGithubReposQuery(undefined, {
     enabled: !!githubConnection && !connectionError,
-    retry: 1, // Retry once automatically before showing error
+    retry: (failureCount, error) =>
+      failureCount < 1 && (error.status >= 500 || error.status === 0),
   });
 
   const {
@@ -72,34 +84,31 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
     isPending: isAnalyzePending,
   } = useActionMutation(analyzeGithubReposAction, {
     showErrorToast: false,
-    onSuccess: ({ failedRepoIds, summaries }) => {
-      if (failedRepoIds.length > 0 && summaries.length > 0) {
-        const failedRepoNames = githubRepos?.repositories
-          .filter((repo) => failedRepoIds.includes(repo.id))
-          .map((repo) => repo.full_name)
-          .join(', ');
-        toast.warning(
-          `Analysis completed, but the following repositories failed: ${failedRepoNames}`,
-          {
-            timeout: 10000,
-          },
-        );
-      } else if (failedRepoIds.length > 0 && summaries.length === 0) {
-        toast.danger(
-          'None of the selected repositories could be analyzed. Please reselect your repositories and try again.',
-          {
-            timeout: 10000,
-          },
-        );
-      }
+    onSuccess: ({ id }) => {
+      router.push(`${ROUTES.RESUMES}/${id}`);
     },
     onError: (error) => {
-      if (error.code !== ErrorCode.GITHUB_CONNECTION_REQUIRED) {
-        showErrorToast(error, {
+      if (
+        error.code === ErrorCode.GITHUB_CONNECTION_REQUIRED ||
+        error.code === ErrorCode.UNAUTHORIZED
+      ) {
+        return;
+      }
+
+      // The global validation message talks about a form this step doesn't have.
+      const isRequestRejected =
+        error.code === ErrorCode.VALIDATION_ERROR ||
+        error.code === ErrorCode.BAD_REQUEST;
+
+      showErrorToast(
+        isRequestRejected
+          ? { code: ErrorCode.INTERNAL_ERROR, message: error.message }
+          : error,
+        {
           duration:
             error.code === ErrorCode.RATE_LIMIT_EXCEEDED ? 10000 : undefined,
-        });
-      }
+        },
+      );
     },
   });
 
@@ -124,7 +133,22 @@ export function GitHubStep({ onBack }: GitHubStepProps) {
   };
 
   const handleAnalyze = (selectedRepoIds: number[]) => {
-    analyzeMutation({ repoIds: selectedRepoIds });
+    const lastAttempt = lastAttemptRef.current;
+    const isNewAttempt =
+      selectedRepoIds.length !== lastAttempt.repoIds.length ||
+      selectedRepoIds.some((id) => !lastAttempt.repoIds.includes(id));
+
+    if (isNewAttempt) {
+      lastAttemptRef.current = {
+        key: crypto.randomUUID(),
+        repoIds: selectedRepoIds,
+      };
+    }
+
+    analyzeMutation({
+      repoIds: selectedRepoIds,
+      idempotencyKey: lastAttemptRef.current.key,
+    });
   };
 
   const renderReconnectErrorState = (error: {

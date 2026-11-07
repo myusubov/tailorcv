@@ -424,7 +424,7 @@ flow hook, while the route only selects the active controller.
 
 | Domain                  | Relationship                                                        | Key Interface                                               |
 | ----------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Middleware (`proxy.ts`) | Auth determines public/protected route access                       | `isPublicRoute`, `isAuthRoute`, `isProtectedRoute` matchers |
+| Server layouts          | `(auth)/layout.tsx` redirects a signed-in user away from the auth pages; `proxy.ts` has no matchers | `redirectIfSignedIn`                                        |
 | Dashboard               | After sign-in, user is sent to dashboard                            | `config.auth.afterSignInUrl`                                |
 | Onboarding              | After sign-up, user is sent to onboarding                           | `config.auth.afterSignUpUrl`                                |
 | SSO                     | OAuth flows can redirect back into login with `auth_reason` context | `buildLoginUrl()`                                           |

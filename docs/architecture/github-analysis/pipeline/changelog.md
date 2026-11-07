@@ -6,6 +6,29 @@
 
 Historical pipeline entries currently live in the parent GitHub Analysis changelog: [../changelog.md](../changelog.md).
 
+## 2026-11-07
+
+### Analyze Route Requires an Idempotency Key
+
+- **Problem:** A retry of the analyze call after the frontend's 15-second timeout created a second resume.
+- **Solution:**
+  1. **Schema — `apps/backend/src/schemas/github.schema.ts`**: The request body now requires `idempotencyKey` (a UUID) beside `repoIds`.
+  2. **Controller and service — `apps/backend/src/controllers/github.controller.ts`, `apps/backend/src/services/resume.service.ts`**: The key is passed to `createResume`, which returns the first resume created for that user and key. See the [onboarding changelog](../../onboarding/changelog.md#idempotency-key-stops-duplicate-resumes) and [onboarding ADR 0002](../../onboarding/adr/0002-store-idempotency-key-on-the-created-row.md).
+- **Outcome:** A request without a key fails body validation, and the frontend always sends one. The route does not use the Redis `idempotency()` middleware. No test, lint or typecheck was run.
+
+## 2026-11-06
+
+### Analyze Route Creates a Resume Instead of Running Analysis
+
+- **Decision:** `POST /api/v1/auth/github/analyze` creates a resume immediately and returns its id; repository analysis is no longer part of the request.
+- **Problem:** The route ran the whole analysis inside the request and returned its result, but the resume now exists before any analysis, and analysis is meant to run afterwards.
+- **Solution:**
+  1. **Controller — `apps/backend/src/controllers/github.controller.ts`**: `analyzeGithubRepos` calls `createResume` with the Clerk user id and the selected repository ids as strings, and responds with `CreateResumeResponse`. The import and call of `analyzeGithubRepositories` were removed, so the service has no caller.
+  2. **Service — `apps/backend/src/services/resume.service.ts`**: New `createResume`; see the onboarding changelog and ADR 0001 for what it copies.
+  3. **Contract — `packages/shared/src/types/resume.ts`**: `CreateResumeResponse` (`{ id }`) is shared by the backend service output and the frontend `AnalyzeGithubReposOutput`.
+  4. **Unchanged — `apps/backend/src/routes/github.router.ts`**: `requireClerkAuth` and `requireGithubConnection` still run before the controller, so a stale installation token is still refreshed and its failures still reach this route.
+- **Outcome:** The route no longer returns per-repository analyses or `failedRepoIds`. `analyzeGithubRepositories` and its tests stay in the codebase, unused by any route. Nothing runs repository analysis after the resume is created yet. No test, lint or typecheck was run for this change.
+
 ## 2026-10-27
 
 ### Rate Limiting Not Applied to GitHub Routes

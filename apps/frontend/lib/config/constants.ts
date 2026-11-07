@@ -21,6 +21,11 @@ export const ASSETS = {
   },
 } as const;
 
+export const ROUTES = {
+  ONBOARDING: '/onboarding',
+  RESUMES: '/resumes',
+} as const;
+
 // Export individual constants for easy access
 export const { LOGOS, ICONS, PLACEHOLDERS } = ASSETS;
 

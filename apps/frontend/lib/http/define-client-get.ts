@@ -25,7 +25,7 @@ export function makeKey(prefix: string, ...parts: CacheKeyPart[]) {
 export type ClientGetFn<TParams, TResponse> = ((
   params: TParams,
   options?: DefineClientGetOptions,
-) => Promise<ApiResult<TResponse> | null>) & {
+) => Promise<ApiResult<TResponse>>) & {
   key: (
     params: TParams,
     options?: DefineClientGetOptions,

@@ -1,4 +1,9 @@
+import { z } from 'zod';
 import { baseResumeDataSchema, type BaseResumeData } from 'shared';
+
+export const onboardingStatusSchema = z.object({
+  onboardingCompletedAt: z.iso.datetime().nullable(),
+});
 
 /**
  * Onboarding uses the same schema as the base resume data.

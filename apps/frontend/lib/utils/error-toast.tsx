@@ -11,9 +11,14 @@ export const FRIENDLY_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
     'AI generated an invalid response. Usually, retrying fixes this!',
   [ErrorCode.AI_TIMEOUT_ERROR]:
     'The AI took too long to respond. It might be busy.',
-  [ErrorCode.NETWORK_ERROR]: 'Connectivity issue. Please check your internet.',
+  [ErrorCode.NETWORK_ERROR]:
+    "We couldn't reach our servers. Please try again in a moment.",
+  [ErrorCode.INVALID_RESPONSE]:
+    'We got an unexpected response from our servers. Please try again.',
   [ErrorCode.VALIDATION_ERROR]: 'Please fix any errors in the form.',
   [ErrorCode.INTERNAL_ERROR]: 'Something went wrong. Please try again.',
+  [ErrorCode.USER_NOT_FOUND]:
+    "We couldn't find your account. Try signing out and back in.",
   [ErrorCode.GITHUB_REPOS_FETCH_FAILED]:
     'Failed to fetch repositories. Please try again.',
   [ErrorCode.GITHUB_CONNECTION_REQUIRED]:

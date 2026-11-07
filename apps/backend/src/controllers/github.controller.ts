@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction } from 'express';
-import { analyzeGithubRepositories } from '../services/github-analysis.service';
 import {
   createInstallationAccessToken,
   exchangeCodeForToken,
@@ -19,6 +18,7 @@ import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import { successResponse } from '../utils/response';
 import { logger } from '../lib/logger';
+import { createResume } from '../services/resume.service';
 
 /**
  * Returns the GitHub App installation URL for the client to redirect to.
@@ -139,9 +139,9 @@ export async function fetchGithubConnection(
 }
 
 /**
- * Analyzes the selected repositories with the saved installation token.
- * Repositories whose tree could not be read come back in `failedRepoIds`; other
- * GitHub failures reach the error middleware.
+ * Creates a resume for the user from their profile and returns its id; a
+ * repeated idempotency key returns the same resume. The selected repository ids
+ * are only recorded on the resume; the repositories themselves are not read here.
  */
 export async function analyzeGithubRepos(
   req: Request<unknown, unknown, AnalyzeGithubReposRequestBody>,
@@ -149,12 +149,13 @@ export async function analyzeGithubRepos(
   next: NextFunction,
 ) {
   try {
-    const { clerkUserId, githubConnection } = res.locals;
-    const { repoIds } = req.body;
-    const result = await analyzeGithubRepositories({
-      clerkUserId,
-      accessToken: githubConnection.installationAccessToken,
-      repoIds,
+    const { clerkUserId } = res.locals;
+    const { repoIds, idempotencyKey } = req.body;
+
+    const result = await createResume({
+      userId: clerkUserId,
+      sourceRepoIds: repoIds.map(String),
+      idempotencyKey,
     });
     return successResponse(res, result, 200);
   } catch (error) {

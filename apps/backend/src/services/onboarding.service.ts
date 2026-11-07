@@ -5,22 +5,24 @@ import type {
 } from '../types/onboarding';
 
 /**
- * Checks whether the authenticated user has completed onboarding.
- * @param input - User Clerk ID used to find the latest base resume.
- * @returns Onboarding completion state and latest base resume ID when present.
- * @sideEffects Reads base resume metadata from the database.
+ * Returns when the user completed onboarding, or `null` if they have not or no
+ * user row exists.
  */
 export async function getOnboardingStatus(
   input: GetOnboardingStatusInput,
 ): Promise<OnboardingStatus> {
-  const latestBaseResume = await prisma.baseResume.findFirst({
-    where: { userId: input.clerkUserId },
-    orderBy: { updatedAt: 'desc' },
-    select: { id: true },
+  const { clerkUserId } = input;
+
+  const data = await prisma.user.findUnique({
+    where: {
+      clerkUserId,
+    },
+    select: {
+      onboardingCompletedAt: true,
+    },
   });
 
   return {
-    hasBaseResume: Boolean(latestBaseResume),
-    latestBaseResumeId: latestBaseResume?.id ?? null,
+    onboardingCompletedAt: data?.onboardingCompletedAt ?? null,
   };
 }

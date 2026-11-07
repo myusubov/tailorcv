@@ -8,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  clerkUserId       String             @unique
-  email             String             @unique
-  firstName         String?
-  lastName          String?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  baseResumes       BaseResume[]
-  customizedResumes CustomizedResume[]
-  githubConnection  GitHubConnection?
+  id                    String            @id @default(uuid())
+  clerkUserId           String            @unique
+  email                 String            @unique
+  firstName             String?
+  lastName              String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  githubConnection      GitHubConnection?
+  onboardingCompletedAt DateTime?
+  profile               Profile?
+  analyses              Analysis[]
+  resumes               Resume[]
 
   @@map("users")
 }
@@ -25,7 +27,7 @@ model User {
 model GitHubConnection {
   id                               String   @id @default(uuid())
   userId                           String   @unique
-  installationId                    String
+  installationId                   String
   installationAccessToken          String
   installationAccessTokenExpiresAt DateTime
   createdAt                        DateTime @default(now())
@@ -36,38 +38,199 @@ model GitHubConnection {
   @@map("github_connections")
 }
 
-model BaseResume {
-  id                String             @id @default(uuid())
-  userId            String
-  name              String             @default("My Resume")
-  data              Json
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  user              User               @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
-  customizedResumes CustomizedResume[]
-  status            BaseResumeStatus   @default(DRAFT)
+model Profile {
+  id             String          @id @default(uuid())
+  userId         String          @unique
+  contact        Contact?
+  experiences    Experience[]
+  educations     Education[]
+  certifications Certification[]
+  languages      Language[]
+  updatedAt      DateTime        @updatedAt
 
-  @@map("base_resumes")
+  user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+
+  @@map("profiles")
 }
 
-model CustomizedResume {
-  id             String     @id @default(uuid())
-  userId         String
-  baseResumeId   String
-  jobTitle       String?
-  companyName    String?
-  jobDescription String
-  customizedData Json
-  matchScore     Int?       @default(0)
-  createdAt      DateTime   @default(now())
-  baseResume     BaseResume @relation(fields: [baseResumeId], references: [id], onDelete: Cascade)
-  user           User       @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+model Analysis {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  githubRepoId String
+  repoFullName String
+  data         Json // analyzer output
+  fileContents Json // key files the AI reads
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@map("customized_resumes")
+  @@unique([userId, githubRepoId])
+  @@map("analyses")
 }
 
-enum BaseResumeStatus {
-  DRAFT
-  COMPLETED
-  PUBLISHED
+model Resume {
+  id              String          @id @default(uuid())
+  userId          String
+  status          ResumeStatus    @default(GENERATING)
+  name            String          @default("Untitled Resume")
+  user            User            @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  headline        String?
+  jobDescription  String?
+  summary         String?
+  contact         Contact?
+  projects        Project[]
+  experiences     Experience[]
+  skillGroups     SkillGroup[]
+  educations      Education[]
+  certifications  Certification[]
+  languages       Language[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  sectionOrder    String[]
+  sourceRepoIds   String[]
+  failedRepoNames String[]
+  failureReason   String?
+  idempotencyKey  String?
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@map("resumes")
+}
+
+enum ResumeStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  profileId   String?  @unique
+  resumeId    String?  @unique
+  name        String?
+  email       String?
+  phone       String?
+  location    String?
+  linkedinUrl String?
+  githubUrl   String?
+  websiteUrl  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  resume  Resume?  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+}
+
+model Project {
+  id           String    @id @default(uuid())
+  name         String
+  resumeId     String
+  role         String?
+  startDate    DateTime?
+  description  String?
+  endDate      DateTime?
+  tools        String[]
+  bullets      String[]
+  repoUrl      String?
+  liveUrl      String?
+  organization String?
+  position     Int
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@map("projects")
+}
+
+model Experience {
+  id        String    @id @default(uuid())
+  resumeId  String?
+  profileId String?
+  jobTitle  String
+  company   String?
+  location  String?
+  startDate DateTime?
+  endDate   DateTime?
+  bullets   String[]
+  tools     String[]
+  position  Int
+
+  resume  Resume?  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@index([profileId])
+  @@map("experiences")
+}
+
+model SkillGroup {
+  id       String   @id @default(uuid())
+  resumeId String
+  title    String
+  skills   String[]
+  position Int
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@map("skill_groups")
+}
+
+model Education {
+  id           String    @id @default(uuid())
+  resumeId     String?
+  profileId    String?
+  degree       String?
+  fieldOfStudy String?
+  school       String
+  location     String?
+  startDate    DateTime?
+  endDate      DateTime?
+  gpa          String?
+  coursework   String[]
+  position     Int
+
+  resume  Resume?  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@index([profileId])
+  @@map("educations")
+}
+
+model Certification {
+  id             String    @id @default(uuid())
+  name           String
+  issuer         String?
+  url            String?
+  resumeId       String?
+  profileId      String?
+  issueDate      DateTime?
+  expirationDate DateTime?
+  position       Int
+
+  resume  Resume?  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@index([profileId])
+  @@map("certifications")
+}
+
+model Language {
+  id        String  @id @default(uuid())
+  resumeId  String?
+  profileId String?
+  language  String
+  level     String?
+  position  Int
+
+  resume  Resume?  @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  profile Profile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@index([profileId])
+  @@map("languages")
 }
