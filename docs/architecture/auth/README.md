@@ -23,6 +23,7 @@
 - **`auth_reason` login redirects**: When OAuth cannot finish sign-in because Clerk requires the primary factor, a second factor, or a password reset, redirect to `/login` with a reason code so the login page can explain the next step inline. The `session_expired` reason is used by the global 401 handler.
 - **Route access lives in server layouts, not `proxy.ts`**: `proxy.ts` has no route matchers. Layouts call the guards in `lib/auth/guards.ts`: `(auth)/layout.tsx` runs `redirectIfSignedIn` and `onboarding/layout.tsx` runs `requireNotOnboardedUser`.
 - **One place handles an expired session**: `QueryProvider` gives the `QueryCache` and `MutationCache` an `onError` that sends any `UNAUTHORIZED` error to `/login?auth_reason=session_expired` with a full page load, once per load. Individual calls do not handle it.
+- **The backend answers a missing session with a 401, never a redirect**: `requireClerkAuth` uses `getAuth` and forwards an `UNAUTHORIZED` `AppError`. Do not switch it back to Clerk's `requireAuth()`, which redirects and would hide the code from the handler above.
 - **No account profile names**: TailorCV auth flows do not collect or submit account first/last name. If Clerk reports `missing_requirements` for names, treat it as dashboard configuration drift.
 - **Factor-specific social entry**: Login uses `signIn.sso()` and registration uses `signUp.sso()` directly; `/sso-callback` owns transfers between the two resources. `signUp.reset()` is reserved for an explicit registration restart, such as changing the email during verification.
 
@@ -58,6 +59,7 @@ Auth smoke / real auth testing  -> testing/README.md
 | `docs/architecture/auth/testing/README.md` | Main doc for auth browser automation, Gmail polling, and test env setup            | Any auth test or E2E change                 |
 | `apps/frontend/lib/auth/guards.ts`         | Server guards: `requireUser`, `requireNotOnboardedUser`, `requireOnboardedUser`, `redirectIfSignedIn` | Route access or redirect changes            |
 | `apps/frontend/app/providers/query-provider.tsx` | Global `UNAUTHORIZED` handler that redirects to sign-in with the `session_expired` notice | Expired-session behavior changes            |
+| `apps/backend/src/middleware/auth.ts`      | `requireClerkAuth`: reads the Clerk session and answers a missing one with a 401 `UNAUTHORIZED` error | Backend login check changes                 |
 
 ---
 
@@ -135,6 +137,7 @@ docs/architecture/
 - [x] `decorateUrl` in all `finalize()` and `setActive()` calls
 - [x] Route access moved from `proxy.ts` matchers to server layout guards (2026-11-06)
 - [x] Global expired-session redirect with a login notice (2026-11-06; the redirect and the notice were not exercised together, and a signed-in user is bounced away from `/login`)
+- [x] Backend login check answers 401 `UNAUTHORIZED` instead of redirecting (2026-11-09; checked with a bad bearer token and a forced 401, not with a naturally rejected session)
 
 ### Phase 2: Hardening (Pending)
 

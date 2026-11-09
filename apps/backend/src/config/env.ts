@@ -51,12 +51,6 @@ const envSchema = z.object({
 
   // Admin user IDs (comma-separated Clerk user IDs)
   ADMIN_USER_IDS: z.string().optional(),
-
-  // Dev-only auth bypass (for local testing without Clerk tokens)
-  DEV_AUTH_BYPASS: z
-    .enum(['true', 'false'])
-    .optional()
-    .transform((v) => v === 'true'),
 });
 
 // Parse and validate environment variables

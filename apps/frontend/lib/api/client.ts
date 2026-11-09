@@ -23,6 +23,13 @@ export type ApiErr = {
 
 export type ApiResult<T> = ApiOk<T> | ApiErr;
 
+class AuthRequiredError extends Error {
+  constructor() {
+    super('Authentication required');
+    this.name = 'AuthRequiredError';
+  }
+}
+
 export type BackendRequestOptions = Omit<RequestInit, 'body'> & {
   pathPrefix?: string;
   query?: Record<string, string | number | boolean | null | undefined>;
@@ -81,7 +88,7 @@ async function backendFetch(
       : await (await auth()).getToken().catch(() => null);
 
   if (!token && authMode === 'required') {
-    throw new Error('Authentication required');
+    throw new AuthRequiredError();
   }
 
   const requestHeaders = new Headers(headers);
@@ -165,15 +172,12 @@ export async function backendRequest<T>(
       data: payload.data as T,
       meta: payload.meta,
     };
-  } catch (err: any) {
-    if (err.message === 'Authentication required') {
+  } catch (err: unknown) {
+    if (err instanceof AuthRequiredError) {
       return {
         ok: false,
         status: 401,
-        error: {
-          message: 'Authentication required',
-          code: ErrorCode.UNAUTHORIZED,
-        },
+        error: { message: err.message, code: ErrorCode.UNAUTHORIZED },
       };
     }
     return {
