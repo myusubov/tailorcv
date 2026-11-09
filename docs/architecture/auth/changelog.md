@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-11-09
+
+### Backend Login Check Answers 401 Instead of Redirecting
+
+- **Problem:** `requireClerkAuth` called Clerk's `requireAuth()`, which answers an unauthenticated request with an HTTP redirect (Clerk's source: `response.redirect(signInUrl)`). The backend's own `UNAUTHORIZED` error below it was never reached for a rejected session, so the global handler in `QueryProvider` never saw the code.
+- **Solution:**
+  1. **Middleware — `apps/backend/src/middleware/auth.ts`**: `requireClerkAuth` reads the session with `getAuth(req)` (`clerkMiddleware()` in `server.ts` runs first) and forwards `AppError` 401 `UNAUTHORIZED` when there is no `userId`. Clerk's docs say not to use `requireAuth()` for API routes.
+  2. **Dev bypass removed — `apps/backend/src/middleware/auth.ts`, `apps/backend/src/config/env.ts`**: The `DEV_AUTH_BYPASS` branch (the `x-dev-user-id` header and the dev user upsert) and the `DEV_AUTH_BYPASS` environment setting were deleted. The reason was not recorded.
+  3. **Missing token — `apps/frontend/lib/api/client.ts`**: A missing Clerk token on the frontend's own side threw `Error('Authentication required')`, which `backendRequest` recognised by comparing the message text. `backendFetch` now throws a private `AuthRequiredError` and the catch uses `instanceof`; the result is unchanged (401 `UNAUTHORIZED`). `backendStream` still lets the error propagate.
+- **Outcome:** A request to `POST /api/v1/auth/github/analyze` with an invalid bearer token returned `401` with `"code":"UNAUTHORIZED"` in the JSON body and no redirect. A forced backend 401 sent the browser to sign-in, then `(auth)/layout.tsx` sent the still-signed-in user on to `/resumes`. A naturally rejected token was not reproduced, so the two halves were not exercised together. No lint, typecheck or test was run.
+
+---
+
 ## 2026-11-06
 
 ### Route Access Moves From Middleware to Server Layouts
