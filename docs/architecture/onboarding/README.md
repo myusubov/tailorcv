@@ -1,6 +1,6 @@
 # Onboarding: Resume Data Capture
 
-> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. The upload and manual-entry submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt; GitHub Analyze creates a resume and redirects to it. The method-selection UI currently offers GitHub import only; upload and manual entry remain implemented and reachable via their `?method=` query values but are not presented as selectable cards.
+> Onboarding captures a user's source resume data through upload, GitHub import, or manual entry. The upload and manual-entry submit handlers are temporarily placeholders while the next analysis pipeline is rebuilt; GitHub Analyze creates a resume, queues a background job that generates its content and redirects to it. The method-selection UI currently offers GitHub import only; upload and manual entry remain implemented and reachable via their `?method=` query values but are not presented as selectable cards.
 
 ---
 
@@ -48,7 +48,11 @@ app/onboarding/page.tsx
 | `apps/frontend/app/components/onboarding/github/github-step.tsx`                 | Handles GitHub connection, installation-repository loading, and resume creation on Analyze (navigates to the new resume; keeps one idempotency key per selection of repositories); shows error pages for repository-loading errors, a suspended app and a required reconnect, and toasts for other creation errors. An expired session is redirected to sign-in by the query provider, not here.                                        | GitHub onboarding path changes.                             |
 | `apps/frontend/app/onboarding/layout.tsx`                                        | Server gate for every onboarding route: calls `requireNotOnboardedUser` inside a `Suspense` boundary.                              | Onboarding access or redirect changes.                      |
 | `apps/frontend/lib/auth/guards.ts`                                               | `requireNotOnboardedUser` reads the onboarding status and redirects completed users to `/resumes`; see the [auth README](../auth/README.md). | Onboarding gate changes.                                    |
-| `apps/backend/src/services/resume.service.ts`                                    | `createResume` copies the user's profile data into a new resume and returns the existing one for a repeated idempotency key; see [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) and [ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md). | Resume creation changes.                                    |
+| `apps/backend/src/services/resume.service.ts`                                    | `createResume` copies the user's profile data into a new resume and returns the existing one for a repeated idempotency key; `saveResumeContent` saves the generated content, marks the resume `READY` and sets `onboardingCompletedAt` in one transaction; `markResumeFailed` marks a generating resume `FAILED`. See [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) and [ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md). | Resume creation or save changes.                            |
+| `apps/backend/src/services/resume-generation.service.ts`                         | Enqueues the generation job and runs it: analysis, Gemini call, save, and the failure policy; see [ADR 0003](adr/0003-generate-resume-content-in-a-queue-worker.md). | Generation job behavior or failure handling changes.        |
+| `apps/backend/src/services/resume-ai.service.ts`, `resume-evidence.service.ts`   | Gemini call with one retry for a bad reply, and the cap that keeps the evidence under 90,000 characters. Prompt in `prompts/resume-content.prompt.ts`, reply schema in `schemas/resume-content.schema.ts`. | Prompt, model output or evidence size changes.              |
+| `apps/backend/src/lib/resume-queue.ts`, `lib/resume-worker.ts`, `worker-runner.ts` | The BullMQ queue, the worker process entry and its failed-attempt handling; Bull Board at `/admin/queues` in development (`lib/queue-board.ts`). | Queue, worker or Redis changes.                             |
+| `apps/frontend/app/(resume)/resumes/[id]/page.tsx`                               | Shows the resume status, failure reason, headline, summary, skill groups and projects.                                            | Resume page changes.                                        |
 | `apps/frontend/app/components/onboarding/github/github-repo-selection-view.tsx`  | Coordinates GitHub repo search query param, installation-repository count, selection limit, clear selection, and analyze handoff. | GitHub repo picker behavior changes.                        |
 | `apps/frontend/app/components/onboarding/github/github-repo-*.tsx`               | Feature-local GitHub repo picker header, toolbar, card, empty-state, and action components.                                       | GitHub repo picker presentation changes.                    |
 | `apps/frontend/app/components/onboarding/github/github-repo-grid-skeleton.tsx`   | Shared skeleton grid used while GitHub repositories are loading.                                                                  | GitHub repo loading-state UI changes.                       |
@@ -97,7 +101,24 @@ flowchart TD
 
 The request carries an `idempotencyKey` that the component keeps while the same repositories are selected, so a retry after a timeout returns the resume the first call created ([ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md)).
 
-The resume page, repository analysis after creation and setting `onboardingCompletedAt` are not implemented yet.
+### 4.3 Resume Generation Job
+
+```mermaid
+flowchart TD
+  Analyze[analyzeGithubRepos] --> Enqueue[enqueueResumeGeneration]
+  Enqueue -->|Redis rejects| Failed1[FAILED SERVICE_UNAVAILABLE]
+  Enqueue --> Worker[Worker runs generateResume]
+  Worker --> Skip[Resume missing or not GENERATING: skip]
+  Worker --> Github[Refresh token and analyze repositories]
+  Github -->|No connection, suspended app, no repository analyzed| Failed2[FAILED with that reason]
+  Github --> Gemini[capEvidence and Gemini call]
+  Gemini -->|Gemini error or second bad reply| Failed3[FAILED SERVICE_UNAVAILABLE or INTERNAL_ERROR]
+  Gemini --> Save[saveResumeContent in one transaction]
+  Save --> Ready[READY and onboardingCompletedAt set]
+  Save -->|Other error| Retry[Job retried up to 3 attempts, then FAILED]
+```
+
+`/resumes/{id}` is a server component that loads the resume once per request and shows its status, so a resume still `GENERATING` needs a reload. If the worker dies and no other worker takes the job, the resume stays `GENERATING`; nothing sweeps it. Repositories that could not be analyzed are saved on the resume as `failedRepoNames`.
 
 ---
 
@@ -155,10 +176,10 @@ if (ok) goToNextStep();
 | Domain            | Relationship                                                                                                                            | Key Interface                                                  |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Auth              | New users land on onboarding after registration.                                                                                        | `config.auth.afterSignUpUrl`                                   |
-| GitHub analysis   | GitHub loads repositories from the connected installation; Analyze calls the analyze route, which creates a resume and returns its id. No repository analysis runs after creation yet. | `FetchGithubReposResponse`, `CreateResumeResponse`, `POST /api/v1/auth/github/analyze` |
-| Resumes           | Analyze creates a `Resume` that owns copies of the user's profile rows; `/resumes/{id}` has no page yet.                                | `createResume`, [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) |
-| Onboarding status | The onboarding layout reads `onboardingCompletedAt` from `GET /api/v1/onboarding/status`; nothing in the code sets it yet, so every user is treated as not onboarded. | `getOnboardingStatus`, `requireNotOnboardedUser` |
-| Resume generation | Upload and manual submit handlers are placeholders until the next generation pipeline is implemented.                                   | Placeholder toasts in upload and manual paths                  |
+| GitHub analysis   | GitHub loads repositories from the connected installation; Analyze calls the analyze route, which creates a resume, queues its generation job and returns its id. The job runs `analyzeGithubRepositories`. | `FetchGithubReposResponse`, `CreateResumeResponse`, `POST /api/v1/auth/github/analyze`, `analyzeGithubRepositories` |
+| Resumes           | Analyze creates a `Resume` that owns copies of the user's profile rows; the generation job fills its headline, summary, skill groups and projects. `/resumes/{id}` renders it. | `createResume`, `saveResumeContent`, `GET /api/v1/resumes/:id`, [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) |
+| Onboarding status | The onboarding layout reads `onboardingCompletedAt` from `GET /api/v1/onboarding/status`; `saveResumeContent` sets it when a first resume becomes `READY`. | `getOnboardingStatus`, `requireNotOnboardedUser`, `saveResumeContent` |
+| Resume generation | GitHub Analyze enqueues a BullMQ job that a worker process runs with Gemini; the upload and manual submit handlers are still placeholders. See [ADR 0003](adr/0003-generate-resume-content-in-a-queue-worker.md). | `enqueueResumeGeneration`, `generateResume`, Redis (`REDIS_URL`), `GEMINI_API_KEY` |
 | Shared schemas    | Manual entry validates against the shared onboarding form schema.                                                                       | `onboardingSchema`, `OnboardingFormInput`                      |
 | UI system         | HeroUI supplies form, date, modal, chip, and Checkbox primitives used by onboarding.                                                    | `@heroui/react`, `docs/architecture/ui/README.md`              |
 
@@ -184,8 +205,12 @@ if (ok) goToNextStep();
 - [x] GitHub Analyze creates a resume, copies the profile into it and redirects to `/resumes/{id}`; create-call errors map to the reconnect page, toasts or a sign-in redirect (2026-11-06, no component test, no lint or typecheck run)
 - [x] Analyze retries with the same idempotency key return one resume (2026-11-07, checked by hand for the timeout retry; the concurrent-insert branch, no test, no lint or typecheck run)
 - [x] Onboarding layout gate based on `onboardingCompletedAt` (2026-11-06)
-- [ ] Set `onboardingCompletedAt` when a resume finishes generating
-- [ ] Run GitHub project-structure analysis after the resume is created
+- [x] Set `onboardingCompletedAt` when a resume finishes generating (2026-11-20, in the save transaction)
+- [x] Run GitHub project-structure analysis after the resume is created (2026-11-20, in the generation job)
+- [x] Generate headline, summary, skill groups and projects with Gemini in a queue worker; `/resumes/{id}` renders the result (2026-11-20, failure paths checked by hand, no test, lint or typecheck run after the final refactors)
+- [ ] Sweep resumes left in `GENERATING` when the worker dies
+- [ ] User-facing messages and a retry flow for a `FAILED` resume
+- [ ] Tests for `generateResumeContent`, `saveResumeContent` and the `generateResume` failure branches
 
 ---
 
@@ -199,6 +224,9 @@ if (ok) goToNextStep();
 | Placeholder submits look like completed generation. | Use explicit not-implemented toasts until the new generation pipeline exists.                |
 | Analyze is clicked twice, or retried after a timeout, and creates two resumes. | The request carries an idempotency key stored on the resume under a per-user unique constraint ([ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md)). A replay with the same key and different repositories returns the first resume, so the component changes the key when the selection changes. |
 | The onboarding status cannot be read.               | The layout gate throws (a 401 redirects to sign-in), so `app/error.tsx` renders instead of letting the user through. |
+| The worker dies or stops answering during a job.    | BullMQ marks the job stalled and another worker takes it (seen once, with the database unreachable). If no worker runs at all, the resume stays `GENERATING`; there is no job timeout or sweeper. |
+| The model names a repository we did not analyze, or returns a bad reply. | Projects carry a `repoId`; name and URL come from the analyzed repository. An unknown id or a bad reply is requested once more, then the resume is `FAILED` (`SERVICE_UNAVAILABLE`). |
+| The Gemini free tier rate-limits or the key is wrong. | A 429 or overload is `SERVICE_UNAVAILABLE`; a 400, 401, 403 or 404 from Gemini is `INTERNAL_ERROR`. There is no retry flow for the user yet. |
 
 ---
 

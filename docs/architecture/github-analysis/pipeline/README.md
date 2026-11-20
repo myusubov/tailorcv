@@ -19,10 +19,10 @@ GitHub repo IDs selected by user
   └─ POST /api/v1/auth/github/analyze
       ├─ require Clerk authentication
       ├─ require saved GitHub connection
-      └─ validates the body (repository IDs and an idempotency key), calls createResume and returns the new resume id, or the existing one for a repeated key; the repository IDs are only recorded on the resume
+      └─ validates the body (repository IDs and an idempotency key), calls createResume, queues the resume's generation job and returns the new resume id, or the existing one for a repeated key; the repository IDs are only recorded on the resume
 
-analyzeGithubRepositories (no route calls it today)
-  └─ returns per-repository GitHub metadata, summaries, detected areas, maturity signals, architecture signals, candidate file paths and candidate file contents, plus `failedRepoIds` for selected repositories that could not be analyzed
+analyzeGithubRepositories (called by the resume generation job, not by a route)
+  └─ returns per-repository GitHub metadata, summaries, detected areas, maturity signals, architecture signals, candidate file paths and candidate file contents, plus `failedRepoIds` and `failedRepoNames` for selected repositories that could not be analyzed
 
 GitHub App installation
   └─ callback verifies user access to installation
@@ -38,14 +38,14 @@ GitHub App installation
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | `apps/backend/src/routes/github.router.ts`                         | Registers GitHub OAuth, repo listing, connection, and analyze routes.                                                                                    | GitHub endpoint changes                      |
 | `apps/backend/src/schemas/github.schema.ts`                        | Zod request body schema (repository IDs and idempotency key) and inferred type for the analyze route.                                                    | GitHub request validation changes            |
-| `apps/backend/src/controllers/github.controller.ts`                | Reads validated selected repo IDs and the idempotency key and calls `createResume`.                                                                      | GitHub request/response changes              |
+| `apps/backend/src/controllers/github.controller.ts`                | Reads validated selected repo IDs and the idempotency key, calls `createResume` and queues the generation job; a failed enqueue marks the resume `FAILED`. | GitHub request/response changes              |
 | `apps/backend/src/services/resume.service.ts`                      | Creates the resume the analyze route returns and copies the user's profile data into it, or returns the existing resume for a repeated idempotency key; see onboarding [ADR 0001](../../onboarding/adr/0001-copy-profile-data-into-each-resume.md) and [ADR 0002](../../onboarding/adr/0002-store-idempotency-key-on-the-created-row.md). | Analyze route behavior changes               |
 | `apps/backend/src/mappers/github.mapper.ts`                        | Maps internal GitHub models into client-safe response DTOs with explicit field allowlists, and a repository listing item into the analysis response's `GithubRepositoryMetadata`. | GitHub response DTO changes                  |
 | `apps/backend/src/middleware/github-auth.ts`                       | Requires a saved GitHub connection after Clerk auth and attaches it to `res.locals.githubConnection`.                                                    | GitHub-protected route changes               |
 | `packages/shared/src/types/github.ts`                              | Defines full backend GitHub connection and client-safe public connection response types.                                                                 | GitHub API contract changes                  |
 | `apps/backend/prisma/schema.prisma`                                | Persists the installation ID plus the cached, expiring installation token for each Clerk user.                                                           | GitHub connection persistence changes        |
 | `apps/backend/src/services/github.service.ts`                      | Initiates the installation flow, verifies callbacks, manages installation tokens, and fetches repositories, recursive trees (`fetchRepositoryTree`) and file text (`fetchRepoFile`) through the Octokit client. | GitHub connection, token lifecycle or GitHub fetch changes |
-| `apps/backend/src/services/github-analysis.service.ts`             | Runs the analysis orchestration: fetches selected repos and trees, normalizes entries, reads candidate files, and returns per-repository analyses plus `failedRepoIds`. It decides which GitHub failures degrade one repository or file and which reject the call. No route calls it since 2026-11-06. | GitHub analysis orchestration changes        |
+| `apps/backend/src/services/github-analysis.service.ts`             | Runs the analysis orchestration: fetches selected repos and trees, normalizes entries, reads candidate files, and returns per-repository analyses plus `failedRepoIds` and `failedRepoNames`. It decides which GitHub failures degrade one repository or file and which reject the call. The resume generation job calls it; no route does. | GitHub analysis orchestration changes        |
 | `apps/backend/src/lib/octokit.ts`                                  | Octokit client factory: pinned REST API version, pagination, retry and fail-fast throttling plugins.                                                     | GitHub client behavior changes               |
 | `apps/backend/src/lib/octokit-error.ts`                            | Translates an Octokit `RequestError` into an `AppError` by what the failure means.                                                                      | GitHub error mapping changes                 |
 | `apps/backend/src/middleware/error.ts`                             | Global error handler; applies the Octokit error mapping to every `RequestError`.                                                                         | GitHub error response changes                |
@@ -66,14 +66,15 @@ flowchart TD
   GitHubAuth --> Validate[validateBody]
   Validate --> Controller[analyzeGithubRepos]
   Controller --> Service[createResume]
-  Service --> Response[Return the new resume id]
+  Service --> Enqueue[enqueueResumeGeneration]
+  Enqueue --> Response[Return the new resume id]
 ```
 
-`requireGithubConnection` still runs first and can refresh the installation token, so the GitHub failures in 6.3 (reconnect, suspended app, rate limit, GitHub outage) can still reach this route even though `createResume` does not call GitHub.
+`requireGithubConnection` still runs first and can refresh the installation token, so the GitHub failures in 6.3 (reconnect, suspended app, rate limit, GitHub outage) can still reach this route even though `createResume` does not call GitHub. If queueing fails because Redis is down, the controller marks the resume `FAILED` (`SERVICE_UNAVAILABLE`) and still returns its id.
 
-### 4.2 Analysis Service Flow (not called by any route)
+### 4.2 Analysis Service Flow (called by the generation job)
 
-`analyzeGithubRepositories` is kept for a later step and has no caller. Its flow:
+`analyzeGithubRepositories` runs inside the resume generation job (see the onboarding [ADR 0003](../../onboarding/adr/0003-generate-resume-content-in-a-queue-worker.md)), after the job refreshes the installation token. Its flow:
 
 ```mermaid
 flowchart TD
@@ -84,6 +85,8 @@ flowchart TD
 ```
 
 `fetchRepositoryTree` failures with 404, 409 or 422 put the repository in `failedRepoIds`. `fetchRepoFile` returns `null` for a 404, so that candidate file gets `content: null`. Every other GitHub failure rejects the whole call; see 6.3.
+
+When none of the selected repositories is found, the service no longer throws a 400: every id is returned in `failedRepoIds`, and the job marks the resume `FAILED` with `GITHUB_REPO_ANALYSIS_FAILED`. `failedRepoNames` holds the full names of failed repositories that GitHub still listed; the job saves them on the resume when some, but not all, failed.
 
 ---
 
@@ -161,7 +164,7 @@ apps/backend/src/
 
 | Domain                     | Relationship                                                                   | Key Interface                                 |
 | -------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------- |
-| Onboarding                 | GitHub repo selection calls the analyze route, which creates a resume; `GitHubStep` maps the error codes in 6.3 to error pages or toasts. | `AnalyzeGithubReposInput`, `CreateResumeResponse` |
+| Onboarding                 | GitHub repo selection calls the analyze route, which creates a resume and queues its generation job; `GitHubStep` maps the error codes in 6.3 to error pages or toasts. The job calls `analyzeGithubRepositories`. | `AnalyzeGithubReposInput`, `CreateResumeResponse` |
 | Auth                       | GitHub-token routes require Clerk auth and saved GitHub connection middleware. | `requireClerkAuth`, `requireGithubConnection` |
 | Project structure analysis | Service normalizes GitHub tree entries before invoking the analyzer.           | `AnalyzeProjectStructureInput`                |
 
@@ -180,10 +183,11 @@ The backend validates GitHub App configuration through `apps/backend/src/config/
 
 ## 8. Implementation Status
 
-- [x] Analyze route accepts selected repository IDs, creates a resume and returns its id (2026-11-06); no repository analysis runs on it yet
+- [x] Analyze route accepts selected repository IDs, creates a resume, queues its generation job and returns its id (2026-11-06; queueing 2026-11-20); the analysis runs in the job, not in the request
 - [x] Analyze route requires an `idempotencyKey` and returns the same resume for a repeated key (2026-11-07, no test)
-- [x] Analysis service returns project-structure summaries and detected areas for selected repositories (no route calls it since 2026-11-06)
-- [ ] Run the analysis service after the resume is created
+- [x] Analysis service returns project-structure summaries and detected areas for selected repositories
+- [x] Run the analysis service after the resume is created (2026-11-20, inside the generation job)
+- [x] Analysis result carries `failedRepoNames`, and none-found no longer throws a 400 (2026-11-20, existing analysis tests not re-run)
 - [x] GitHub connection middleware boundary
 - [x] GitHub App installation connection and installation-token refresh
 - [x] Client-safe GitHub response mapper
@@ -196,7 +200,7 @@ The backend validates GitHub App configuration through `apps/backend/src/config/
 - [x] Candidate file contents read per repository and returned as `candidateFileContents` (unverified, see Risks)
 - [ ] Multi-analyzer orchestration beyond project structure
 - [ ] Evidence aggregator
-- [ ] AI resume synthesis integration
+- [x] AI resume synthesis integration (2026-11-20, Gemini in the generation job; see the onboarding domain)
 
 ---
 
@@ -214,7 +218,7 @@ The backend validates GitHub App configuration through `apps/backend/src/config/
 | One rate-limited or failing request fails every selected repository | By design: those failures are shared, so the call rejects with `RATE_LIMIT_EXCEEDED` or `GITHUB_API_ERROR`. An analyze call fires one file request per candidate path (a capped list per repository, three repositories at most), all at once. |
 | The 2026-10-23 Octokit migration and candidate file reads are unverified | No test or lint was run, so `octokit-error.test.ts` and `error.test.ts` are unchecked, and the backend typecheck was not re-run after the final refactors. One unauthenticated read-only request to the public contents endpoint confirmed that Octokit's `%2F`-encoded nested paths return file text and that a missing file throws 404. |
 | `apps/backend/tsconfig.json` moved to `NodeNext` in the same worktree | The reason and runtime effect are not recorded or verified here; see the dependency-management changelog. |
-| GitHub routes, including `POST /api/v1/auth/github/analyze`, are not rate limited | Deliberate as of 2026-10-27 (the reason is not recorded). `githubAuthRateLimiter` and `githubApiRateLimiter` exist in `middleware/rateLimiter.ts` but are not applied. Clerk auth still gates every GitHub route, and the Octokit client fails fast with `RATE_LIMIT_EXCEEDED` when GitHub throttles. |
+| GitHub routes, including `POST /api/v1/auth/github/analyze`, are not rate limited | Deliberate as of 2026-10-27 (the reason is not recorded). `middleware/rateLimiter.ts`, which defined the unused limiters, was deleted on 2026-11-20. Clerk auth still gates every GitHub route, and the Octokit client fails fast with `RATE_LIMIT_EXCEEDED` when GitHub throttles. |
 
 ---
 

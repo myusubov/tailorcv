@@ -1,5 +1,4 @@
 import { RequestError } from '@octokit/request-error';
-import { ErrorCode } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The analyzer and the GitHub calls are replaced so these tests cover only how
@@ -86,15 +85,16 @@ describe('analyzeGithubRepositories', () => {
       expect(result.summaries.map((s) => s.repository.id)).toEqual([1]);
     });
 
-    it('rejects with BAD_REQUEST 400 when none of the selected repositories is in the installation', async () => {
+    it('returns every selected id in failedRepoIds and no summaries when none is in the installation', async () => {
       vi.mocked(fetchGithubRepos).mockResolvedValue([
         createRepo({ id: 1, name: 'api' }),
       ]);
 
-      await expect(run([98, 99])).rejects.toMatchObject({
-        errorCode: ErrorCode.BAD_REQUEST,
-        statusCode: 400,
-      });
+      const result = await run([98, 99]);
+
+      expect(result.failedRepoIds).toEqual([98, 99]);
+      expect(result.failedRepoNames).toEqual([]);
+      expect(result.summaries).toEqual([]);
     });
   });
 

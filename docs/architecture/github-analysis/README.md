@@ -36,12 +36,12 @@
 
 ```text
 GitHub repo IDs selected by user
-  -> protected analyze route (today: creates a resume and returns its id)
-  -> analysis service, no route calls it yet: per-repository tree retrieval and Project Structure Analyzer
+  -> protected analyze route (creates a resume, queues its generation job, returns its id)
+  -> analysis service, called by the generation job: per-repository tree retrieval and Project Structure Analyzer
   -> candidate file contents (404 gives null content)
-  -> failedRepoIds for repositories that could not be analyzed
-  -> future analyzers
-  -> future evidence aggregator + AI resume synthesis
+  -> failedRepoIds and failedRepoNames for repositories that could not be analyzed
+  -> Gemini resume synthesis in the same job (onboarding domain)
+  -> future analyzers and evidence aggregator
 ```
 
 ---

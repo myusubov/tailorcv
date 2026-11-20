@@ -1,8 +1,7 @@
 import { RequestError } from '@octokit/request-error';
-import { ErrorCode, type AnalyzedGithubRepository } from 'shared';
+import type { AnalyzedGithubRepository } from 'shared';
 
 import { mapGitHubRepoToMetadata } from '../mappers/github.mapper';
-import { AppError } from '../utils/AppError';
 import {
   normalizeTreeEntries,
   splitRepositoryFullName,
@@ -22,17 +21,18 @@ import type {
   FetchRepoFileInput,
 } from '../types/github';
 
-// Result of analyzing one repository: the analysis, or just its ID when the
-// repository's tree could not be fetched.
+// Result of analyzing one repository: the analysis, or just its ID and name when
+// the repository's tree could not be fetched.
 type RepositoryOutcome =
   | { ok: true; analysis: AnalyzedGithubRepository }
-  | { ok: false; repoId: number };
+  | { ok: false; repoId: number; repoFullName: string };
 
 /**
  * Analyzes the selected repositories and returns each one's metadata, structure
  * signals and candidate file contents. A repository missing from the installation
- * or whose tree GitHub rejects (404, 409, 422) goes to `failedRepoIds`; a 404 on a
- * candidate file gives null content. Any other GitHub failure rejects the whole call.
+ * or whose tree GitHub rejects (404, 409, 422) goes to `failedRepoIds`, and its name
+ * to `failedRepoNames` when GitHub still lists it; if none are found, nothing throws.
+ * A 404 on a candidate file gives null content. Any other GitHub failure rejects.
  */
 export async function analyzeGithubRepositories({
   clerkUserId,
@@ -42,14 +42,6 @@ export async function analyzeGithubRepositories({
   const repos = await fetchGithubRepos(accessToken);
 
   const selectedRepos = repos.filter((repo) => repoIds.includes(repo.id));
-
-  if (selectedRepos.length === 0) {
-    throw new AppError(
-      'None of the selected repositories could be found. Please reselect your repositories and try again.',
-      ErrorCode.BAD_REQUEST,
-      400,
-    );
-  }
 
   const outcomes = await Promise.all(
     selectedRepos.map(async (repo): Promise<RepositoryOutcome> => {
@@ -79,7 +71,7 @@ export async function analyzeGithubRepositories({
                 { err, owner, repo: repoName },
                 'Skipping repository whose tree could not be fetched',
               );
-              return { ok: false, repoId: repo.id };
+              return { ok: false, repoId: repo.id, repoFullName };
           }
         }
         throw err;
@@ -113,8 +105,8 @@ export async function analyzeGithubRepositories({
               repo: repoName,
               path,
             };
-              const content = await fetchRepoFile(fetchInput);
-              return { path, content };
+            const content = await fetchRepoFile(fetchInput);
+            return { path, content };
           },
         ),
       );
@@ -146,5 +138,10 @@ export async function analyzeGithubRepositories({
     ...outcomes.flatMap((outcome) => (outcome.ok ? [] : [outcome.repoId])),
   ];
 
-  return { summaries, failedRepoIds };
+  // A selected repository missing from the installation has no name to report.
+  const failedRepoNames = outcomes.flatMap((outcome) =>
+    outcome.ok ? [] : [outcome.repoFullName],
+  );
+
+  return { summaries, failedRepoIds, failedRepoNames };
 }

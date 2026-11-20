@@ -49,7 +49,31 @@ export interface UpdateResumeInput {
 }
 
 export type GetResumeInput = {
-  id: string;
+  params: {
+    id: string;
+  };
 };
 
-export type GetResumeOutput = BaseResume;
+export type GetResumeOutput = {
+  id: string;
+  status: 'GENERATING' | 'READY' | 'FAILED';
+  failureReason: string | null;
+  failedRepoNames: string[];
+  headline: string | null;
+  summary: string | null;
+  skillGroups: {
+    id: string;
+    title: string;
+    skills: string[];
+    position: number;
+  }[];
+  projects: {
+    id: string;
+    name: string;
+    description: string | null;
+    tools: string[];
+    bullets: string[];
+    repoUrl: string | null;
+    position: number;
+  }[];
+};

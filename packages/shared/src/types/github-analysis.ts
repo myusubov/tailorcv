@@ -326,9 +326,11 @@ export interface AnalyzedGithubRepository {
 
 /**
  * Response body data of the GitHub analyze endpoint.
- * `failedRepoIds` lists selected repositories that could not be analyzed.
+ * `failedRepoIds` lists selected repositories that could not be analyzed;
+ * `failedRepoNames` names those that GitHub still listed.
  */
 export interface AnalyzeGithubReposResponse {
   summaries: AnalyzedGithubRepository[];
   failedRepoIds: number[];
+  failedRepoNames: string[];
 }

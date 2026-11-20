@@ -37,8 +37,8 @@ when editing files.
 | Auth          | Clerk                                                                                                                  | v7 (frontend), v1 (backend) |
 | UI            | HeroUI v3.2.3 + Tailwind CSS 4                                                                                         | -                           |
 | Icons         | Iconify (`@iconify/react`)                                                                                             | -                           |
-| AI            | OpenAI (Responses API) + Anthropic                                                                                     | -                           |
-| Queue         | Not decided (candidate: BullMQ + Redis)                                                                                | -                           |
+| AI            | Google Gemini (`@google/genai`, free tier) for resume content                                                          | -                           |
+| Queue         | BullMQ + Redis (resume generation worker, see onboarding ADR 0003)                                                     | BullMQ 6.x                  |
 | Validation    | Zod 4                                                                                                                  | -                           |
 | Data Fetching | TanStack React Query v5                                                                                                | -                           |
 | Forms         | react-hook-form + Zod                                                                                                  | -                           |
@@ -121,8 +121,8 @@ router.use('/entity', entityRouter);
 **Key rules:**
 
 - Always apply `requireClerkAuth` middleware (except health/webhooks)
-- No route applies a rate limiter. This is deliberate as of 2026-10-27: the AI chat limiters were removed with the chat routes, and `globalRateLimiter`, `githubAuthRateLimiter` and `githubApiRateLimiter` in `apps/backend/src/middleware/rateLimiter.ts` stay defined but unused. Do not add one without the owner's decision.
-- Use `idempotency()` middleware for POST endpoints that trigger async/streaming work. Resume creation is the exception: it stores the client's idempotency key on the row (onboarding ADR 0002)
+- No route applies a rate limiter. This is deliberate as of 2026-10-27, and the unused limiters in `middleware/rateLimiter.ts` were deleted on 2026-11-20. Do not add one without the owner's decision.
+- The Redis `idempotency()` middleware was deleted on 2026-11-20. A POST that creates a row stores the client's idempotency key on that row, as resume creation does (onboarding ADR 0002).
 - Controller functions follow naming: `{verb}{Entity}Controller`
 
 ---
