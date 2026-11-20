@@ -11,8 +11,8 @@ import { ErrorCode } from 'shared';
 import { logger, requestLogger } from './lib/logger';
 import { prisma } from './lib/prisma';
 import { redisClient, redisSubscriber } from './lib/redis';
-import { globalRateLimiter } from './middleware/rateLimiter';
 import { jsonParser, urlencodedParser } from './middleware/bodyParser';
+import { createQueueBoardRouter, QUEUE_BOARD_PATH } from './lib/queue-board';
 
 dotenv.config();
 
@@ -28,8 +28,10 @@ app.use(urlencodedParser);
 app.use(clerkMiddleware());
 app.use(requestLogger);
 
-// // Apply global rate limiting to all API routes
-// app.use('/api', globalRateLimiter);
+// The board shows job data and has no login, so it is mounted in development only.
+if (env.NODE_ENV === 'development') {
+  app.use(QUEUE_BOARD_PATH, createQueueBoardRouter());
+}
 
 // Routes
 app.use('/api/v1', v1Router);

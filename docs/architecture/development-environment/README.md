@@ -49,6 +49,7 @@ LAN browser
 | `apps/backend/package.json`                    | Builds a self-contained backend runtime, including the generated Prisma client   | Changing backend production build or start behavior        |
 | `apps/backend/scripts/copy-prisma-runtime.mjs` | Copies Prisma runtime files into the compiled backend artifact                   | Changing the backend output structure                      |
 | `apps/backend/prisma.config.ts`                | Points the Prisma CLI at `DATABASE_URL_UNPOOLED` and sets no shadow database URL | Changing or diagnosing migration connectivity              |
+| `apps/backend/src/worker-runner.ts`            | Entry point of the resume generation worker, run by `dev:worker` and `dev:backend` | Changing how the worker starts locally                     |
 | `apps/frontend/Dockerfile`                     | Selects the frontend production/build Node image                                 | Changing frontend container runtime                        |
 | `apps/frontend/next.config.ts`                 | Owns the Next.js development-origin allowlist and frontend runtime configuration | Changing the host address used to open the development app |
 | `apps/frontend/package.json`                   | Owns the Next.js development-server and compiler release                         | Changing or diagnosing framework development behavior      |
@@ -103,6 +104,8 @@ Windows host (outside repository)
 - Define `DATABASE_URL_UNPOOLED` in `apps/backend/.env`. No `.env.example` exists, and every Prisma CLI command, including the `prisma generate` step of `npm run build -w backend`, reads it through `prisma.config.ts`. Prisma's `env()` fails on a missing variable.
 - Do not set `shadowDatabaseUrl`. Prisma creates and removes its own shadow database on Neon, and a shadow URL equal to the application database can wipe it.
 - The backend `Dockerfile` and `.github/workflows/ci.yml` define a placeholder `DATABASE_URL_UNPOOLED` for `prisma generate`. Whether the build fails without it has not been tested.
+- Run the generation worker beside the API (`npm run dev:backend` does); without it, new resumes stay `GENERATING`. Redis must be reachable through `REDIS_URL`, and `GEMINI_API_KEY` is required by the env validation.
+- Bull Board (`/admin/queues`) is mounted only when `NODE_ENV` is `development` because it shows job data and has no login.
 - Keep Turbopack's development filesystem cache disabled because this workspace has repeatedly restored stale CSS and HMR chunks. Normal in-memory Fast Refresh remains enabled.
 
 ---
@@ -125,6 +128,7 @@ Windows host (outside repository)
 - [x] Backend production builds include the generated Prisma runtime in `apps/backend/dist`
 - [x] Next.js 16.3 development tooling is current, with cross-session Turbopack filesystem persistence disabled after recurring stale CSS and HMR restores
 - [x] Prisma CLI reads `DATABASE_URL_UNPOOLED` and sets no shadow database URL (2026-10-27; the Docker build and a CI run were not executed)
+- [x] `npm run dev:backend` starts the resume generation worker; Bull Board is mounted in development only (2026-11-20, checked by hand, no CI or Docker run)
 - [ ] Confirm or update that address whenever the host joins a different network
 - [ ] Treat LAN reachability as verified only after probing the exact endpoint from the intended client
 

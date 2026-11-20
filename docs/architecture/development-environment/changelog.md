@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-11-20
+
+### Local Worker, Redis and Bull Board for Resume Generation
+
+- **Decision:** `npm run dev:backend` starts the generation worker beside the API, and Bull Board is available only in development.
+- **Problem:** Analyze now queues a job, so a local run with no worker leaves every new resume in `GENERATING`, and Redis must be reachable for Analyze to queue.
+- **Solution:**
+  1. **Scripts — `package.json`, `apps/backend/package.json`**: `dev:backend` runs the shared watcher, the API and `dev:worker` (`tsx watch --include .env src/worker-runner.ts`) together.
+  2. **Dashboard — `apps/backend/src/server.ts`, `apps/backend/src/lib/queue-board.ts`**: Bull Board is mounted at `/admin/queues` only when `NODE_ENV` is `development`; it has no login.
+  3. **Environment — `apps/backend/src/config/env.ts`**: `REDIS_URL` (already required for the GitHub state) is also the queue connection, and `GEMINI_API_KEY` is required.
+- **Outcome:** Checked by hand on this machine with Redis in a Docker container on port 6380; a worker started with an unreachable database host hung without logging an error and BullMQ handed its job to a normal worker. The cause of that hang was not found. A Docker or CI run was not executed, and the worker has no production start script documented here.
+
 ## 2026-10-27
 
 ### Prisma CLI on the Direct Neon Connection

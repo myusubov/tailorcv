@@ -6,6 +6,19 @@
 
 Historical pipeline entries currently live in the parent GitHub Analysis changelog: [../changelog.md](../changelog.md).
 
+## 2026-11-20
+
+### Analysis Runs in the Resume Generation Job
+
+- **Decision:** The analysis service is called by the resume generation job, and it reports a total failure as data instead of throwing; see the onboarding [ADR 0003](../../onboarding/adr/0003-generate-resume-content-in-a-queue-worker.md).
+- **Problem:** Since 2026-11-06 nothing called `analyzeGithubRepositories`, and the job needs to tell a failed repository from a missing one and to name the failed ones.
+- **Solution:**
+  1. **Caller — `apps/backend/src/services/resume-generation.service.ts`**: `generateResume` calls the service with the installation token it refreshed; the analyze route still does not.
+  2. **Result — `apps/backend/src/services/github-analysis.service.ts`, `packages/shared/src/types/github-analysis.ts`**: The result has `failedRepoNames` (full names of failed repositories that GitHub still listed). The `BAD_REQUEST` thrown when none of the selected repositories was found was removed; every id is returned in `failedRepoIds` instead.
+  3. **Route — `apps/backend/src/controllers/github.controller.ts`**: After `createResume`, `analyzeGithubRepos` queues the job; a failed enqueue marks the resume `FAILED` with `SERVICE_UNAVAILABLE` and the route still returns the id.
+  4. **Removed — `apps/backend/src/middleware/rateLimiter.ts`, `apps/backend/src/middleware/idempotency.ts`**: Both files were deleted; no route used either.
+- **Outcome:** The job marks the resume `FAILED` with `GITHUB_REPO_ANALYSIS_FAILED` when every repository fails, and saves `failedRepoNames` otherwise. Checked by hand through the generation job; `github-analysis.service.test.ts` was changed but not re-run, and no lint or typecheck was run.
+
 ## 2026-11-07
 
 ### Analyze Route Requires an Idempotency Key

@@ -23,11 +23,7 @@ const envSchema = z.object({
   CLERK_WEBHOOK_SECRET: z.string().min(1),
 
   // Gemini AI
-  // GEMINI_API_KEY: z.string().min(1),
-  OPENAI_ONBOARDING_SYSTEM_PROMPT: z.string().min(1),
-
-  // OpenAI AI
-  OPENAI_API_KEY: z.string().min(1),
+  GEMINI_API_KEY: z.string().min(1),
 
   // GitHub App
   GITHUB_APP_SLUG: z.string().min(1),

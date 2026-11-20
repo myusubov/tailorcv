@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-11-20
+
+### Queue and Gemini Packages for Resume Generation
+
+- **Decision:** Declare the queue, queue-dashboard and Gemini client packages in the backend workspace that imports them.
+- **Problem:** Resume generation needs a job queue on Redis, a development view of the jobs and a Gemini client; see the onboarding [ADR 0003](../onboarding/adr/0003-generate-resume-content-in-a-queue-worker.md).
+- **Solution:**
+  1. **Backend ownership — `apps/backend/package.json`**: Adds `bullmq` `^6.7.3`, `@google/genai` `^3.3.0`, `@bull-board/api` `^9.13.1` and `@bull-board/express` `^9.13.1`, and a `dev:worker` script. `ioredis` was already declared.
+  2. **Root script — `package.json`**: `dev:backend` also starts `dev:worker`.
+  3. **Reproducible resolution — `package-lock.json`**: Records the added packages and their transitive dependencies.
+  4. **Environment — `apps/backend/src/config/env.ts`**: `GEMINI_API_KEY` is required; the OpenAI variables (`OPENAI_API_KEY`, `OPENAI_ONBOARDING_SYSTEM_PROMPT`) were removed. `apps/backend/src/lib/openai.ts` was deleted; the `openai` package is still declared in both `dependencies` and `devDependencies` of `apps/backend/package.json`.
+- **Outcome:** Backend source imports packages the backend workspace declares. No install audit, `npm ls`, lint or typecheck result is recorded for these additions. Whether to remove the now unused `openai` declarations is not decided.
+
 ## 2026-10-23
 
 ### Octokit Packages for Backend GitHub Access

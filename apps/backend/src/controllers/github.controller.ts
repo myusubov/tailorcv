@@ -18,7 +18,8 @@ import { AppError } from '../utils/AppError';
 import { ErrorCode } from 'shared';
 import { successResponse } from '../utils/response';
 import { logger } from '../lib/logger';
-import { createResume } from '../services/resume.service';
+import { createResume, markResumeFailed } from '../services/resume.service';
+import { enqueueResumeGeneration } from '../services/resume-generation.service';
 
 /**
  * Returns the GitHub App installation URL for the client to redirect to.
@@ -139,9 +140,10 @@ export async function fetchGithubConnection(
 }
 
 /**
- * Creates a resume for the user from their profile and returns its id; a
- * repeated idempotency key returns the same resume. The selected repository ids
- * are only recorded on the resume; the repositories themselves are not read here.
+ * Creates a resume for the user from their profile, queues its generation job
+ * and returns its id; a repeated idempotency key returns the same resume. The
+ * selected repository ids are only recorded on the resume; the repositories
+ * themselves are read by the job, not here.
  */
 export async function analyzeGithubRepos(
   req: Request<unknown, unknown, AnalyzeGithubReposRequestBody>,
@@ -157,6 +159,25 @@ export async function analyzeGithubRepos(
       sourceRepoIds: repoIds.map(String),
       idempotencyKey,
     });
+
+    try {
+      await enqueueResumeGeneration({ resumeId: result.id });
+    } catch (error) {
+      logger.error(
+        { err: error, resumeId: result.id },
+        'Failed to enqueue resume generation job',
+      );
+      await markResumeFailed({
+        resumeId: result.id,
+        failureReason: ErrorCode.SERVICE_UNAVAILABLE,
+      }).catch((markError) => {
+        logger.error(
+          { err: markError, resumeId: result.id },
+          'Could not mark resume as failed after enqueue failure',
+        );
+      });
+    }
+
     return successResponse(res, result, 200);
   } catch (error) {
     next(error);

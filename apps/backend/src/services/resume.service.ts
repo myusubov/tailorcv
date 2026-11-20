@@ -1,7 +1,15 @@
 import { Prisma } from '../../prisma/generated/client/client.js';
 import { prisma } from '../lib';
 
-import { CreateResumeInput, CreateResumeOutput } from '../types/resume';
+import {
+  CreateResumeInput,
+  CreateResumeOutput,
+  GetResumeByIdForWorkerInput,
+  GetResumeForUserInput,
+  MarkResumeFailedInput,
+  SaveFailedRepoNamesInput,
+  SaveResumeContentInput,
+} from '../types/resume';
 
 async function findResumeIdByKey(
   input: Pick<CreateResumeInput, 'userId' | 'idempotencyKey'>,
@@ -159,4 +167,124 @@ export async function createResume(
     if (!winner) throw e;
     return { id: winner.id };
   }
+}
+
+/**
+ * Marks the resume `FAILED` with the reason if it is still `GENERATING`. Returns
+ * whether a resume was changed.
+ */
+export async function markResumeFailed({
+  resumeId,
+  failureReason,
+}: MarkResumeFailedInput) {
+  const { count } = await prisma.resume.updateMany({
+    where: { id: resumeId, status: 'GENERATING' },
+    data: {
+      status: 'FAILED',
+      failureReason,
+    },
+  });
+
+  return count === 1;
+}
+
+/** Returns only the fields the generation job needs, or `null` if the resume is gone. */
+export async function getResumeByIdForWorker({
+  resumeId,
+}: GetResumeByIdForWorkerInput) {
+  return prisma.resume.findUnique({
+    where: { id: resumeId },
+    select: {
+      id: true,
+      status: true,
+      userId: true,
+      sourceRepoIds: true,
+    },
+  });
+}
+
+/**
+ * Returns the resume with its skill groups and projects in order, or `null`
+ * when it does not exist or belongs to another user.
+ */
+export async function getResumeForUser({
+  resumeId,
+  userId,
+}: GetResumeForUserInput) {
+  return prisma.resume.findFirst({
+    where: { id: resumeId, userId },
+    include: {
+      skillGroups: { orderBy: { position: 'asc' } },
+      projects: { orderBy: { position: 'asc' } },
+    },
+  });
+}
+
+/**
+ * Records the repositories that could not be analyzed, only while the resume is
+ * still `GENERATING`. Returns whether a resume was changed.
+ */
+export async function saveFailedRepoNames({
+  failedRepoNames,
+  resumeId,
+}: SaveFailedRepoNamesInput) {
+  const { count } = await prisma.resume.updateMany({
+    where: { id: resumeId, status: 'GENERATING' },
+    data: {
+      failedRepoNames,
+    },
+  });
+
+  return count === 1;
+}
+
+/**
+ * Saves the generated content on the resume, marks it `READY` and sets the user's
+ * `onboardingCompletedAt` if it is still empty, all in one transaction. Returns
+ * false and saves nothing when the resume is no longer `GENERATING`.
+ */
+export async function saveResumeContent({
+  resumeId,
+  userId,
+  content,
+}: SaveResumeContentInput) {
+  const { headline, summary, skillGroups, projects } = content;
+
+  return prisma.$transaction(async (tx) => {
+    const { count } = await tx.resume.updateMany({
+      where: { id: resumeId, status: 'GENERATING' },
+      data: { headline, summary, status: 'READY' },
+    });
+    if (count === 0) return false;
+
+    await tx.skillGroup.createMany({
+      data: skillGroups.map(({ title, skills }, idx) => ({
+        resumeId,
+        title,
+        skills,
+        position: idx,
+      })),
+    });
+
+    await tx.project.createMany({
+      data: projects.map(
+        ({ name, repoUrl, description, tools, bullets }, idx) => ({
+          resumeId,
+          name,
+          description,
+          tools,
+          bullets: bullets.map((bullet) => bullet.text),
+          repoUrl,
+          position: idx,
+        }),
+      ),
+    });
+
+    await tx.user.updateMany({
+      where: { clerkUserId: userId, onboardingCompletedAt: null },
+      data: { onboardingCompletedAt: new Date() },
+    });
+
+    return true;
+  });
 }

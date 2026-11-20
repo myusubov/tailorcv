@@ -72,7 +72,7 @@ const compareByDepthThenPath = (a: RepoTreeEntry, b: RepoTreeEntry): number => {
 
 // Position of the first matching tier two type; a name that matches none ranks
 // after every type.
-const getTierTwoRank = (name: string): number => {
+export const getTierTwoRank = (name: string): number => {
   const rank = TIER_TWO_FILE_PATTERNS_BY_PRIORITY.findIndex((pattern) =>
     pattern.test(name),
   );
@@ -85,6 +85,32 @@ const sortTierTwoFiles = (a: RepoTreeEntry, b: RepoTreeEntry): number => {
 
   return compareByDepthThenPath(a, b);
 };
+
+/**
+ * Returns the tier a candidate file path was picked in, judged from the path
+ * alone, using the same patterns as `buildCandidateFilesToInspect`.
+ */
+export function getCandidateFileTier(path: string): 1 | 2 | 3 {
+  const lowercasedPath = path.toLowerCase();
+  const isRootFile = !lowercasedPath.includes('/');
+
+  if (isRootFile && TIER_ONE_FILE_NAME_PATTERN.test(lowercasedPath)) return 1;
+  if (TIER_THREE_PATH_PATTERN.test(lowercasedPath)) return 3;
+  return 2;
+}
+
+export function isArchitectureOrDesignFile(path: string): boolean {
+  return ARCHITECTURE_OR_DESIGN_FILE_PATTERN.test(path);
+}
+
+// Instruction files written for AI coding tools, not about what the project does.
+const AGENT_INSTRUCTION_FILE_PATTERN = /(^|\/)(agents|claude)\.md$/i;
+
+export function isAgentInstructionFile(path: string): boolean {
+  return AGENT_INSTRUCTION_FILE_PATTERN.test(path);
+}
+
+export const TIER_TWO_TYPE_COUNT = TIER_TWO_FILE_PATTERNS_BY_PRIORITY.length;
 
 /**
  * Returns the file paths a later step should read to understand what the repository does.
