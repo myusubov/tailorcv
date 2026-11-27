@@ -88,6 +88,7 @@ model Resume {
   updatedAt       DateTime        @updatedAt
   sectionOrder    String[]
   sourceRepoIds   String[]
+  analyzedRepoIds String[]
   failedRepoNames String[]
   failureReason   String?
   idempotencyKey  String?

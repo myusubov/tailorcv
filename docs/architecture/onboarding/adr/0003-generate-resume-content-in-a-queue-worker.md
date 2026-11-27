@@ -35,11 +35,11 @@ The model returns a `repoId` for each project; the project name and URL are copi
 ## Consequences
 
 - Redis must be reachable for Analyze to queue; if it is not, the resume is marked `FAILED` (`SERVICE_UNAVAILABLE`) and the route still returns the id.
-- A resume whose worker dies with no other worker left stays `GENERATING`; there is no job timeout or sweeper, and no retry flow for a `FAILED` resume.
+- A resume whose worker dies with no other worker left stays `GENERATING`; there is no job timeout or sweeper. A resume that failed with `SERVICE_UNAVAILABLE` can be retried ([ADR 0004](0004-retry-a-failed-resume-from-its-stored-analysis.md)); other failure reasons have no retry flow.
 - A transient Gemini failure is not retried by BullMQ, so a user sees `FAILED` after the client's own retries are used up.
 - Bull Board has no login and is mounted only when `NODE_ENV` is `development`.
-- A job retry repeats the GitHub analysis, which is why the Gemini client keeps its own retries short.
-- Failure paths were checked by hand; no automated test covers the worker, the save or the failure policy.
+- A job retry that starts before the analysis was stored repeats the GitHub analysis; one that starts after reuses it ([ADR 0004](0004-retry-a-failed-resume-from-its-stored-analysis.md)). The Gemini client keeps its own retries short.
+- Failure paths were checked by hand. Unit tests with mocked Prisma and Gemini cover `generateResume`, `generateResumeContent`, `saveResumeContent` and `failResumeGeneration`; no test covers the worker's failed-attempt handler, and none runs against a real database or Redis.
 
 ## References
 

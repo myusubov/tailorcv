@@ -1,10 +1,13 @@
 import { ApiError } from '@google/genai';
 import { ErrorCode } from 'shared';
+import type { AnalyzeGithubReposResponse } from 'shared';
 import { logger } from '../lib/logger';
 import { resumeGenerationQueue } from '../lib/resume-queue';
 import type {
   EnqueueResumeGenerationInput,
   FailResumeGenerationInput,
+  RemoveResumeGenerationJobInput,
+  RetryResumeGenerationInput,
 } from '../types/resume';
 import { AppError } from '../utils/AppError';
 import {
@@ -13,12 +16,15 @@ import {
 } from './github.service';
 import {
   getResumeByIdForWorker,
+  getResumeIdForUser,
   markResumeFailed,
+  resetFailedResume,
+  saveAnalyzedRepoIds,
   saveFailedRepoNames,
   saveResumeContent,
 } from './resume.service';
 import { analyzeGithubRepositories } from './github-analysis.service';
-import { storeAnalyses } from './analysis.service';
+import { getStoredAnalyses, storeAnalyses } from './analysis.service';
 import { Prisma } from '../../prisma/generated/client/client.js';
 import type { GeneratedResumeContent } from '../types/resume-content';
 import { generateResumeContent } from './resume-ai.service';
@@ -42,6 +48,62 @@ export async function enqueueResumeGeneration(
   );
 }
 
+/**
+ * Removes the queue job whose id is the resume id, so a retry can enqueue the
+ * resume again. Does nothing when no such job exists.
+ */
+export async function removeResumeGenerationJob({
+  resumeId,
+}: RemoveResumeGenerationJobInput) {
+  await resumeGenerationQueue.remove(resumeId);
+}
+
+/**
+ * Restarts generation for a resume that failed with `SERVICE_UNAVAILABLE`. Throws
+ * `NOT_FOUND` when the user has no such resume and `RESUME_NOT_RETRYABLE` for any
+ * other state. If the job cannot be queued, the resume is marked `FAILED` again
+ * and `SERVICE_UNAVAILABLE` is thrown.
+ */
+export async function retryResumeGeneration({
+  resumeId,
+  userId,
+}: RetryResumeGenerationInput) {
+  const userResume = await getResumeIdForUser({ resumeId, userId });
+  if (!userResume) {
+    throw new AppError('Resume not found', ErrorCode.NOT_FOUND, 404);
+  }
+  const resetStatus = await resetFailedResume({ resumeId, userId });
+
+  if (!resetStatus) {
+    throw new AppError(
+      'Resume not retryable',
+      ErrorCode.RESUME_NOT_RETRYABLE,
+      409,
+    );
+  }
+
+  try {
+    await removeResumeGenerationJob({ resumeId });
+    await enqueueResumeGeneration({ resumeId });
+  } catch (err) {
+    logger.error(
+      { err, resumeId, userId },
+      'Failed to queue retry, marking resume as failed',
+    );
+    await markResumeFailed({
+      resumeId,
+      failureReason: ErrorCode.SERVICE_UNAVAILABLE,
+    });
+    throw new AppError(
+      "We couldn't restart your resume right now. Please try again in a moment.",
+      ErrorCode.SERVICE_UNAVAILABLE,
+      503,
+    );
+  }
+
+  return { id: resumeId };
+}
+
 // Connection-level failures, where a retry can succeed, unlike constraint or query errors.
 const DATABASE_UNAVAILABLE_CODES = ['P1001', 'P1008', 'P1017', 'P2037'];
 
@@ -62,11 +124,96 @@ function getContentFailureReason(err: unknown) {
   return isPermanent ? ErrorCode.INTERNAL_ERROR : ErrorCode.SERVICE_UNAVAILABLE;
 }
 
+type ResumeForWorker = NonNullable<
+  Awaited<ReturnType<typeof getResumeByIdForWorker>>
+>;
+
+// Everything that needs GitHub access lives here, so reusing a stored analysis
+// never calls GitHub. Returns null after marking the resume failed.
+async function analyzeAndStoreRepositories(resume: ResumeForWorker) {
+  const githubConnection = await getGithubConnection(resume.userId);
+  if (!githubConnection) {
+    logger.warn(
+      { resumeId: resume.id, userId: resume.userId },
+      'GitHub connection is missing, marking resume as failed',
+    );
+    await markResumeFailed({
+      resumeId: resume.id,
+      failureReason: ErrorCode.GITHUB_CONNECTION_REQUIRED,
+    });
+    return null;
+  }
+  let validConnection: Awaited<ReturnType<typeof getValidInstallationToken>>;
+  try {
+    validConnection = await getValidInstallationToken(githubConnection);
+  } catch (error) {
+    if (
+      error instanceof AppError &&
+      error.errorCode === ErrorCode.GITHUB_APP_SUSPENDED
+    ) {
+      logger.warn(
+        { resumeId: resume.id, userId: resume.userId },
+        'GitHub app is suspended, marking resume as failed',
+      );
+      await markResumeFailed({
+        resumeId: resume.id,
+        failureReason: ErrorCode.GITHUB_APP_SUSPENDED,
+      });
+      return null;
+    }
+    throw error;
+  }
+
+  const analysis = await analyzeGithubRepositories({
+    clerkUserId: resume.userId,
+    repoIds: resume.sourceRepoIds.map((id) => Number(id)),
+    accessToken: validConnection.installationAccessToken,
+  });
+  // allSettled lets both writes finish before a failure is rethrown, so
+  // the job's retry never starts while one of them is still running.
+  const writes = await Promise.allSettled([
+    saveFailedRepoNames({
+      resumeId: resume.id,
+      failedRepoNames: analysis.failedRepoNames,
+    }),
+    storeAnalyses({
+      userId: resume.userId,
+      summaries: analysis.summaries,
+    }).then(() =>
+      saveAnalyzedRepoIds({
+        resumeId: resume.id,
+        analyzedRepoIds: analysis.summaries.map((summary) =>
+          String(summary.repository.id),
+        ),
+      }),
+    ),
+  ]);
+  const rejected = writes.find(
+    (write): write is PromiseRejectedResult => write.status === 'rejected',
+  );
+  if (rejected) throw rejected.reason;
+  return analysis;
+}
+
+// Returns null unless every repository saved on the resume still has a stored
+// analysis, so the caller falls back to the full flow.
+async function loadStoredAnalysis(
+  resume: ResumeForWorker,
+): Promise<AnalyzeGithubReposResponse | null> {
+  if (resume.analyzedRepoIds.length === 0) return null;
+  const summaries = await getStoredAnalyses({
+    userId: resume.userId,
+    repoIds: resume.analyzedRepoIds,
+  });
+  if (summaries.length !== resume.analyzedRepoIds.length) return null;
+  return { failedRepoIds: [], failedRepoNames: [], summaries };
+}
+
 /**
- * Runs one generation job: analyzes the source repositories, asks Gemini for the
- * content and saves it. A missing GitHub connection, a suspended app, failed
- * analysis or a failed Gemini call marks the resume `FAILED` and returns. Any
- * other error is thrown so BullMQ retries the job.
+ * Runs one generation job: reuses the stored analysis when every saved repo
+ * still has one, else analyzes the source repositories, then asks Gemini and
+ * saves the content. GitHub access loss, failed analysis or a failed Gemini call
+ * marks the resume `FAILED`; any other error is thrown so BullMQ retries.
  */
 export async function generateResume(resumeId: string) {
   const resume = await getResumeByIdForWorker({ resumeId });
@@ -81,43 +228,10 @@ export async function generateResume(resumeId: string) {
     );
     return;
   }
-  const githubConnection = await getGithubConnection(resume.userId);
-  if (!githubConnection) {
-    logger.warn(
-      { resumeId, userId: resume.userId },
-      'GitHub connection is missing, marking resume as failed',
-    );
-    await markResumeFailed({
-      resumeId,
-      failureReason: ErrorCode.GITHUB_CONNECTION_REQUIRED,
-    });
-    return;
-  }
-  let validConnection: Awaited<ReturnType<typeof getValidInstallationToken>>;
-  try {
-    validConnection = await getValidInstallationToken(githubConnection);
-  } catch (error) {
-    if (
-      error instanceof AppError &&
-      error.errorCode === ErrorCode.GITHUB_APP_SUSPENDED
-    ) {
-      logger.warn(
-        { resumeId, userId: resume.userId },
-        'GitHub app is suspended, marking resume as failed',
-      );
-      await markResumeFailed({
-        resumeId,
-        failureReason: ErrorCode.GITHUB_APP_SUSPENDED,
-      });
-      return;
-    }
-    throw error;
-  }
-  const analysis = await analyzeGithubRepositories({
-    clerkUserId: resume.userId,
-    repoIds: resume.sourceRepoIds.map((id) => Number(id)),
-    accessToken: validConnection.installationAccessToken,
-  });
+  const analysis =
+    (await loadStoredAnalysis(resume)) ??
+    (await analyzeAndStoreRepositories(resume));
+  if (!analysis) return;
 
   if (analysis.failedRepoIds.length === resume.sourceRepoIds.length) {
     logger.warn(
@@ -130,18 +244,6 @@ export async function generateResume(resumeId: string) {
     });
     return;
   }
-
-  if (analysis.failedRepoNames.length > 0) {
-    await saveFailedRepoNames({
-      resumeId: resume.id,
-      failedRepoNames: analysis.failedRepoNames,
-    });
-  }
-
-  await storeAnalyses({
-    userId: resume.userId,
-    summaries: analysis.summaries,
-  });
 
   let resumeContent: GeneratedResumeContent;
   try {
