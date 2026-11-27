@@ -13,6 +13,10 @@ export type EnqueueResumeGenerationInput = {
   resumeId: string;
 };
 
+export type RemoveResumeGenerationJobInput = {
+  resumeId: string;
+};
+
 export type ResumeGenerationJobData = {
   resumeId: string;
 };
@@ -34,6 +38,21 @@ export type GetResumeByIdForWorkerInput = {
 export type SaveFailedRepoNamesInput = {
   resumeId: string;
   failedRepoNames: string[];
+};
+
+export type SaveAnalyzedRepoIdsInput = {
+  resumeId: string;
+  analyzedRepoIds: string[];
+};
+
+export type ResetFailedResumeInput = {
+  resumeId: string;
+  userId: string;
+};
+
+export type RetryResumeGenerationInput = {
+  resumeId: string;
+  userId: string;
 };
 
 export type GetResumeForUserInput = {

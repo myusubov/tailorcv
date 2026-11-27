@@ -1,6 +1,10 @@
+import type { AnalyzedGithubRepository } from 'shared';
 import { prisma } from '../lib';
 import type { Prisma } from '../../prisma/generated/client/client.js';
-import type { StoreAnalysesInput } from '../types/analysis';
+import type {
+  GetStoredAnalysesInput,
+  StoreAnalysesInput,
+} from '../types/analysis';
 
 /**
  * Stores one analysis row per analyzed repository, replacing the row the user
@@ -40,4 +44,33 @@ export async function storeAnalyses({ userId, summaries }: StoreAnalysesInput) {
       });
     }),
   );
+}
+
+/**
+ * Returns one summary per repository that has a stored analysis, shaped like
+ * the summaries `storeAnalyses` received.
+ */
+export async function getStoredAnalyses({
+  userId,
+  repoIds,
+}: GetStoredAnalysesInput): Promise<AnalyzedGithubRepository[]> {
+  const rows = await prisma.analysis.findMany({
+    where: {
+      userId,
+      githubRepoId: {
+        in: repoIds,
+      },
+    },
+  });
+
+  return rows.map((row) => {
+    // storeAnalyses wrote plain objects of these shapes into the JSON columns.
+    const data = row.data as unknown as Omit<
+      AnalyzedGithubRepository,
+      'candidateFileContents'
+    >;
+    const candidateFileContents =
+      row.fileContents as unknown as AnalyzedGithubRepository['candidateFileContents'];
+    return { ...data, candidateFileContents };
+  });
 }

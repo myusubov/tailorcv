@@ -1,3 +1,4 @@
+import { ErrorCode } from 'shared';
 import { Prisma } from '../../prisma/generated/client/client.js';
 import { prisma } from '../lib';
 
@@ -7,6 +8,8 @@ import {
   GetResumeByIdForWorkerInput,
   GetResumeForUserInput,
   MarkResumeFailedInput,
+  ResetFailedResumeInput,
+  SaveAnalyzedRepoIdsInput,
   SaveFailedRepoNamesInput,
   SaveResumeContentInput,
 } from '../types/resume';
@@ -199,6 +202,7 @@ export async function getResumeByIdForWorker({
       status: true,
       userId: true,
       sourceRepoIds: true,
+      analyzedRepoIds: true,
     },
   });
 }
@@ -221,6 +225,20 @@ export async function getResumeForUser({
 }
 
 /**
+ * Returns only the id of the user's resume, or `null` when it does not exist or
+ * belongs to another user.
+ */
+export async function getResumeIdForUser({
+  resumeId,
+  userId,
+}: GetResumeForUserInput) {
+  return prisma.resume.findFirst({
+    where: { id: resumeId, userId },
+    select: { id: true },
+  });
+}
+
+/**
  * Records the repositories that could not be analyzed, only while the resume is
  * still `GENERATING`. Returns whether a resume was changed.
  */
@@ -232,6 +250,50 @@ export async function saveFailedRepoNames({
     where: { id: resumeId, status: 'GENERATING' },
     data: {
       failedRepoNames,
+    },
+  });
+
+  return count === 1;
+}
+
+/**
+ * Records the repositories whose analysis was stored for the resume, only while
+ * it is still `GENERATING`.
+ */
+export async function saveAnalyzedRepoIds({
+  resumeId,
+  analyzedRepoIds,
+}: SaveAnalyzedRepoIdsInput) {
+  await prisma.resume.updateMany({
+    where: {
+      id: resumeId,
+      status: 'GENERATING',
+    },
+    data: {
+      analyzedRepoIds,
+    },
+  });
+}
+
+/**
+ * Moves the user's resume from `FAILED` back to `GENERATING` and clears its
+ * failure reason, only when it failed with `SERVICE_UNAVAILABLE`. Returns whether
+ * a resume was changed.
+ */
+export async function resetFailedResume({
+  resumeId,
+  userId,
+}: ResetFailedResumeInput) {
+  const { count } = await prisma.resume.updateMany({
+    where: {
+      id: resumeId,
+      userId,
+      status: 'FAILED',
+      failureReason: ErrorCode.SERVICE_UNAVAILABLE,
+    },
+    data: {
+      status: 'GENERATING',
+      failureReason: null,
     },
   });
 
