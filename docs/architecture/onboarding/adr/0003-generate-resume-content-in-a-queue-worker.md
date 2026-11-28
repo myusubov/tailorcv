@@ -18,7 +18,7 @@ Analyze creates the resume, adds a BullMQ job on Redis and returns the resume id
 The failure policy depends on who can fix the problem:
 
 - Failures a retry cannot fix mark the resume `FAILED` and end the job: a missing GitHub connection, a suspended app, no analyzable repository, and any Gemini failure. The Gemini client already retries a failed call 3 times, and a bad reply is requested once more.
-- Any other error (database, save) is thrown and retried by BullMQ. Only after the last attempt does the worker mark the resume `FAILED` (`SERVICE_UNAVAILABLE` for a database connection error, `INTERNAL_ERROR` otherwise).
+- Any other error (database, save) is thrown and retried by BullMQ. Only after the last attempt does the worker mark the resume `FAILED` (`SERVICE_UNAVAILABLE` for a database connection error, a GitHub outage or a GitHub rate limit, see [ADR 0005](0005-retryable-failure-reasons-and-github-errors-in-the-job.md); `INTERNAL_ERROR` otherwise).
 - Every status change uses a conditional update on `GENERATING`, so a late or repeated job cannot overwrite a finished or failed resume.
 
 The model returns a `repoId` for each project; the project name and URL are copied from the analyzed repository, never from the model. The content, `READY` and `onboardingCompletedAt` are written in one transaction.
@@ -35,7 +35,7 @@ The model returns a `repoId` for each project; the project name and URL are copi
 ## Consequences
 
 - Redis must be reachable for Analyze to queue; if it is not, the resume is marked `FAILED` (`SERVICE_UNAVAILABLE`) and the route still returns the id.
-- A resume whose worker dies with no other worker left stays `GENERATING`; there is no job timeout or sweeper. A resume that failed with `SERVICE_UNAVAILABLE` can be retried ([ADR 0004](0004-retry-a-failed-resume-from-its-stored-analysis.md)); other failure reasons have no retry flow.
+- A resume whose worker dies with no other worker left stays `GENERATING`; there is no job timeout or sweeper. A resume that failed with `SERVICE_UNAVAILABLE` or `GITHUB_REPO_ANALYSIS_FAILED` can be retried ([ADR 0004](0004-retry-a-failed-resume-from-its-stored-analysis.md), [ADR 0005](0005-retryable-failure-reasons-and-github-errors-in-the-job.md)); other failure reasons have no retry flow.
 - A transient Gemini failure is not retried by BullMQ, so a user sees `FAILED` after the client's own retries are used up.
 - Bull Board has no login and is mounted only when `NODE_ENV` is `development`.
 - A job retry that starts before the analysis was stored repeats the GitHub analysis; one that starts after reuses it ([ADR 0004](0004-retry-a-failed-resume-from-its-stored-analysis.md)). The Gemini client keeps its own retries short.

@@ -153,6 +153,7 @@ apps/backend/src/
 | 5xx, including network failures                                                                    | `GITHUB_API_ERROR`                             | 502         |
 | Any other 4xx (the request we built was wrong)                                                     | `INTERNAL_ERROR`                               | 500         |
 
+- **Rule**: The resume generation job applies the same mapping after its last failed attempt (`getFailureReason`), and stores `GITHUB_API_ERROR` and `RATE_LIMIT_EXCEEDED` on the resume as `SERVICE_UNAVAILABLE`; see onboarding [ADR 0005](../../onboarding/adr/0005-retryable-failure-reasons-and-github-errors-in-the-job.md).
 - **Rule**: A suspended installation is detected in `getValidInstallationToken` (only when it refreshes a token) and throws `GITHUB_APP_SUSPENDED` with status 403; it is not produced by the mapper.
 - **Rule**: The analysis service decides that a tree failure is local: a tree request answered with 404, 409 or 422 puts that repository in `failedRepoIds`. A missing file is handled inside `fetchRepoFile`, which returns `null` for a 404 (so the candidate file gets `content: null`) and rethrows everything else; the analysis service has no per-file catch. Everything else is rethrown, because it affects every repository (rate limit, rejected token, GitHub outage) or is not understood.
 - **Anti-pattern**: Catching all errors around `fetchRepoFile` or `fetchRepositoryTree`. It hides rate limits and the reconnect flow behind empty results.

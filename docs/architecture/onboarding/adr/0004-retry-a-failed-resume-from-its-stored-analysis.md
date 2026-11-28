@@ -1,6 +1,6 @@
 # ADR 0004: Retry a Failed Resume From Its Stored Analysis
 
-- **Status:** Accepted
+- **Status:** Accepted; the retryable reasons were extended by [ADR 0005](0005-retryable-failure-reasons-and-github-errors-in-the-job.md)
 - **Date:** 2026-11-26
 - **Domain:** docs/architecture/onboarding/
 - **Related changelog entry:** [changelog.md](../changelog.md#retry-for-a-resume-that-failed-with-service_unavailable)

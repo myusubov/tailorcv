@@ -48,8 +48,8 @@ app/onboarding/page.tsx
 | `apps/frontend/app/components/onboarding/github/github-step.tsx`                 | Handles GitHub connection, installation-repository loading, and resume creation on Analyze (navigates to the new resume; keeps one idempotency key per selection of repositories); shows error pages for repository-loading errors, a suspended app and a required reconnect, and toasts for other creation errors. An expired session is redirected to sign-in by the query provider, not here.                                        | GitHub onboarding path changes.                             |
 | `apps/frontend/app/onboarding/layout.tsx`                                        | Server gate for every onboarding route: calls `requireNotOnboardedUser` inside a `Suspense` boundary.                              | Onboarding access or redirect changes.                      |
 | `apps/frontend/lib/auth/guards.ts`                                               | `requireNotOnboardedUser` reads the onboarding status and redirects completed users to `/resumes`; see the [auth README](../auth/README.md). | Onboarding gate changes.                                    |
-| `apps/backend/src/services/resume.service.ts`                                    | `createResume` copies the user's profile data into a new resume and returns the existing one for a repeated idempotency key; `saveResumeContent` saves the generated content, marks the resume `READY` and sets `onboardingCompletedAt` in one transaction; `markResumeFailed` marks a generating resume `FAILED`; `resetFailedResume` moves a `SERVICE_UNAVAILABLE` failure back to `GENERATING` and `saveAnalyzedRepoIds` records the stored analyses for the retry. See [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) and [ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md). | Resume creation or save changes.                            |
-| `apps/backend/src/services/resume-generation.service.ts`                         | Enqueues the generation job and runs it: analysis (or the stored analysis on a retry), Gemini call, save, and the failure policy; also `retryResumeGeneration`. See [ADR 0003](adr/0003-generate-resume-content-in-a-queue-worker.md) and [ADR 0004](adr/0004-retry-a-failed-resume-from-its-stored-analysis.md). | Generation job, retry or failure handling changes.          |
+| `apps/backend/src/services/resume.service.ts`                                    | `createResume` copies the user's profile data into a new resume and returns the existing one for a repeated idempotency key; `saveResumeContent` saves the generated content, marks the resume `READY` and sets `onboardingCompletedAt` in one transaction; `markResumeFailed` marks a generating resume `FAILED`; `resetFailedResume` moves a failure with a retryable reason (`SERVICE_UNAVAILABLE` or `GITHUB_REPO_ANALYSIS_FAILED`) back to `GENERATING` and `saveAnalyzedRepoIds` records the stored analyses for the retry. See [ADR 0001](adr/0001-copy-profile-data-into-each-resume.md) and [ADR 0002](adr/0002-store-idempotency-key-on-the-created-row.md). | Resume creation or save changes.                            |
+| `apps/backend/src/services/resume-generation.service.ts`                         | Enqueues the generation job and runs it: analysis (or the stored analysis on a retry), Gemini call, save, and the failure policy; also `retryResumeGeneration`. See [ADR 0003](adr/0003-generate-resume-content-in-a-queue-worker.md), [ADR 0004](adr/0004-retry-a-failed-resume-from-its-stored-analysis.md) and [ADR 0005](adr/0005-retryable-failure-reasons-and-github-errors-in-the-job.md). | Generation job, retry or failure handling changes.          |
 | `apps/backend/src/services/analysis.service.ts`                                  | `storeAnalyses` keeps one analysis row per user and repository; `getStoredAnalyses` rebuilds the summaries from those rows for a retry. | Stored analysis changes.                                    |
 | `apps/backend/src/services/resume-ai.service.ts`, `resume-evidence.service.ts`   | Gemini call with one retry for a bad reply, and the cap that keeps the evidence under 90,000 characters. Prompt in `prompts/resume-content.prompt.ts`, reply schema in `schemas/resume-content.schema.ts`. | Prompt, model output or evidence size changes.              |
 | `apps/backend/src/lib/resume-queue.ts`, `lib/resume-worker.ts`, `worker-runner.ts` | The BullMQ queue, the worker process entry and its failed-attempt handling; Bull Board at `/admin/queues` in development (`lib/queue-board.ts`). | Queue, worker or Redis changes.                             |
@@ -114,6 +114,7 @@ flowchart TD
   Reuse -->|Yes| Gemini
   Reuse -->|No| Github[Refresh token and analyze repositories]
   Github -->|No connection, suspended app, no repository analyzed| Failed2[FAILED with that reason]
+  Github -->|GitHub outage or rate limit, after 3 attempts| Failed4[FAILED SERVICE_UNAVAILABLE]
   Github --> Gemini[capEvidence and Gemini call]
   Gemini -->|Gemini error or second bad reply| Failed3[FAILED SERVICE_UNAVAILABLE or INTERNAL_ERROR]
   Gemini --> Save[saveResumeContent in one transaction]
@@ -121,7 +122,7 @@ flowchart TD
   Save -->|Other error| Retry[Job retried up to 3 attempts, then FAILED]
 ```
 
-`/resumes/{id}` is a server component that loads the resume once per request and shows its status, so a resume still `GENERATING` needs a reload. If the worker dies and no other worker takes the job, the resume stays `GENERATING`; nothing sweeps it. Repositories that could not be analyzed are saved on the resume as `failedRepoNames`.
+`/resumes/{id}` is a server component that loads the resume once per request and shows its status, so a resume still `GENERATING` needs a reload. If the worker dies and no other worker takes the job, the resume stays `GENERATING`; nothing sweeps it. Repositories that could not be analyzed are saved on the resume as `failedRepoNames`. After the last attempt a GitHub error is stored through `mapOctokitErrorToAppError`: an outage or rate limit as `SERVICE_UNAVAILABLE`, a refused token as `GITHUB_CONNECTION_REQUIRED` and any other 4xx as `INTERNAL_ERROR` ([ADR 0005](adr/0005-retryable-failure-reasons-and-github-errors-in-the-job.md)).
 
 ### 4.4 Retrying a Failed Resume
 
@@ -129,7 +130,7 @@ flowchart TD
 flowchart TD
   Retry[POST /api/v1/resumes/:id/retry] --> Find{Resume is the user's?}
   Find -->|No| NotFound[404 NOT_FOUND]
-  Find -->|Yes| Reset{FAILED with SERVICE_UNAVAILABLE?}
+  Find -->|Yes| Reset{FAILED with a retryable reason?}
   Reset -->|No| Conflict[409 RESUME_NOT_RETRYABLE]
   Reset -->|Yes| Generating[Resume set to GENERATING]
   Generating --> Remove[Remove the old job]
@@ -139,7 +140,7 @@ flowchart TD
   Add --> Worker[Worker runs generateResume]
 ```
 
-The retry keeps the resume id. The worker takes the stored analysis when the resume's `analyzedRepoIds` all have a row, and runs the full flow otherwise ([ADR 0004](adr/0004-retry-a-failed-resume-from-its-stored-analysis.md)). No UI calls the route yet.
+The retry keeps the resume id. The worker takes the stored analysis when the resume's `analyzedRepoIds` all have a row, and runs the full flow otherwise ([ADR 0004](adr/0004-retry-a-failed-resume-from-its-stored-analysis.md)). The retryable reasons are `SERVICE_UNAVAILABLE` and `GITHUB_REPO_ANALYSIS_FAILED` (`RETRYABLE_FAILURE_REASONS`, [ADR 0005](adr/0005-retryable-failure-reasons-and-github-errors-in-the-job.md)); a `GITHUB_REPO_ANALYSIS_FAILED` retry always runs the full flow because nothing was stored. No UI calls the route yet.
 
 ---
 
@@ -231,6 +232,7 @@ if (ok) goToNextStep();
 - [x] Generate headline, summary, skill groups and projects with Gemini in a queue worker; `/resumes/{id}` renders the result (2026-11-20, failure paths checked by hand, unit tests added afterwards, no lint or typecheck run after the final refactors)
 - [ ] Sweep resumes left in `GENERATING` when the worker dies (deferred: rare, a stalled job is taken by another worker)
 - [x] Backend retry for a resume that failed with `SERVICE_UNAVAILABLE`: `POST /api/v1/resumes/:id/retry`, stored-analysis reuse, `Resume.analyzedRepoIds` (2026-11-26, unit tests written, manual scenarios not run, no lint or typecheck run after the final refactors)
+- [x] Retry for a resume that failed with `GITHUB_REPO_ANALYSIS_FAILED`, and a GitHub outage or rate limit in the job stored as `SERVICE_UNAVAILABLE` (2026-11-28, unit tests written but not run, no lint or typecheck run)
 - [ ] Retry button and user-facing messages for a `FAILED` resume, and a retry for the other failure reasons
 - [x] Tests for `generateResumeContent`, `saveResumeContent` and the `generateResume` failure branches (2026-11-20, mocked Prisma and Gemini, no lint or typecheck run)
 
@@ -249,6 +251,7 @@ if (ok) goToNextStep();
 | The worker dies or stops answering during a job.    | BullMQ marks the job stalled and another worker takes it (seen once, with the database unreachable). If no worker runs at all, the resume stays `GENERATING`; there is no job timeout or sweeper (sweeper deferred as rare). |
 | The model names a repository we did not analyze, or returns a bad reply. | Projects carry a `repoId`; name and URL come from the analyzed repository. An unknown id or a bad reply is requested once more, then the resume is `FAILED` (`SERVICE_UNAVAILABLE`). |
 | The Gemini free tier rate-limits or the key is wrong. | A 429 or overload is `SERVICE_UNAVAILABLE`; a 400, 401, 403 or 404 from Gemini is `INTERNAL_ERROR`. A `SERVICE_UNAVAILABLE` failure can be retried through the endpoint; there is no button for it yet. |
+| GitHub is down or rate limits while the job analyzes the repositories. | BullMQ retries the job 3 times; the last failure is stored as `SERVICE_UNAVAILABLE` and can be retried. Nothing was stored, so that retry reads GitHub again ([ADR 0005](adr/0005-retryable-failure-reasons-and-github-errors-in-the-job.md)). |
 
 ---
 
