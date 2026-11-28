@@ -1,7 +1,9 @@
 import { ApiError } from '@google/genai';
+import { RequestError } from '@octokit/request-error';
 import { ErrorCode } from 'shared';
 import type { AnalyzeGithubReposResponse } from 'shared';
 import { logger } from '../lib/logger';
+import { mapOctokitErrorToAppError } from '../lib/octokit-error';
 import { resumeGenerationQueue } from '../lib/resume-queue';
 import type {
   EnqueueResumeGenerationInput,
@@ -59,10 +61,10 @@ export async function removeResumeGenerationJob({
 }
 
 /**
- * Restarts generation for a resume that failed with `SERVICE_UNAVAILABLE`. Throws
+ * Restarts generation for a resume that failed with a retryable reason. Throws
  * `NOT_FOUND` when the user has no such resume and `RESUME_NOT_RETRYABLE` for any
- * other state. If the job cannot be queued, the resume is marked `FAILED` again
- * and `SERVICE_UNAVAILABLE` is thrown.
+ * other state. If the job cannot be queued, the resume is marked `FAILED` with
+ * `SERVICE_UNAVAILABLE`, whatever its earlier reason, and that error is thrown.
  */
 export async function retryResumeGeneration({
   resumeId,
@@ -277,15 +279,22 @@ export async function generateResume(resumeId: string) {
 
 function getFailureReason(error: unknown) {
   if (error instanceof AppError) return error.errorCode;
+  if (error instanceof RequestError) {
+    const reason = mapOctokitErrorToAppError(error).errorCode;
+    const isTemporaryGithubFailure =
+      reason === ErrorCode.GITHUB_API_ERROR ||
+      reason === ErrorCode.RATE_LIMIT_EXCEEDED;
+    return isTemporaryGithubFailure ? ErrorCode.SERVICE_UNAVAILABLE : reason;
+  }
   if (isDatabaseUnavailableError(error)) return ErrorCode.SERVICE_UNAVAILABLE;
   return ErrorCode.INTERNAL_ERROR;
 }
 
 /**
  * Marks the resume failed once its generation job has used all attempts. The
- * failure reason is the error's code for an `AppError`, `SERVICE_UNAVAILABLE` for a
- * database connection error and `INTERNAL_ERROR` otherwise, so raw error messages
- * never reach the resume row.
+ * reason is the error's code for an `AppError` or a GitHub error, with
+ * `SERVICE_UNAVAILABLE` for a database connection error or a GitHub outage or rate
+ * limit, and `INTERNAL_ERROR` otherwise, so raw messages never reach the resume row.
  */
 export async function failResumeGeneration({
   resumeId,

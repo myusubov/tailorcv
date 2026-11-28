@@ -275,10 +275,15 @@ export async function saveAnalyzedRepoIds({
   });
 }
 
+const RETRYABLE_FAILURE_REASONS = [
+  ErrorCode.SERVICE_UNAVAILABLE,
+  ErrorCode.GITHUB_REPO_ANALYSIS_FAILED,
+];
+
 /**
  * Moves the user's resume from `FAILED` back to `GENERATING` and clears its
- * failure reason, only when it failed with `SERVICE_UNAVAILABLE`. Returns whether
- * a resume was changed.
+ * failure reason, only when the reason is in `RETRYABLE_FAILURE_REASONS`. Returns
+ * whether a resume was changed.
  */
 export async function resetFailedResume({
   resumeId,
@@ -289,7 +294,7 @@ export async function resetFailedResume({
       id: resumeId,
       userId,
       status: 'FAILED',
-      failureReason: ErrorCode.SERVICE_UNAVAILABLE,
+      failureReason: { in: RETRYABLE_FAILURE_REASONS },
     },
     data: {
       status: 'GENERATING',

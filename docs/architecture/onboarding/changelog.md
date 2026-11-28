@@ -6,6 +6,18 @@
 
 Older history: [changelog-archive-2026-h1.md](changelog-archive-2026-h1.md) (January-June 2026).
 
+## 2026-11-28
+
+### Retry for GITHUB_REPO_ANALYSIS_FAILED and GitHub Errors in the Job
+
+- **Decision:** The retry endpoint accepts a list of failure reasons, and a GitHub outage or rate limit in the job is stored as `SERVICE_UNAVAILABLE`; see [ADR 0005](adr/0005-retryable-failure-reasons-and-github-errors-in-the-job.md).
+- **Problem:** A resume that failed with `GITHUB_REPO_ANALYSIS_FAILED` got 409 although the user can fix the cause, for example by sharing the repository with the app again. The worker also stored a raw Octokit `RequestError` as `INTERNAL_ERROR`, because `mapOctokitErrorToAppError` ran only in the Express error handler, so a GitHub outage or rate limit during analysis ended as a failure no retry accepts.
+- **Solution:**
+  1. **Gate — `apps/backend/src/services/resume.service.ts`**: `RETRYABLE_FAILURE_REASONS` (`SERVICE_UNAVAILABLE`, `GITHUB_REPO_ANALYSIS_FAILED`); `resetFailedResume` filters `failureReason` with `in` on it. Any other reason still gets 409 `RESUME_NOT_RETRYABLE`.
+  2. **Failure reason — `apps/backend/src/services/resume-generation.service.ts`**: `getFailureReason` passes a `RequestError` through `mapOctokitErrorToAppError`. `GITHUB_API_ERROR` and `RATE_LIMIT_EXCEEDED` become `SERVICE_UNAVAILABLE`; `GITHUB_CONNECTION_REQUIRED` and `INTERNAL_ERROR` are stored as returned. `generateResume` is unchanged: a `GITHUB_REPO_ANALYSIS_FAILED` retry runs the full flow because `analyzedRepoIds` is empty when every repository failed.
+  3. **Tests — `apps/backend/src/services/resume.service.test.ts`, `resume-generation.service.test.ts`**: the `resetFailedResume` query test expects the two-reason list; `failResumeGeneration` has three `RequestError` cases (503, 429 and a 403 with `x-ratelimit-remaining: 0`) that expect `SERVICE_UNAVAILABLE`.
+- **Outcome:** The unit tests were written against mocked Prisma and not run, and no lint or typecheck was run for this change. The mapper's other codes are covered by `octokit-error.test.ts`. There is still no retry button or failure message on the resume page, and `GITHUB_APP_SUSPENDED`, `GITHUB_CONNECTION_REQUIRED` and `INTERNAL_ERROR` still get 409.
+
 ## 2026-11-26
 
 ### Retry for a Resume That Failed With SERVICE_UNAVAILABLE

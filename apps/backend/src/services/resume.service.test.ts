@@ -132,7 +132,7 @@ describe('resetFailedResume', () => {
     updateMany.mockReset();
   });
 
-  it('only resets a resume of this user that failed with SERVICE_UNAVAILABLE', async () => {
+  it('only resets a resume of this user that failed with SERVICE_UNAVAILABLE or GITHUB_REPO_ANALYSIS_FAILED', async () => {
     updateMany.mockResolvedValue({ count: 1 });
 
     await resetFailedResume(resetInput);
@@ -142,7 +142,9 @@ describe('resetFailedResume', () => {
         id: 'resume-1',
         userId: 'user-1',
         status: 'FAILED',
-        failureReason: 'SERVICE_UNAVAILABLE',
+        failureReason: {
+          in: ['SERVICE_UNAVAILABLE', 'GITHUB_REPO_ANALYSIS_FAILED'],
+        },
       },
       data: { status: 'GENERATING', failureReason: null },
     });

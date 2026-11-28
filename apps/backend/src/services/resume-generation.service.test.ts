@@ -1,4 +1,5 @@
 import { ApiError } from '@google/genai';
+import { RequestError } from '@octokit/request-error';
 import { ErrorCode } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -648,6 +649,40 @@ describe('failResumeGeneration', () => {
 
     expect(JSON.stringify(mocks.markResumeFailed.mock.calls)).not.toContain(
       'hunter2',
+    );
+  });
+
+  describe('for a GitHub RequestError', () => {
+    const repositoriesUrl = 'https://api.github.com/installation/repositories';
+
+    it.each<[string, number, Record<string, string>]>([
+      ['a 503, GitHub is failing', 503, {}],
+      ['a 429, the rate limit', 429, {}],
+      [
+        'a 403 that is a rate limit (x-ratelimit-remaining 0)',
+        403,
+        { 'x-ratelimit-remaining': '0' },
+      ],
+    ])(
+      'uses SERVICE_UNAVAILABLE for %s',
+      async (_name, status, responseHeaders) => {
+        const error = new RequestError('GitHub failed', status, {
+          request: { method: 'GET', url: repositoriesUrl, headers: {} },
+          response: {
+            status,
+            url: repositoriesUrl,
+            headers: responseHeaders,
+            data: {},
+          },
+        });
+
+        await failResumeGeneration({ resumeId: 'resume-1', error });
+
+        expect(mocks.markResumeFailed).toHaveBeenCalledWith({
+          resumeId: 'resume-1',
+          failureReason: ErrorCode.SERVICE_UNAVAILABLE,
+        });
+      },
     );
   });
 });
